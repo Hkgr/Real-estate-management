@@ -19,16 +19,13 @@ class PropertyCard extends Model
         'card_purchase_date',
         'card_status',
         'card_property_details',
-        'card_location',
-        'card_latitude',
-        'card_longitude',
+        'card_google_maps_url',
     ];
 
     protected $casts = [
         'card_purchase_date' => 'date',
         'card_total_area' => 'decimal:2',
-        'card_latitude' => 'decimal:7',
-        'card_longitude' => 'decimal:7',
+
     ];
         public function owners()
     {

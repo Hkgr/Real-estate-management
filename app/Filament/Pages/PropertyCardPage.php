@@ -231,23 +231,12 @@ class PropertyCardPage extends Page implements HasSchemas
 
                     Section::make('الموقع')
                     ->schema([
-                        Textarea::make('card_location')
-                            ->label('موقع العقار (عنوان/وصف)')
-                            ->rows(3)
-                            ->required()
-                            ->placeholder('مثال: حلب - الحمدانية - شارع ...'),
+                        TextInput::make('card_google_maps_url')
+                            ->label('رابط خريطة Google')
+                            ->url()
+                            ->helperText('ألصق رابط الموقع من Google Maps لمساعدتنا في الوصول بدقة.')
+                            ->placeholder('https://maps.google.com/?q=...'),
 
-                        Grid::make(2)->schema([
-                            TextInput::make('card_latitude')
-                                ->label('Latitude')
-                                ->numeric()
-                                ->nullable(),
-
-                            TextInput::make('card_longitude')
-                                ->label('Longitude')
-                                ->numeric()
-                                ->nullable(),
-                        ]),
                     ]),
             ])
             ->statePath('data')

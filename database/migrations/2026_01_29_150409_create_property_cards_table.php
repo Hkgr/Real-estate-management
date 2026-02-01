@@ -32,9 +32,7 @@ return new class extends Migration
             $table->enum('card_ownership_metric', ['percentage', 'shares', 'meters'])->default('percentage');
             $table->decimal('card_ownership_value', 12, 2)->nullable();
 
-            $table->text('card_location');                          // موقع العقار
-            $table->decimal('card_latitude', 10, 7)->nullable();
-            $table->decimal('card_longitude', 10, 7)->nullable();
+            $table->string('card_google_maps_url', 2048)->nullable(); // رابط خريطة Google
 
             $table->timestamps();
             $table->softDeletes();
