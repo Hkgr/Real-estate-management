@@ -354,14 +354,18 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
 
-                $exists = PropertyCard::query()
-                    ->where('card_cadastral_zone_number', $zone)
+                $existingRecord = PropertyCard::withTrashed()
+                                    ->where('card_cadastral_zone_number', $zone)
                     ->where('card_property_number', $num)
+                                        ->first();
 
-                    ->exists();
+                if ($existingRecord) {
+                    $message = $existingRecord->trashed()
+                        ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
+                        : 'هذا العقار موجود مسبقًا بنفس المفتاح';
 
-                if ($exists) {
-                    Notification::make()->title('هذا العقار موجود مسبقًا بنفس المفتاح')->danger()->send();
+
+                    Notification::make()->title($message)->danger()->send();
                     return;
                 }
 
