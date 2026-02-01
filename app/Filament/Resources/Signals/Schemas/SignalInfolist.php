@@ -16,6 +16,10 @@ class SignalInfolist
                 TextEntry::make('signal_year'),
                 TextEntry::make('type')
                     ->badge(),
+                TextEntry::make('property.display_name')
+                    ->label('العقار')
+                    ->placeholder('-'),
+
                 TextEntry::make('signal_owner')
                     ->placeholder('-'),
                 TextEntry::make('signal_source')

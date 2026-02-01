@@ -21,6 +21,10 @@ class SignalsTable
                     ->searchable(),
                 TextColumn::make('type')
                     ->badge(),
+                TextColumn::make('property.display_name')
+                    ->label('العقار')
+                    ->placeholder('-')
+                    ->searchable(),
                 TextColumn::make('signal_owner')
                     ->searchable(),
                 TextColumn::make('signal_source')

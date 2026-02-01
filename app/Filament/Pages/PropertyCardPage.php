@@ -191,10 +191,10 @@ class PropertyCardPage extends Page implements HasSchemas
                  * استخدم Pivot Model + HasMany مثل: ownerships()
                  * (PropertyCardOwner) + العلاقة owner() داخل Pivot.
                  */
-                Section::make('المالكون')
+                Section::make('الملاك')
                     ->schema([
                         Repeater::make('ownerships')
-                            ->label('المالكون')
+                            ->label('الملاك')
                             ->relationship('ownerships') // HasMany على Pivot Model: PropertyCardOwner
                             ->schema([
                                 Select::make('owner_id')

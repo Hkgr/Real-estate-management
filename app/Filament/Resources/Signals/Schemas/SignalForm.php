@@ -12,6 +12,13 @@ class SignalForm
     {
         return $schema
             ->components([
+                Select::make('property_id')
+                    ->label('العقار')
+                    ->relationship('property', 'display_name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
+
                 TextInput::make('signal_id')
                     ->required(),
                 TextInput::make('signal_year')
