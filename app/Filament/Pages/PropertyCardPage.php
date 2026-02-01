@@ -5,7 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\PropertyCard;
 use BackedEnum;
 use UnitEnum;
-
+use App\Models\Owner;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -23,8 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Get;
-
+use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\QueryException;
 
 use Mpdf\Mpdf;
@@ -192,8 +191,7 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->schema([
                                 Select::make('owner_id')
                                     ->label('المالك')
-                                    ->relationship('owner', 'full_name')
-                                    ->searchable()
+                                    ->options(fn () => Owner::query()->pluck('full_name', 'id'))                                    ->searchable()
                                     ->preload()
                                     ->required(),
                                 TextInput::make('ownership_percentage')
