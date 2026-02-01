@@ -6,7 +6,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -34,17 +33,19 @@ class RashadPanelProvider extends PanelProvider
             ])
 
             // ✅ أهم شي: خليه يكتشف الموارد والصفحات
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->resources([])
             ->pages([
-                Dashboard::class,
+                \App\Filament\Pages\PropertyCardPage::class,
+                \App\Filament\Pages\OwnerCardPage::class,
+
             ])
 
             // ✅ الغينا كل widgets المضافة (هي اللي كانت طالعة فوق)
             // لو عندك Widgets مخصصة وتريدها لاحقاً بنرجع نضيفها بعد ما يستقر كل شيء.
-           ->widgets([
-    \App\Filament\Widgets\AppStatsOverview::class,
-])
+            ->widgets([
+                \App\Filament\Widgets\AppStatsOverview::class,
+            ])
+
 
             ->middleware([
                 EncryptCookies::class,
