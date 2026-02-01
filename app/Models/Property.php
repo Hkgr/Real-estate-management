@@ -36,9 +36,18 @@ class Property extends Model
     {
         return "{$this->region_name} - عقار {$this->property_number}";
     }
-        public function owners()
-    {
-        return $this->belongsToMany(Owner::class)->withTimestamps();
+    public function owners()
+        {
+        return $this->belongsToMany(Owner::class)
+            ->using(OwnerProperty::class)
+            ->withPivot([
+                'ownership_percentage',
+                'ownership_metric',
+                'is_current',
+                'purchase_date',
+                'sale_date',
+            ])
+            ->withTimestamps();
     }
 
 }
