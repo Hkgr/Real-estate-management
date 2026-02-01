@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class PropertyCard extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'card_governorate',
+        'card_previous_owner',
+        'card_region_name',
+        'card_cadastral_zone_number',
+        'card_property_number',
+        'card_total_area',
+        'card_owned_area',
+        'card_purchase_date',
+        'card_status',
+        'card_ownership_metric',
+        'card_ownership_value',
+        'card_location',
+        'card_latitude',
+        'card_longitude',
+    ];
+
+    protected $casts = [
+        'card_purchase_date' => 'date',
+        'card_total_area' => 'decimal:2',
+        'card_owned_area' => 'decimal:2',
+        'card_ownership_value' => 'decimal:2',
+        'card_latitude' => 'decimal:7',
+        'card_longitude' => 'decimal:7',
+    ];
+}

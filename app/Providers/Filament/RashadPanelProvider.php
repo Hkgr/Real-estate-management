@@ -28,6 +28,7 @@ class RashadPanelProvider extends PanelProvider
             ->login()
             ->font('Cairo')
             ->maxContentWidth('full')
+            ->viteTheme('resources/css/filament/rashad/theme.css')
             ->colors([
                 'primary' => Color::Amber,
             ])
