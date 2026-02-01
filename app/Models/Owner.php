@@ -17,14 +17,23 @@ class Owner extends Model
         'email',
         'is_active',
     ];
-        protected $casts = [
+    protected $casts = [
         'birth_date' => 'date',
         'is_active' => 'boolean',
     ];
 
     public function properties()
     {
-        return $this->belongsToMany(Property::class)->withTimestamps();
+        return $this->belongsToMany(Property::class)
+            ->using(OwnerProperty::class)
+            ->withPivot([
+                'ownership_percentage',
+                'ownership_metric',
+                'is_current',
+                'purchase_date',
+                'sale_date',
+            ])
+            ->withTimestamps();
     }
 
 }
