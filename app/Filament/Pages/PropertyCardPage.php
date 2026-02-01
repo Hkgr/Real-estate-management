@@ -241,7 +241,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                                         Toggle::make('is_active')
                                             ->label('فعّال')
-                                            ->default(true),
+                                            ->default(false),
                                     ])
                                     ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
                                     ->required(),
@@ -273,7 +273,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                                 Toggle::make('is_current')
                                     ->label('مالك حالي')
-                                    ->default(true),
+                                    ->default(false),
 
                                 DatePicker::make('purchase_date')
                                     ->label('تاريخ الشراء')
