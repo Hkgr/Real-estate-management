@@ -330,8 +330,9 @@ class PropertyCardPage extends Page implements HasSchemas
             ->label('إضافة')
             ->icon('heroicon-o-plus')
             ->action(function () {
-                                try {
-                    $this->form->validate();
+               try {
+                    $validated = $this->form->validate();
+
                 } catch (ValidationException $exception) {
                     Notification::make()
                         ->title('يرجى تصحيح أخطاء الحقول')
@@ -341,8 +342,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = $this->getFormPayload();
-                $zone = $payload['card_cadastral_zone_number'] ?? null;
+                $payload = $this->getFormPayload($validated);
+                                $zone = $payload['card_cadastral_zone_number'] ?? null;
                 $num = $payload['card_property_number'] ?? null;
 
                   if ($this->isMissingKeyValue($zone) || $this->isMissingKeyValue($num)) {
@@ -390,9 +391,10 @@ class PropertyCardPage extends Page implements HasSchemas
         return $this->uniformAction($action);
     }
 
-    private function getFormPayload(): array
+    private function getFormPayload(?array $payload = null): array
     {
-        $payload = $this->form->getState();
+        $payload = $payload ?? $this->form->getState();
+
 
         if (array_key_exists('data', $payload) && is_array($payload['data'])) {
             return $payload['data'];
@@ -468,9 +470,10 @@ class PropertyCardPage extends Page implements HasSchemas
                     Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
                     return;
                 }
-                                try {
-                $payload = $this->getFormPayload();
-                                } catch (ValidationException $exception) {
+                try {
+                    $validated = $this->form->validate();
+                } catch (ValidationException $exception) {
+
                     Notification::make()
                         ->title('يرجى تصحيح أخطاء الحقول')
                         ->body($this->formatValidationErrors($exception))
@@ -479,8 +482,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = $this->form->validate();
-                $record = PropertyCard::find($this->currentRecordId);
+                $payload = $this->getFormPayload($validated);
+                                $record = PropertyCard::find($this->currentRecordId);
                 if (! $record) {
                     $this->currentRecordId = null;
                     Notification::make()->title('السجل لم يعد موجودًا')->danger()->send();
