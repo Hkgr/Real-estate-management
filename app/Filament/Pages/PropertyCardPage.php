@@ -25,6 +25,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
 
 use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
@@ -102,6 +103,7 @@ class PropertyCardPage extends Page implements HasSchemas
                             TextInput::make('card_subdivision')
                                 ->label('المقسم')
                                 ->maxLength(100)
+                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->nullable()
                                 ->placeholder('مثال: المقسم 22 '),
 
@@ -122,6 +124,7 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->label('تفصيل العقار')
                             ->rows(3)
                             ->nullable()
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->placeholder('اختياري'),
 
                     ]),
@@ -251,6 +254,8 @@ class PropertyCardPage extends Page implements HasSchemas
                         TextInput::make('card_google_maps_url')
                             ->label('رابط خريطة Google')
                             ->url()
+                            ->nullable()
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->helperText('ألصق رابط الموقع من Google Maps لمساعدتنا في الوصول بدقة.')
                             ->placeholder('https://maps.google.com/?q=...'),
 
@@ -325,8 +330,18 @@ class PropertyCardPage extends Page implements HasSchemas
             ->label('إضافة')
             ->icon('heroicon-o-plus')
             ->action(function () {
-                $payload = $this->form->getState();
+                                try {
+                    $this->form->validate();
+                } catch (ValidationException $exception) {
+                    Notification::make()
+                        ->title('يرجى تصحيح أخطاء الحقول')
+                        ->body($this->formatValidationErrors($exception))
+                        ->danger()
+                        ->send();
+                    return;
+                }
 
+                $payload = $this->form->validate();
                 $exists = PropertyCard::query()
                     ->where('card_cadastral_zone_number', $payload['card_cadastral_zone_number'])
                     ->where('card_property_number', $payload['card_property_number'])
@@ -340,8 +355,13 @@ class PropertyCardPage extends Page implements HasSchemas
                 try {
                     $record = PropertyCard::create($payload);
                     $this->form->model($record)->saveRelationships();
-                } catch (QueryException) {
-                    Notification::make()->title('فشل الحفظ (تحقق من القيود/القيم)')->danger()->send();
+                } catch (QueryException $exception) {
+                    Notification::make()
+                        ->title('فشل الحفظ')
+                        ->body($this->formatQueryExceptionMessage($exception))
+                        ->danger()
+                        ->send();
+
                     return;
                 }
 
@@ -408,9 +428,18 @@ class PropertyCardPage extends Page implements HasSchemas
                     Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
                     return;
                 }
+                                try {
+                    $this->form->validate();
+                } catch (ValidationException $exception) {
+                    Notification::make()
+                        ->title('يرجى تصحيح أخطاء الحقول')
+                        ->body($this->formatValidationErrors($exception))
+                        ->danger()
+                        ->send();
+                    return;
+                }
 
-                $payload = $this->form->getState();
-
+                $payload = $this->form->validate();
                 $record = PropertyCard::find($this->currentRecordId);
                 if (! $record) {
                     $this->currentRecordId = null;
@@ -420,9 +449,14 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 try {
                     $record->update($payload);
-                                        $this->form->model($record)->saveRelationships();
-                } catch (QueryException) {
-                    Notification::make()->title('فشل التعديل (قد يكون مفتاح مكرر)')->danger()->send();
+                    $this->form->model($record)->saveRelationships();
+                } catch (QueryException $exception) {
+                    Notification::make()
+                        ->title('فشل التعديل')
+                        ->body($this->formatQueryExceptionMessage($exception))
+                        ->danger()
+                        ->send();
+
                     return;
                 }
 
@@ -537,6 +571,38 @@ protected function resolveChromePath(): string
 
     // 3) آخر حل: اتركه (سيعطي خطأ واضح)
     return $path;
+}
+protected function formatValidationErrors(ValidationException $exception): string
+{
+    $errors = $exception->errors();
+
+    if ($errors === []) {
+        return 'حدثت أخطاء تحقق غير معروفة.';
+    }
+
+    return collect($errors)
+        ->map(function (array $messages, string $field): string {
+            $message = implode('، ', $messages);
+            return "{$field}: {$message}";
+        })
+        ->implode("\n");
+}
+
+protected function formatQueryExceptionMessage(QueryException $exception): string
+{
+    $sqlState = $exception->errorInfo[0] ?? null;
+    $driverCode = $exception->errorInfo[1] ?? null;
+    $message = $exception->errorInfo[2] ?? $exception->getMessage();
+
+    if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
+        return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
+    }
+
+    if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
+        return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+    }
+
+    return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
 }
 
 }
