@@ -34,4 +34,18 @@ class PropertyCard extends Model
         'card_latitude' => 'decimal:7',
         'card_longitude' => 'decimal:7',
     ];
+        public function owners()
+    {
+        return $this->belongsToMany(Owner::class, 'owner_property_card')
+            ->using(OwnerPropertyCard::class)
+            ->withPivot([
+                'ownership_percentage',
+                'ownership_metric',
+                'is_current',
+                'purchase_date',
+                'sale_date',
+            ])
+            ->withTimestamps();
+    }
+
 }

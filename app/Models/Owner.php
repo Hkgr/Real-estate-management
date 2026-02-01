@@ -36,4 +36,18 @@ class Owner extends Model
             ->withTimestamps();
     }
 
-}
+    public function propertyCards()
+    {
+        return $this->belongsToMany(PropertyCard::class, 'owner_property_card')
+            ->using(OwnerPropertyCard::class)
+            ->withPivot([
+                'ownership_percentage',
+                'ownership_metric',
+                'is_current',
+                'purchase_date',
+                'sale_date',
+            ])
+            ->withTimestamps();
+    }
+
+    }

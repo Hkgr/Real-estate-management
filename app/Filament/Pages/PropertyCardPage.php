@@ -21,6 +21,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Get;
 
 use Illuminate\Database\QueryException;
 
@@ -180,7 +183,47 @@ class PropertyCardPage extends Page implements HasSchemas
                         ]),
                     ]),
 
-                Section::make('الموقع')
+  
+                Section::make('المالكون')
+                    ->schema([
+                        Repeater::make('owners')
+                            ->label('المالكون')
+                            ->relationship('owners')
+                            ->schema([
+                                Select::make('owner_id')
+                                    ->label('المالك')
+                                    ->relationship('owner', 'full_name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(),
+                                TextInput::make('ownership_percentage')
+                                    ->label('نسبة التملك')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->suffix('%'),
+                                TextInput::make('ownership_metric')
+                                    ->label('معيار التملك')
+                                    ->required(),
+                                Toggle::make('is_current')
+                                    ->label('مالك حالي')
+                                    ->default(true),
+                                DatePicker::make('purchase_date')
+                                    ->label('تاريخ الشراء')
+                                    ->nullable(),
+                                DatePicker::make('sale_date')
+                                    ->label('تاريخ البيع')
+                                    ->visible(fn (Get $get) => ! $get('is_current'))
+                                    ->nullable(),
+                            ])
+                            ->columns([
+                                'default' => 1,
+                                'md' => 2,
+                            ]),
+                    ]),
+
+                    Section::make('الموقع')
                     ->schema([
                         Textarea::make('card_location')
                             ->label('موقع العقار (عنوان/وصف)')
