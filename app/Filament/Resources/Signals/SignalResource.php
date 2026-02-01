@@ -18,9 +18,12 @@ use Filament\Tables\Table;
 
 class SignalResource extends Resource
 {
-    protected static ?string $model = Signal::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $title = 'بطاقة الإشارة';
+    protected static ?string $navigationLabel = 'بطاقة الإشارة (جديدة)';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-home-modern';
+    protected static ?string $slug = 'signal-card';
+
 
     protected static ?string $recordTitleAttribute = 'signal';
 
