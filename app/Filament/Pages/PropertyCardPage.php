@@ -99,10 +99,11 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->required()
                                 ->placeholder('مثال: الحمدانية'),
 
-                            TextInput::make('card_previous_owner')
-                                ->label('المالك السابق')
+                            TextInput::make('card_subdivision')
+                                ->label('المقسم')
+                                ->maxLength(100)
                                 ->nullable()
-                                ->placeholder('اختياري'),
+                                ->placeholder('مثال: المقسم 22 '),
 
                             Select::make('card_status')
                                 ->label('حالة العقار')
@@ -117,11 +118,17 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('تاريخ الشراء')
                                 ->nullable(),
                         ]),
+                                                Textarea::make('card_property_details')
+                            ->label('تفصيل العقار')
+                            ->rows(3)
+                            ->nullable()
+                            ->placeholder('اختياري'),
+
                     ]),
 
                 Section::make('المساحات والملكية')
                     ->schema([
-                        Grid::make(2)->schema([
+                        Grid::make(1)->schema([
                             TextInput::make('card_total_area')
                                 ->label('مساحة العقار الكلية')
                                 ->numeric()
@@ -130,55 +137,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->required()
                                 ->placeholder('مثال: 400'),
 
-                            TextInput::make('card_owned_area')
-                                ->label('المساحة المملوكة')
-                                ->numeric()
-                                ->minValue(0)
-                                ->suffix('م²')
-                                ->required()
-                                ->placeholder('مثال: 200'),
-                        ]),
 
-                        Grid::make(2)->schema([
-                            Select::make('card_ownership_metric')
-                                ->label('مقياس الملكية')
-                                ->native(false)
-                                ->options([
-                                    'percentage' => 'النسبة المئوية (%)',
-                                    'shares'     => 'عدد الأسهم',
-                                    'meters'     => 'عدد الأمتار (م²)',
-                                ])
-                                ->live()
-                                ->required()
-                                ->placeholder('اختر مقياس الملكية'),
-
-                            TextInput::make('card_ownership_value')
-                                ->label('قيمة الملكية')
-                                ->numeric()
-                                ->minValue(0)
-                                ->suffix(fn (callable $get) => match ($get('card_ownership_metric')) {
-                                    'shares' => 'سهم',
-                                    'meters' => 'م²',
-                                    default  => '%',
-                                })
-                                ->helperText(fn (callable $get) => match ($get('card_ownership_metric')) {
-                                    'percentage' => 'يجب أن تكون بين 0 و 100',
-                                    'shares'     => 'رقم صحيح (مثال: 120)',
-                                    'meters'     => 'قيمة بالمتر المربع (مثال: 125.5)',
-                                    default      => 'اختر المقياس أولاً',
-                                })
-                                ->rules(fn (callable $get) => match ($get('card_ownership_metric')) {
-                                    'percentage' => ['numeric', 'between:0,100'],
-                                    'shares'     => ['integer', 'min:0'],
-                                    'meters'     => ['numeric', 'min:0'],
-                                    default      => ['numeric', 'min:0'],
-                                })
-                                ->required()
-                                ->placeholder(fn (callable $get) => match ($get('card_ownership_metric')) {
-                                    'shares' => 'مثال: 120',
-                                    'meters' => 'مثال: 150',
-                                    default  => 'مثال: 50',
-                                }),
                         ]),
                     ]),
 
@@ -268,8 +227,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
         $this->form->fill([
             'card_status' => 'active',
-            'card_ownership_metric' => 'percentage',
-            'card_ownership_value' => null,
+
         ]);
     }
 
