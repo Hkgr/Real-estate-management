@@ -308,8 +308,7 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         $this->currentRecordId = $record->id;
-        $this->form->fill($record->attributesToArray());
-
+        $this->form->fill($record->load('owners')->toArray());
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
 
@@ -337,14 +336,14 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 try {
                     $record = PropertyCard::create($payload);
+                    $this->form->model($record)->saveRelationships();
                 } catch (QueryException) {
                     Notification::make()->title('فشل الحفظ (تحقق من القيود/القيم)')->danger()->send();
                     return;
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->attributesToArray());
-
+                $this->form->fill($record->load('owners')->toArray());
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
 
@@ -388,8 +387,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->attributesToArray());
-
+                $this->form->fill($record->load('owners')->toArray());
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
 
@@ -419,13 +417,14 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 try {
                     $record->update($payload);
+                                        $this->form->model($record)->saveRelationships();
                 } catch (QueryException) {
                     Notification::make()->title('فشل التعديل (قد يكون مفتاح مكرر)')->danger()->send();
                     return;
                 }
 
-                $this->form->fill($record->fresh()->attributesToArray());
-                Notification::make()->title('تم التعديل بنجاح')->success()->send();
+                $this->form->fill($record->fresh()->load('owners')->toArray());
+                                Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
