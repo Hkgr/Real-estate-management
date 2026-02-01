@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Owner extends Model
 {
     use SoftDeletes;
@@ -49,5 +49,11 @@ class Owner extends Model
             ])
             ->withTimestamps();
     }
+    public function signals(): BelongsToMany
+    {
+        return $this->belongsToMany(Signal::class, 'owner_signal')
+            ->withTimestamps();
 
     }
+
+}

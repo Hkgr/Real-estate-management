@@ -18,7 +18,7 @@ use Filament\Schemas\Components\Grid;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
-
+use Filament\Forms\Components\Select;
 use Illuminate\Database\QueryException;
 
 class OwnerCardPage extends Page implements HasSchemas
@@ -94,6 +94,16 @@ class OwnerCardPage extends Page implements HasSchemas
                                 ->nullable(),
                         ]),
                     ]),
+                Section::make('الإشارات المرتبطة')
+                    ->schema([
+                        Select::make('signals')
+                            ->label('الإشارات')
+                            ->relationship('signals', 'signal_id')
+                            ->searchable()
+                            ->preload()
+                            ->multiple(),
+                    ]),
+
             ])
             ->statePath('data')
             ->model(Owner::class);
@@ -117,6 +127,15 @@ class OwnerCardPage extends Page implements HasSchemas
         $this->form->fill([]);
     }
 
+    protected function fillFormWithRecord(Owner $record): void
+    {
+        $this->form->fill(array_merge(
+            $record->attributesToArray(),
+            ['signals' => $record->signals()->pluck('signals.id')->all()],
+        ));
+    }
+
+
     public function tryAutoSearch(): void
     {
         $nationalId = $this->data['national_id'] ?? null;
@@ -136,7 +155,7 @@ class OwnerCardPage extends Page implements HasSchemas
         }
 
         $this->currentRecordId = $record->id;
-        $this->form->fill($record->attributesToArray());
+        $this->fillFormWithRecord($record);
 
         Notification::make()->title('تم تحميل بطاقة المالك تلقائياً')->success()->send();
     }
@@ -148,6 +167,8 @@ class OwnerCardPage extends Page implements HasSchemas
             ->icon('heroicon-o-plus')
             ->action(function () {
                 $payload = $this->form->getState();
+                $signals = $payload['signals'] ?? [];
+                unset($payload['signals']);
 
                 $exists = Owner::query()
                     ->where('national_id', $payload['national_id'])
@@ -165,8 +186,10 @@ class OwnerCardPage extends Page implements HasSchemas
                     return;
                 }
 
+                $record->signals()->sync($signals);
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->attributesToArray());
+                $this->fillFormWithRecord($record->fresh());
+
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -201,8 +224,7 @@ class OwnerCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->attributesToArray());
-
+                $this->fillFormWithRecord($record);
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
 
@@ -222,6 +244,8 @@ class OwnerCardPage extends Page implements HasSchemas
                 }
 
                 $payload = $this->form->getState();
+                $signals = $payload['signals'] ?? [];
+                unset($payload['signals']);
 
                 $record = Owner::find($this->currentRecordId);
                 if (! $record) {
@@ -237,7 +261,9 @@ class OwnerCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->form->fill($record->fresh()->attributesToArray());
+                $record->signals()->sync($signals);
+                $this->fillFormWithRecord($record->fresh());
+
                 Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 

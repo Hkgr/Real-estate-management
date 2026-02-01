@@ -18,6 +18,12 @@ class SignalForm
                     ->searchable()
                     ->preload()
                     ->nullable(),
+                Select::make('owners')
+                    ->label('المالكون')
+                    ->relationship('owners', 'full_name')
+                    ->searchable()
+                    ->preload()
+                    ->multiple(),
 
                 TextInput::make('signal_id')
                     ->required(),

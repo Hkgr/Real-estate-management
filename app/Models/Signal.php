@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Signal extends Model
 {
@@ -20,5 +21,11 @@ class Signal extends Model
     {
         return $this->belongsTo(Property::class);
     }
+        public function owners(): BelongsToMany
+    {
+        return $this->belongsToMany(Owner::class, 'owner_signal')
+            ->withTimestamps();
+    }
+
 
 }
