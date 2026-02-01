@@ -150,8 +150,44 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->schema([
                                 Select::make('owner_id')
                                     ->label('المالك')
-                                    ->options(fn () => Owner::query()->pluck('full_name', 'id'))                                    ->searchable()
+                                    ->options(fn () => Owner::query()->pluck('full_name', 'id'))
+                                    ->searchable()
                                     ->preload()
+                                                                        ->createOptionForm([
+                                        TextInput::make('full_name')
+                                            ->label('الاسم الرباعي')
+                                            ->required()
+                                            ->maxLength(200)
+                                            ->columnSpanFull(),
+                                        DatePicker::make('birth_date')
+                                            ->label('تاريخ الميلاد')
+                                            ->nullable()
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                                        TextInput::make('national_id')
+                                            ->label('الرقم الوطني')
+                                            ->required()
+                                            ->maxLength(50)
+                                            ->unique(Owner::class, 'national_id'),
+                                        TextInput::make('phone')
+                                            ->label('رقم الهاتف')
+                                            ->tel()
+                                            ->maxLength(50)
+                                            ->nullable()
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                                        TextInput::make('email')
+                                            ->label('البريد الإلكتروني')
+                                            ->email()
+                                            ->maxLength(150)
+                                            ->nullable()
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                                        Toggle::make('is_active')
+                                            ->label('فعّال')
+                                            ->default(true),
+                                    ])
+                                    ->createOptionUsing(function (array $data): int {
+                                        return Owner::create($data)->id;
+                                    })
+
                                     ->required(),
                                 TextInput::make('ownership_percentage')
                                     ->label('قيمة التملك')
