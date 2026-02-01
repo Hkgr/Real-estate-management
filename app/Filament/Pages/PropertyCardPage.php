@@ -9,11 +9,11 @@ use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Spatie\Browsershot\Browsershot;
 
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Schema;
-
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 
@@ -23,7 +23,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Validator;
+
+use Mpdf\Mpdf;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
+use Mpdf\HTMLParserMode;
 
 class PropertyCardPage extends Page implements HasSchemas
 {
@@ -64,7 +68,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('رقم المنطقة العقارية')
                                 ->maxLength(50)
                                 ->required()
-                                ->lazy() // البحث عند الخروج من الحقل
+                                ->lazy()
                                 ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 12A'),
 
@@ -72,7 +76,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('رقم العقار')
                                 ->maxLength(50)
                                 ->required()
-                                ->lazy() // البحث عند الخروج من الحقل
+                                ->lazy()
                                 ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 105'),
                         ]),
@@ -161,7 +165,6 @@ class PropertyCardPage extends Page implements HasSchemas
                                     'meters'     => 'قيمة بالمتر المربع (مثال: 125.5)',
                                     default      => 'اختر المقياس أولاً',
                                 })
-                                // ✅ FIX: rules() + array rules (بدون integer|min:0 كسلسلة واحدة)
                                 ->rules(fn (callable $get) => match ($get('card_ownership_metric')) {
                                     'percentage' => ['numeric', 'between:0,100'],
                                     'shares'     => ['integer', 'min:0'],
@@ -213,7 +216,6 @@ class PropertyCardPage extends Page implements HasSchemas
             ->color('gray')
             ->outlined()
             ->size('sm')
-            // ✅ FIX: لا تستخدم Tailwind داخل PHP (لن يُولد CSS)
             ->extraAttributes([
                 'style' => 'min-width: 112px; white-space: nowrap;',
             ]);
@@ -320,8 +322,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 $zone = $data['card_cadastral_zone_number'] ?? null;
                 $num  = $data['card_property_number'] ?? null;
 
-                $query = PropertyCard::query()
-                    ->where('card_property_number', $num);
+                $query = PropertyCard::query()->where('card_property_number', $num);
 
                 if (filled($zone)) {
                     $query->where('card_cadastral_zone_number', $zone);
@@ -409,4 +410,80 @@ class PropertyCardPage extends Page implements HasSchemas
 
         return $this->uniformAction($action);
     }
+
+  public function pdfBrowserAction(): Action
+{
+    $action = Action::make('pdf_browser')
+        ->label('تحميل PDF (Chrome)')
+        ->icon('heroicon-o-document-arrow-down')
+        ->disabled(fn () => blank($this->currentRecordId))
+        ->action(function () {
+
+            if (! $this->currentRecordId) {
+                Notification::make()->title('حمّل بطاقة أولاً ثم حمّل PDF')->warning()->send();
+                return;
+            }
+
+            $record = PropertyCard::find($this->currentRecordId);
+
+            if (! $record) {
+                $this->currentRecordId = null;
+                Notification::make()->title('السجل غير موجود')->danger()->send();
+                return;
+            }
+
+            $filename = 'property-card-' .
+                ($record->card_cadastral_zone_number ?? 'zone') . '-' .
+                ($record->card_property_number ?? 'no') . '.pdf';
+
+            $html = view('pdf.property-card-browser', [
+                'record' => $record,
+            ])->render();
+
+            // ✅ على ويندوز: استخدم Chromium الذي جاء مع puppeteer
+            $chromePath = base_path('node_modules/puppeteer/.local-chromium/win64-*/chrome-win/chrome.exe');
+
+            $pdf = Browsershot::html($html)
+                ->setChromePath($this->resolveChromePath())
+                ->format('A4')
+                ->margins(12, 10, 12, 10)
+                ->showBackground()
+                ->pdf();
+
+            return response()->streamDownload(
+                fn () => print($pdf),
+                $filename,
+                ['Content-Type' => 'application/pdf']
+            );
+        });
+
+    return $this->uniformAction($action);
+}
+
+protected function resolveChromePath(): string
+{
+    // 1) جرّب المسار الذي يحدده puppeteer تلقائياً
+    $cmd = 'node -e "console.log(require(\'puppeteer\').executablePath())"';
+    $path = trim((string) shell_exec($cmd));
+
+    if ($path && file_exists($path)) {
+        return $path;
+    }
+
+    // 2) جرّب Chrome النظام إن كان مثبتاً
+    $candidates = [
+        'C:\Program Files\Google\Chrome\Application\chrome.exe',
+        'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate)) {
+            return $candidate;
+        }
+    }
+
+    // 3) آخر حل: اتركه (سيعطي خطأ واضح)
+    return $path;
+}
+
 }
