@@ -342,9 +342,22 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $payload = $this->form->validate();
+                                $zone = $payload['card_cadastral_zone_number'] ?? null;
+                $num = $payload['card_property_number'] ?? null;
+
+                if (! filled($zone) || ! filled($num)) {
+                    Notification::make()
+                        ->title('يرجى إدخال رقم المنطقة العقارية ورقم العقار')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+
                 $exists = PropertyCard::query()
-                    ->where('card_cadastral_zone_number', $payload['card_cadastral_zone_number'])
-                    ->where('card_property_number', $payload['card_property_number'])
+                    ->where('card_cadastral_zone_number', $zone)
+                    ->where('card_property_number', $num)
+
                     ->exists();
 
                 if ($exists) {
