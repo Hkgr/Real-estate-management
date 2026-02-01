@@ -99,8 +99,38 @@ public static function infolist(Schema $schema): Schema
                     Section::make('المالكون')
             ->columns(['default' => 1, 'md' => 2])
             ->schema([
-                TextEntry::make('owners.full_name')
-                    ->label('المالكون')
+                TextEntry::make('owners')
+                    ->label('المالكون (بيانات الملكية)')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->owners->map(function ($owner) {
+                            $pivot = $owner->pivot;
+                            $ownershipPercentage = $pivot?->ownership_percentage;
+                            $ownershipMetric = $pivot?->ownership_metric;
+                            $isCurrent = $pivot?->is_current;
+                            $purchaseDate = $pivot?->purchase_date;
+                            $saleDate = $pivot?->sale_date;
+
+                            $ownershipPercentageText = $ownershipPercentage !== null
+                                ? number_format((float) $ownershipPercentage, 2) . '%'
+                                : '—';
+
+                            $ownershipMetricText = $ownershipMetric ?: '—';
+                            $ownerStatusText = $isCurrent === null ? '—' : ($isCurrent ? 'حالي' : 'سابق');
+                            $purchaseDateText = $purchaseDate ? $purchaseDate->format('Y-m-d') : '—';
+                            $saleDateText = $saleDate ? $saleDate->format('Y-m-d') : '—';
+
+                            return sprintf(
+                                '%s — نسبة التملك: %s | معيار التملك: %s | حالة المالك: %s | شراء: %s | بيع: %s',
+                                $owner->full_name,
+                                $ownershipPercentageText,
+                                $ownershipMetricText,
+                                $ownerStatusText,
+                                $purchaseDateText,
+                                $saleDateText
+                            );
+                        })->all();
+                    })
+
                     ->listWithLineBreaks()
                     ->placeholder('—'),
             ])
