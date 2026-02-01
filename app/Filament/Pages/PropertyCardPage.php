@@ -115,7 +115,10 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->required(),
 
                         ]),
-                                                Textarea::make('card_property_details')
+                        DatePicker::make('card_sale_date')
+                            ->label('تاريخ البيع')
+                            ->nullable(),
+                        Textarea::make('card_property_details')
                             ->label('تفصيل العقار')
                             ->rows(3)
                             ->nullable()

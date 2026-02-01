@@ -18,12 +18,14 @@ class PropertyCard extends Model
         'card_total_area',
                 'card_area_unit',
         'card_status',
+        'card_sale_date',
         'card_property_details',
         'card_google_maps_url',
     ];
 
     protected $casts = [
         'card_total_area' => 'decimal:2',
+        'card_sale_date' => 'date',
 
     ];
         public function owners()
