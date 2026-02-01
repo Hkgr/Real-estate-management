@@ -71,7 +71,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('رقم المنطقة العقارية')
                                 ->maxLength(50)
                                 ->required()
-                                ->lazy()
+                                ->live()
                                 ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 12A'),
 
@@ -79,7 +79,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('رقم العقار')
                                 ->maxLength(50)
                                 ->required()
-                                ->lazy()
+                                ->live()
                                 ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 105'),
                         ]),
@@ -345,7 +345,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 $zone = $payload['card_cadastral_zone_number'] ?? null;
                 $num = $payload['card_property_number'] ?? null;
 
-                if (! filled($zone) || ! filled($num)) {
+                  if ($this->isMissingKeyValue($zone) || $this->isMissingKeyValue($num)) {
                     Notification::make()
                         ->title('يرجى إدخال رقم المنطقة العقارية ورقم العقار')
                         ->danger()
@@ -384,6 +384,19 @@ class PropertyCardPage extends Page implements HasSchemas
             });
 
         return $this->uniformAction($action);
+    }
+
+        private function isMissingKeyValue(mixed $value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_string($value)) {
+            return trim($value) === '';
+        }
+
+        return false;
     }
 
     public function searchAction(): Action
