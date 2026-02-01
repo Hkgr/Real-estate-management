@@ -96,6 +96,16 @@ public static function infolist(Schema $schema): Schema
                 TextEntry::make('longitude')->label('Longitude')->numeric(decimalPlaces: 7),
             ])
             ->columnSpanFull(),
+                    Section::make('المالكون')
+            ->columns(['default' => 1, 'md' => 2])
+            ->schema([
+                TextEntry::make('owners.full_name')
+                    ->label('المالكون')
+                    ->listWithLineBreaks()
+                    ->placeholder('—'),
+            ])
+            ->columnSpanFull(),
+
     ]);
 }
 

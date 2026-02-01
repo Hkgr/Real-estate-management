@@ -11,11 +11,20 @@ class Owner extends Model
 
     protected $fillable = [
         'full_name',
+        'birth_date',
         'national_id',
         'phone',
         'email',
-        'address',
-        'notes',
         'is_active',
     ];
+        protected $casts = [
+        'birth_date' => 'date',
+        'is_active' => 'boolean',
+    ];
+
+    public function properties()
+    {
+        return $this->belongsToMany(Property::class)->withTimestamps();
+    }
+
 }

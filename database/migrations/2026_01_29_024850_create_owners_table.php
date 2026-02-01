@@ -18,8 +18,6 @@ return new class extends Migration
             $table->string('national_id', 50)->unique(); // الرقم الوطني/هوية (اختياري حسب بلدك)
             $table->string('phone', 50)->nullable();
             $table->string('email', 150)->nullable();
-            $table->text('address')->nullable();        // عنوان/وصف
-            $table->text('notes')->nullable();          // ملاحظات
 
             $table->boolean('is_active')->default(true);
 

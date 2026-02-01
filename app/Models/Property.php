@@ -36,4 +36,9 @@ class Property extends Model
     {
         return "{$this->region_name} - عقار {$this->property_number}";
     }
+        public function owners()
+    {
+        return $this->belongsToMany(Owner::class)->withTimestamps();
+    }
+
 }
