@@ -132,13 +132,8 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->live(onBlur: true),
                         ]),
 
-                        Grid::make(2)->schema([
-                            DatePicker::make('card_sale_date')
-                                ->label('تاريخ البيع')
-                                ->nullable()
-                                ->live(onBlur: true),
-
-                            TextInput::make('card_google_maps_url')
+                        Grid::make(1)->schema([
+                           TextInput::make('card_google_maps_url')
                                 ->label('رابط خريطة Google')
                                 ->url()
                                 ->maxLength(2048)
