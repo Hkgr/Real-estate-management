@@ -676,32 +676,41 @@ class PropertyCardPage extends Page implements HasSchemas
             ->implode("\n");
     }
 
-    protected function formatQueryExceptionMessage(QueryException $exception): string
-    {
-        $sqlState    = $exception->errorInfo[0] ?? null;
-        $driverCode  = $exception->errorInfo[1] ?? null;
-        $message     = $exception->errorInfo[2] ?? $exception->getMessage();
+protected function formatQueryExceptionMessage(QueryException $exception): string
+{
+    $sqlState   = $exception->errorInfo[0] ?? null;
+    $driverCode = $exception->errorInfo[1] ?? null;
+    $message    = $exception->errorInfo[2] ?? $exception->getMessage();
 
-        // Duplicate
-        if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
-            return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
-        }
-
-        // FK
-        if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
-            return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
-        }
-
-        // NOT NULL / no default
-        if (in_array($driverCode, [1048, 1364], true)) {
-            return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
-        }
-
-        // Unknown column (غالباً بسبب تمرير علاقة ضمن create/update)
-        if ($driverCode === 1054) {
-            return 'يوجد حقل غير معروف أثناء الحفظ (غالباً بسبب تمرير علاقة ضمن بيانات الحفظ). راجع الـ payload.';
-        }
-
-        return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
+    // Duplicate
+    if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
+        return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
     }
+
+    // FK
+    if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
+        return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+    }
+
+    // Unknown column
+    if ($driverCode === 1054 || $sqlState === '42S22' || str_contains($message, 'Unknown column')) {
+        $col = null;
+        if (preg_match("/Unknown column '([^']+)'/i", $message, $m)) {
+            $col = $m[1];
+        }
+
+        // لإعطاءك اسم العمود المفقود مباشرة
+        return $col
+            ? "حقل غير موجود في قاعدة البيانات: {$col}. إمّا أن العمود غير موجود في الجدول، أو أنك تمرّر مفتاحًا ليس من أعمدة الجدول ضمن بيانات الحفظ."
+            : "يوجد حقل غير معروف أثناء الحفظ. راجع أن أسماء الحقول تطابق أعمدة الجداول.";
+    }
+
+    // NOT NULL / no default
+    if (in_array($driverCode, [1048, 1364], true)) {
+        return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+    }
+
+    return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
+}
+
 }
