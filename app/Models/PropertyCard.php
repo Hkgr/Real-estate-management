@@ -16,14 +16,13 @@ class PropertyCard extends Model
         'card_cadastral_zone_number',
         'card_property_number',
         'card_total_area',
-        'card_purchase_date',
+                'card_area_unit',
         'card_status',
         'card_property_details',
         'card_google_maps_url',
     ];
 
     protected $casts = [
-        'card_purchase_date' => 'date',
         'card_total_area' => 'decimal:2',
 
     ];

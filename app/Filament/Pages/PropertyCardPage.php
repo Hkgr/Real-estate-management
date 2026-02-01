@@ -114,9 +114,6 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ])
                                 ->required(),
 
-                            DatePicker::make('card_purchase_date')
-                                ->label('تاريخ الشراء')
-                                ->nullable(),
                         ]),
                                                 Textarea::make('card_property_details')
                             ->label('تفصيل العقار')
@@ -129,11 +126,28 @@ class PropertyCardPage extends Page implements HasSchemas
                 Section::make('المساحات والملكية')
                     ->schema([
                         Grid::make(1)->schema([
+                                                        Select::make('card_area_unit')
+                                ->label('وحدة المساحة')
+                                ->native(false)
+                                ->options([
+                                    'percentage' => 'نسبة مئوية (%)',
+                                    'shares' => 'عدد الأسهم',
+                                    'meters' => 'عدد الأمتار (م²)',
+                                ])
+                                ->default('meters')
+                                ->required(),
+
                             TextInput::make('card_total_area')
                                 ->label('مساحة العقار الكلية')
                                 ->numeric()
                                 ->minValue(0)
-                                ->suffix('م²')
+                                ->suffix(fn (Get $get) => match ($get('card_area_unit')) {
+                                    'percentage' => '%',
+                                    'shares' => 'سهم',
+                                    'meters' => 'م²',
+                                    default => null,
+                                })
+
                                 ->required()
                                 ->placeholder('مثال: 400'),
 
