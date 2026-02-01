@@ -341,8 +341,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = $this->form->validate();
-                                $zone = $payload['card_cadastral_zone_number'] ?? null;
+                $payload = $this->getFormPayload();
+                $zone = $payload['card_cadastral_zone_number'] ?? null;
                 $num = $payload['card_property_number'] ?? null;
 
                   if ($this->isMissingKeyValue($zone) || $this->isMissingKeyValue($num)) {
@@ -386,8 +386,18 @@ class PropertyCardPage extends Page implements HasSchemas
         return $this->uniformAction($action);
     }
 
-        private function isMissingKeyValue(mixed $value): bool
+    private function getFormPayload(): array
     {
+        $payload = $this->form->getState();
+
+        if (array_key_exists('data', $payload) && is_array($payload['data'])) {
+            return $payload['data'];
+        }
+
+        return $payload;
+    }
+
+    private function isMissingKeyValue(mixed $value): bool    {
         if ($value === null) {
             return true;
         }
@@ -455,8 +465,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
                                 try {
-                    $this->form->validate();
-                } catch (ValidationException $exception) {
+                $payload = $this->getFormPayload();
+                                } catch (ValidationException $exception) {
                     Notification::make()
                         ->title('يرجى تصحيح أخطاء الحقول')
                         ->body($this->formatValidationErrors($exception))
