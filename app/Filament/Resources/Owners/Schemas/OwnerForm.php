@@ -26,7 +26,8 @@ class OwnerForm
 
                         DatePicker::make('birth_date')
                             ->label('تاريخ الميلاد')
-                            ->nullable(),
+                            ->nullable()
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                         TextInput::make('national_id')
                             ->label('الرقم الوطني')
@@ -38,13 +39,15 @@ class OwnerForm
                             ->label('رقم الهاتف')
                             ->tel()
                             ->maxLength(50)
-                            ->nullable(),
+                          ->nullable()
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                         TextInput::make('email')
                             ->label('البريد الإلكتروني')
                             ->email()
                             ->maxLength(150)
-                            ->nullable(),
+                            ->nullable()
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                         Toggle::make('is_active')
                             ->label('فعّال')
@@ -70,12 +73,14 @@ class OwnerForm
                             ->label('العنوان')
                             ->rows(3)
                             ->nullable()
+                                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->columnSpanFull(),
 
                         Textarea::make('notes')
                             ->label('ملاحظات')
                             ->rows(3)
                             ->nullable()
+                                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->columnSpanFull(),
                     ])
                     ->columns(1)
