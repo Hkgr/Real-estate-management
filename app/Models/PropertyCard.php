@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PropertyCard extends Model
@@ -16,7 +17,7 @@ class PropertyCard extends Model
         'card_cadastral_zone_number',
         'card_property_number',
         'card_total_area',
-                'card_area_unit',
+        'card_area_unit',
         'card_status',
         'card_sale_date',
         'card_property_details',
@@ -28,7 +29,7 @@ class PropertyCard extends Model
         'card_sale_date' => 'date',
 
     ];
-        public function owners()
+    public function owners()
     {
         return $this->belongsToMany(Owner::class, 'owner_property_card')
             ->using(OwnerPropertyCard::class)
@@ -41,5 +42,10 @@ class PropertyCard extends Model
             ])
             ->withTimestamps();
     }
+    public function ownerships(): HasMany
+    {
+        return $this->hasMany(OwnerPropertyCard::class);
+    }
+
 
 }
