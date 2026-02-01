@@ -55,6 +55,18 @@ class PropertyCardPage extends Page implements HasSchemas
     {
         $this->resetCardForm();
     }
+    public function updated(string $propertyName): void
+    {
+        if (! str_starts_with($propertyName, 'data.')) {
+            return;
+        }
+
+        try {
+            $this->form->validateOnly($propertyName);
+        } catch (ValidationException) {
+            // Handled by Livewire/Filament error bag.
+        }
+    }
 
     // =========================
     // Form
@@ -71,16 +83,16 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('رقم المنطقة العقارية')
                                 ->maxLength(50)
                                 ->required()
-                                ->live()
-                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
+                                ->live(onBlur: true)
+                                                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 12A'),
 
                             TextInput::make('card_property_number')
                                 ->label('رقم العقار')
                                 ->maxLength(50)
                                 ->required()
-                                ->live()
-                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
+                                ->live(onBlur: true)
+                                                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 105'),
                         ]),
                     ])
@@ -93,16 +105,21 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('المحافظة')
                                 ->maxLength(100)
                                 ->required()
+                                ->live(onBlur: true)
                                 ->placeholder('مثال: حلب'),
 
                             TextInput::make('card_region_name')
                                 ->label('اسم المنطقة')
+                                 ->maxLength(255)
+                                ->maxLength(255)
                                 ->required()
+                                ->live(onBlur: true)
                                 ->placeholder('مثال: الحمدانية'),
 
                             TextInput::make('card_subdivision')
                                 ->label('المقسم')
                                 ->maxLength(100)
+                                ->live(onBlur: true)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->nullable()
                                 ->placeholder('مثال: المقسم 22 '),
@@ -114,15 +131,18 @@ class PropertyCardPage extends Page implements HasSchemas
                                     'active' => 'فاعل',
                                     'frozen' => 'مجمد',
                                 ])
+                                ->live(onBlur: true)
                                 ->required(),
 
                         ]),
                         DatePicker::make('card_sale_date')
                             ->label('تاريخ البيع')
+                            ->live(onBlur: true)
                             ->nullable(),
                         Textarea::make('card_property_details')
                             ->label('تفصيل العقار')
                             ->rows(3)
+                            ->live(onBlur: true)
                             ->nullable()
                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->placeholder('اختياري'),
@@ -141,12 +161,15 @@ class PropertyCardPage extends Page implements HasSchemas
                                     'meters' => 'عدد الأمتار (م²)',
                                 ])
                                 ->default('meters')
+                                ->live(onBlur: true)
                                 ->required(),
 
                             TextInput::make('card_total_area')
                                 ->label('مساحة العقار الكلية')
                                 ->numeric()
                                 ->minValue(0)
+                                ->maxValue(9999999999.99)
+                                ->live(onBlur: true)
                                 ->suffix(fn (Get $get) => match ($get('card_area_unit')) {
                                     'percentage' => '%',
                                     'shares' => 'سهم',
@@ -178,26 +201,31 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->label('الاسم الرباعي')
                                             ->required()
                                             ->maxLength(200)
+                                            ->live(onBlur: true)
                                             ->columnSpanFull(),
                                         DatePicker::make('birth_date')
                                             ->label('تاريخ الميلاد')
+                                            ->live(onBlur: true)
                                             ->nullable()
                                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
                                         TextInput::make('national_id')
                                             ->label('الرقم الوطني')
                                             ->required()
                                             ->maxLength(50)
+                                            ->live(onBlur: true)
                                             ->unique(Owner::class, 'national_id'),
                                         TextInput::make('phone')
                                             ->label('رقم الهاتف')
                                             ->tel()
                                             ->maxLength(50)
+                                            ->live(onBlur: true)
                                             ->nullable()
                                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
                                         TextInput::make('email')
                                             ->label('البريد الإلكتروني')
                                             ->email()
                                             ->maxLength(150)
+                                            ->live(onBlur: true)
                                             ->nullable()
                                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
                                         Toggle::make('is_active')
@@ -214,7 +242,8 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->numeric()
                                     ->required()
                                     ->minValue(0)
-                                    ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : null)
+                                     ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 999.99)
+                                    ->live(onBlur: true)
                                     ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
                                         'percentage' => '%',
                                         'shares' => 'سهم',
@@ -231,16 +260,19 @@ class PropertyCardPage extends Page implements HasSchemas
                                         'meters' => 'عدد الأمتار (م²)',
                                     ])
 
+                                 ->live(onBlur: true)
                                     ->required(),
                                 Toggle::make('is_current')
                                     ->label('مالك حالي')
                                     ->default(true),
                                 DatePicker::make('purchase_date')
                                     ->label('تاريخ الشراء')
+                                    ->live(onBlur: true)
                                     ->nullable(),
                                 DatePicker::make('sale_date')
                                     ->label('تاريخ البيع')
                                     ->visible(fn (Get $get) => ! $get('is_current'))
+                                    ->live(onBlur: true)
                                     ->nullable(),
                             ])
                             ->columns([
@@ -254,6 +286,9 @@ class PropertyCardPage extends Page implements HasSchemas
                         TextInput::make('card_google_maps_url')
                             ->label('رابط خريطة Google')
                             ->url()
+                            ->maxLength(2048)
+                            ->live(onBlur: true)
+
                             ->nullable()
                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->helperText('ألصق رابط الموقع من Google Maps لمساعدتنا في الوصول بدقة.')
