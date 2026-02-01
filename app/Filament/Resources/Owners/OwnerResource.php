@@ -44,7 +44,8 @@ class OwnerResource extends Resource
             Section::make('بيانات المالك')
                 ->columns(['default' => 1, 'md' => 3])
                 ->schema([
-                    TextEntry::make('full_name')->label('الاسم الكامل'),
+                    TextEntry::make('full_name')->label('الاسم الرباعي'),
+                    TextEntry::make('birth_date')->label('تاريخ الميلاد')->date(),
                     TextEntry::make('national_id')->label('الرقم الوطني'),
                     TextEntry::make('phone')->label('الهاتف')->placeholder('—'),
                     TextEntry::make('email')->label('البريد')->placeholder('—'),
@@ -60,6 +61,17 @@ class OwnerResource extends Resource
                         ->formatStateUsing(fn ($state) => $state ? 'فعّال' : 'غير فعّال'),
                 ])
                 ->columnSpanFull(),
+                
+            Section::make('العقارات')
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    TextEntry::make('properties.property_number')
+                        ->label('العقارات المملوكة')
+                        ->listWithLineBreaks()
+                        ->placeholder('—'),
+                ])
+                ->columnSpanFull(),
+
         ]);
     }
 

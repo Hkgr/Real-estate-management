@@ -21,7 +21,7 @@ class OwnersTable
         return $table
             ->columns([
                 TextColumn::make('full_name')
-                    ->label('الاسم')
+                    ->label('الاسم الرباعي')
                     ->searchable()
                     ->sortable(),
 

@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Owners\Schemas;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -17,10 +19,14 @@ class OwnerForm
                 Section::make('البيانات الأساسية')
                     ->schema([
                         TextInput::make('full_name')
-                            ->label('الاسم الكامل')
+                            ->label('الاسم الرباعي')
                             ->required()
                             ->maxLength(200)
                             ->columnSpanFull(),
+
+                        DatePicker::make('birth_date')
+                            ->label('تاريخ الميلاد')
+                            ->nullable(),
 
                         TextInput::make('national_id')
                             ->label('الرقم الوطني')
@@ -47,7 +53,18 @@ class OwnerForm
                     ->columns(['default' => 1, 'md' => 2])
                     ->columnSpanFull(),
 
-                Section::make('العنوان والملاحظات')
+                Section::make('العقارات المملوكة')
+                    ->schema([
+                        Select::make('properties')
+                            ->label('العقارات')
+                            ->relationship('properties', 'property_number')
+                            ->searchable()
+                            ->preload()
+                            ->multiple(),
+                    ])
+                    ->columnSpanFull(),
+
+                    Section::make('العنوان والملاحظات')
                     ->schema([
                         Textarea::make('address')
                             ->label('العنوان')

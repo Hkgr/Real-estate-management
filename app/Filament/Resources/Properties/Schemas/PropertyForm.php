@@ -6,6 +6,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 
 class PropertyForm
@@ -66,6 +67,18 @@ class PropertyForm
                         'md' => 2,
                     ])
                     ->columnSpanFull(),
+                    
+                Section::make('المالكون')
+                    ->schema([
+                        Select::make('owners')
+                            ->label('المالكون')
+                            ->relationship('owners', 'full_name')
+                            ->searchable()
+                            ->preload()
+                            ->multiple(),
+                    ])
+                    ->columnSpanFull(),
+
             ])
             ->columns(1);
     }
