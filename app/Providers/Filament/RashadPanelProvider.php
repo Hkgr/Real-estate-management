@@ -37,6 +37,7 @@ class RashadPanelProvider extends PanelProvider
             ->pages([
                 \App\Filament\Pages\PropertyCardPage::class,
                 \App\Filament\Pages\OwnerCardPage::class,
+                \App\Filament\Pages\SignalCardPage::class,
 
             ])
 
