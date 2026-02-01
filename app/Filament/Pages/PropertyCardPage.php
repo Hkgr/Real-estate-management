@@ -2,35 +2,29 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Owner;
 use App\Models\PropertyCard;
 use BackedEnum;
-use UnitEnum;
-use App\Models\Owner;
 use Filament\Actions\Action;
-use Filament\Notifications\Notification;
-use Filament\Pages\Page;
-use Spatie\Browsershot\Browsershot;
-
-use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Schemas\Concerns\InteractsWithSchemas;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Grid;
-
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
-
-use Mpdf\Mpdf;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
-use Mpdf\HTMLParserMode;
+use Spatie\Browsershot\Browsershot;
+use UnitEnum;
 
 class PropertyCardPage extends Page implements HasSchemas
 {
@@ -42,19 +36,23 @@ class PropertyCardPage extends Page implements HasSchemas
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-home-modern';
     protected static ?string $slug = 'property-card';
 
+    public ?int $currentRecordId = null;
+
+    public array $data = [];
+
     public function getView(): string
     {
         return 'filament.pages.property-card-page';
     }
 
-    public ?int $currentRecordId = null;
-
-    public array $data = [];
-
     public function mount(): void
     {
         $this->resetCardForm();
     }
+
+    /**
+     * تحقق لطيف عند الخروج من الحقول (onBlur) بدون كسر التجربة.
+     */
     public function updated(string $propertyName): void
     {
         if (! str_starts_with($propertyName, 'data.')) {
@@ -62,9 +60,9 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         try {
-            $this->form->validateOnly($propertyName);
+            $this->form->validate();
         } catch (ValidationException) {
-            // Handled by Livewire/Filament error bag.
+            // Filament/Livewire سيعرض الأخطاء في الـ error bag.
         }
     }
 
@@ -77,6 +75,7 @@ class PropertyCardPage extends Page implements HasSchemas
         return $schema
             ->components([
                 Section::make('المفتاح (اكتب وسيتم البحث تلقائياً)')
+                    ->description('عند إدخال الرقمين والخروج من الحقل سيتم تحميل بيانات العقار إن وُجد.')
                     ->schema([
                         Grid::make(2)->schema([
                             TextInput::make('card_cadastral_zone_number')
@@ -84,7 +83,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->maxLength(50)
                                 ->required()
                                 ->live(onBlur: true)
-                                                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
+                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 12A'),
 
                             TextInput::make('card_property_number')
@@ -92,11 +91,10 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->maxLength(50)
                                 ->required()
                                 ->live(onBlur: true)
-                                                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
+                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 105'),
                         ]),
-                    ])
-                    ->description('عند إدخال الرقمين والخروج من الحقل سيتم تحميل بيانات العقار إن وُجد.'),
+                    ]),
 
                 Section::make('البيانات الأساسية')
                     ->schema([
@@ -110,7 +108,6 @@ class PropertyCardPage extends Page implements HasSchemas
 
                             TextInput::make('card_region_name')
                                 ->label('اسم المنطقة')
-                                 ->maxLength(255)
                                 ->maxLength(255)
                                 ->required()
                                 ->live(onBlur: true)
@@ -120,9 +117,9 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('المقسم')
                                 ->maxLength(100)
                                 ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->nullable()
-                                ->placeholder('مثال: المقسم 22 '),
+                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->placeholder('مثال: المقسم 22'),
 
                             Select::make('card_status')
                                 ->label('حالة العقار')
@@ -131,28 +128,40 @@ class PropertyCardPage extends Page implements HasSchemas
                                     'active' => 'فاعل',
                                     'frozen' => 'مجمد',
                                 ])
-                                ->live(onBlur: true)
-                                ->required(),
-
+                                ->required()
+                                ->live(onBlur: true),
                         ]),
-                        DatePicker::make('card_sale_date')
-                            ->label('تاريخ البيع')
-                            ->live(onBlur: true)
-                            ->nullable(),
+
+                        Grid::make(2)->schema([
+                            DatePicker::make('card_sale_date')
+                                ->label('تاريخ البيع')
+                                ->nullable()
+                                ->live(onBlur: true),
+
+                            TextInput::make('card_google_maps_url')
+                                ->label('رابط خريطة Google')
+                                ->url()
+                                ->maxLength(2048)
+                                ->nullable()
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->helperText('ألصق رابط الموقع من Google Maps لمساعدتنا في الوصول بدقة.')
+                                ->placeholder('https://maps.google.com/?q=...'),
+                        ]),
+
                         Textarea::make('card_property_details')
                             ->label('تفصيل العقار')
                             ->rows(3)
-                            ->live(onBlur: true)
                             ->nullable()
+                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                             ->placeholder('اختياري'),
-
                     ]),
 
                 Section::make('المساحات والملكية')
                     ->schema([
-                        Grid::make(1)->schema([
-                                                        Select::make('card_area_unit')
+                        Grid::make(2)->schema([
+                            Select::make('card_area_unit')
                                 ->label('وحدة المساحة')
                                 ->native(false)
                                 ->options([
@@ -161,14 +170,15 @@ class PropertyCardPage extends Page implements HasSchemas
                                     'meters' => 'عدد الأمتار (م²)',
                                 ])
                                 ->default('meters')
-                                ->live(onBlur: true)
-                                ->required(),
+                                ->required()
+                                ->live(onBlur: true),
 
                             TextInput::make('card_total_area')
                                 ->label('مساحة العقار الكلية')
                                 ->numeric()
                                 ->minValue(0)
                                 ->maxValue(9999999999.99)
+                                ->required()
                                 ->live(onBlur: true)
                                 ->suffix(fn (Get $get) => match ($get('card_area_unit')) {
                                     'percentage' => '%',
@@ -176,73 +186,88 @@ class PropertyCardPage extends Page implements HasSchemas
                                     'meters' => 'م²',
                                     default => null,
                                 })
-
-                                ->required()
                                 ->placeholder('مثال: 400'),
-
-
                         ]),
                     ]),
 
-  
+                /**
+                 * ✅ مهم:
+                 * إذا كنت تعمل بعلاقة M:N مع حقول Pivot (نسبة/معيار/تواريخ...) فلا تستخدم relationship('owners') مباشرة.
+                 * استخدم Pivot Model + HasMany مثل: ownerships()
+                 * (PropertyCardOwner) + العلاقة owner() داخل Pivot.
+                 */
                 Section::make('المالكون')
                     ->schema([
-                        Repeater::make('owners')
+                        Repeater::make('ownerships')
                             ->label('المالكون')
-                            ->relationship('owners')
+                            ->relationship('ownerships') // HasMany على Pivot Model: PropertyCardOwner
                             ->schema([
                                 Select::make('owner_id')
                                     ->label('المالك')
-                                    ->options(fn () => Owner::query()->pluck('full_name', 'id'))
+                                    ->relationship('owner', 'full_name') // belongsTo داخل Pivot
                                     ->searchable()
                                     ->preload()
-                                                                        ->createOptionForm([
+                                    ->createOptionForm([
                                         TextInput::make('full_name')
                                             ->label('الاسم الرباعي')
                                             ->required()
                                             ->maxLength(200)
                                             ->live(onBlur: true)
                                             ->columnSpanFull(),
+
                                         DatePicker::make('birth_date')
                                             ->label('تاريخ الميلاد')
-                                            ->live(onBlur: true)
                                             ->nullable()
+                                            ->live(onBlur: true)
                                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
                                         TextInput::make('national_id')
                                             ->label('الرقم الوطني')
                                             ->required()
                                             ->maxLength(50)
                                             ->live(onBlur: true)
                                             ->unique(Owner::class, 'national_id'),
+
                                         TextInput::make('phone')
                                             ->label('رقم الهاتف')
                                             ->tel()
                                             ->maxLength(50)
-                                            ->live(onBlur: true)
                                             ->nullable()
+                                            ->live(onBlur: true)
                                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
                                         TextInput::make('email')
                                             ->label('البريد الإلكتروني')
                                             ->email()
                                             ->maxLength(150)
-                                            ->live(onBlur: true)
                                             ->nullable()
+                                            ->live(onBlur: true)
                                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
                                         Toggle::make('is_active')
                                             ->label('فعّال')
                                             ->default(true),
                                     ])
-                                    ->createOptionUsing(function (array $data): int {
-                                        return Owner::create($data)->id;
-                                    })
-
+                                    ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
                                     ->required(),
+
+                                Select::make('ownership_metric')
+                                    ->label('معيار التملك')
+                                    ->native(false)
+                                    ->options([
+                                        'percentage' => 'نسبة مئوية (%)',
+                                        'shares' => 'عدد الأسهم',
+                                        'meters' => 'عدد الأمتار (م²)',
+                                    ])
+                                    ->required()
+                                    ->live(onBlur: true),
+
                                 TextInput::make('ownership_percentage')
                                     ->label('قيمة التملك')
                                     ->numeric()
-                                    ->required()
                                     ->minValue(0)
-                                     ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 999.99)
+                                    ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 9999999999.99)
+                                    ->required()
                                     ->live(onBlur: true)
                                     ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
                                         'percentage' => '%',
@@ -250,50 +275,26 @@ class PropertyCardPage extends Page implements HasSchemas
                                         'meters' => 'م²',
                                         default => null,
                                     }),
-                                Select::make('ownership_metric')
 
-                                    ->label('معيار التملك')
-                                                                        ->native(false)
-                                    ->options([
-                                        'percentage' => 'نسبة مئوية (%)',
-                                        'shares' => 'عدد الأسهم',
-                                        'meters' => 'عدد الأمتار (م²)',
-                                    ])
-
-                                 ->live(onBlur: true)
-                                    ->required(),
                                 Toggle::make('is_current')
                                     ->label('مالك حالي')
                                     ->default(true),
+
                                 DatePicker::make('purchase_date')
                                     ->label('تاريخ الشراء')
-                                    ->live(onBlur: true)
-                                    ->nullable(),
+                                    ->nullable()
+                                    ->live(onBlur: true),
+
                                 DatePicker::make('sale_date')
                                     ->label('تاريخ البيع')
-                                    ->visible(fn (Get $get) => ! $get('is_current'))
+                                    ->nullable()
                                     ->live(onBlur: true)
-                                    ->nullable(),
+                                    ->visible(fn (Get $get) => ! (bool) $get('is_current')),
                             ])
                             ->columns([
                                 'default' => 1,
                                 'md' => 2,
                             ]),
-                    ]),
-
-                    Section::make('الموقع')
-                    ->schema([
-                        TextInput::make('card_google_maps_url')
-                            ->label('رابط خريطة Google')
-                            ->url()
-                            ->maxLength(2048)
-                            ->live(onBlur: true)
-
-                            ->nullable()
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                            ->helperText('ألصق رابط الموقع من Google Maps لمساعدتنا في الوصول بدقة.')
-                            ->placeholder('https://maps.google.com/?q=...'),
-
                     ]),
             ])
             ->statePath('data')
@@ -322,7 +323,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
         $this->form->fill([
             'card_status' => 'active',
-
+            // ممكن تضيف defaults أخرى هنا
         ]);
     }
 
@@ -351,7 +352,10 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         $this->currentRecordId = $record->id;
-        $this->form->fill($record->load('owners')->toArray());
+
+        // ✅ تحميل Pivot + المالك داخلها
+        $this->form->fill($record->load('ownerships.owner')->toArray());
+
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
 
@@ -365,9 +369,8 @@ class PropertyCardPage extends Page implements HasSchemas
             ->label('إضافة')
             ->icon('heroicon-o-plus')
             ->action(function () {
-               try {
+                try {
                     $validated = $this->form->validate();
-
                 } catch (ValidationException $exception) {
                     Notification::make()
                         ->title('يرجى تصحيح أخطاء الحقول')
@@ -377,11 +380,12 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = $this->getFormPayload($validated);
-                                $zone = $payload['card_cadastral_zone_number'] ?? null;
-                $num = $payload['card_property_number'] ?? null;
+                $state = $this->getFormPayload($validated);
 
-                  if ($this->isMissingKeyValue($zone) || $this->isMissingKeyValue($num)) {
+                $zone = $state['card_cadastral_zone_number'] ?? null;
+                $num  = $state['card_property_number'] ?? null;
+
+                if ($this->isMissingKeyValue($zone) || $this->isMissingKeyValue($num)) {
                     Notification::make()
                         ->title('يرجى إدخال رقم المنطقة العقارية ورقم العقار')
                         ->danger()
@@ -389,24 +393,25 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-
                 $existingRecord = PropertyCard::withTrashed()
-                                    ->where('card_cadastral_zone_number', $zone)
+                    ->where('card_cadastral_zone_number', $zone)
                     ->where('card_property_number', $num)
-                                        ->first();
+                    ->first();
 
                 if ($existingRecord) {
                     $message = $existingRecord->trashed()
                         ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
                         : 'هذا العقار موجود مسبقًا بنفس المفتاح';
 
-
                     Notification::make()->title($message)->danger()->send();
                     return;
                 }
 
+                // ✅ لا تمرّر العلاقات كأعمدة
+                $attributes = Arr::except($state, ['owners', 'ownerships']);
+
                 try {
-                    $record = PropertyCard::create($payload);
+                    $record = PropertyCard::create($attributes);
                     $this->form->model($record)->saveRelationships();
                 } catch (QueryException $exception) {
                     Notification::make()
@@ -414,40 +419,16 @@ class PropertyCardPage extends Page implements HasSchemas
                         ->body($this->formatQueryExceptionMessage($exception))
                         ->danger()
                         ->send();
-
                     return;
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('owners')->toArray());
+                $this->form->fill($record->load('ownerships.owner')->toArray());
+
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
-    }
-
-    private function getFormPayload(?array $payload = null): array
-    {
-        $payload = $payload ?? $this->form->getState();
-
-
-        if (array_key_exists('data', $payload) && is_array($payload['data'])) {
-            return $payload['data'];
-        }
-
-        return $payload;
-    }
-
-    private function isMissingKeyValue(mixed $value): bool    {
-        if ($value === null) {
-            return true;
-        }
-
-        if (is_string($value)) {
-            return trim($value) === '';
-        }
-
-        return false;
     }
 
     public function searchAction(): Action
@@ -487,7 +468,8 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('owners')->toArray());
+                $this->form->fill($record->load('ownerships.owner')->toArray());
+
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
 
@@ -505,10 +487,10 @@ class PropertyCardPage extends Page implements HasSchemas
                     Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
                     return;
                 }
+
                 try {
                     $validated = $this->form->validate();
                 } catch (ValidationException $exception) {
-
                     Notification::make()
                         ->title('يرجى تصحيح أخطاء الحقول')
                         ->body($this->formatValidationErrors($exception))
@@ -517,16 +499,19 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = $this->getFormPayload($validated);
-                                $record = PropertyCard::find($this->currentRecordId);
+                $record = PropertyCard::find($this->currentRecordId);
+
                 if (! $record) {
                     $this->currentRecordId = null;
                     Notification::make()->title('السجل لم يعد موجودًا')->danger()->send();
                     return;
                 }
 
+                $state = $this->getFormPayload($validated);
+                $attributes = Arr::except($state, ['owners', 'ownerships']);
+
                 try {
-                    $record->update($payload);
+                    $record->update($attributes);
                     $this->form->model($record)->saveRelationships();
                 } catch (QueryException $exception) {
                     Notification::make()
@@ -534,12 +519,11 @@ class PropertyCardPage extends Page implements HasSchemas
                         ->body($this->formatQueryExceptionMessage($exception))
                         ->danger()
                         ->send();
-
                     return;
                 }
 
-                $this->form->fill($record->fresh()->load('owners')->toArray());
-                                Notification::make()->title('تم التعديل بنجاح')->success()->send();
+                $this->form->fill($record->fresh()->load('ownerships.owner')->toArray());
+                Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
@@ -561,6 +545,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $record = PropertyCard::find($this->currentRecordId);
+
                 if (! $record) {
                     $this->currentRecordId = null;
                     Notification::make()->title('السجل غير موجود')->danger()->send();
@@ -568,119 +553,155 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $record->delete();
-
                 $this->resetCardForm();
+
                 Notification::make()->title('تم الحذف بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
     }
 
-  public function pdfBrowserAction(): Action
-{
-    $action = Action::make('pdf_browser')
-        ->label('تحميل PDF (Chrome)')
-        ->icon('heroicon-o-document-arrow-down')
-        ->disabled(fn () => blank($this->currentRecordId))
-        ->action(function () {
+    public function pdfBrowserAction(): Action
+    {
+        $action = Action::make('pdf_browser')
+            ->label('تحميل PDF (Chrome)')
+            ->icon('heroicon-o-document-arrow-down')
+            ->disabled(fn () => blank($this->currentRecordId))
+            ->action(function () {
+                if (! $this->currentRecordId) {
+                    Notification::make()->title('حمّل بطاقة أولاً ثم حمّل PDF')->warning()->send();
+                    return;
+                }
 
-            if (! $this->currentRecordId) {
-                Notification::make()->title('حمّل بطاقة أولاً ثم حمّل PDF')->warning()->send();
-                return;
+                $record = PropertyCard::find($this->currentRecordId);
+
+                if (! $record) {
+                    $this->currentRecordId = null;
+                    Notification::make()->title('السجل غير موجود')->danger()->send();
+                    return;
+                }
+
+                $filename = 'property-card-' .
+                    ($record->card_cadastral_zone_number ?? 'zone') . '-' .
+                    ($record->card_property_number ?? 'no') . '.pdf';
+
+                $html = view('pdf.property-card-browser', [
+                    'record' => $record->load('ownerships.owner'),
+                ])->render();
+
+                $pdf = Browsershot::html($html)
+                    ->setChromePath($this->resolveChromePath())
+                    ->format('A4')
+                    ->margins(12, 10, 12, 10)
+                    ->showBackground()
+                    ->pdf();
+
+                return response()->streamDownload(
+                    fn () => print($pdf),
+                    $filename,
+                    ['Content-Type' => 'application/pdf']
+                );
+            });
+
+        return $this->uniformAction($action);
+    }
+
+    // =========================
+    // Helpers
+    // =========================
+
+    private function getFormPayload(?array $payload = null): array
+    {
+        $payload = $payload ?? $this->form->getState();
+
+        if (array_key_exists('data', $payload) && is_array($payload['data'])) {
+            return $payload['data'];
+        }
+
+        return $payload;
+    }
+
+    private function isMissingKeyValue(mixed $value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_string($value)) {
+            return trim($value) === '';
+        }
+
+        return false;
+    }
+
+    protected function resolveChromePath(): string
+    {
+        // 1) جرّب مسار puppeteer
+        $cmd = 'node -e "console.log(require(\'puppeteer\').executablePath())"';
+        $path = trim((string) @shell_exec($cmd));
+
+        if ($path && file_exists($path)) {
+            return $path;
+        }
+
+        // 2) جرّب Chrome النظام (Windows)
+        $candidates = [
+            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
             }
+        }
 
-            $record = PropertyCard::find($this->currentRecordId);
-
-            if (! $record) {
-                $this->currentRecordId = null;
-                Notification::make()->title('السجل غير موجود')->danger()->send();
-                return;
-            }
-
-            $filename = 'property-card-' .
-                ($record->card_cadastral_zone_number ?? 'zone') . '-' .
-                ($record->card_property_number ?? 'no') . '.pdf';
-
-            $html = view('pdf.property-card-browser', [
-                'record' => $record,
-            ])->render();
-
-            // ✅ على ويندوز: استخدم Chromium الذي جاء مع puppeteer
-            $chromePath = base_path('node_modules/puppeteer/.local-chromium/win64-*/chrome-win/chrome.exe');
-
-            $pdf = Browsershot::html($html)
-                ->setChromePath($this->resolveChromePath())
-                ->format('A4')
-                ->margins(12, 10, 12, 10)
-                ->showBackground()
-                ->pdf();
-
-            return response()->streamDownload(
-                fn () => print($pdf),
-                $filename,
-                ['Content-Type' => 'application/pdf']
-            );
-        });
-
-    return $this->uniformAction($action);
-}
-
-protected function resolveChromePath(): string
-{
-    // 1) جرّب المسار الذي يحدده puppeteer تلقائياً
-    $cmd = 'node -e "console.log(require(\'puppeteer\').executablePath())"';
-    $path = trim((string) shell_exec($cmd));
-
-    if ($path && file_exists($path)) {
+        // 3) آخر حل: أعد ما حصلنا عليه (قد يكون فارغاً ويظهر خطأ واضح)
         return $path;
     }
 
-    // 2) جرّب Chrome النظام إن كان مثبتاً
-    $candidates = [
-        'C:\Program Files\Google\Chrome\Application\chrome.exe',
-        'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
-    ];
+    protected function formatValidationErrors(ValidationException $exception): string
+    {
+        $errors = $exception->errors();
 
-    foreach ($candidates as $candidate) {
-        if (file_exists($candidate)) {
-            return $candidate;
+        if ($errors === []) {
+            return 'حدثت أخطاء تحقق غير معروفة.';
         }
+
+        return collect($errors)
+            ->map(function (array $messages, string $field): string {
+                $message = implode('، ', $messages);
+                return "{$field}: {$message}";
+            })
+            ->implode("\n");
     }
 
-    // 3) آخر حل: اتركه (سيعطي خطأ واضح)
-    return $path;
-}
-protected function formatValidationErrors(ValidationException $exception): string
-{
-    $errors = $exception->errors();
+    protected function formatQueryExceptionMessage(QueryException $exception): string
+    {
+        $sqlState    = $exception->errorInfo[0] ?? null;
+        $driverCode  = $exception->errorInfo[1] ?? null;
+        $message     = $exception->errorInfo[2] ?? $exception->getMessage();
 
-    if ($errors === []) {
-        return 'حدثت أخطاء تحقق غير معروفة.';
+        // Duplicate
+        if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
+            return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
+        }
+
+        // FK
+        if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
+            return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+        }
+
+        // NOT NULL / no default
+        if (in_array($driverCode, [1048, 1364], true)) {
+            return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+        }
+
+        // Unknown column (غالباً بسبب تمرير علاقة ضمن create/update)
+        if ($driverCode === 1054) {
+            return 'يوجد حقل غير معروف أثناء الحفظ (غالباً بسبب تمرير علاقة ضمن بيانات الحفظ). راجع الـ payload.';
+        }
+
+        return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
     }
-
-    return collect($errors)
-        ->map(function (array $messages, string $field): string {
-            $message = implode('، ', $messages);
-            return "{$field}: {$message}";
-        })
-        ->implode("\n");
-}
-
-protected function formatQueryExceptionMessage(QueryException $exception): string
-{
-    $sqlState = $exception->errorInfo[0] ?? null;
-    $driverCode = $exception->errorInfo[1] ?? null;
-    $message = $exception->errorInfo[2] ?? $exception->getMessage();
-
-    if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
-        return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
-    }
-
-    if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
-        return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
-    }
-
-    return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
-}
-
 }
