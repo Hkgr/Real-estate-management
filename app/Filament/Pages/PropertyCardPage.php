@@ -291,6 +291,73 @@ class PropertyCardPage extends Page implements HasSchemas
                                 'md' => 2,
                             ]),
                     ]),
+                Section::make('الإشارات')
+                    ->schema([
+                        Repeater::make('signals')
+                            ->label('الإشارات')
+                            ->relationship('signals')
+                            ->schema([
+                                TextInput::make('signal_id')
+                                    ->label('رقم الإشارة')
+                                    ->maxLength(50)
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->placeholder('مثال: 125'),
+
+                                TextInput::make('signal_year')
+                                    ->label('السنة')
+                                    ->numeric()
+                                    ->minValue(1900)
+                                    ->maxValue((int) date('Y') + 1)
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->placeholder('مثال: 2024')
+                                    ->helperText('أدخل سنة الإشارة لتسهيل البحث.'),
+
+                                Select::make('type')
+                                    ->label('نوع الإشارة')
+                                    ->native(false)
+                                    ->searchable()
+                                    ->options([
+                                        'حجز' => 'حجز',
+                                        'دعوة' => 'دعوة',
+                                        'استيفاء رسوم' => 'استيفاء رسوم',
+                                        'إنذار' => 'إنذار',
+                                        'استملاك' => 'استملاك',
+                                    ])
+                                    ->required()
+                                    ->placeholder('اختر نوع الإشارة'),
+
+                                TextInput::make('signal_owner')
+                                    ->label('المالك')
+                                    ->maxLength(150)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                    ->placeholder('اسم المالك إن وُجد'),
+
+                                TextInput::make('signal_source')
+                                    ->label('الجهة/المصدر')
+                                    ->maxLength(150)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                    ->placeholder('مثال: جهة إصدار الإشارة'),
+
+                                TextInput::make('signal_victim')
+                                    ->label('المتضرّر')
+                                    ->maxLength(150)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                    ->placeholder('اسم المتضرّر إن وُجد'),
+                            ])
+                            ->columns([
+                                'default' => 1,
+                                'md' => 2,
+                            ]),
+                    ]),
+
             ])
             ->statePath('data')
             ->model(PropertyCard::class);
@@ -349,7 +416,7 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->currentRecordId = $record->id;
 
         // ✅ تحميل Pivot + المالك داخلها
-        $this->form->fill($record->load('ownerships.owner')->toArray());
+        $this->form->fill($record->load('ownerships.owner', 'signals')->toArray());
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -403,7 +470,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 // ✅ لا تمرّر العلاقات كأعمدة
-                $attributes = Arr::except($state, ['owners', 'ownerships']);
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
 
                 try {
                     $record = PropertyCard::create($attributes);
@@ -418,7 +485,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals')->toArray());
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -463,7 +530,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals')->toArray());
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
@@ -503,7 +570,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $state = $this->getFormPayload($validated);
-                $attributes = Arr::except($state, ['owners', 'ownerships']);
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
 
                 try {
                     $record->update($attributes);
@@ -517,8 +584,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->form->fill($record->fresh()->load('ownerships.owner')->toArray());
-                Notification::make()->title('تم التعديل بنجاح')->success()->send();
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
+                                Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);

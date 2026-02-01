@@ -47,5 +47,9 @@ class PropertyCard extends Model
         return $this->hasMany(OwnerPropertyCard::class);
     }
 
+    public function signals(): HasMany
+    {
+        return $this->hasMany(Signal::class);
+    }
 
 }
