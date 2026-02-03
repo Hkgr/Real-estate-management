@@ -135,6 +135,20 @@ class PropertyCardPage extends Page implements HasSchemas
                         ]),
 
                         Grid::make(1)->schema([
+                            Select::make('card_investment_type')
+                                ->label('نوع الاستثمار')
+                                ->native(false)
+                                ->options([
+                                    'سكني' => 'سكني',
+                                    'تجاري' => 'تجاري',
+                                    'أرض زراعية' => 'أرض زراعية',
+                                    'صناعي' => 'صناعي',
+                                ])
+                                ->nullable()
+                                ->live(onBlur: true),
+                        ]),
+
+                        Grid::make(1)->schema([
                            TextInput::make('card_google_maps_url')
                                 ->label('رابط خريطة Google')
                                 ->url()
