@@ -29,7 +29,8 @@ class SignalsTable
                     ->searchable(),
                 TextColumn::make('signal_source')
                     ->searchable(),
-                TextColumn::make('signal_victim')
+                TextColumn::make('signal_victims_label')
+                    ->label('المتضرّرون')
                     ->searchable(),
                 TextColumn::make('deleted_at')
                     ->dateTime()
