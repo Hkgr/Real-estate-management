@@ -32,6 +32,15 @@
         <tr><th>المالك السابق</th><td>{{ $record->card_previous_owner ?: '—' }}</td></tr>
         <tr><th>حالة العقار</th><td>{{ $record->card_status === 'frozen' ? 'مجمد' : 'فاعل' }}</td></tr>
         <tr><th>تاريخ الشراء</th><td><span class="ltr">{{ optional($record->card_purchase_date)->format('Y-m-d') ?: '—' }}</span></td></tr>
+        <tr>
+            <th>طريقة الشراء</th>
+            <td>
+                @php
+                    $purchaseMethod = $record->ownerships->first()?->purchase_method;
+                @endphp
+                {{ $purchaseMethod === 'sale_contract' ? 'عقد بيع' : ($purchaseMethod === 'court_judgment' ? 'حكم قضائي' : '—') }}
+            </td>
+        </tr>
         <tr><th>المساحة الكلية</th><td><span class="ltr">{{ number_format((float)$record->card_total_area, 2) }}</span> م²</td></tr>
         <tr><th>المساحة المملوكة</th><td><span class="ltr">{{ number_format((float)$record->card_owned_area, 2) }}</span> م²</td></tr>
         <tr><th>الموقع</th><td>{{ $record->card_location }}</td></tr>
