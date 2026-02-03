@@ -291,16 +291,66 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->live(onBlur: true)
                                             ->visible(fn (Get $get) => ! (bool) $get('is_current')),
 
-                                        Select::make('purchase_method')
-                                            ->label('طريقة الشراء')
-                                            ->native(false)
-                                            ->options([
-                                                'sale_contract' => 'عقد بيع',
-                                                'court_judgment' => 'حكم قضائي',
-                                            ])
-                                            ->nullable()
-                                            ->live(onBlur: true),
-                                    ]),
+                                    ])
+                                    ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
+                                    ->required(),
+
+                                Select::make('ownership_metric')
+                                    ->label('معيار التملك')
+                                    ->native(false)
+                                    ->options([
+                                        'percentage' => 'نسبة مئوية (%)',
+                                        'shares' => 'عدد الأسهم',
+                                        'meters' => 'عدد الأمتار (م²)',
+                                    ])
+                                    ->required()
+                                    ->live(onBlur: true),
+
+                                TextInput::make('ownership_percentage')
+                                    ->label('قيمة التملك')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 9999999999.99)
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
+                                        'percentage' => '%',
+                                        'shares' => 'سهم',
+                                        'meters' => 'م²',
+                                        default => null,
+                                    }),
+
+                                Toggle::make('is_current')
+                                    ->label('مالك حالي')
+                                    ->default(false)
+                                    ->live(),
+
+                                DatePicker::make('purchase_date')
+                                    ->label('تاريخ الشراء')
+                                    ->nullable()
+                                    ->live(onBlur: true),
+
+                                DatePicker::make('sale_date')
+                                    ->label('تاريخ البيع')
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->visible(fn (Get $get) => ! (bool) $get('is_current')),+
+
+                                Select::make('purchase_method')
+                                    ->label('طريقة الشراء')
+                                    ->native(false)
+                                    ->options([
+                                        'sale_contract' => 'عقد بيع',
+                                        'court_judgment' => 'حكم قضائي',
+                                    ])
+                                    ->nullable()
+                                    ->live(onBlur: true),
+
+                            ])
+
+                            ->columns([
+                                'default' => 1,
+                                'md' => 2,
                             ]),
                     ]),
                 Section::make('الإشارات')
