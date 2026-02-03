@@ -25,8 +25,8 @@ class SignalsTable
                     ->label('العقار')
                     ->placeholder('-')
                     ->searchable(),
-                TextColumn::make('signal_owner')
-                    ->searchable(),
+                TextColumn::make('signal_owners_label')
+                    ->label('أصحاب الإشارة'),
                 TextColumn::make('signal_source')
                     ->searchable(),
                 TextColumn::make('signal_victims_label')

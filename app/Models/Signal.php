@@ -13,6 +13,7 @@ class Signal extends Model
         'signal_date',
         'type',
         'signal_owner',
+        'signal_owners',
         'signal_source',
         'signal_sources',
         'signal_victims',
@@ -21,6 +22,7 @@ class Signal extends Model
         'property_card_id',
     ];
     protected $casts = [
+        'signal_owners' => 'array',
         'signal_sources' => 'array',
         'signal_victims' => 'array',
     ];
@@ -69,6 +71,38 @@ class Signal extends Model
         }
 
         return $this->signal_source ?? '-';
+    }
+
+    public function getSignalOwnersLabelAttribute(): string
+    {
+        $owners = $this->signal_owners ?? [];
+
+        if (is_string($owners)) {
+            $owners = json_decode($owners, true) ?? [];
+        }
+
+        if (is_array($owners) && count($owners) > 0) {
+            $labels = collect($owners)->map(function (array $owner): ?string {
+                $name = $owner['name'] ?? null;
+                $ownerId = $owner['owner_id'] ?? null;
+
+                if (filled($name)) {
+                    return $name;
+                }
+
+                if (filled($ownerId)) {
+                    return "مالك #{$ownerId}";
+                }
+
+                return null;
+            })->filter();
+
+            if ($labels->isNotEmpty()) {
+                return $labels->implode('، ');
+            }
+        }
+
+        return $this->signal_owner ?? '-';
     }
 
     public function getSignalVictimsLabelAttribute(): string

@@ -20,7 +20,8 @@ class SignalInfolist
                     ->label('العقار')
                     ->placeholder('-'),
 
-                TextEntry::make('signal_owner')
+                TextEntry::make('signal_owners_label')
+                    ->label('أصحاب الإشارة')
                     ->placeholder('-'),
                 TextEntry::make('signal_source')
                     ->placeholder('-'),

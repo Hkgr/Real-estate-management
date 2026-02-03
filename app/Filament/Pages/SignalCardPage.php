@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Signal;
+use App\Models\Owner;
 use BackedEnum;
 use UnitEnum;
 
@@ -17,7 +18,9 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 
 use Illuminate\Database\QueryException;
 
@@ -96,11 +99,84 @@ class SignalCardPage extends Page implements HasSchemas
                 Section::make('أطراف الإشارة')
                     ->schema([
                         Grid::make(2)->schema([
-                            TextInput::make('signal_owner')
-                                ->label('المالك')
-                                ->maxLength(150)
-                                ->nullable()
-                                ->placeholder('اسم المالك إن وُجد'),
+                            Repeater::make('signal_owners')
+                                ->label('أصحاب الإشارة')
+                                ->schema([
+                                    Toggle::make('owner_from_owner')
+                                        ->label('من المالكين')
+                                        ->default(true)
+                                        ->live(),
+
+                                    Select::make('owner_id')
+                                        ->label('المالك')
+                                        ->native(false)
+                                        ->searchable()
+                                        ->options(fn () => Owner::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                                        ->visible(fn ($get) => (bool) $get('owner_from_owner'))
+                                        ->placeholder('اختر مالكًا'),
+
+                                    TextInput::make('owner_name')
+                                        ->label('اسم المالك')
+                                        ->maxLength(150)
+                                        ->nullable()
+                                        ->live(onBlur: true)
+                                        ->visible(fn ($get) => ! (bool) $get('owner_from_owner'))
+                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                        ->placeholder('اسم المالك إن وُجد'),
+                                ])
+                                ->columns([
+                                    'default' => 1,
+                                    'md' => 2,
+                                ])
+                                ->defaultItems(0)
+                                ->afterStateHydrated(function ($state, $set, $get): void {
+                                    if (is_array($state) && count($state) > 0) {
+                                        $set('signal_owners', collect($state)->map(function (array $item): array {
+                                            return [
+                                                'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                                'owner_id' => $item['owner_id'] ?? null,
+                                                'owner_name' => $item['name'] ?? null,
+                                            ];
+                                        })->all());
+                                        return;
+                                    }
+
+                                    $legacyOwner = $get('signal_owner');
+                                    if (filled($legacyOwner)) {
+                                        $set('signal_owners', [[
+                                            'owner_from_owner' => false,
+                                            'owner_id' => null,
+                                            'owner_name' => $legacyOwner,
+                                        ]]);
+                                    }
+                                })
+                                ->dehydrateStateUsing(function ($state): array {
+                                    return collect($state ?? [])
+                                        ->map(function (array $row): ?array {
+                                            $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
+                                            $ownerId = $row['owner_id'] ?? null;
+                                            $name = $fromOwner
+                                                ? Owner::query()->whereKey($ownerId)->value('full_name')
+                                                : ($row['owner_name'] ?? null);
+
+                                            if ($fromOwner && ! filled($ownerId)) {
+                                                return null;
+                                            }
+
+                                            if (! $fromOwner && ! filled($name)) {
+                                                return null;
+                                            }
+
+                                            return [
+                                                'is_owner' => $fromOwner,
+                                                'owner_id' => $fromOwner ? $ownerId : null,
+                                                'name' => filled($name) ? $name : null,
+                                            ];
+                                        })
+                                        ->filter()
+                                        ->values()
+                                        ->all();
+                                }),
 
                             TextInput::make('signal_source')
                                 ->label('الجهة/المصدر')
