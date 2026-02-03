@@ -299,6 +299,8 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => Arr::except($data, [
                                 'signal_owner_id',
                                 'signal_owner_from_owner',
+                                'signal_victim_id',
+                                'signal_victim_from_owner',
                                 'owners',
                             ]))
                             ->schema([
@@ -414,13 +416,79 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                     ->placeholder('مثال: جهة إصدار الإشارة'),
+                                Select::make('signal_victim_id')
+                                    ->label('المتضرّر من المالكين')
+                                    ->native(false)
+                                    ->searchable()
+                                    ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                    ->live()
+                                    ->reactive()
+                                    ->visible(fn (Get $get) => (bool) $get('signal_victim_from_owner'))
+                                    ->afterStateHydrated(function ($state, $set, Get $get): void {
+                                        if (filled($state)) {
+                                            return;
+                                        }
+
+                                        $owners = $get('owners') ?? [];
+                                        $ownerId = $owners[0]['id'] ?? null;
+
+                                        if ($ownerId) {
+                                            $set('signal_victim_id', $ownerId);
+                                            $set('signal_victim_from_owner', true);
+                                        }
+                                    })
+                                    ->afterStateUpdated(function ($state, $set, Get $get): void {
+                                        if (! $get('signal_victim_from_owner')) {
+                                            return;
+                                        }
+
+                                        $name = $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $state);
+
+                                        if ($name) {
+                                            $set('signal_victim', $name);
+                                        }
+                                    })
+                                    ->placeholder('اختر متضرّرًا من بطاقة العقار'),
+
+                                Toggle::make('signal_victim_from_owner')
+                                    ->label('المتضرّر من المالكين')
+                                    ->default(true)
+                                    ->live()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set, Get $get): void {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $name = $this->resolveOwnerNameFromOwnerships(
+                                            $get('../../ownerships'),
+                                            $get('signal_victim_id')
+                                        );
+
+                                        if ($name) {
+                                            $set('signal_victim', $name);
+                                        }
+                                    }),
+
 
                                 TextInput::make('signal_victim')
                                     ->label('المتضرّر')
                                     ->maxLength(150)
                                     ->nullable()
                                     ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                    ->visible(fn (Get $get) => ! (bool) $get('signal_victim_from_owner'))
+                                    ->dehydrateStateUsing(function ($state, Get $get) {
+                                        if ($get('signal_victim_from_owner')) {
+                                            $name = $this->resolveOwnerNameFromOwnerships(
+                                                $get('../../ownerships'),
+                                                $get('signal_victim_id')
+                                            );
+
+                                            return filled($name) ? $name : null;
+                                        }
+
+                                        return filled($state) ? $state : null;
+                                    })
                                     ->placeholder('اسم المتضرّر إن وُجد'),
                             ])
                             ->columns([
