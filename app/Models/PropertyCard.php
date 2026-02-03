@@ -39,7 +39,7 @@ class PropertyCard extends Model
                 'is_current',
                 'purchase_date',
                 'sale_date',
-                 'purchase_method',
+                'purchase_method',
             ])
             ->withTimestamps();
     }
