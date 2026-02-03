@@ -212,372 +212,11 @@ class PropertyCardPage extends Page implements HasSchemas
                  */
                 Section::make('الملاك')
                     ->schema([
-                        Repeater::make('ownerships')
-                            ->label('الملاك')
-                            ->relationship('ownerships') // HasMany على Pivot Model: PropertyCardOwner
-                            ->schema([
-                                Grid::make(2)
-                                    ->schema([
-                                        Select::make('owner_id')
-                                            ->label('المالك')
-                                            ->relationship('owner', 'full_name') // belongsTo داخل Pivot
-                                            ->searchable()
-                                            ->preload()
-                                            ->createOptionForm([
-                                                TextInput::make('full_name')
-                                                    ->label('الاسم الرباعي')
-                                                    ->required()
-                                                    ->maxLength(200)
-                                                    ->live(onBlur: true)
-                                                    ->columnSpanFull(),
-
-                                                DatePicker::make('birth_date')
-                                                    ->label('تاريخ الميلاد')
-                                                    ->nullable()
-                                                    ->live(onBlur: true)
-                                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                                TextInput::make('national_id')
-                                                    ->label('الرقم الوطني')
-                                                    ->required()
-                                                    ->maxLength(50)
-                                                    ->live(onBlur: true)
-                                                    ->unique(Owner::class, 'national_id'),
-
-                                                TextInput::make('phone')
-                                                    ->label('رقم الهاتف')
-                                                    ->tel()
-                                                    ->maxLength(50)
-                                                    ->nullable()
-                                                    ->live(onBlur: true)
-                                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                                TextInput::make('email')
-                                                    ->label('البريد الإلكتروني')
-                                                    ->email()
-                                                    ->maxLength(150)
-                                                    ->nullable()
-                                                    ->live(onBlur: true)
-                                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                                Toggle::make('is_active')
-                                                    ->label('فعّال')
-                                                    ->default(false)
-                                                    ->live(),
-
-                                            ])
-                                            ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
-                                            ->required(),
-                                        Select::make('ownership_metric')
-                                            ->label('معيار التملك')
-                                            ->native(false)
-                                            ->options([
-                                                'أسهم' => 'أسهم',
-                                                'نسبة مئوية' => 'نسبة مئوية',
-                                                'م²' => 'م²',
-                                            ])
-                                            ->required()
-                                            ->live(onBlur: true),
-
-                                        TextInput::make('ownership_percentage')
-                                            ->label('قيمة التملك')
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->maxValue(9999999999.99)
-                                            ->required()
-                                            ->live(onBlur: true)
-                                            ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
-                                                'أسهم' => 'سهم',
-                                                'نسبة مئوية' => '%',
-                                                'م²' => 'م²',
-                                                default => null,
-                                            }),
-
-
-                                        Toggle::make('is_current')
-                                            ->label('مالك حالي')
-                                            ->default(false)
-                                            ->live(),
-
-                                        DatePicker::make('purchase_date')
-                                            ->label('تاريخ الشراء')
-                                            ->nullable()
-                                            ->live(onBlur: true),
-
-                                        DatePicker::make('sale_date')
-                                            ->label('تاريخ البيع')
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->visible(fn (Get $get) => ! (bool) $get('is_current')),
-
-
-                                    ]),
-                            ]),
+                        $this->ownershipsRepeater(),
                     ]),
                 Section::make('الإشارات')
                     ->schema([
-                        Repeater::make('signals')
-                            ->label('الإشارات')
-                            ->relationship('signals')
-                            ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
-                                if (isset($data['signal_owners'])) {
-                                    $data['signal_owners'] = collect($data['signal_owners'])
-                                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
-                                        ->values()
-                                        ->all();
-                                }
-
-                                if (isset($data['signal_victims'])) {
-                                    $data['signal_victims'] = collect($data['signal_victims'])
-                                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
-                                        ->values()
-                                        ->all();
-                                }
-
-                                return Arr::except($data, [
-                                    'signal_victim_id',
-                                    'signal_victim_from_owner',
-                                    'signal_victim',
-                                    'owners',
-                                ]);
-                            })
-
-                            ->schema([
-                                TextInput::make('signal_id')
-                                    ->label('رقم الإشارة')
-                                    ->maxLength(50)
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->placeholder('مثال: 125'),
-
-                                DatePicker::make('signal_date')
-                                    ->label('تاريخ الإشارة')
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->placeholder('مثال: 2024-01-01')
-                                    ->helperText('أدخل تاريخ الإشارة لتسهيل البحث.'),
-
-                                Select::make('type')
-                                    ->label('نوع الإشارة')
-                                    ->native(false)
-                                    ->searchable()
-                                    ->options([
-                                        'حجز' => 'حجز',
-                                        'دعوى' => 'دعوى',
-                                        'استيفاء رسوم' => 'استيفاء رسوم',
-                                        'أخرى' => 'أخرى',
-                                        'استملاك' => 'استملاك',
-
-                                    ])
-                                    ->required()
-                                    ->placeholder('اختر نوع الإشارة'),
-
-                                Grid::make(3)
-                                    ->schema([
-                                        TextInput::make('signal_source')
-                                            ->label('الجهة/المصدر')
-                                            ->maxLength(150)
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                            ->placeholder('مثال: جهة إصدار الإشارة'),
-
-                                        TextInput::make('signal_source_number')
-                                            ->label('رقم الجهة')
-                                            ->maxLength(50)
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                            ->placeholder('مثال: 2024/55'),
-
-                                        DatePicker::make('signal_source_date')
-                                            ->label('تاريخ الجهة')
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                            ->placeholder('مثال: 2024-01-01'),
-                                    ]),
-
-                                Repeater::make('signal_owners')
-                                    ->label('أصحاب الإشارة')
-                                    ->schema([
-                                        Toggle::make('owner_from_owner')
-                                            ->label('من المالكين')
-                                            ->default(true)
-                                            ->live(),
-
-                                        Select::make('owner_id')
-                                            ->label('المالك')
-                                            ->native(false)
-                                            ->searchable()
-                                            ->options(fn () => $this->getAllOwnerOptions())
-                                            ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
-                                            ->placeholder('اختر مالكًا من بطاقة العقار'),
-
-                                        TextInput::make('owner_name')
-                                            ->label('اسم المالك')
-                                            ->maxLength(150)
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->visible(fn (Get $get) => ! (bool) $get('owner_from_owner'))
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                            ->placeholder('اسم المالك إن وُجد'),
-                                    ])
-                                    ->columns([
-                                        'default' => 1,
-                                        'md' => 2,
-                                    ])
-                                    ->defaultItems(0)
-                                    ->afterStateHydrated(function ($state, $set, Get $get): void {
-                                        if (is_array($state) && count($state) > 0) {
-                                            $set('signal_owners', collect($state)->map(function (array $item): array {
-                                                return [
-                                                    'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
-                                                    'owner_id' => $item['owner_id'] ?? null,
-                                                    'owner_name' => $item['name'] ?? null,
-                                                ];
-                                            })->all());
-                                            return;
-                                        }
-
-                                        $owners = $get('owners') ?? [];
-                                        if (is_array($owners) && count($owners) > 0) {
-                                            $set('signal_owners', collect($owners)->map(function (array $owner): array {
-                                                return [
-                                                    'owner_from_owner' => true,
-                                                    'owner_id' => $owner['id'] ?? null,
-                                                    'owner_name' => $owner['full_name'] ?? null,
-                                                ];
-                                            })->all());
-                                            return;
-                                        }
-
-                                        $legacyOwner = $get('signal_owner');
-                                        if (filled($legacyOwner)) {
-                                            $set('signal_owners', [[
-                                                'owner_from_owner' => false,
-                                                'owner_id' => null,
-                                                'owner_name' => $legacyOwner,
-                                            ]]);
-                                        }
-                                    })
-                                    ->dehydrateStateUsing(function ($state, Get $get): array {
-                                        return collect($state ?? [])
-                                            ->map(function (array $row) use ($get): ?array {
-                                                $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
-                                                $ownerId = $row['owner_id'] ?? null;
-
-                                                $name = $fromOwner
-                                                    ? $this->resolveOwnerNameFromAllOwners($ownerId)
-                                                    : ($row['owner_name'] ?? null);
-
-                                                if ($fromOwner && ! filled($ownerId)) {
-                                                    return null;
-                                                }
-
-                                                if (! $fromOwner && ! filled($name)) {
-                                                    return null;
-                                                }
-
-                                                return [
-                                                    'is_owner' => $fromOwner,
-                                                    'owner_id' => $fromOwner ? $ownerId : null,
-                                                    'name' => filled($name) ? $name : null,
-                                                ];
-                                            })
-                                            ->filter()
-                                            ->values()
-                                            ->all();
-                                    }),
-
-                                Repeater::make('signal_victims')
-                                    ->label('المدعى عليهم في الإشارة')
-                                    ->schema([
-                                        Toggle::make('victim_from_owner')
-                                            ->label('من المالكين')
-                                            ->default(true)
-                                            ->live()
-                                            ->reactive(),
-
-                                        Select::make('victim_owner_id')
-                                            ->label('المالك')
-                                            ->native(false)
-                                            ->searchable()
-                                            ->options(fn () => $this->getAllOwnerOptions())
-                                            ->live()
-                                            ->reactive()
-                                            ->visible(fn (Get $get) => (bool) $get('victim_from_owner'))
-                                            ->placeholder('اختر متضرّرًا من بطاقة العقار'),
-
-                                        TextInput::make('victim_name')
-                                            ->label('اسم المدعى عليه')
-                                            ->maxLength(150)
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->visible(fn (Get $get) => ! (bool) $get('victim_from_owner'))
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                            ->placeholder('اسم المتضرّر إن وُجد'),
-                                    ])
-                                    ->columns([
-                                        'default' => 1,
-                                        'md' => 2,
-                                    ])
-                                    ->defaultItems(0)
-                                    ->afterStateHydrated(function ($state, $set, Get $get): void {
-                                        if (is_array($state) && count($state) > 0) {
-                                            $set('signal_victims', collect($state)->map(function (array $item): array {
-                                                return [
-                                                    'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
-                                                    'victim_owner_id' => $item['owner_id'] ?? null,
-                                                    'victim_name' => $item['name'] ?? null,
-                                                ];
-                                            })->all());
-                                            return;
-                                        }
-
-                                        $legacyVictim = $get('signal_victim');
-
-                                        if (filled($legacyVictim)) {
-                                            $set('signal_victims', [[
-                                                'victim_from_owner' => false,
-                                                'victim_owner_id' => null,
-                                                'victim_name' => $legacyVictim,
-                                            ]]);
-                                        }
-                                    })
-                                    ->dehydrateStateUsing(function ($state, Get $get): array {
-                                        return collect($state ?? [])
-                                            ->map(function (array $row) use ($get): ?array {
-                                                $fromOwner = (bool) ($row['victim_from_owner'] ?? false);
-                                                $ownerId = $row['victim_owner_id'] ?? null;
-
-                                                $name = $fromOwner
-                                                    ? $this->resolveOwnerNameFromAllOwners($ownerId)
-                                                    : ($row['victim_name'] ?? null);
-
-                                                if ($fromOwner && ! filled($ownerId)) {
-                                                    return null;
-                                                }
-
-                                                if (! $fromOwner && ! filled($name)) {
-                                                    return null;
-                                                }
-
-                                                return [
-                                                    'is_owner' => $fromOwner,
-                                                    'owner_id' => $fromOwner ? $ownerId : null,
-                                                    'name' => filled($name) ? $name : null,
-                                                ];
-                                            })
-                                            ->filter()
-                                            ->values()
-                                            ->all();
-                                    }),
-                            ])
-                            ->columns([
-                                'default' => 1,
-                                'md' => 2,
-                            ]),
+                        $this->signalsRepeater(),
                     ]),
                 Section::make('ملفات البطاقة')
                     ->description('يمكنك رفع الملفات أثناء إنشاء البطاقة، وسيتم حفظها تلقائياً عند أول رفع.')
@@ -622,63 +261,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     ]),
                 Section::make('الدفعات')
                     ->schema([
-                        Repeater::make('payments')
-                            ->label('الدفعات')
-                            ->relationship('payments')
-                            ->schema([
-                                TextInput::make('debit')
-                                    ->label('مدين')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->live(onBlur: true),
-
-                                TextInput::make('credit')
-                                    ->label('دائن')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->live(onBlur: true),
-
-                                TextInput::make('statement')
-                                    ->label('البيان')
-                                    ->maxLength(255)
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                TextInput::make('voucher')
-                                    ->label('سند')
-                                    ->maxLength(150)
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                DatePicker::make('payment_date')
-                                    ->label('التاريخ')
-                                    ->required()
-                                    ->live(onBlur: true),
-
-                                TextInput::make('balance_movement')
-                                    ->label('حركة الرصيد')
-                                    ->maxLength(255)
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                Select::make('currency')
-                                    ->label('العملة')
-                                    ->native(false)
-                                    ->options([
-                                        'syp_new' => 'ليرة سورية جديدة',
-                                        'syp_old' => 'ليرة سورية قديمة',
-                                        'usd' => 'دولار أمريكي',
-                                    ])
-                                    ->nullable()
-                                    ->live(onBlur: true),
-                            ])
-                            ->columns([
-                                'default' => 1,
-                                'md' => 6,
-                            ]),
+                        $this->paymentsRepeater(),
                     ]),
 
             ])
@@ -714,6 +297,463 @@ class PropertyCardPage extends Page implements HasSchemas
         ]);
 
         $this->resetFileInputs();
+    }
+
+    protected function ownershipsRepeater(): Repeater
+    {
+        $repeater = Repeater::make('ownerships')
+            ->label('الملاك')
+            ->schema([
+                Grid::make(2)
+                    ->schema([
+                        Select::make('owner_id')
+                            ->label('المالك')
+                            ->relationship('owner', 'full_name') // belongsTo داخل Pivot
+                            ->searchable()
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('full_name')
+                                    ->label('الاسم الرباعي')
+                                    ->required()
+                                    ->maxLength(200)
+                                    ->live(onBlur: true)
+                                    ->columnSpanFull(),
+
+                                DatePicker::make('birth_date')
+                                    ->label('تاريخ الميلاد')
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                TextInput::make('national_id')
+                                    ->label('الرقم الوطني')
+                                    ->required()
+                                    ->maxLength(50)
+                                    ->live(onBlur: true)
+                                    ->unique(Owner::class, 'national_id'),
+
+                                TextInput::make('phone')
+                                    ->label('رقم الهاتف')
+                                    ->tel()
+                                    ->maxLength(50)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                TextInput::make('email')
+                                    ->label('البريد الإلكتروني')
+                                    ->email()
+                                    ->maxLength(150)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                Toggle::make('is_active')
+                                    ->label('فعّال')
+                                    ->default(false)
+                                    ->live(),
+
+                            ])
+                            ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
+                            ->required(),
+                        Select::make('ownership_metric')
+                            ->label('معيار التملك')
+                            ->native(false)
+                            ->options([
+                                'أسهم' => 'أسهم',
+                                'نسبة مئوية' => 'نسبة مئوية',
+                                'م²' => 'م²',
+                            ])
+                            ->required()
+                            ->live(onBlur: true),
+
+                        TextInput::make('ownership_percentage')
+                            ->label('قيمة التملك')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(9999999999.99)
+                            ->required()
+                            ->live(onBlur: true)
+                            ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
+                                'أسهم' => 'سهم',
+                                'نسبة مئوية' => '%',
+                                'م²' => 'م²',
+                                default => null,
+                            }),
+
+                        Toggle::make('is_current')
+                            ->label('مالك حالي')
+                            ->default(false)
+                            ->live(),
+
+                        DatePicker::make('purchase_date')
+                            ->label('تاريخ الشراء')
+                            ->nullable()
+                            ->live(onBlur: true),
+
+                        DatePicker::make('sale_date')
+                            ->label('تاريخ البيع')
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => ! (bool) $get('is_current')),
+                    ]),
+            ]);
+
+        if (filled($this->currentRecordId)) {
+            $repeater->relationship('ownerships');
+        } else {
+            $repeater
+                ->disabled()
+                ->dehydrated(false)
+                ->helperText('حمّل بطاقة أولاً لإضافة الملاك.');
+        }
+
+        return $repeater;
+    }
+
+    protected function signalsRepeater(): Repeater
+    {
+        $repeater = Repeater::make('signals')
+            ->label('الإشارات')
+            ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                if (isset($data['signal_owners'])) {
+                    $data['signal_owners'] = collect($data['signal_owners'])
+                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
+                        ->values()
+                        ->all();
+                }
+
+                if (isset($data['signal_victims'])) {
+                    $data['signal_victims'] = collect($data['signal_victims'])
+                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
+                        ->values()
+                        ->all();
+                }
+
+                return Arr::except($data, [
+                    'signal_victim_id',
+                    'signal_victim_from_owner',
+                    'signal_victim',
+                    'owners',
+                ]);
+            })
+            ->schema([
+                TextInput::make('signal_id')
+                    ->label('رقم الإشارة')
+                    ->maxLength(50)
+                    ->required()
+                    ->live(onBlur: true)
+                    ->placeholder('مثال: 125'),
+
+                DatePicker::make('signal_date')
+                    ->label('تاريخ الإشارة')
+                    ->required()
+                    ->live(onBlur: true)
+                    ->placeholder('مثال: 2024-01-01')
+                    ->helperText('أدخل تاريخ الإشارة لتسهيل البحث.'),
+
+                Select::make('type')
+                    ->label('نوع الإشارة')
+                    ->native(false)
+                    ->searchable()
+                    ->options([
+                        'حجز' => 'حجز',
+                        'دعوى' => 'دعوى',
+                        'استيفاء رسوم' => 'استيفاء رسوم',
+                        'أخرى' => 'أخرى',
+                        'استملاك' => 'استملاك',
+                    ])
+                    ->required()
+                    ->placeholder('اختر نوع الإشارة'),
+
+                Grid::make(3)
+                    ->schema([
+                        TextInput::make('signal_source')
+                            ->label('الجهة/المصدر')
+                            ->maxLength(150)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->placeholder('مثال: جهة إصدار الإشارة'),
+
+                        TextInput::make('signal_source_number')
+                            ->label('رقم الجهة')
+                            ->maxLength(50)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->placeholder('مثال: 2024/55'),
+
+                        DatePicker::make('signal_source_date')
+                            ->label('تاريخ الجهة')
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->placeholder('مثال: 2024-01-01'),
+                    ]),
+
+                Repeater::make('signal_owners')
+                    ->label('أصحاب الإشارة')
+                    ->schema([
+                        Toggle::make('owner_from_owner')
+                            ->label('من المالكين')
+                            ->default(true)
+                            ->live(),
+
+                        Select::make('owner_id')
+                            ->label('المالك')
+                            ->native(false)
+                            ->searchable()
+                            ->options(fn () => $this->getAllOwnerOptions())
+                            ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
+                            ->placeholder('اختر مالكًا من بطاقة العقار'),
+
+                        TextInput::make('owner_name')
+                            ->label('اسم المالك')
+                            ->maxLength(150)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => ! (bool) $get('owner_from_owner'))
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->placeholder('اسم المالك إن وُجد'),
+                    ])
+                    ->columns([
+                        'default' => 1,
+                        'md' => 2,
+                    ])
+                    ->defaultItems(0)
+                    ->afterStateHydrated(function ($state, $set, Get $get): void {
+                        if (is_array($state) && count($state) > 0) {
+                            $set('signal_owners', collect($state)->map(function (array $item): array {
+                                return [
+                                    'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                    'owner_id' => $item['owner_id'] ?? null,
+                                    'owner_name' => $item['name'] ?? null,
+                                ];
+                            })->all());
+                            return;
+                        }
+
+                        $owners = $get('owners') ?? [];
+                        if (is_array($owners) && count($owners) > 0) {
+                            $set('signal_owners', collect($owners)->map(function (array $owner): array {
+                                return [
+                                    'owner_from_owner' => true,
+                                    'owner_id' => $owner['id'] ?? null,
+                                    'owner_name' => $owner['full_name'] ?? null,
+                                ];
+                            })->all());
+                            return;
+                        }
+
+                        $legacyOwner = $get('signal_owner');
+                        if (filled($legacyOwner)) {
+                            $set('signal_owners', [[
+                                'owner_from_owner' => false,
+                                'owner_id' => null,
+                                'owner_name' => $legacyOwner,
+                            ]]);
+                        }
+                    })
+                    ->dehydrateStateUsing(function ($state, Get $get): array {
+                        return collect($state ?? [])
+                            ->map(function (array $row) use ($get): ?array {
+                                $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
+                                $ownerId = $row['owner_id'] ?? null;
+
+                                $name = $fromOwner
+                                    ? $this->resolveOwnerNameFromAllOwners($ownerId)
+                                    : ($row['owner_name'] ?? null);
+
+                                if ($fromOwner && ! filled($ownerId)) {
+                                    return null;
+                                }
+
+                                if (! $fromOwner && ! filled($name)) {
+                                    return null;
+                                }
+
+                                return [
+                                    'is_owner' => $fromOwner,
+                                    'owner_id' => $fromOwner ? $ownerId : null,
+                                    'name' => filled($name) ? $name : null,
+                                ];
+                            })
+                            ->filter()
+                            ->values()
+                            ->all();
+                    }),
+
+                Repeater::make('signal_victims')
+                    ->label('المدعى عليهم في الإشارة')
+                    ->schema([
+                        Toggle::make('victim_from_owner')
+                            ->label('من المالكين')
+                            ->default(true)
+                            ->live()
+                            ->reactive(),
+
+                        Select::make('victim_owner_id')
+                            ->label('المالك')
+                            ->native(false)
+                            ->searchable()
+                            ->options(fn () => $this->getAllOwnerOptions())
+                            ->live()
+                            ->reactive()
+                            ->visible(fn (Get $get) => (bool) $get('victim_from_owner'))
+                            ->placeholder('اختر متضرّرًا من بطاقة العقار'),
+
+                        TextInput::make('victim_name')
+                            ->label('اسم المدعى عليه')
+                            ->maxLength(150)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get) => ! (bool) $get('victim_from_owner'))
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->placeholder('اسم المتضرّر إن وُجد'),
+                    ])
+                    ->columns([
+                        'default' => 1,
+                        'md' => 2,
+                    ])
+                    ->defaultItems(0)
+                    ->afterStateHydrated(function ($state, $set, Get $get): void {
+                        if (is_array($state) && count($state) > 0) {
+                            $set('signal_victims', collect($state)->map(function (array $item): array {
+                                return [
+                                    'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                    'victim_owner_id' => $item['owner_id'] ?? null,
+                                    'victim_name' => $item['name'] ?? null,
+                                ];
+                            })->all());
+                            return;
+                        }
+
+                        $legacyVictim = $get('signal_victim');
+
+                        if (filled($legacyVictim)) {
+                            $set('signal_victims', [[
+                                'victim_from_owner' => false,
+                                'victim_owner_id' => null,
+                                'victim_name' => $legacyVictim,
+                            ]]);
+                        }
+                    })
+                    ->dehydrateStateUsing(function ($state, Get $get): array {
+                        return collect($state ?? [])
+                            ->map(function (array $row) use ($get): ?array {
+                                $fromOwner = (bool) ($row['victim_from_owner'] ?? false);
+                                $ownerId = $row['victim_owner_id'] ?? null;
+
+                                $name = $fromOwner
+                                    ? $this->resolveOwnerNameFromAllOwners($ownerId)
+                                    : ($row['victim_name'] ?? null);
+
+                                if ($fromOwner && ! filled($ownerId)) {
+                                    return null;
+                                }
+
+                                if (! $fromOwner && ! filled($name)) {
+                                    return null;
+                                }
+
+                                return [
+                                    'is_owner' => $fromOwner,
+                                    'owner_id' => $fromOwner ? $ownerId : null,
+                                    'name' => filled($name) ? $name : null,
+                                ];
+                            })
+                            ->filter()
+                            ->values()
+                            ->all();
+                    }),
+            ])
+            ->columns([
+                'default' => 1,
+                'md' => 2,
+            ]);
+
+        if (filled($this->currentRecordId)) {
+            $repeater->relationship('signals');
+        } else {
+            $repeater
+                ->disabled()
+                ->dehydrated(false)
+                ->helperText('حمّل بطاقة أولاً لإضافة الإشارات.');
+        }
+
+        return $repeater;
+    }
+
+    protected function paymentsRepeater(): Repeater
+    {
+        $repeater = Repeater::make('payments')
+            ->label('الدفعات')
+            ->schema([
+                TextInput::make('debit')
+                    ->label('مدين')
+                    ->numeric()
+                    ->minValue(0)
+                    ->live(onBlur: true),
+
+                TextInput::make('credit')
+                    ->label('دائن')
+                    ->numeric()
+                    ->minValue(0)
+                    ->live(onBlur: true),
+
+                TextInput::make('statement')
+                    ->label('البيان')
+                    ->maxLength(255)
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                TextInput::make('voucher')
+                    ->label('سند')
+                    ->maxLength(150)
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                DatePicker::make('payment_date')
+                    ->label('التاريخ')
+                    ->required()
+                    ->live(onBlur: true),
+
+                TextInput::make('balance_movement')
+                    ->label('حركة الرصيد')
+                    ->maxLength(255)
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                Select::make('currency')
+                    ->label('العملة')
+                    ->native(false)
+                    ->options([
+                        'syp_new' => 'ليرة سورية جديدة',
+                        'syp_old' => 'ليرة سورية قديمة',
+                        'usd' => 'دولار أمريكي',
+                    ])
+                    ->nullable()
+                    ->live(onBlur: true),
+            ])
+            ->columns([
+                'default' => 1,
+                'md' => 6,
+            ]);
+
+        if (filled($this->currentRecordId)) {
+            $repeater->relationship('payments');
+        } else {
+            $repeater
+                ->disabled()
+                ->dehydrated(false)
+                ->helperText('حمّل بطاقة أولاً لإضافة الدفعات.');
+        }
+
+        return $repeater;
     }
 
     // =========================
