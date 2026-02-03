@@ -381,7 +381,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->label('المالك')
                                             ->native(false)
                                             ->searchable()
-                                            ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                            ->options(fn () => $this->getAllOwnerOptions())
                                             ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
                                             ->placeholder('اختر مالكًا من بطاقة العقار'),
 
@@ -439,7 +439,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                                 $ownerId = $row['owner_id'] ?? null;
 
                                                 $name = $fromOwner
-                                                    ? $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $ownerId)
+                                                    ? $this->resolveOwnerNameFromOwnerships($ownerId)
                                                     : ($row['owner_name'] ?? null);
 
                                                 if ($fromOwner && ! filled($ownerId)) {
@@ -474,7 +474,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->label('المالك')
                                             ->native(false)
                                             ->searchable()
-                                            ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                            ->options(fn () => $this->getAllOwnerOptions())
                                             ->live()
                                             ->reactive()
                                             ->visible(fn (Get $get) => (bool) $get('victim_from_owner'))
@@ -523,7 +523,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                                 $ownerId = $row['victim_owner_id'] ?? null;
 
                                                 $name = $fromOwner
-                                                    ? $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $ownerId)
+                                                    ? $this->resolveOwnerNameFromOwnerships($ownerId)
                                                     : ($row['victim_name'] ?? null);
 
                                                 if ($fromOwner && ! filled($ownerId)) {
@@ -981,40 +981,23 @@ class PropertyCardPage extends Page implements HasSchemas
             ->implode("\n");
     }
 
-    protected function getOwnerOptionsFromOwnerships(?array $ownerships): array
+    protected function getAllOwnerOptions(): array
     {
-        return collect($ownerships ?? [])
-            ->mapWithKeys(function (array $ownership): array {
-                $owner = $ownership['owner'] ?? [];
-                $ownerId = $ownership['owner_id'] ?? $owner['id'] ?? null;
-                $fullName = $owner['full_name'] ?? null;
-
-                if (! filled($ownerId) || ! filled($fullName)) {
-                    return [];
-                }
-
-
-    // FK
-
-                return [$ownerId => $fullName];
-            })
+        return Owner::query()
+            ->orderBy('full_name')
+            ->pluck('full_name', 'id')
             ->all();
-
     }
 
-    // Unknown column
-    protected function resolveOwnerNameFromOwnerships(?array $ownerships, mixed $ownerId): ?string
+    protected function resolveOwnerNameFromOwnerships(mixed $ownerId): ?string
     {
         if (! filled($ownerId)) {
             return null;
-
         }
 
-        // لإعطاءك اسم العمود المفقود مباشرة
-        $options = $this->getOwnerOptionsFromOwnerships($ownerships);
+        $options = $this->getAllOwnerOptions();
 
         return $options[$ownerId] ?? null;
-
     }
 
     protected function syncSignalOwners(PropertyCard $record, array $state): void
