@@ -148,6 +148,19 @@ class PropertyCardPage extends Page implements HasSchemas
                         ]),
 
                         Grid::make(1)->schema([
+                            Select::make('card_purchase_method')
+                                ->label('طريقة الشراء')
+                                ->native(false)
+                                ->options([
+                                    'regular_contract' => 'عقد عادي',
+                                    'court_judgment' => 'حكم قضائي',
+                                    'commercial_register_contract' => 'عقد سجل تجاري',
+                                ])
+                                ->nullable()
+                                ->live(onBlur: true),
+                        ]),
+
+                        Grid::make(1)->schema([
                            TextInput::make('card_google_maps_url')
                                 ->label('رابط خريطة Google')
                                 ->url()
@@ -273,16 +286,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->live(onBlur: true)
                                             ->visible(fn (Get $get) => ! (bool) $get('is_current')),
 
-                                        Select::make('purchase_method')
-                                            ->label('طريقة الشراء')
-                                            ->native(false)
-                                            ->options([
-                                                'regular_contract' => 'عقد عادي',
-                                                'court_judgment' => 'حكم قضائي',
-                                                'commercial_register_contract' => 'عقد سجل تجاري',
-                                            ])
-                                            ->nullable()
-                                            ->live(onBlur: true),
+
                                     ]),
                             ]),
                     ]),
@@ -462,7 +466,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     }),
 
                                 Repeater::make('signal_victims')
-                                    ->label('المتضرّرون')
+                                    ->label('المدعى عليهم في الإشارة')
                                     ->schema([
                                         Toggle::make('victim_from_owner')
                                             ->label('من المالكين')
@@ -481,7 +485,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->placeholder('اختر متضرّرًا من بطاقة العقار'),
 
                                         TextInput::make('victim_name')
-                                            ->label('اسم المتضرّر')
+                                            ->label('اسم المدعى عليه')
                                             ->maxLength(150)
                                             ->nullable()
                                             ->live(onBlur: true)
