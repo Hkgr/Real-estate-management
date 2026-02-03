@@ -198,7 +198,6 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->label('الملاك')
                             ->relationship('ownerships') // HasMany على Pivot Model: PropertyCardOwner
                             ->schema([
-                                FormGrid::make(2)
                                 Grid::make(2)
                                     ->schema([
                                         Select::make('owner_id')
