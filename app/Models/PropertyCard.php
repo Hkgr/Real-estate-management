@@ -20,6 +20,7 @@ class PropertyCard extends Model
         'card_total_area',
         'card_area_unit',
         'card_status',
+        'card_investment_type',
         'card_sale_date',
         'card_property_details',
         'card_google_maps_url',

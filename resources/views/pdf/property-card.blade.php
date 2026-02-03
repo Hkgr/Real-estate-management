@@ -28,6 +28,7 @@
         <tr><th>اسم المنطقة</th><td>{{ $record->card_region_name }}</td></tr>
         <tr><th>المالك السابق</th><td>{{ $record->card_previous_owner ?: '—' }}</td></tr>
         <tr><th>حالة العقار</th><td>{{ $record->card_status === 'frozen' ? 'مجمد' : 'فاعل' }}</td></tr>
+        <tr><th>نوع الاستثمار</th><td>{{ $record->card_investment_type ?: '—' }}</td></tr>
         <tr><th>تاريخ الشراء</th><td><span class="ltr">{{ optional($record->card_purchase_date)->format('Y-m-d') ?: '—' }}</span></td></tr>
         <tr>
             <th>طريقة الشراء</th>
