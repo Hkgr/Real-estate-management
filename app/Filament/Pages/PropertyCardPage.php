@@ -300,6 +300,13 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->label('الإشارات')
                             ->relationship('signals')
                             ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                                if (isset($data['signal_owners'])) {
+                                    $data['signal_owners'] = collect($data['signal_owners'])
+                                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
+                                        ->values()
+                                        ->all();
+                                }
+
                                 if (isset($data['signal_sources'])) {
                                     $data['signal_sources'] = collect($data['signal_sources'])
                                         ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
@@ -315,8 +322,6 @@ class PropertyCardPage extends Page implements HasSchemas
                                 }
 
                                 return Arr::except($data, [
-                                    'signal_owner_id',
-                                    'signal_owner_from_owner',
                                     'signal_victim_id',
                                     'signal_victim_from_owner',
                                     'signal_victim',
@@ -353,79 +358,97 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->required()
                                     ->placeholder('اختر نوع الإشارة'),
 
-                                Select::make('signal_owner_id')
-                                    ->label('صاحب الإشارة من المالكين')
-                                    ->native(false)
-                                    ->searchable()
-                                    ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
-                                    ->live()
-                                    ->reactive()
-                                    ->visible(fn (Get $get) => (bool) $get('signal_owner_from_owner'))
+                                Repeater::make('signal_owners')
+                                    ->label('أصحاب الإشارة')
+                                    ->schema([
+                                        Toggle::make('owner_from_owner')
+                                            ->label('من المالكين')
+                                            ->default(true)
+                                            ->live(),
+
+                                        Select::make('owner_id')
+                                            ->label('المالك')
+                                            ->native(false)
+                                            ->searchable()
+                                            ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                            ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
+                                            ->placeholder('اختر مالكًا من بطاقة العقار'),
+
+                                        TextInput::make('owner_name')
+                                            ->label('اسم المالك')
+                                            ->maxLength(150)
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->visible(fn (Get $get) => ! (bool) $get('owner_from_owner'))
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('اسم المالك إن وُجد'),
+                                    ])
+                                    ->columns([
+                                        'default' => 1,
+                                        'md' => 2,
+                                    ])
+                                    ->defaultItems(0)
                                     ->afterStateHydrated(function ($state, $set, Get $get): void {
-                                        if (filled($state)) {
+                                        if (is_array($state) && count($state) > 0) {
+                                            $set('signal_owners', collect($state)->map(function (array $item): array {
+                                                return [
+                                                    'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                                    'owner_id' => $item['owner_id'] ?? null,
+                                                    'owner_name' => $item['name'] ?? null,
+                                                ];
+                                            })->all());
                                             return;
                                         }
 
                                         $owners = $get('owners') ?? [];
-                                        $ownerId = $owners[0]['id'] ?? null;
-
-                                        if ($ownerId) {
-                                            $set('signal_owner_id', $ownerId);
-                                            $set('signal_owner_from_owner', true);
-                                        }
-                                    })
-                                    ->afterStateUpdated(function ($state, $set, Get $get): void {
-                                        if (! $get('signal_owner_from_owner')) {
+                                        if (is_array($owners) && count($owners) > 0) {
+                                            $set('signal_owners', collect($owners)->map(function (array $owner): array {
+                                                return [
+                                                    'owner_from_owner' => true,
+                                                    'owner_id' => $owner['id'] ?? null,
+                                                    'owner_name' => $owner['full_name'] ?? null,
+                                                ];
+                                            })->all());
                                             return;
                                         }
 
-                                        $name = $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $state);
-
-                                        if ($name) {
-                                            $set('signal_owner', $name);
+                                        $legacyOwner = $get('signal_owner');
+                                        if (filled($legacyOwner)) {
+                                            $set('signal_owners', [[
+                                                'owner_from_owner' => false,
+                                                'owner_id' => null,
+                                                'owner_name' => $legacyOwner,
+                                            ]]);
                                         }
                                     })
-                                    ->placeholder('اختر مالكًا من بطاقة العقار'),
+                                    ->dehydrateStateUsing(function ($state, Get $get): array {
+                                        return collect($state ?? [])
+                                            ->map(function (array $row) use ($get): ?array {
+                                                $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
+                                                $ownerId = $row['owner_id'] ?? null;
 
-                                Toggle::make('signal_owner_from_owner')
-                                    ->label('صاحب الإشارة من المالكين')
-                                    ->default(true)
-                                    ->live()
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, $set, Get $get): void {
-                                        if (! $state) {
-                                            return;
-                                        }
+                                                $name = $fromOwner
+                                                    ? $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $ownerId)
+                                                    : ($row['owner_name'] ?? null);
 
-                                        $name = $this->resolveOwnerNameFromOwnerships(
-                                            $get('../../ownerships'),
-                                            $get('signal_owner_id')
-                                        );
+                                                if ($fromOwner && ! filled($ownerId)) {
+                                                    return null;
+                                                }
 
-                                        if ($name) {
-                                            $set('signal_owner', $name);
-                                        }
+                                                if (! $fromOwner && ! filled($name)) {
+                                                    return null;
+                                                }
+
+                                                return [
+                                                    'is_owner' => $fromOwner,
+                                                    'owner_id' => $fromOwner ? $ownerId : null,
+                                                    'name' => filled($name) ? $name : null,
+                                                ];
+                                            })
+                                            ->filter()
+                                            ->values()
+                                            ->all();
                                     }),
-
-                                TextInput::make('signal_owner')
-                                    ->label('المالك')
-                                    ->maxLength(150)
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->visible(fn (Get $get) => ! (bool) $get('signal_owner_from_owner'))
-                                    ->dehydrateStateUsing(function ($state, Get $get) {
-                                        if ($get('signal_owner_from_owner')) {
-                                            $name = $this->resolveOwnerNameFromOwnerships(
-                                                $get('../../ownerships'),
-                                                $get('signal_owner_id')
-                                            );
-
-                                            return filled($name) ? $name : null;
-                                        }
-
-                                        return filled($state) ? $state : null;
-                                    })
-                                    ->placeholder('اسم المالك إن وُجد'),
 
                                 Repeater::make('signal_sources')
                                     ->label('المصادر')
@@ -1014,8 +1037,7 @@ class PropertyCardPage extends Page implements HasSchemas
         $signals = $state['signals'] ?? [];
 
         foreach ($signals as $signalData) {
-            $ownerId = $signalData['signal_owner_id'] ?? null;
-            $useOwner = (bool) ($signalData['signal_owner_from_owner'] ?? false);
+            $ownersPayload = $signalData['signal_owners'] ?? [];
             $signal = null;
 
             if (filled($signalData['id'] ?? null)) {
@@ -1033,11 +1055,14 @@ class PropertyCardPage extends Page implements HasSchemas
                 continue;
             }
 
-            if ($useOwner && filled($ownerId)) {
-                $signal->owners()->sync([$ownerId]);
-            } else {
-                $signal->owners()->sync([]);
-            }
+            $ownerIds = collect($ownersPayload)
+                ->filter(fn (array $item): bool => (bool) ($item['is_owner'] ?? false) && filled($item['owner_id'] ?? null))
+                ->pluck('owner_id')
+                ->unique()
+                ->values()
+                ->all();
+
+            $signal->owners()->sync($ownerIds);
         }
 
     }
