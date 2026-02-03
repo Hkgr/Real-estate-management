@@ -29,6 +29,13 @@ class SignalsTable
                     ->label('أصحاب الإشارة'),
                 TextColumn::make('signal_source')
                     ->searchable(),
+                TextColumn::make('signal_source_number')
+                    ->label('رقم الجهة')
+                    ->searchable(),
+                TextColumn::make('signal_source_date')
+                    ->label('تاريخ الجهة')
+                    ->date()
+                    ->sortable(),
                 TextColumn::make('signal_victims_label')
                     ->label('المتضرّرون')
                     ->searchable(),

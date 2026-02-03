@@ -15,6 +15,8 @@ class Signal extends Model
         'signal_owner',
         'signal_owners',
         'signal_source',
+        'signal_source_number',
+        'signal_source_date',
         'signal_victims',
         'signal_victim',
         'property_id',
@@ -23,6 +25,7 @@ class Signal extends Model
     protected $casts = [
         'signal_owners' => 'array',
         'signal_victims' => 'array',
+        'signal_source_date' => 'date',
     ];
 
     public function property(): BelongsTo

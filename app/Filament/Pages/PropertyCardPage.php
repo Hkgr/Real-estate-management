@@ -377,13 +377,31 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->required()
                                     ->placeholder('اختر نوع الإشارة'),
 
-                                TextInput::make('signal_source')
-                                    ->label('الجهة/المصدر')
-                                    ->maxLength(150)
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                    ->placeholder('مثال: جهة إصدار الإشارة'),
+                                FormGrid::make(3)
+                                    ->schema([
+                                        TextInput::make('signal_source')
+                                            ->label('الجهة/المصدر')
+                                            ->maxLength(150)
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('مثال: جهة إصدار الإشارة'),
+
+                                        TextInput::make('signal_source_number')
+                                            ->label('رقم الجهة')
+                                            ->maxLength(50)
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('مثال: 2024/55'),
+
+                                        DatePicker::make('signal_source_date')
+                                            ->label('تاريخ الجهة')
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('مثال: 2024-01-01'),
+                                    ]),
 
                                 Repeater::make('signal_owners')
                                     ->label('أصحاب الإشارة')

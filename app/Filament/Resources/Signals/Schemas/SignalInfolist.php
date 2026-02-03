@@ -25,6 +25,13 @@ class SignalInfolist
                     ->placeholder('-'),
                 TextEntry::make('signal_source')
                     ->placeholder('-'),
+                TextEntry::make('signal_source_number')
+                    ->label('رقم الجهة')
+                    ->placeholder('-'),
+                TextEntry::make('signal_source_date')
+                    ->label('تاريخ الجهة')
+                    ->date()
+                    ->placeholder('-'),
                 TextEntry::make('signal_victims_label')
                     ->label('المتضرّرون')
                     ->placeholder('-'),
