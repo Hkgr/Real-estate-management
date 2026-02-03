@@ -297,8 +297,9 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->label('طريقة الشراء')
                                             ->native(false)
                                             ->options([
-                                                'sale_contract' => 'عقد بيع',
+                                                'regular_contract' => 'عقد عادي',
                                                 'court_judgment' => 'حكم قضائي',
+                                                'commercial_register_contract' => 'عقد سجل تجاري',
                                             ])
                                             ->nullable()
                                             ->live(onBlur: true),

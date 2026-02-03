@@ -34,8 +34,14 @@
             <td>
                 @php
                     $purchaseMethod = $record->ownerships->first()?->purchase_method;
+                    $purchaseMethodLabel = match ($purchaseMethod) {
+                        'regular_contract' => 'عقد عادي',
+                        'court_judgment' => 'حكم قضائي',
+                        'commercial_register_contract' => 'عقد سجل تجاري',
+                        default => '—',
+                    };
                 @endphp
-                {{ $purchaseMethod === 'sale_contract' ? 'عقد بيع' : ($purchaseMethod === 'court_judgment' ? 'حكم قضائي' : '—') }}
+                {{ $purchaseMethodLabel }}
             </td>
         </tr>
         <tr><th>المساحة الكلية</th><td><span class="ltr">{{ number_format((float)$record->card_total_area, 2) }}</span> م²</td></tr>
