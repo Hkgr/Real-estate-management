@@ -21,11 +21,16 @@ class SignalsTable
                     ->searchable(),
                 TextColumn::make('type')
                     ->badge(),
-                TextColumn::make('signal_owner')
+                TextColumn::make('property.display_name')
+                    ->label('العقار')
+                    ->placeholder('-')
                     ->searchable(),
+                TextColumn::make('signal_owners_label')
+                    ->label('أصحاب الإشارة'),
                 TextColumn::make('signal_source')
                     ->searchable(),
-                TextColumn::make('signal_victim')
+                TextColumn::make('signal_victims_label')
+                    ->label('المتضرّرون')
                     ->searchable(),
                 TextColumn::make('deleted_at')
                     ->dateTime()

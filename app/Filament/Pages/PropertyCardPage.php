@@ -191,10 +191,10 @@ class PropertyCardPage extends Page implements HasSchemas
                  * استخدم Pivot Model + HasMany مثل: ownerships()
                  * (PropertyCardOwner) + العلاقة owner() داخل Pivot.
                  */
-                Section::make('المالكون')
+                Section::make('الملاك')
                     ->schema([
                         Repeater::make('ownerships')
-                            ->label('المالكون')
+                            ->label('الملاك')
                             ->relationship('ownerships') // HasMany على Pivot Model: PropertyCardOwner
                             ->schema([
                                 Select::make('owner_id')
@@ -241,7 +241,9 @@ class PropertyCardPage extends Page implements HasSchemas
 
                                         Toggle::make('is_active')
                                             ->label('فعّال')
-                                            ->default(false),
+                                            ->default(false)
+                                            ->live(),
+
                                     ])
                                     ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
                                     ->required(),
@@ -273,7 +275,8 @@ class PropertyCardPage extends Page implements HasSchemas
 
                                 Toggle::make('is_current')
                                     ->label('مالك حالي')
-                                    ->default(false),
+                                    ->default(false)
+                                    ->live(),
 
                                 DatePicker::make('purchase_date')
                                     ->label('تاريخ الشراء')
@@ -291,6 +294,253 @@ class PropertyCardPage extends Page implements HasSchemas
                                 'md' => 2,
                             ]),
                     ]),
+                Section::make('الإشارات')
+                    ->schema([
+                        Repeater::make('signals')
+                            ->label('الإشارات')
+                            ->relationship('signals')
+                            ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                                if (isset($data['signal_owners'])) {
+                                    $data['signal_owners'] = collect($data['signal_owners'])
+                                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
+                                        ->values()
+                                        ->all();
+                                }
+
+                                if (isset($data['signal_victims'])) {
+                                    $data['signal_victims'] = collect($data['signal_victims'])
+                                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
+                                        ->values()
+                                        ->all();
+                                }
+
+                                return Arr::except($data, [
+                                    'signal_victim_id',
+                                    'signal_victim_from_owner',
+                                    'signal_victim',
+                                    'owners',
+                                ]);
+                            })
+
+                            ->schema([
+                                TextInput::make('signal_id')
+                                    ->label('رقم الإشارة')
+                                    ->maxLength(50)
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->placeholder('مثال: 125'),
+
+                                DatePicker::make('signal_date')
+                                    ->label('تاريخ الإشارة')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->placeholder('مثال: 2024-01-01')
+                                    ->helperText('أدخل تاريخ الإشارة لتسهيل البحث.'),
+
+                                Select::make('type')
+                                    ->label('نوع الإشارة')
+                                    ->native(false)
+                                    ->searchable()
+                                    ->options([
+                                        'حجز' => 'حجز',
+                                        'دعوة' => 'دعوة',
+                                        'استيفاء رسوم' => 'استيفاء رسوم',
+                                        'إنذار' => 'إنذار',
+                                        'استملاك' => 'استملاك',
+                                    ])
+                                    ->required()
+                                    ->placeholder('اختر نوع الإشارة'),
+
+                                TextInput::make('signal_source')
+                                    ->label('الجهة/المصدر')
+                                    ->maxLength(150)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                    ->placeholder('مثال: جهة إصدار الإشارة'),
+
+                                Repeater::make('signal_owners')
+                                    ->label('أصحاب الإشارة')
+                                    ->schema([
+                                        Toggle::make('owner_from_owner')
+                                            ->label('من المالكين')
+                                            ->default(true)
+                                            ->live(),
+
+                                        Select::make('owner_id')
+                                            ->label('المالك')
+                                            ->native(false)
+                                            ->searchable()
+                                            ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                            ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
+                                            ->placeholder('اختر مالكًا من بطاقة العقار'),
+
+                                        TextInput::make('owner_name')
+                                            ->label('اسم المالك')
+                                            ->maxLength(150)
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->visible(fn (Get $get) => ! (bool) $get('owner_from_owner'))
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('اسم المالك إن وُجد'),
+                                    ])
+                                    ->columns([
+                                        'default' => 1,
+                                        'md' => 2,
+                                    ])
+                                    ->defaultItems(0)
+                                    ->afterStateHydrated(function ($state, $set, Get $get): void {
+                                        if (is_array($state) && count($state) > 0) {
+                                            $set('signal_owners', collect($state)->map(function (array $item): array {
+                                                return [
+                                                    'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                                    'owner_id' => $item['owner_id'] ?? null,
+                                                    'owner_name' => $item['name'] ?? null,
+                                                ];
+                                            })->all());
+                                            return;
+                                        }
+
+                                        $owners = $get('owners') ?? [];
+                                        if (is_array($owners) && count($owners) > 0) {
+                                            $set('signal_owners', collect($owners)->map(function (array $owner): array {
+                                                return [
+                                                    'owner_from_owner' => true,
+                                                    'owner_id' => $owner['id'] ?? null,
+                                                    'owner_name' => $owner['full_name'] ?? null,
+                                                ];
+                                            })->all());
+                                            return;
+                                        }
+
+                                        $legacyOwner = $get('signal_owner');
+                                        if (filled($legacyOwner)) {
+                                            $set('signal_owners', [[
+                                                'owner_from_owner' => false,
+                                                'owner_id' => null,
+                                                'owner_name' => $legacyOwner,
+                                            ]]);
+                                        }
+                                    })
+                                    ->dehydrateStateUsing(function ($state, Get $get): array {
+                                        return collect($state ?? [])
+                                            ->map(function (array $row) use ($get): ?array {
+                                                $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
+                                                $ownerId = $row['owner_id'] ?? null;
+
+                                                $name = $fromOwner
+                                                    ? $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $ownerId)
+                                                    : ($row['owner_name'] ?? null);
+
+                                                if ($fromOwner && ! filled($ownerId)) {
+                                                    return null;
+                                                }
+
+                                                if (! $fromOwner && ! filled($name)) {
+                                                    return null;
+                                                }
+
+                                                return [
+                                                    'is_owner' => $fromOwner,
+                                                    'owner_id' => $fromOwner ? $ownerId : null,
+                                                    'name' => filled($name) ? $name : null,
+                                                ];
+                                            })
+                                            ->filter()
+                                            ->values()
+                                            ->all();
+                                    }),
+
+                                Repeater::make('signal_victims')
+                                    ->label('المتضرّرون')
+                                    ->schema([
+                                        Toggle::make('victim_from_owner')
+                                            ->label('من المالكين')
+                                            ->default(true)
+                                            ->live()
+                                            ->reactive(),
+
+                                        Select::make('victim_owner_id')
+                                            ->label('المالك')
+                                            ->native(false)
+                                            ->searchable()
+                                            ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                            ->live()
+                                            ->reactive()
+                                            ->visible(fn (Get $get) => (bool) $get('victim_from_owner'))
+                                            ->placeholder('اختر متضرّرًا من بطاقة العقار'),
+
+                                        TextInput::make('victim_name')
+                                            ->label('اسم المتضرّر')
+                                            ->maxLength(150)
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->visible(fn (Get $get) => ! (bool) $get('victim_from_owner'))
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('اسم المتضرّر إن وُجد'),
+                                    ])
+                                    ->columns([
+                                        'default' => 1,
+                                        'md' => 2,
+                                    ])
+                                    ->defaultItems(0)
+                                    ->afterStateHydrated(function ($state, $set, Get $get): void {
+                                        if (is_array($state) && count($state) > 0) {
+                                            $set('signal_victims', collect($state)->map(function (array $item): array {
+                                                return [
+                                                    'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                                    'victim_owner_id' => $item['owner_id'] ?? null,
+                                                    'victim_name' => $item['name'] ?? null,
+                                                ];
+                                            })->all());
+                                            return;
+                                        }
+
+                                        $legacyVictim = $get('signal_victim');
+
+                                        if (filled($legacyVictim)) {
+                                            $set('signal_victims', [[
+                                                'victim_from_owner' => false,
+                                                'victim_owner_id' => null,
+                                                'victim_name' => $legacyVictim,
+                                            ]]);
+                                        }
+                                    })
+                                    ->dehydrateStateUsing(function ($state, Get $get): array {
+                                        return collect($state ?? [])
+                                            ->map(function (array $row) use ($get): ?array {
+                                                $fromOwner = (bool) ($row['victim_from_owner'] ?? false);
+                                                $ownerId = $row['victim_owner_id'] ?? null;
+
+                                                $name = $fromOwner
+                                                    ? $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $ownerId)
+                                                    : ($row['victim_name'] ?? null);
+
+                                                if ($fromOwner && ! filled($ownerId)) {
+                                                    return null;
+                                                }
+
+                                                if (! $fromOwner && ! filled($name)) {
+                                                    return null;
+                                                }
+
+                                                return [
+                                                    'is_owner' => $fromOwner,
+                                                    'owner_id' => $fromOwner ? $ownerId : null,
+                                                    'name' => filled($name) ? $name : null,
+                                                ];
+                                            })
+                                            ->filter()
+                                            ->values()
+                                            ->all();
+                                    }),
+                            ])
+                            ->columns([
+                                'default' => 1,
+                                'md' => 2,
+                            ]),
+                    ]),
+
             ])
             ->statePath('data')
             ->model(PropertyCard::class);
@@ -349,7 +599,7 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->currentRecordId = $record->id;
 
         // ✅ تحميل Pivot + المالك داخلها
-        $this->form->fill($record->load('ownerships.owner')->toArray());
+        $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -403,11 +653,12 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 // ✅ لا تمرّر العلاقات كأعمدة
-                $attributes = Arr::except($state, ['owners', 'ownerships']);
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
 
                 try {
                     $record = PropertyCard::create($attributes);
                     $this->form->model($record)->saveRelationships();
+                    $this->syncSignalOwners($record, $state);
                 } catch (QueryException $exception) {
                     Notification::make()
                         ->title('فشل الحفظ')
@@ -418,7 +669,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -463,7 +714,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
@@ -503,11 +754,12 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $state = $this->getFormPayload($validated);
-                $attributes = Arr::except($state, ['owners', 'ownerships']);
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
 
                 try {
                     $record->update($attributes);
                     $this->form->model($record)->saveRelationships();
+                    $this->syncSignalOwners($record, $state);
                 } catch (QueryException $exception) {
                     Notification::make()
                         ->title('فشل التعديل')
@@ -517,7 +769,6 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->form->fill($record->fresh()->load('ownerships.owner')->toArray());
                 Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 
@@ -671,41 +922,113 @@ class PropertyCardPage extends Page implements HasSchemas
             ->implode("\n");
     }
 
-protected function formatQueryExceptionMessage(QueryException $exception): string
-{
-    $sqlState   = $exception->errorInfo[0] ?? null;
-    $driverCode = $exception->errorInfo[1] ?? null;
-    $message    = $exception->errorInfo[2] ?? $exception->getMessage();
+    protected function getOwnerOptionsFromOwnerships(?array $ownerships): array
+    {
+        return collect($ownerships ?? [])
+            ->mapWithKeys(function (array $ownership): array {
+                $owner = $ownership['owner'] ?? [];
+                $ownerId = $ownership['owner_id'] ?? $owner['id'] ?? null;
+                $fullName = $owner['full_name'] ?? null;
 
-    // Duplicate
-    if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
-        return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
-    }
+                if (! filled($ownerId) || ! filled($fullName)) {
+                    return [];
+                }
+
 
     // FK
-    if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
-        return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+
+                return [$ownerId => $fullName];
+            })
+            ->all();
+
     }
 
     // Unknown column
-    if ($driverCode === 1054 || $sqlState === '42S22' || str_contains($message, 'Unknown column')) {
-        $col = null;
-        if (preg_match("/Unknown column '([^']+)'/i", $message, $m)) {
-            $col = $m[1];
+    protected function resolveOwnerNameFromOwnerships(?array $ownerships, mixed $ownerId): ?string
+    {
+        if (! filled($ownerId)) {
+            return null;
+
         }
 
         // لإعطاءك اسم العمود المفقود مباشرة
-        return $col
-            ? "حقل غير موجود في قاعدة البيانات: {$col}. إمّا أن العمود غير موجود في الجدول، أو أنك تمرّر مفتاحًا ليس من أعمدة الجدول ضمن بيانات الحفظ."
-            : "يوجد حقل غير معروف أثناء الحفظ. راجع أن أسماء الحقول تطابق أعمدة الجداول.";
+        $options = $this->getOwnerOptionsFromOwnerships($ownerships);
+
+        return $options[$ownerId] ?? null;
+
     }
 
-    // NOT NULL / no default
-    if (in_array($driverCode, [1048, 1364], true)) {
-        return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+    protected function syncSignalOwners(PropertyCard $record, array $state): void
+    {
+        $signals = $state['signals'] ?? [];
+
+        foreach ($signals as $signalData) {
+            $ownersPayload = $signalData['signal_owners'] ?? [];
+            $signal = null;
+
+            if (filled($signalData['id'] ?? null)) {
+                $signal = $record->signals()->find($signalData['id']);
+            }
+
+            if (! $signal && filled($signalData['signal_id'] ?? null) && filled($signalData['signal_date'] ?? null)) {
+                    $signal = $record->signals()
+                    ->where('signal_id', $signalData['signal_id'])
+                    ->whereDate('signal_date', $signalData['signal_date'])
+                    ->first();
+            }
+
+            if (! $signal) {
+                continue;
+            }
+
+            $ownerIds = collect($ownersPayload)
+                ->filter(fn (array $item): bool => (bool) ($item['is_owner'] ?? false) && filled($item['owner_id'] ?? null))
+                ->pluck('owner_id')
+                ->unique()
+                ->values()
+                ->all();
+
+            $signal->owners()->sync($ownerIds);
+        }
+
     }
 
-    return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
-}
+ protected function formatQueryExceptionMessage(QueryException $exception): string
+    {
+        $sqlState   = $exception->errorInfo[0] ?? null;
+        $driverCode = $exception->errorInfo[1] ?? null;
+        $message    = $exception->errorInfo[2] ?? $exception->getMessage();
+
+        // Duplicate
+        if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
+            return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
+        }
+
+        // FK
+        if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
+            return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+        }
+
+        // Unknown column
+        if ($driverCode === 1054 || $sqlState === '42S22' || str_contains($message, 'Unknown column')) {
+            $col = null;
+            if (preg_match("/Unknown column '([^']+)'/i", $message, $m)) {
+                $col = $m[1];
+            }
+
+            // لإعطاءك اسم العمود المفقود مباشرة
+            return $col
+                ? "حقل غير موجود في قاعدة البيانات: {$col}. إمّا أن العمود غير موجود في الجدول، أو أنك تمرّر مفتاحًا ليس من أعمدة الجدول ضمن بيانات الحفظ."
+                : "يوجد حقل غير معروف أثناء الحفظ. راجع أن أسماء الحقول تطابق أعمدة الجداول.";
+        }
+
+        // NOT NULL / no default
+        if (in_array($driverCode, [1048, 1364], true)) {
+            return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+        }
+
+        return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
+    }
+
 
 }

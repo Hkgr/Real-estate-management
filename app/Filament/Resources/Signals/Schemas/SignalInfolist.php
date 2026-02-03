@@ -16,11 +16,17 @@ class SignalInfolist
                 TextEntry::make('signal_year'),
                 TextEntry::make('type')
                     ->badge(),
-                TextEntry::make('signal_owner')
+                TextEntry::make('property.display_name')
+                    ->label('العقار')
+                    ->placeholder('-'),
+
+                TextEntry::make('signal_owners_label')
+                    ->label('أصحاب الإشارة')
                     ->placeholder('-'),
                 TextEntry::make('signal_source')
                     ->placeholder('-'),
-                TextEntry::make('signal_victim')
+                TextEntry::make('signal_victims_label')
+                    ->label('المتضرّرون')
                     ->placeholder('-'),
                 TextEntry::make('deleted_at')
                     ->dateTime()
