@@ -24,7 +24,8 @@ class SignalInfolist
                     ->placeholder('-'),
                 TextEntry::make('signal_source')
                     ->placeholder('-'),
-                TextEntry::make('signal_victim')
+                TextEntry::make('signal_victims_label')
+                    ->label('المتضرّرون')
                     ->placeholder('-'),
                 TextEntry::make('deleted_at')
                     ->dateTime()

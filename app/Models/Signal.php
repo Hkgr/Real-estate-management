@@ -15,12 +15,14 @@ class Signal extends Model
         'signal_owner',
         'signal_source',
         'signal_sources',
+        'signal_victims',
         'signal_victim',
         'property_id',
         'property_card_id',
     ];
     protected $casts = [
         'signal_sources' => 'array',
+        'signal_victims' => 'array',
     ];
 
     public function property(): BelongsTo
@@ -69,5 +71,36 @@ class Signal extends Model
         return $this->signal_source ?? '-';
     }
 
+    public function getSignalVictimsLabelAttribute(): string
+    {
+        $victims = $this->signal_victims ?? [];
+
+        if (is_string($victims)) {
+            $victims = json_decode($victims, true) ?? [];
+        }
+
+        if (is_array($victims) && count($victims) > 0) {
+            $labels = collect($victims)->map(function (array $victim): ?string {
+                $name = $victim['name'] ?? null;
+                $ownerId = $victim['owner_id'] ?? null;
+
+                if (filled($name)) {
+                    return $name;
+                }
+
+                if (filled($ownerId)) {
+                    return "مالك #{$ownerId}";
+                }
+
+                return null;
+            })->filter();
+
+            if ($labels->isNotEmpty()) {
+                return $labels->implode('، ');
+            }
+        }
+
+        return $this->signal_victim ?? '-';
+    }
 
 }
