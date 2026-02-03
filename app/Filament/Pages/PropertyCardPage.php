@@ -299,13 +299,23 @@ class PropertyCardPage extends Page implements HasSchemas
                         Repeater::make('signals')
                             ->label('الإشارات')
                             ->relationship('signals')
-                            ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => Arr::except($data, [
-                                'signal_owner_id',
-                                'signal_owner_from_owner',
-                                'signal_victim_id',
-                                'signal_victim_from_owner',
-                                'owners',
-                            ]))
+                            ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                                if (isset($data['signal_sources'])) {
+                                    $data['signal_sources'] = collect($data['signal_sources'])
+                                        ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
+                                        ->values()
+                                        ->all();
+                                }
+
+                                return Arr::except($data, [
+                                    'signal_owner_id',
+                                    'signal_owner_from_owner',
+                                    'signal_victim_id',
+                                    'signal_victim_from_owner',
+                                    'owners',
+                                ]);
+                            })
+
                             ->schema([
                                 TextInput::make('signal_id')
                                     ->label('رقم الإشارة')
@@ -409,13 +419,81 @@ class PropertyCardPage extends Page implements HasSchemas
                                     })
                                     ->placeholder('اسم المالك إن وُجد'),
 
-                                TextInput::make('signal_source')
-                                    ->label('الجهة/المصدر')
-                                    ->maxLength(150)
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                    ->placeholder('مثال: جهة إصدار الإشارة'),
+                                Repeater::make('signal_sources')
+                                    ->label('المصادر')
+                                    ->schema([
+                                        Toggle::make('source_from_owner')
+                                            ->label('من المالكين')
+                                            ->default(true)
+                                            ->live()
+                                            ->reactive(),
+
+                                        Select::make('source_owner_id')
+                                            ->label('المالك')
+                                            ->native(false)
+                                            ->searchable()
+                                            ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                            ->live()
+                                            ->reactive()
+                                            ->visible(fn (Get $get) => (bool) $get('source_from_owner'))
+                                            ->placeholder('اختر مالكًا من بطاقة العقار'),
+
+                                        TextInput::make('source_name')
+                                            ->label('اسم الجهة/المصدر')
+                                            ->maxLength(150)
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->visible(fn (Get $get) => ! (bool) $get('source_from_owner'))
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                            ->placeholder('مثال: جهة إصدار الإشارة'),
+                                    ])
+                                    ->columns([
+                                        'default' => 1,
+                                        'md' => 2,
+                                    ])
+                                    ->defaultItems(0)
+                                    ->afterStateHydrated(function ($state, $set): void {
+                                        if (! is_array($state)) {
+                                            return;
+                                        }
+
+                                        $set('signal_sources', collect($state)->map(function (array $item): array {
+                                            return [
+                                                'source_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                                'source_owner_id' => $item['owner_id'] ?? null,
+                                                'source_name' => $item['name'] ?? null,
+                                            ];
+                                        })->all());
+                                    })
+                                    ->dehydrateStateUsing(function ($state, Get $get): array {
+                                        return collect($state ?? [])
+                                            ->map(function (array $row) use ($get): ?array {
+                                                $fromOwner = (bool) ($row['source_from_owner'] ?? false);
+                                                $ownerId = $row['source_owner_id'] ?? null;
+
+                                                $name = $fromOwner
+                                                    ? $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $ownerId)
+                                                    : ($row['source_name'] ?? null);
+
+                                                if ($fromOwner && ! filled($ownerId)) {
+                                                    return null;
+                                                }
+
+                                                if (! $fromOwner && ! filled($name)) {
+                                                    return null;
+                                                }
+
+                                                return [
+                                                    'is_owner' => $fromOwner,
+                                                    'owner_id' => $fromOwner ? $ownerId : null,
+                                                    'name' => filled($name) ? $name : null,
+                                                ];
+                                            })
+                                            ->filter()
+                                            ->values()
+                                            ->all();
+                                    }),
+
                                 Select::make('signal_victim_id')
                                     ->label('المتضرّر من المالكين')
                                     ->native(false)
