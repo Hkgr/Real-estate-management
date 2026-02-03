@@ -56,6 +56,11 @@ class PropertyCard extends Model
         return $this->hasMany(Signal::class);
     }
 
+      public function files(): HasMany
+    {
+        return $this->hasMany(PropertyCardFile::class);
+    }
+
     public function propertyOwnerPayments(): HasMany
     {
         return $this->hasMany(PropertyOwnerPayment::class);
