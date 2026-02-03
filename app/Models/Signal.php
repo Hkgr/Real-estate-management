@@ -10,7 +10,7 @@ class Signal extends Model
 {
       protected $fillable = [
         'signal_id',
-        'signal_year',
+        'signal_date',
         'type',
         'signal_owner',
         'signal_source',

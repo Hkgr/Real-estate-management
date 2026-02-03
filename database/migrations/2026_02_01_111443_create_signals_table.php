@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('signal_id', 100);
             $table->string('signal_year', 4);
+            $table->date('signal_date')->nullable();
             $table->enum('type', ['حجز ', 'دعوة', 'استيفاء رسوم', 'إنذار', 'استملاك']);
             $table->string('signal_owner', 200)->nullable();
             $table->string('signal_source', 200)->nullable();

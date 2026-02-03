@@ -311,15 +311,12 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->live(onBlur: true)
                                     ->placeholder('مثال: 125'),
 
-                                TextInput::make('signal_year')
-                                    ->label('السنة')
-                                    ->numeric()
-                                    ->minValue(1900)
-                                    ->maxValue((int) date('Y') + 1)
+                                DatePicker::make('signal_date')
+                                    ->label('تاريخ الإشارة')
                                     ->required()
                                     ->live(onBlur: true)
-                                    ->placeholder('مثال: 2024')
-                                    ->helperText('أدخل سنة الإشارة لتسهيل البحث.'),
+                                    ->placeholder('مثال: 2024-01-01')
+                                    ->helperText('أدخل تاريخ الإشارة لتسهيل البحث.'),
 
                                 Select::make('type')
                                     ->label('نوع الإشارة')
@@ -927,10 +924,10 @@ class PropertyCardPage extends Page implements HasSchemas
                 $signal = $record->signals()->find($signalData['id']);
             }
 
-            if (! $signal && filled($signalData['signal_id'] ?? null) && filled($signalData['signal_year'] ?? null)) {
-                $signal = $record->signals()
+            if (! $signal && filled($signalData['signal_id'] ?? null) && filled($signalData['signal_date'] ?? null)) {
+                    $signal = $record->signals()
                     ->where('signal_id', $signalData['signal_id'])
-                    ->where('signal_year', $signalData['signal_year'])
+                    ->whereDate('signal_date', $signalData['signal_date'])
                     ->first();
             }
 
