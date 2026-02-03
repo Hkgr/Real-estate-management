@@ -287,8 +287,20 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->label('تاريخ البيع')
                                     ->nullable()
                                     ->live(onBlur: true)
-                                    ->visible(fn (Get $get) => ! (bool) $get('is_current')),
+                                    ->visible(fn (Get $get) => ! (bool) $get('is_current')),+
+
+                                Select::make('purchase_method')
+                                    ->label('طريقة الشراء')
+                                    ->native(false)
+                                    ->options([
+                                        'sale_contract' => 'عقد بيع',
+                                        'court_judgment' => 'حكم قضائي',
+                                    ])
+                                    ->nullable()
+                                    ->live(onBlur: true),
+
                             ])
+
                             ->columns([
                                 'default' => 1,
                                 'md' => 2,

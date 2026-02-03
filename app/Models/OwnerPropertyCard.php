@@ -13,6 +13,7 @@ class OwnerPropertyCard extends Pivot
         'is_current' => 'boolean',
         'purchase_date' => 'date',
         'sale_date' => 'date',
+        'purchase_method' => 'string',
     ];
 
     public function owner()
