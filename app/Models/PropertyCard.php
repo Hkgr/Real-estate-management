@@ -18,7 +18,6 @@ class PropertyCard extends Model
         'card_property_number',
         'card_record_number',
         'card_total_area',
-        'card_area_unit',
         'card_status',
         'card_investment_type',
         'card_sale_date',

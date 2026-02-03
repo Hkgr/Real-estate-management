@@ -7,7 +7,6 @@ use App\Models\PropertyCard;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid as FormGrid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -171,19 +170,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 Section::make('المساحات والملكية')
                     ->schema([
-                        Grid::make(2)->schema([
-                            Select::make('card_area_unit')
-                                ->label('وحدة المساحة')
-                                ->native(false)
-                                ->options([
-                                    'percentage' => 'نسبة مئوية (%)',
-                                    'shares' => 'عدد الأسهم',
-                                    'meters' => 'عدد الأمتار (م²)',
-                                ])
-                                ->default('meters')
-                                ->required()
-                                ->live(onBlur: true),
-
+                        Grid::make(1)->schema([
                             TextInput::make('card_total_area')
                                 ->label('مساحة العقار الكلية')
                                 ->numeric()
@@ -191,12 +178,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->maxValue(9999999999.99)
                                 ->required()
                                 ->live(onBlur: true)
-                                ->suffix(fn (Get $get) => match ($get('card_area_unit')) {
-                                    'percentage' => '%',
-                                    'shares' => 'سهم',
-                                    'meters' => 'م²',
-                                    default => null,
-                                })
+                                ->suffix('م²')
                                 ->placeholder('مثال: 400'),
                         ]),
                     ]),
@@ -266,30 +248,14 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
                                             ->required(),
 
-                                        Select::make('ownership_metric')
-                                            ->label('معيار التملك')
-                                            ->native(false)
-                                            ->options([
-                                                'percentage' => 'نسبة مئوية (%)',
-                                                'shares' => 'عدد الأسهم',
-                                                'meters' => 'عدد الأمتار (م²)',
-                                            ])
-                                            ->required()
-                                            ->live(onBlur: true),
-
                                         TextInput::make('ownership_percentage')
                                             ->label('قيمة التملك')
                                             ->numeric()
                                             ->minValue(0)
-                                            ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 9999999999.99)
+                                            ->maxValue(9999999999.99)
                                             ->required()
                                             ->live(onBlur: true)
-                                            ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
-                                                'percentage' => '%',
-                                                'shares' => 'سهم',
-                                                'meters' => 'م²',
-                                                default => null,
-                                            }),
+                                            ->suffix('سهم'),
 
                                         Toggle::make('is_current')
                                             ->label('مالك حالي')
@@ -377,7 +343,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->required()
                                     ->placeholder('اختر نوع الإشارة'),
 
-                                FormGrid::make(3)
+                                Grid::make(3)
                                     ->schema([
                                         TextInput::make('signal_source')
                                             ->label('الجهة/المصدر')
@@ -473,7 +439,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                                 $ownerId = $row['owner_id'] ?? null;
 
                                                 $name = $fromOwner
-                                                    ? $this->resolveOwnerNameFromOwnerships($ownerId)
+                                                    ? $this->resolveOwnerNameFromAllOwners($ownerId)
                                                     : ($row['owner_name'] ?? null);
 
                                                 if ($fromOwner && ! filled($ownerId)) {
@@ -557,7 +523,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                                 $ownerId = $row['victim_owner_id'] ?? null;
 
                                                 $name = $fromOwner
-                                                    ? $this->resolveOwnerNameFromOwnerships($ownerId)
+                                                    ? $this->resolveOwnerNameFromAllOwners($ownerId)
                                                     : ($row['victim_name'] ?? null);
 
                                                 if ($fromOwner && ! filled($ownerId)) {
@@ -627,6 +593,17 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->nullable()
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                Select::make('currency')
+                                    ->label('العملة')
+                                    ->native(false)
+                                    ->options([
+                                        'syp_new' => 'ليرة سورية جديدة',
+                                        'syp_old' => 'ليرة سورية قديمة',
+                                        'usd' => 'دولار أمريكي',
+                                    ])
+                                    ->nullable()
+                                    ->live(onBlur: true),
                             ])
                             ->columns([
                                 'default' => 1,
@@ -1008,7 +985,7 @@ class PropertyCardPage extends Page implements HasSchemas
             ->all();
     }
 
-    protected function resolveOwnerNameFromOwnerships(mixed $ownerId): ?string
+    protected function resolveOwnerNameFromAllOwners(mixed $ownerId): ?string
     {
         if (! filled($ownerId)) {
             return null;
