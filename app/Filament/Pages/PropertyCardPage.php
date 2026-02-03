@@ -832,6 +832,9 @@ class PropertyCardPage extends Page implements HasSchemas
                 ], [
                     'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
                     'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
+                    'files.*.file_upload.*.max' => 'حجم الملف يجب ألا يتجاوز :max كيلوبايت.',
+                    'files.*.file_upload.*.mimes' => 'صيغة الملف غير مدعومة. الصيغ المسموحة: :values.',
+                    'files.*.file_upload.*.mimetypes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: :values.',
                 ]);
 
                 if ($validator->fails()) {
@@ -1231,10 +1234,70 @@ class PropertyCardPage extends Page implements HasSchemas
             return 'حدثت أخطاء تحقق غير معروفة.';
         }
 
+        $fieldLabels = [
+            'card_record_number' => 'رقم المحضر',
+            'card_governorate' => 'المحافظة',
+            'card_region_name' => 'اسم المنطقة',
+            'card_subdivision' => 'المقسم',
+            'card_status' => 'حالة العقار',
+            'card_investment_type' => 'نوع الاستثمار',
+            'card_purchase_method' => 'طريقة الشراء',
+            'card_google_maps_url' => 'رابط خريطة Google',
+            'card_property_details' => 'تفصيل العقار',
+            'card_total_area' => 'مساحة العقار الكلية',
+            'ownerships' => 'الملاك',
+            'owner_id' => 'المالك',
+            'ownership_metric' => 'معيار التملك',
+            'ownership_percentage' => 'نسبة التملك',
+            'is_current' => 'الملكية الحالية',
+            'purchase_date' => 'تاريخ الشراء',
+            'sale_date' => 'تاريخ البيع',
+            'full_name' => 'الاسم الرباعي',
+            'birth_date' => 'تاريخ الميلاد',
+            'national_id' => 'الرقم الوطني',
+            'phone' => 'رقم الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'is_active' => 'نشط',
+            'signals' => 'الإشارات',
+            'signal_id' => 'رقم الإشارة',
+            'signal_date' => 'تاريخ الإشارة',
+            'type' => 'نوع الإشارة',
+            'signal_source' => 'الجهة',
+            'signal_source_number' => 'رقم الكتاب',
+            'signal_source_date' => 'تاريخ الكتاب',
+            'signal_owners' => 'أصحاب الإشارة',
+            'owner_from_owner' => 'من المالكين',
+            'owner_name' => 'اسم المالك',
+            'signal_victims' => 'المتضررون',
+            'victim_from_owner' => 'من المالكين',
+            'victim_owner_id' => 'المالك المتضرر',
+            'victim_name' => 'اسم المتضرر',
+            'files' => 'الملفات',
+            'file_upload' => 'رفع الملف',
+            'file_name' => 'اسم الملف',
+            'file_issued_at' => 'تاريخ الإصدار',
+            'payments' => 'الحركات المالية',
+            'debit' => 'مدين',
+            'credit' => 'دائن',
+            'statement' => 'البيان',
+            'voucher' => 'رقم السند',
+            'payment_date' => 'تاريخ الحركة',
+            'balance_movement' => 'حركة الرصيد',
+            'currency' => 'العملة',
+        ];
+
         return collect($errors)
             ->map(function (array $messages, string $field): string {
+                $normalizedField = collect(explode('.', $field))
+                    ->reject(fn (string $segment): bool => is_numeric($segment))
+                    ->implode('.');
+                $segments = explode('.', $normalizedField);
+                $lastSegment = end($segments) ?: $normalizedField;
+                $label = $fieldLabels[$normalizedField]
+                    ?? $fieldLabels[$lastSegment]
+                    ?? $normalizedField;
                 $message = implode('، ', $messages);
-                return "{$field}: {$message}";
+                return "{$label}: {$message}";
             })
             ->implode("\n");
     }
