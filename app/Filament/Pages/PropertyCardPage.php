@@ -296,6 +296,10 @@ class PropertyCardPage extends Page implements HasSchemas
             // ممكن تضيف defaults أخرى هنا
         ]);
 
+        $this->data['ownerships'] = [];
+        $this->data['signals'] = [];
+        $this->data['payments'] = [];
+
         $this->resetFileInputs();
     }
 
@@ -303,6 +307,7 @@ class PropertyCardPage extends Page implements HasSchemas
     {
         $repeater = Repeater::make('ownerships')
             ->label('الملاك')
+            ->default([])
             ->schema([
                 Grid::make(2)
                     ->schema([
@@ -415,6 +420,7 @@ class PropertyCardPage extends Page implements HasSchemas
     {
         $repeater = Repeater::make('signals')
             ->label('الإشارات')
+            ->default([])
             ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
                 if (isset($data['signal_owners'])) {
                     $data['signal_owners'] = collect($data['signal_owners'])
@@ -494,6 +500,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 Repeater::make('signal_owners')
                     ->label('أصحاب الإشارة')
+                    ->default([])
                     ->schema([
                         Toggle::make('owner_from_owner')
                             ->label('من المالكين')
@@ -586,6 +593,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 Repeater::make('signal_victims')
                     ->label('المدعى عليهم في الإشارة')
+                    ->default([])
                     ->schema([
                         Toggle::make('victim_from_owner')
                             ->label('من المالكين')
@@ -689,6 +697,7 @@ class PropertyCardPage extends Page implements HasSchemas
     {
         $repeater = Repeater::make('payments')
             ->label('الدفعات')
+            ->default([])
             ->schema([
                 TextInput::make('debit')
                     ->label('مدين')
