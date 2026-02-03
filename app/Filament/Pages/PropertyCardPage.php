@@ -582,28 +582,38 @@ class PropertyCardPage extends Page implements HasSchemas
                 Section::make('ملفات البطاقة')
                     ->description('يمكنك رفع الملفات أثناء إنشاء البطاقة، وسيتم حفظها تلقائياً عند أول رفع.')
                     ->schema([
-                        Grid::make(3)->schema([
-                            TextInput::make('file_name')
-                                ->label('اسم الملف')
-                                ->maxLength(255)
-                                ->nullable()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->placeholder('مثال: سند الملكية'),
+                        Repeater::make('files')
+                            ->label('الملفات')
+                            ->schema([
+                                Grid::make(3)->schema([
+                                    TextInput::make('file_name')
+                                        ->label('اسم الملف')
+                                        ->maxLength(255)
+                                        ->nullable()
+                                        ->live(onBlur: true)
+                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                        ->placeholder('مثال: سند الملكية'),
 
-                            DatePicker::make('file_issued_at')
-                                ->label('تاريخ الإصدار')
-                                ->nullable()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                                    DatePicker::make('file_issued_at')
+                                        ->label('تاريخ الإصدار')
+                                        ->nullable()
+                                        ->live(onBlur: true)
+                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-                            FileUpload::make('file_upload')
-                                ->label('رفع الملف')
-                                ->storeFiles(false)
-                                ->live()
-                                ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                ->helperText('مسموح: PDF أو صور فقط.'),
-                        ]),
+                                    FileUpload::make('file_upload')
+                                        ->label('رفع الملف')
+                                        ->multiple()
+                                        ->storeFiles(false)
+                                        ->live()
+                                        ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                        ->helperText('مسموح: PDF أو صور فقط.'),
+                                ]),
+                            ])
+                            ->defaultItems(1)
+                            ->columns([
+                                'default' => 1,
+                                'md' => 1,
+                            ]),
                         Placeholder::make('uploaded_files')
                             ->label('الملفات المرفوعة')
                             ->content(fn () => $this->renderUploadedFiles())
@@ -810,17 +820,18 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $payload = [
-                    'file_upload' => $this->data['file_upload'] ?? null,
-                    'file_name' => $this->data['file_name'] ?? null,
-                    'file_issued_at' => $this->data['file_issued_at'] ?? null,
+                    'files' => $this->data['files'] ?? [],
                 ];
 
                 $validator = Validator::make($payload, [
-                    'file_upload' => ['required', 'file', 'max:10240'],
-                    'file_name' => ['nullable', 'string', 'max:255'],
-                    'file_issued_at' => ['nullable', 'date'],
+                    'files' => ['required', 'array', 'min:1'],
+                    'files.*.file_upload' => ['required', 'array', 'min:1'],
+                    'files.*.file_upload.*' => ['file', 'max:10240'],
+                    'files.*.file_name' => ['nullable', 'string', 'max:255'],
+                    'files.*.file_issued_at' => ['nullable', 'date'],
                 ], [
-                    'file_upload.required' => 'يرجى اختيار ملف للرفع.',
+                    'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
+                    'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
                 ]);
 
                 if ($validator->fails()) {
@@ -833,25 +844,29 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $uploadedFile = $payload['file_upload'];
+                foreach ($payload['files'] as $fileRow) {
+                    $uploadedFiles = Arr::wrap($fileRow['file_upload'] ?? []);
 
-                if (! $uploadedFile instanceof UploadedFile) {
-                    Notification::make()->title('الملف غير صالح')->danger()->send();
-                    return;
+                    foreach ($uploadedFiles as $uploadedFile) {
+                        if (! $uploadedFile instanceof UploadedFile) {
+                            Notification::make()->title('الملف غير صالح')->danger()->send();
+                            return;
+                        }
+
+                        $fileName = $this->normalizeUploadedFileName($fileRow['file_name'] ?? null, $uploadedFile);
+                        $issuedAt = filled($fileRow['file_issued_at'] ?? null)
+                            ? \Illuminate\Support\Carbon::parse($fileRow['file_issued_at'])
+                            : null;
+
+                        app(PropertyCardFileStorage::class)->store(
+                            $record,
+                            $uploadedFile,
+                            $issuedAt,
+                            null,
+                            $fileName
+                        );
+                    }
                 }
-
-                $fileName = $this->normalizeUploadedFileName($payload['file_name'] ?? null, $uploadedFile);
-                $issuedAt = filled($payload['file_issued_at'])
-                    ? \Illuminate\Support\Carbon::parse($payload['file_issued_at'])
-                    : null;
-
-                app(PropertyCardFileStorage::class)->store(
-                    $record,
-                    $uploadedFile,
-                    $issuedAt,
-                    null,
-                    $fileName
-                );
 
                 $this->resetFileInputs();
 
@@ -904,9 +919,7 @@ class PropertyCardPage extends Page implements HasSchemas
             'ownerships',
             'signals',
             'payments',
-            'file_name',
-            'file_issued_at',
-            'file_upload',
+            'files',
         ]);
 
         try {
@@ -989,9 +1002,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     'ownerships',
                     'signals',
                     'payments',
-                    'file_name',
-                    'file_issued_at',
-                    'file_upload',
+                    'files',
                 ]);
 
                 try {
@@ -1145,9 +1156,13 @@ class PropertyCardPage extends Page implements HasSchemas
 
     protected function resetFileInputs(): void
     {
-        $this->data['file_name'] = null;
-        $this->data['file_issued_at'] = null;
-        $this->data['file_upload'] = null;
+        $this->data['files'] = [
+            [
+                'file_name' => null,
+                'file_issued_at' => null,
+                'file_upload' => [],
+            ],
+        ];
     }
 
     protected function renderUploadedFiles(): HtmlString
