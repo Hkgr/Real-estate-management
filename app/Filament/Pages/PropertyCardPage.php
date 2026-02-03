@@ -550,6 +550,55 @@ class PropertyCardPage extends Page implements HasSchemas
                                 'md' => 2,
                             ]),
                     ]),
+                Section::make('الدفعات')
+                    ->schema([
+                        Repeater::make('payments')
+                            ->label('الدفعات')
+                            ->relationship('payments')
+                            ->schema([
+                                TextInput::make('debit')
+                                    ->label('مدين')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->live(onBlur: true),
+
+                                TextInput::make('credit')
+                                    ->label('دائن')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->live(onBlur: true),
+
+                                TextInput::make('statement')
+                                    ->label('البيان')
+                                    ->maxLength(255)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                TextInput::make('voucher')
+                                    ->label('سند')
+                                    ->maxLength(150)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                DatePicker::make('payment_date')
+                                    ->label('التاريخ')
+                                    ->required()
+                                    ->live(onBlur: true),
+
+                                TextInput::make('balance_movement')
+                                    ->label('حركة الرصيد')
+                                    ->maxLength(255)
+                                    ->nullable()
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                            ])
+                            ->columns([
+                                'default' => 1,
+                                'md' => 6,
+                            ]),
+                    ]),
 
             ])
             ->statePath('data')
@@ -609,7 +658,7 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->currentRecordId = $record->id;
 
         // ✅ تحميل Pivot + المالك داخلها
-        $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
+        $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -663,7 +712,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 // ✅ لا تمرّر العلاقات كأعمدة
-                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals', 'payments']);
 
                 try {
                     $record = PropertyCard::create($attributes);
@@ -679,7 +728,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -724,7 +773,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
@@ -764,7 +813,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $state = $this->getFormPayload($validated);
-                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
+                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals', 'payments']);
 
                 try {
                     $record->update($attributes);
