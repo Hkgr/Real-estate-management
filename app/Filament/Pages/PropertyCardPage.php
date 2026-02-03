@@ -580,7 +580,7 @@ class PropertyCardPage extends Page implements HasSchemas
                             ]),
                     ]),
                 Section::make('ملفات البطاقة')
-                    ->description('يجب تحميل بطاقة العقار أولاً قبل رفع أي ملف.')
+                    ->description('يمكنك رفع الملفات أثناء إنشاء البطاقة، وسيتم حفظها تلقائياً عند أول رفع.')
                     ->schema([
                         Grid::make(3)->schema([
                             TextInput::make('file_name')
@@ -589,20 +589,17 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->nullable()
                                 ->live(onBlur: true)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->disabled(fn () => blank($this->currentRecordId))
                                 ->placeholder('مثال: سند الملكية'),
 
                             DatePicker::make('file_issued_at')
                                 ->label('تاريخ الإصدار')
                                 ->nullable()
                                 ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->disabled(fn () => blank($this->currentRecordId)),
+                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                             FileUpload::make('file_upload')
                                 ->label('رفع الملف')
                                 ->storeFiles(false)
-                                ->disabled(fn () => blank($this->currentRecordId))
                                 ->live()
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
                                 ->helperText('مسموح: PDF أو صور فقط.'),
@@ -748,63 +745,9 @@ class PropertyCardPage extends Page implements HasSchemas
             ->label('إضافة')
             ->icon('heroicon-o-plus')
             ->action(function () {
-                try {
-                    $validated = $this->form->validate();
-                } catch (ValidationException $exception) {
-                    Notification::make()
-                        ->title('يرجى تصحيح أخطاء الحقول')
-                        ->body($this->formatValidationErrors($exception))
-                        ->danger()
-                        ->send();
-                    return;
-                }
+                $record = $this->persistNewRecordFromForm();
 
-                $state = $this->getFormPayload($validated);
-
-                $recordNumber = $state['card_record_number'] ?? null;
-
-                if ($this->isMissingKeyValue($recordNumber)) {
-                    Notification::make()
-                        ->title('يرجى إدخال رقم المحضر')
-                        ->danger()
-                        ->send();
-                    return;
-                }
-
-                $existingRecord = PropertyCard::withTrashed()
-                    ->where('card_record_number', $recordNumber)
-                    ->first();
-
-                if ($existingRecord) {
-                    $message = $existingRecord->trashed()
-                        ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
-                        : 'هذا العقار موجود مسبقًا بنفس المفتاح';
-
-                    Notification::make()->title($message)->danger()->send();
-                    return;
-                }
-
-                // ✅ لا تمرّر العلاقات كأعمدة
-                $attributes = Arr::except($state, [
-                    'owners',
-                    'ownerships',
-                    'signals',
-                    'payments',
-                    'file_name',
-                    'file_issued_at',
-                    'file_upload',
-                ]);
-
-                try {
-                    $record = PropertyCard::create($attributes);
-                    $this->form->model($record)->saveRelationships();
-                    $this->syncSignalOwners($record, $state);
-                } catch (QueryException $exception) {
-                    Notification::make()
-                        ->title('فشل الحفظ')
-                        ->body($this->formatQueryExceptionMessage($exception))
-                        ->danger()
-                        ->send();
+                if (! $record) {
                     return;
                 }
 
@@ -859,10 +802,10 @@ class PropertyCardPage extends Page implements HasSchemas
         $action = Action::make('upload_file')
             ->label('رفع ملف')
             ->icon('heroicon-o-arrow-up-tray')
-            ->disabled(fn () => blank($this->currentRecordId))
             ->action(function () {
-                if (! $this->currentRecordId) {
-                    Notification::make()->title('يرجى تحميل بطاقة أولاً')->warning()->send();
+                $record = $this->resolveRecordForFileUpload();
+
+                if (! $record) {
                     return;
                 }
 
@@ -887,14 +830,6 @@ class PropertyCardPage extends Page implements HasSchemas
                         ->body($this->formatValidationErrors($exception))
                         ->danger()
                         ->send();
-                    return;
-                }
-
-                $record = PropertyCard::find($this->currentRecordId);
-
-                if (! $record) {
-                    $this->currentRecordId = null;
-                    Notification::make()->title('السجل غير موجود')->danger()->send();
                     return;
                 }
 
@@ -924,6 +859,97 @@ class PropertyCardPage extends Page implements HasSchemas
             });
 
         return $this->uniformAction($action);
+    }
+
+    protected function persistNewRecordFromForm(): ?PropertyCard
+    {
+        try {
+            $validated = $this->form->validate();
+        } catch (ValidationException $exception) {
+            Notification::make()
+                ->title('يرجى تصحيح أخطاء الحقول')
+                ->body($this->formatValidationErrors($exception))
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        $state = $this->getFormPayload($validated);
+
+        $recordNumber = $state['card_record_number'] ?? null;
+
+        if ($this->isMissingKeyValue($recordNumber)) {
+            Notification::make()
+                ->title('يرجى إدخال رقم المحضر')
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        $existingRecord = PropertyCard::withTrashed()
+            ->where('card_record_number', $recordNumber)
+            ->first();
+
+        if ($existingRecord) {
+            $message = $existingRecord->trashed()
+                ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
+                : 'هذا العقار موجود مسبقًا بنفس المفتاح';
+
+            Notification::make()->title($message)->danger()->send();
+            return null;
+        }
+
+        $attributes = Arr::except($state, [
+            'owners',
+            'ownerships',
+            'signals',
+            'payments',
+            'file_name',
+            'file_issued_at',
+            'file_upload',
+        ]);
+
+        try {
+            $record = PropertyCard::create($attributes);
+            $this->form->model($record)->saveRelationships();
+            $this->syncSignalOwners($record, $state);
+        } catch (QueryException $exception) {
+            Notification::make()
+                ->title('فشل الحفظ')
+                ->body($this->formatQueryExceptionMessage($exception))
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        return $record;
+    }
+
+    protected function resolveRecordForFileUpload(): ?PropertyCard
+    {
+        if ($this->currentRecordId) {
+            $record = PropertyCard::find($this->currentRecordId);
+
+            if (! $record) {
+                $this->currentRecordId = null;
+                Notification::make()->title('السجل غير موجود')->danger()->send();
+                return null;
+            }
+
+            return $record;
+        }
+
+        $record = $this->persistNewRecordFromForm();
+
+        if (! $record) {
+            return null;
+        }
+
+        $this->currentRecordId = $record->id;
+        $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+        $this->resetFileInputs();
+
+        return $record;
     }
 
     public function updateAction(): Action
