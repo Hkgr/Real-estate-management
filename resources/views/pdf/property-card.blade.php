@@ -19,11 +19,8 @@
     <div class="title">بطاقة العقار</div>
 
     <div class="meta">
-        رقم المنطقة العقارية:
-        <strong class="ltr">{{ $record->card_cadastral_zone_number }}</strong>
-        <span class="sep">—</span>
-        رقم العقار:
-        <strong class="ltr">{{ $record->card_property_number }}</strong>
+        رقم المحضر:
+        <strong class="ltr">{{ $record->card_record_number }}</strong>
     </div>
 
     <table>

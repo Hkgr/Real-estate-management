@@ -76,30 +76,22 @@ class PropertyCardPage extends Page implements HasSchemas
         return $schema
             ->components([
                 Section::make('المفتاح (اكتب وسيتم البحث تلقائياً)')
-                    ->description('عند إدخال الرقمين والخروج من الحقل سيتم تحميل بيانات العقار إن وُجد.')
+                    ->description('عند إدخال رقم المحضر والخروج من الحقل سيتم تحميل بيانات العقار إن وُجد.')
                     ->schema([
-                        Grid::make(2)->schema([
-                            TextInput::make('card_cadastral_zone_number')
-                                ->label('رقم المنطقة العقارية')
+                        Grid::make(1)->schema([
+                            TextInput::make('card_record_number')
+                                ->label('رقم المحضر')
                                 ->maxLength(50)
                                 ->required()
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(fn () => $this->tryAutoSearch())
-                                ->placeholder('مثال: 12A'),
-
-                            TextInput::make('card_property_number')
-                                ->label('رقم العقار')
-                                ->maxLength(50)
-                                ->required()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
-                                ->placeholder('مثال: 105'),
+                                ->placeholder('مثال: 2024/105'),
                         ]),
                     ]),
 
                 Section::make('البيانات الأساسية')
                     ->schema([
-                        Grid::make(3)->schema([
+                        Grid::make(4)->schema([
                             TextInput::make('card_governorate')
                                 ->label('المحافظة')
                                 ->maxLength(100)
@@ -114,6 +106,13 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->live(onBlur: true)
                                 ->placeholder('مثال: الحمدانية'),
 
+                            TextInput::make('card_record_number')
+                                ->label('رقم المحضر')
+                                ->maxLength(50)
+                                ->required()
+                                ->live(onBlur: true)
+                                ->placeholder('مثال: 2024/105'),
+
                             TextInput::make('card_subdivision')
                                 ->label('المقسم')
                                 ->maxLength(100)
@@ -121,7 +120,9 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->nullable()
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->placeholder('مثال: المقسم 22'),
+                        ]),
 
+                        Grid::make(1)->schema([
                             Select::make('card_status')
                                 ->label('حالة العقار')
                                 ->native(false)
@@ -637,16 +638,14 @@ class PropertyCardPage extends Page implements HasSchemas
 
     public function tryAutoSearch(): void
     {
-        $zone = $this->data['card_cadastral_zone_number'] ?? null;
-        $num  = $this->data['card_property_number'] ?? null;
+        $recordNumber = $this->data['card_record_number'] ?? null;
 
-        if (! filled($zone) || ! filled($num)) {
+        if (! filled($recordNumber)) {
             return;
         }
 
         $record = PropertyCard::query()
-            ->where('card_cadastral_zone_number', $zone)
-            ->where('card_property_number', $num)
+            ->where('card_record_number', $recordNumber)
             ->first();
 
         if (! $record) {
@@ -686,20 +685,18 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 $state = $this->getFormPayload($validated);
 
-                $zone = $state['card_cadastral_zone_number'] ?? null;
-                $num  = $state['card_property_number'] ?? null;
+                $recordNumber = $state['card_record_number'] ?? null;
 
-                if ($this->isMissingKeyValue($zone) || $this->isMissingKeyValue($num)) {
+                if ($this->isMissingKeyValue($recordNumber)) {
                     Notification::make()
-                        ->title('يرجى إدخال رقم المنطقة العقارية ورقم العقار')
+                        ->title('يرجى إدخال رقم المحضر')
                         ->danger()
                         ->send();
                     return;
                 }
 
                 $existingRecord = PropertyCard::withTrashed()
-                    ->where('card_cadastral_zone_number', $zone)
-                    ->where('card_property_number', $num)
+                    ->where('card_record_number', $recordNumber)
                     ->first();
 
                 if ($existingRecord) {
@@ -744,25 +741,15 @@ class PropertyCardPage extends Page implements HasSchemas
             ->modalHeading('بحث عن بطاقة عقار')
             ->modalSubmitActionLabel('تحميل')
             ->form([
-                TextInput::make('card_cadastral_zone_number')
-                    ->label('رقم المنطقة العقارية')
-                    ->maxLength(50)
-                    ->nullable(),
-
-                TextInput::make('card_property_number')
-                    ->label('رقم العقار')
+                TextInput::make('card_record_number')
+                    ->label('رقم المحضر')
                     ->maxLength(50)
                     ->required(),
             ])
             ->action(function (array $data) {
-                $zone = $data['card_cadastral_zone_number'] ?? null;
-                $num  = $data['card_property_number'] ?? null;
+                $recordNumber = $data['card_record_number'] ?? null;
 
-                $query = PropertyCard::query()->where('card_property_number', $num);
-
-                if (filled($zone)) {
-                    $query->where('card_cadastral_zone_number', $zone);
-                }
+                $query = PropertyCard::query()->where('card_record_number', $recordNumber);
 
                 $record = $query->first();
 
@@ -887,8 +874,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $filename = 'property-card-' .
-                    ($record->card_cadastral_zone_number ?? 'zone') . '-' .
-                    ($record->card_property_number ?? 'no') . '.pdf';
+                    ($record->card_record_number ?? 'record') . '.pdf';
 
                 $html = view('pdf.property-card-browser', [
                     'record' => $record->load('ownerships.owner'),
