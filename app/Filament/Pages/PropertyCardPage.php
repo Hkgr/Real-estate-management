@@ -296,6 +296,11 @@ class PropertyCardPage extends Page implements HasSchemas
                         Repeater::make('signals')
                             ->label('الإشارات')
                             ->relationship('signals')
+                            ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => Arr::except($data, [
+                                'signal_owner_id',
+                                'signal_owner_from_owner',
+                                'owners',
+                            ]))
                             ->schema([
                                 TextInput::make('signal_id')
                                     ->label('رقم الإشارة')
@@ -328,12 +333,74 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->required()
                                     ->placeholder('اختر نوع الإشارة'),
 
+                                Select::make('signal_owner_id')
+                                    ->label('صاحب الإشارة من المالكين')
+                                    ->native(false)
+                                    ->searchable()
+                                    ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
+                                    ->live()
+                                    ->afterStateHydrated(function ($state, $set, Get $get): void {
+                                        if (filled($state)) {
+                                            return;
+                                        }
+
+                                        $owners = $get('owners') ?? [];
+                                        $ownerId = $owners[0]['id'] ?? null;
+
+                                        if ($ownerId) {
+                                            $set('signal_owner_id', $ownerId);
+                                            $set('signal_owner_from_owner', true);
+                                        }
+                                    })
+                                    ->afterStateUpdated(function ($state, $set, Get $get): void {
+                                        if (! $get('signal_owner_from_owner')) {
+                                            return;
+                                        }
+
+                                        $name = $this->resolveOwnerNameFromOwnerships($get('../../ownerships'), $state);
+
+                                        if ($name) {
+                                            $set('signal_owner', $name);
+                                        }
+                                    })
+                                    ->placeholder('اختر مالكًا من بطاقة العقار'),
+
+                                Toggle::make('signal_owner_from_owner')
+                                    ->label('صاحب الإشارة من المالكين')
+                                    ->default(true)
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set, Get $get): void {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $name = $this->resolveOwnerNameFromOwnerships(
+                                            $get('../../ownerships'),
+                                            $get('signal_owner_id')
+                                        );
+
+                                        if ($name) {
+                                            $set('signal_owner', $name);
+                                        }
+                                    }),
+
                                 TextInput::make('signal_owner')
                                     ->label('المالك')
                                     ->maxLength(150)
                                     ->nullable()
                                     ->live(onBlur: true)
-                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                    ->dehydrateStateUsing(function ($state, Get $get) {
+                                        if ($get('signal_owner_from_owner')) {
+                                            $name = $this->resolveOwnerNameFromOwnerships(
+                                                $get('../../ownerships'),
+                                                $get('signal_owner_id')
+                                            );
+
+                                            return filled($name) ? $name : null;
+                                        }
+
+                                        return filled($state) ? $state : null;
+                                    })
                                     ->placeholder('اسم المالك إن وُجد'),
 
                                 TextInput::make('signal_source')
@@ -416,7 +483,7 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->currentRecordId = $record->id;
 
         // ✅ تحميل Pivot + المالك داخلها
-        $this->form->fill($record->load('ownerships.owner', 'signals')->toArray());
+        $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -475,6 +542,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 try {
                     $record = PropertyCard::create($attributes);
                     $this->form->model($record)->saveRelationships();
+                    $this->syncSignalOwners($record, $state);
                 } catch (QueryException $exception) {
                     Notification::make()
                         ->title('فشل الحفظ')
@@ -485,7 +553,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner', 'signals')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -530,7 +598,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner', 'signals')->toArray());
+                $this->form->fill($record->load('ownerships.owner', 'signals.owners')->toArray());
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
@@ -575,6 +643,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 try {
                     $record->update($attributes);
                     $this->form->model($record)->saveRelationships();
+                    $this->syncSignalOwners($record, $state);
                 } catch (QueryException $exception) {
                     Notification::make()
                         ->title('فشل التعديل')
@@ -584,8 +653,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals']);
-                                Notification::make()->title('تم التعديل بنجاح')->success()->send();
+                Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
@@ -738,41 +806,111 @@ class PropertyCardPage extends Page implements HasSchemas
             ->implode("\n");
     }
 
-protected function formatQueryExceptionMessage(QueryException $exception): string
-{
-    $sqlState   = $exception->errorInfo[0] ?? null;
-    $driverCode = $exception->errorInfo[1] ?? null;
-    $message    = $exception->errorInfo[2] ?? $exception->getMessage();
+    protected function getOwnerOptionsFromOwnerships(?array $ownerships): array
+    {
+        return collect($ownerships ?? [])
+            ->mapWithKeys(function (array $ownership): array {
+                $owner = $ownership['owner'] ?? [];
+                $ownerId = $ownership['owner_id'] ?? $owner['id'] ?? null;
+                $fullName = $owner['full_name'] ?? null;
 
-    // Duplicate
-    if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
-        return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
-    }
+                if (! filled($ownerId) || ! filled($fullName)) {
+                    return [];
+                }
+
 
     // FK
-    if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
-        return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+
+                return [$ownerId => $fullName];
+            })
+            ->all();
+
     }
 
     // Unknown column
-    if ($driverCode === 1054 || $sqlState === '42S22' || str_contains($message, 'Unknown column')) {
-        $col = null;
-        if (preg_match("/Unknown column '([^']+)'/i", $message, $m)) {
-            $col = $m[1];
+    protected function resolveOwnerNameFromOwnerships(?array $ownerships, mixed $ownerId): ?string
+    {
+        if (! filled($ownerId)) {
+            return null;
+
         }
 
         // لإعطاءك اسم العمود المفقود مباشرة
-        return $col
-            ? "حقل غير موجود في قاعدة البيانات: {$col}. إمّا أن العمود غير موجود في الجدول، أو أنك تمرّر مفتاحًا ليس من أعمدة الجدول ضمن بيانات الحفظ."
-            : "يوجد حقل غير معروف أثناء الحفظ. راجع أن أسماء الحقول تطابق أعمدة الجداول.";
+        $options = $this->getOwnerOptionsFromOwnerships($ownerships);
+
+        return $options[$ownerId] ?? null;
+
     }
 
-    // NOT NULL / no default
-    if (in_array($driverCode, [1048, 1364], true)) {
-        return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+    protected function syncSignalOwners(PropertyCard $record, array $state): void
+    {
+        $signals = $state['signals'] ?? [];
+
+        foreach ($signals as $signalData) {
+            $ownerId = $signalData['signal_owner_id'] ?? null;
+            $useOwner = (bool) ($signalData['signal_owner_from_owner'] ?? false);
+            $signal = null;
+
+            if (filled($signalData['id'] ?? null)) {
+                $signal = $record->signals()->find($signalData['id']);
+            }
+
+            if (! $signal && filled($signalData['signal_id'] ?? null) && filled($signalData['signal_year'] ?? null)) {
+                $signal = $record->signals()
+                    ->where('signal_id', $signalData['signal_id'])
+                    ->where('signal_year', $signalData['signal_year'])
+                    ->first();
+            }
+
+            if (! $signal) {
+                continue;
+            }
+
+            if ($useOwner && filled($ownerId)) {
+                $signal->owners()->sync([$ownerId]);
+            } else {
+                $signal->owners()->sync([]);
+            }
+        }
+
     }
 
-    return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
-}
+ protected function formatQueryExceptionMessage(QueryException $exception): string
+    {
+        $sqlState   = $exception->errorInfo[0] ?? null;
+        $driverCode = $exception->errorInfo[1] ?? null;
+        $message    = $exception->errorInfo[2] ?? $exception->getMessage();
+
+        // Duplicate
+        if ($driverCode === 1062 || $sqlState === '23505' || str_contains($message, 'Duplicate entry')) {
+            return 'تم رفض العملية بسبب مفتاح مكرر. يرجى التأكد من أن المفتاح فريد.';
+        }
+
+        // FK
+        if (in_array($driverCode, [1451, 1452], true) || $sqlState === '23503') {
+            return 'تم رفض العملية بسبب قيد مرجعي (مفتاح خارجي). يرجى التحقق من العلاقات.';
+        }
+
+        // Unknown column
+        if ($driverCode === 1054 || $sqlState === '42S22' || str_contains($message, 'Unknown column')) {
+            $col = null;
+            if (preg_match("/Unknown column '([^']+)'/i", $message, $m)) {
+                $col = $m[1];
+            }
+
+            // لإعطاءك اسم العمود المفقود مباشرة
+            return $col
+                ? "حقل غير موجود في قاعدة البيانات: {$col}. إمّا أن العمود غير موجود في الجدول، أو أنك تمرّر مفتاحًا ليس من أعمدة الجدول ضمن بيانات الحفظ."
+                : "يوجد حقل غير معروف أثناء الحفظ. راجع أن أسماء الحقول تطابق أعمدة الجداول.";
+        }
+
+        // NOT NULL / no default
+        if (in_array($driverCode, [1048, 1364], true)) {
+            return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+        }
+
+        return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
+    }
+
 
 }
