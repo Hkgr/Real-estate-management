@@ -832,6 +832,9 @@ class PropertyCardPage extends Page implements HasSchemas
                 ], [
                     'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
                     'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
+                    'files.*.file_upload.*.max' => 'حجم الملف يجب ألا يتجاوز :max كيلوبايت.',
+                    'files.*.file_upload.*.mimes' => 'صيغة الملف غير مدعومة. الصيغ المسموحة: :values.',
+                    'files.*.file_upload.*.mimetypes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: :values.',
                 ]);
 
                 if ($validator->fails()) {
@@ -1231,10 +1234,25 @@ class PropertyCardPage extends Page implements HasSchemas
             return 'حدثت أخطاء تحقق غير معروفة.';
         }
 
+        $fieldLabels = [
+            'files' => 'الملفات',
+            'file_upload' => 'رفع الملف',
+            'file_name' => 'اسم الملف',
+            'file_issued_at' => 'تاريخ الإصدار',
+        ];
+
         return collect($errors)
             ->map(function (array $messages, string $field): string {
+                $normalizedField = collect(explode('.', $field))
+                    ->reject(fn (string $segment): bool => is_numeric($segment))
+                    ->implode('.');
+                $segments = explode('.', $normalizedField);
+                $lastSegment = end($segments) ?: $normalizedField;
+                $label = $fieldLabels[$normalizedField]
+                    ?? $fieldLabels[$lastSegment]
+                    ?? $normalizedField;
                 $message = implode('، ', $messages);
-                return "{$field}: {$message}";
+                return "{$label}: {$message}";
             })
             ->implode("\n");
     }
