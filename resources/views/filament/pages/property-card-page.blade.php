@@ -9,6 +9,7 @@
 {{ $this->searchAction() }}
 {{ $this->updateAction() }}
 {{ $this->deleteAction() }}
+{{ $this->uploadFileAction() }}
 {{ $this->pdfBrowserAction() }}
 
     <x-filament::badge color="gray" class="ml-4 px-3 py-1">

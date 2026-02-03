@@ -16,7 +16,8 @@ class PropertyCardFileStorage
         PropertyCard $propertyCard,
         UploadedFile $file,
         ?CarbonInterface $issuedAt = null,
-        ?string $diskName = null
+        ?string $diskName = null,
+        ?string $fileName = null
     ): PropertyCardFile {
         $diskName = $diskName ?? config('filesystems.default');
         $disk = Storage::disk($diskName);
@@ -28,7 +29,7 @@ class PropertyCardFileStorage
 
         $disk->makeDirectory($directory);
 
-        $originalName = $this->normalizeFileName($file->getClientOriginalName());
+        $originalName = $this->normalizeFileName($fileName ?: $file->getClientOriginalName());
         $storedPath = $disk->putFileAs($directory, $file, $originalName);
 
         if ($storedPath === false) {

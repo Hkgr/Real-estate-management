@@ -7,6 +7,8 @@ use App\Models\PropertyCard;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -21,8 +23,14 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use App\Models\PropertyCardFile;
+use App\Services\PropertyCardFileStorage;
 use Spatie\Browsershot\Browsershot;
 use UnitEnum;
 
@@ -571,6 +579,40 @@ class PropertyCardPage extends Page implements HasSchemas
                                 'md' => 2,
                             ]),
                     ]),
+                Section::make('ملفات البطاقة')
+                    ->description('يجب تحميل بطاقة العقار أولاً قبل رفع أي ملف.')
+                    ->schema([
+                        Grid::make(3)->schema([
+                            TextInput::make('file_name')
+                                ->label('اسم الملف')
+                                ->maxLength(255)
+                                ->nullable()
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->disabled(fn () => blank($this->currentRecordId))
+                                ->placeholder('مثال: سند الملكية'),
+
+                            DatePicker::make('file_issued_at')
+                                ->label('تاريخ الإصدار')
+                                ->nullable()
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->disabled(fn () => blank($this->currentRecordId)),
+
+                            FileUpload::make('file_upload')
+                                ->label('رفع الملف')
+                                ->storeFiles(false)
+                                ->disabled(fn () => blank($this->currentRecordId))
+                                ->live()
+                                ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                ->helperText('مسموح: PDF أو صور فقط.'),
+                        ]),
+                        Placeholder::make('uploaded_files')
+                            ->label('الملفات المرفوعة')
+                            ->content(fn () => $this->renderUploadedFiles())
+                            ->visible(fn () => filled($this->currentRecordId))
+                            ->columnSpanFull(),
+                    ]),
                 Section::make('الدفعات')
                     ->schema([
                         Repeater::make('payments')
@@ -661,6 +703,8 @@ class PropertyCardPage extends Page implements HasSchemas
             'card_status' => 'active',
             // ممكن تضيف defaults أخرى هنا
         ]);
+
+        $this->resetFileInputs();
     }
 
     // =========================
@@ -689,6 +733,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
         // ✅ تحميل Pivot + المالك داخلها
         $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+        $this->resetFileInputs();
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -740,7 +785,15 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 // ✅ لا تمرّر العلاقات كأعمدة
-                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals', 'payments']);
+                $attributes = Arr::except($state, [
+                    'owners',
+                    'ownerships',
+                    'signals',
+                    'payments',
+                    'file_name',
+                    'file_issued_at',
+                    'file_upload',
+                ]);
 
                 try {
                     $record = PropertyCard::create($attributes);
@@ -757,6 +810,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 $this->currentRecordId = $record->id;
                 $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+                $this->resetFileInputs();
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -792,8 +846,81 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 $this->currentRecordId = $record->id;
                 $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+                $this->resetFileInputs();
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+
+    public function uploadFileAction(): Action
+    {
+        $action = Action::make('upload_file')
+            ->label('رفع ملف')
+            ->icon('heroicon-o-arrow-up-tray')
+            ->disabled(fn () => blank($this->currentRecordId))
+            ->action(function () {
+                if (! $this->currentRecordId) {
+                    Notification::make()->title('يرجى تحميل بطاقة أولاً')->warning()->send();
+                    return;
+                }
+
+                $payload = [
+                    'file_upload' => $this->data['file_upload'] ?? null,
+                    'file_name' => $this->data['file_name'] ?? null,
+                    'file_issued_at' => $this->data['file_issued_at'] ?? null,
+                ];
+
+                $validator = Validator::make($payload, [
+                    'file_upload' => ['required', 'file', 'max:10240'],
+                    'file_name' => ['nullable', 'string', 'max:255'],
+                    'file_issued_at' => ['nullable', 'date'],
+                ], [
+                    'file_upload.required' => 'يرجى اختيار ملف للرفع.',
+                ]);
+
+                if ($validator->fails()) {
+                    $exception = ValidationException::withMessages($validator->errors()->toArray());
+                    Notification::make()
+                        ->title('يرجى تصحيح أخطاء الحقول')
+                        ->body($this->formatValidationErrors($exception))
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+                $record = PropertyCard::find($this->currentRecordId);
+
+                if (! $record) {
+                    $this->currentRecordId = null;
+                    Notification::make()->title('السجل غير موجود')->danger()->send();
+                    return;
+                }
+
+                $uploadedFile = $payload['file_upload'];
+
+                if (! $uploadedFile instanceof UploadedFile) {
+                    Notification::make()->title('الملف غير صالح')->danger()->send();
+                    return;
+                }
+
+                $fileName = $this->normalizeUploadedFileName($payload['file_name'] ?? null, $uploadedFile);
+                $issuedAt = filled($payload['file_issued_at'])
+                    ? \Illuminate\Support\Carbon::parse($payload['file_issued_at'])
+                    : null;
+
+                app(PropertyCardFileStorage::class)->store(
+                    $record,
+                    $uploadedFile,
+                    $issuedAt,
+                    null,
+                    $fileName
+                );
+
+                $this->resetFileInputs();
+
+                Notification::make()->title('تم رفع الملف بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
@@ -831,7 +958,15 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $state = $this->getFormPayload($validated);
-                $attributes = Arr::except($state, ['owners', 'ownerships', 'signals', 'payments']);
+                $attributes = Arr::except($state, [
+                    'owners',
+                    'ownerships',
+                    'signals',
+                    'payments',
+                    'file_name',
+                    'file_issued_at',
+                    'file_upload',
+                ]);
 
                 try {
                     $record->update($attributes);
@@ -980,6 +1115,71 @@ class PropertyCardPage extends Page implements HasSchemas
 
         // 3) آخر حل: أعد ما حصلنا عليه (قد يكون فارغاً ويظهر خطأ واضح)
         return $path;
+    }
+
+    protected function resetFileInputs(): void
+    {
+        $this->data['file_name'] = null;
+        $this->data['file_issued_at'] = null;
+        $this->data['file_upload'] = null;
+    }
+
+    protected function renderUploadedFiles(): HtmlString
+    {
+        if (! $this->currentRecordId) {
+            return new HtmlString('<span class="text-sm text-gray-500">حمّل بطاقة لعرض الملفات.</span>');
+        }
+
+        $files = PropertyCardFile::query()
+            ->where('property_card_id', $this->currentRecordId)
+            ->orderByDesc('issued_at')
+            ->get();
+
+        if ($files->isEmpty()) {
+            return new HtmlString('<span class="text-sm text-gray-500">لا توجد ملفات مرفوعة بعد.</span>');
+        }
+
+        $items = $files->map(function (PropertyCardFile $file): string {
+            $url = Storage::disk($file->storage_disk)->url($file->storage_path);
+            $name = e($file->file_name);
+            $issuedAt = $file->issued_at?->format('Y-m-d');
+            $issuedLabel = $issuedAt ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>" : '';
+            $downloadLink = "<a href=\"{$url}\" class=\"text-primary-600 hover:underline\" download>تنزيل</a>";
+            $previewLink = $this->canPreviewFile($file->mime_type)
+                ? " | <a href=\"{$url}\" class=\"text-primary-600 hover:underline\" target=\"_blank\" rel=\"noopener\">معاينة</a>"
+                : '';
+
+            return "<li class=\"text-sm\"><span class=\"font-medium\">{$name}</span>{$issuedLabel} — {$downloadLink}{$previewLink}</li>";
+        });
+
+        return new HtmlString('<ul class="space-y-1">' . $items->implode('') . '</ul>');
+    }
+
+    protected function canPreviewFile(?string $mimeType): bool
+    {
+        if (! is_string($mimeType)) {
+            return false;
+        }
+
+        return str_starts_with($mimeType, 'image/') || $mimeType === 'application/pdf';
+    }
+
+    protected function normalizeUploadedFileName(?string $fileName, UploadedFile $file): ?string
+    {
+        $fileName = $fileName ? trim($fileName) : null;
+
+        if (! $fileName) {
+            return null;
+        }
+
+        $extension = $file->getClientOriginalExtension();
+        $hasExtension = pathinfo($fileName, PATHINFO_EXTENSION) !== '';
+
+        if (! $hasExtension && $extension !== '') {
+            $fileName .= '.' . $extension;
+        }
+
+        return $fileName;
     }
 
     protected function formatValidationErrors(ValidationException $exception): string
