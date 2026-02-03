@@ -339,6 +339,8 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->searchable()
                                     ->options(fn (Get $get) => $this->getOwnerOptionsFromOwnerships($get('../../ownerships')))
                                     ->live()
+                                    ->reactive()
+                                    ->visible(fn (Get $get) => (bool) $get('signal_owner_from_owner'))
                                     ->afterStateHydrated(function ($state, $set, Get $get): void {
                                         if (filled($state)) {
                                             return;
@@ -369,6 +371,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->label('صاحب الإشارة من المالكين')
                                     ->default(true)
                                     ->live()
+                                    ->reactive()
                                     ->afterStateUpdated(function ($state, $set, Get $get): void {
                                         if (! $state) {
                                             return;
@@ -389,6 +392,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->maxLength(150)
                                     ->nullable()
                                     ->live(onBlur: true)
+                                    ->visible(fn (Get $get) => ! (bool) $get('signal_owner_from_owner'))
                                     ->dehydrateStateUsing(function ($state, Get $get) {
                                         if ($get('signal_owner_from_owner')) {
                                             $name = $this->resolveOwnerNameFromOwnerships(
