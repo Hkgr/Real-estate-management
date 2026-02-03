@@ -32,6 +32,7 @@ class Owner extends Model
                 'is_current',
                 'purchase_date',
                 'sale_date',
+                'purchase_method',
             ])
             ->withTimestamps();
     }
@@ -46,6 +47,7 @@ class Owner extends Model
                 'is_current',
                 'purchase_date',
                 'sale_date',
+                'purchase_method',
             ])
             ->withTimestamps();
     }

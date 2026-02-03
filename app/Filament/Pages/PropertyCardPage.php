@@ -197,101 +197,110 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->label('الملاك')
                             ->relationship('ownerships') // HasMany على Pivot Model: PropertyCardOwner
                             ->schema([
-                                Select::make('owner_id')
-                                    ->label('المالك')
-                                    ->relationship('owner', 'full_name') // belongsTo داخل Pivot
-                                    ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        TextInput::make('full_name')
-                                            ->label('الاسم الرباعي')
+                                Grid::make(2)
+                                    ->schema([
+                                        Select::make('owner_id')
+                                            ->label('المالك')
+                                            ->relationship('owner', 'full_name') // belongsTo داخل Pivot
+                                            ->searchable()
+                                            ->preload()
+                                            ->createOptionForm([
+                                                TextInput::make('full_name')
+                                                    ->label('الاسم الرباعي')
+                                                    ->required()
+                                                    ->maxLength(200)
+                                                    ->live(onBlur: true)
+                                                    ->columnSpanFull(),
+
+                                                DatePicker::make('birth_date')
+                                                    ->label('تاريخ الميلاد')
+                                                    ->nullable()
+                                                    ->live(onBlur: true)
+                                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                                TextInput::make('national_id')
+                                                    ->label('الرقم الوطني')
+                                                    ->required()
+                                                    ->maxLength(50)
+                                                    ->live(onBlur: true)
+                                                    ->unique(Owner::class, 'national_id'),
+
+                                                TextInput::make('phone')
+                                                    ->label('رقم الهاتف')
+                                                    ->tel()
+                                                    ->maxLength(50)
+                                                    ->nullable()
+                                                    ->live(onBlur: true)
+                                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                                TextInput::make('email')
+                                                    ->label('البريد الإلكتروني')
+                                                    ->email()
+                                                    ->maxLength(150)
+                                                    ->nullable()
+                                                    ->live(onBlur: true)
+                                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                                Toggle::make('is_active')
+                                                    ->label('فعّال')
+                                                    ->default(false)
+                                                    ->live(),
+
+                                            ])
+                                            ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
+                                            ->required(),
+
+                                        Select::make('ownership_metric')
+                                            ->label('معيار التملك')
+                                            ->native(false)
+                                            ->options([
+                                                'percentage' => 'نسبة مئوية (%)',
+                                                'shares' => 'عدد الأسهم',
+                                                'meters' => 'عدد الأمتار (م²)',
+                                            ])
                                             ->required()
-                                            ->maxLength(200)
-                                            ->live(onBlur: true)
-                                            ->columnSpanFull(),
+                                            ->live(onBlur: true),
 
-                                        DatePicker::make('birth_date')
-                                            ->label('تاريخ الميلاد')
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                        TextInput::make('national_id')
-                                            ->label('الرقم الوطني')
+                                        TextInput::make('ownership_percentage')
+                                            ->label('قيمة التملك')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 9999999999.99)
                                             ->required()
-                                            ->maxLength(50)
                                             ->live(onBlur: true)
-                                            ->unique(Owner::class, 'national_id'),
+                                            ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
+                                                'percentage' => '%',
+                                                'shares' => 'سهم',
+                                                'meters' => 'م²',
+                                                default => null,
+                                            }),
 
-                                        TextInput::make('phone')
-                                            ->label('رقم الهاتف')
-                                            ->tel()
-                                            ->maxLength(50)
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                        TextInput::make('email')
-                                            ->label('البريد الإلكتروني')
-                                            ->email()
-                                            ->maxLength(150)
-                                            ->nullable()
-                                            ->live(onBlur: true)
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                                        Toggle::make('is_active')
-                                            ->label('فعّال')
+                                        Toggle::make('is_current')
+                                            ->label('مالك حالي')
                                             ->default(false)
                                             ->live(),
 
-                                    ])
-                                    ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
-                                    ->required(),
+                                        DatePicker::make('purchase_date')
+                                            ->label('تاريخ الشراء')
+                                            ->nullable()
+                                            ->live(onBlur: true),
 
-                                Select::make('ownership_metric')
-                                    ->label('معيار التملك')
-                                    ->native(false)
-                                    ->options([
-                                        'percentage' => 'نسبة مئوية (%)',
-                                        'shares' => 'عدد الأسهم',
-                                        'meters' => 'عدد الأمتار (م²)',
-                                    ])
-                                    ->required()
-                                    ->live(onBlur: true),
+                                        DatePicker::make('sale_date')
+                                            ->label('تاريخ البيع')
+                                            ->nullable()
+                                            ->live(onBlur: true)
+                                            ->visible(fn (Get $get) => ! (bool) $get('is_current')),
 
-                                TextInput::make('ownership_percentage')
-                                    ->label('قيمة التملك')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->maxValue(fn (Get $get) => $get('ownership_metric') === 'percentage' ? 100 : 9999999999.99)
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
-                                        'percentage' => '%',
-                                        'shares' => 'سهم',
-                                        'meters' => 'م²',
-                                        default => null,
-                                    }),
-
-                                Toggle::make('is_current')
-                                    ->label('مالك حالي')
-                                    ->default(false)
-                                    ->live(),
-
-                                DatePicker::make('purchase_date')
-                                    ->label('تاريخ الشراء')
-                                    ->nullable()
-                                    ->live(onBlur: true),
-
-                                DatePicker::make('sale_date')
-                                    ->label('تاريخ البيع')
-                                    ->nullable()
-                                    ->live(onBlur: true)
-                                    ->visible(fn (Get $get) => ! (bool) $get('is_current')),
-                            ])
-                            ->columns([
-                                'default' => 1,
-                                'md' => 2,
+                                        Select::make('purchase_method')
+                                            ->label('طريقة الشراء')
+                                            ->native(false)
+                                            ->options([
+                                                'sale_contract' => 'عقد بيع',
+                                                'court_judgment' => 'حكم قضائي',
+                                            ])
+                                            ->nullable()
+                                            ->live(onBlur: true),
+                                    ]),
                             ]),
                     ]),
                 Section::make('الإشارات')
