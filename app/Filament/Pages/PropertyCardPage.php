@@ -260,6 +260,16 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ])
                                             ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
                                             ->required(),
+                                        Select::make('ownership_metric')
+                                            ->label('معيار التملك')
+                                            ->native(false)
+                                            ->options([
+                                                'أسهم' => 'أسهم',
+                                                'نسبة مئوية' => 'نسبة مئوية',
+                                                'م²' => 'م²',
+                                            ])
+                                            ->required()
+                                            ->live(onBlur: true),
 
                                         TextInput::make('ownership_percentage')
                                             ->label('قيمة التملك')
@@ -268,7 +278,13 @@ class PropertyCardPage extends Page implements HasSchemas
                                             ->maxValue(9999999999.99)
                                             ->required()
                                             ->live(onBlur: true)
-                                            ->suffix('سهم'),
+                                            ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
+                                                'أسهم' => 'سهم',
+                                                'نسبة مئوية' => '%',
+                                                'م²' => 'م²',
+                                                default => null,
+                                            }),
+
 
                                         Toggle::make('is_current')
                                             ->label('مالك حالي')
