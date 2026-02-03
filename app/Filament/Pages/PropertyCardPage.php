@@ -706,6 +706,8 @@ class PropertyCardPage extends Page implements HasSchemas
     {
         $this->currentRecordId = null;
 
+        $this->bindFormToRecord(null);
+
         $this->form->fill([
             'card_status' => 'active',
             // ممكن تضيف defaults أخرى هنا
@@ -739,7 +741,9 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->currentRecordId = $record->id;
 
         // ✅ تحميل Pivot + المالك داخلها
-        $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+        $record->load('ownerships.owner', 'signals.owners', 'payments');
+        $this->bindFormToRecord($record);
+        $this->form->fill($record->toArray());
         $this->resetFileInputs();
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
@@ -762,7 +766,9 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+                $record->load('ownerships.owner', 'signals.owners', 'payments');
+                $this->bindFormToRecord($record);
+                $this->form->fill($record->toArray());
                 $this->resetFileInputs();
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
@@ -798,7 +804,9 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->currentRecordId = $record->id;
-                $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+                $record->load('ownerships.owner', 'signals.owners', 'payments');
+                $this->bindFormToRecord($record);
+                $this->form->fill($record->toArray());
                 $this->resetFileInputs();
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
@@ -952,6 +960,8 @@ class PropertyCardPage extends Page implements HasSchemas
                 return null;
             }
 
+            $this->bindFormToRecord($record);
+
             return $record;
         }
 
@@ -962,7 +972,9 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         $this->currentRecordId = $record->id;
-        $this->form->fill($record->load('ownerships.owner', 'signals.owners', 'payments')->toArray());
+        $record->load('ownerships.owner', 'signals.owners', 'payments');
+        $this->bindFormToRecord($record);
+        $this->form->fill($record->toArray());
         $this->resetFileInputs();
 
         return $record;
@@ -998,6 +1010,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     Notification::make()->title('السجل لم يعد موجودًا')->danger()->send();
                     return;
                 }
+
+                $this->bindFormToRecord($record);
 
                 $state = $this->getFormPayload($validated);
                 $attributes = Arr::except($state, [
@@ -1155,6 +1169,11 @@ class PropertyCardPage extends Page implements HasSchemas
 
         // 3) آخر حل: أعد ما حصلنا عليه (قد يكون فارغاً ويظهر خطأ واضح)
         return $path;
+    }
+
+    protected function bindFormToRecord(?PropertyCard $record): void
+    {
+        $this->form->model($record ?? new PropertyCard());
     }
 
     protected function resetFileInputs(): void
