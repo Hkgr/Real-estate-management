@@ -355,10 +355,11 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->searchable()
                                     ->options([
                                         'حجز' => 'حجز',
-                                        'دعوة' => 'دعوة',
+                                        'دعوى' => 'دعوى',
                                         'استيفاء رسوم' => 'استيفاء رسوم',
-                                        'إنذار' => 'إنذار',
+                                        'أخرى' => 'أخرى',
                                         'استملاك' => 'استملاك',
+
                                     ])
                                     ->required()
                                     ->placeholder('اختر نوع الإشارة'),
