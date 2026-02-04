@@ -412,6 +412,10 @@ class PropertyCardPage extends Page implements HasSchemas
             ->default([])
             ->relationship('signals')
             ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                if (filled($data['signal_date'] ?? null) && blank($data['signal_year'] ?? null)) {
+                    $data['signal_year'] = \Illuminate\Support\Carbon::parse($data['signal_date'])->format('Y');
+                }
+
                 if (isset($data['signal_owners'])) {
                     $data['signal_owners'] = collect($data['signal_owners'])
                         ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
@@ -719,6 +723,14 @@ class PropertyCardPage extends Page implements HasSchemas
             ->default([])
             ->relationship('payments')
             ->schema([
+                Select::make('owner_id')
+                    ->label('المالك')
+                    ->native(false)
+                    ->searchable()
+                    ->options(fn () => $this->getAllOwnerOptions())
+                    ->required()
+                    ->live(onBlur: true),
+
                 TextInput::make('debit')
                     ->label('مدين')
                     ->numeric()
@@ -1105,7 +1117,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 $filename = 'property-card-' .
                     ($record->card_record_number ?? 'record') . '.pdf';
 
-                $html = view('pdf.property-card-browser', [
+                $html = view('pdf.property-card', [
                     'record' => $record->load('ownerships.owner'),
                 ])->render();
 
