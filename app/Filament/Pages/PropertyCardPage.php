@@ -304,9 +304,10 @@ class PropertyCardPage extends Page implements HasSchemas
 
     protected function ownershipsRepeater(): Repeater
     {
-        $repeater = Repeater::make('ownerships')
+        return Repeater::make('ownerships')
             ->label('الملاك')
             ->default([])
+            ->relationship('ownerships')
             ->schema([
                 Grid::make(2)
                     ->schema([
@@ -402,24 +403,14 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->visible(fn (Get $get) => ! (bool) $get('is_current')),
                     ]),
             ]);
-
-        if (filled($this->currentRecordId)) {
-            $repeater->relationship('ownerships');
-        } else {
-            $repeater
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText('حمّل بطاقة أولاً لإضافة الملاك.');
-        }
-
-        return $repeater;
     }
 
     protected function signalsRepeater(): Repeater
     {
-        $repeater = Repeater::make('signals')
+        return Repeater::make('signals')
             ->label('الإشارات')
             ->default([])
+            ->relationship('signals')
             ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
                 if (isset($data['signal_owners'])) {
                     $data['signal_owners'] = collect($data['signal_owners'])
@@ -719,24 +710,14 @@ class PropertyCardPage extends Page implements HasSchemas
                 'default' => 1,
                 'md' => 2,
             ]);
-
-        if (filled($this->currentRecordId)) {
-            $repeater->relationship('signals');
-        } else {
-            $repeater
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText('حمّل بطاقة أولاً لإضافة الإشارات.');
-        }
-
-        return $repeater;
     }
 
     protected function paymentsRepeater(): Repeater
     {
-        $repeater = Repeater::make('payments')
+        return Repeater::make('payments')
             ->label('الدفعات')
             ->default([])
+            ->relationship('payments')
             ->schema([
                 TextInput::make('debit')
                     ->label('مدين')
@@ -791,17 +772,6 @@ class PropertyCardPage extends Page implements HasSchemas
                 'default' => 1,
                 'md' => 6,
             ]);
-
-        if (filled($this->currentRecordId)) {
-            $repeater->relationship('payments');
-        } else {
-            $repeater
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText('حمّل بطاقة أولاً لإضافة الدفعات.');
-        }
-
-        return $repeater;
     }
 
     // =========================
