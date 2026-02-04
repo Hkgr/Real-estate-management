@@ -25,6 +25,10 @@ class Owner extends Model
         'owner_type' => 'string',
         'is_active' => 'boolean',
     ];
+    protected $appends = [
+        'display_name',
+    ];
+
 
     public function getDisplayNameAttribute(): string
     {

@@ -301,7 +301,8 @@ class PropertyCardPage extends Page implements HasSchemas
                     ->schema([
                         Select::make('owner_id')
                             ->label('المالك')
-                            ->relationship('owner', 'display_name') // belongsTo داخل Pivot
+                           ->relationship('owner', 'full_name') // belongsTo داخل Pivot
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->display_name)
                             ->searchable()
                             ->preload()
                             ->createOptionForm([
