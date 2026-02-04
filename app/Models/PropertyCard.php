@@ -14,8 +14,6 @@ class PropertyCard extends Model
         'card_governorate',
         'card_subdivision',
         'card_region_name',
-        'card_cadastral_zone_number',
-        'card_property_number',
         'card_record_number',
         'card_total_area',
         'card_status',
