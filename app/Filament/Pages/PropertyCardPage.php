@@ -162,7 +162,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->options([
                                     'regular_contract' => 'عقد عادي',
                                     'court_judgment' => 'حكم قضائي',
-                                    'commercial_register_contract' => 'عقد سجل تجاري',
+                                    'commercial_register_contract' => 'عقد سجل عقاري',
                                 ])
                                 ->nullable()
                                 ->live(onBlur: true),
@@ -412,9 +412,7 @@ class PropertyCardPage extends Page implements HasSchemas
             ->default([])
             ->relationship('signals')
             ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
-                if (filled($data['signal_date'] ?? null) && blank($data['signal_year'] ?? null)) {
-                    $data['signal_year'] = \Illuminate\Support\Carbon::parse($data['signal_date'])->format('Y');
-                }
+
 
                 if (isset($data['signal_owners'])) {
                     $data['signal_owners'] = collect($data['signal_owners'])
@@ -1304,14 +1302,17 @@ class PropertyCardPage extends Page implements HasSchemas
     }
 
 
-    protected function resetFileInputs(): void
-    {
-        $this->data['files'] = [];
+protected function resetFileInputs(): void
+{
+    // خذ الحالة الحالية للفورم (بدون تدمير باقي الحقول)
+    $state = $this->form->getState(); // بسبب statePath('data') هذا يرجع محتوى data مباشرة
 
-        $this->form->fill([
-            'files' => [],
-        ]);
-    }
+    // صفّر فقط جزء الملفات
+    $state['files'] = [[]]; // حتى يظهر سطر رفع واحد (اختياري). أو [] إذا لا تريده.
+
+    // أعد تعبئة الفورم بنفس الحالة الكاملة بعد التعديل
+    $this->form->fill($state);
+}
 
     protected function renderUploadedFiles(): HtmlString
     {
@@ -1496,7 +1497,7 @@ class PropertyCardPage extends Page implements HasSchemas
             'card_investment_type' => 'نوع الاستثمار',
             'card_purchase_method' => 'طريقة الشراء',
             'card_google_maps_url' => 'رابط خريطة Google',
-            'card_property_details' => 'تفصيل العقار',
+            'card_property_details' => 'وصف العقار',
             'card_total_area' => 'مساحة العقار الكلية',
             'ownerships' => 'الملاك',
             'owner_id' => 'المالك',

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 
 class RealtimeNotifications extends Component
@@ -17,6 +18,11 @@ class RealtimeNotifications extends Component
             return collect();
         }
 
+
+        if (! Schema::hasTable('notifications')) {
+            return collect();
+        }
+
         return $user->notifications()
             ->latest()
             ->take($this->perPage)
@@ -28,6 +34,9 @@ class RealtimeNotifications extends Component
         $user = Auth::user();
 
         if (! $user) {
+            return 0;
+        }
+        if (! Schema::hasTable('notifications')) {
             return 0;
         }
 
