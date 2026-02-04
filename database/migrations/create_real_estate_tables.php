@@ -147,7 +147,14 @@ return new class extends Migration
             $table->boolean('is_current')->default(true);
             $table->date('purchase_date')->nullable();
             $table->date('sale_date')->nullable();
-            $table->enum('purchase_method', ['sale_contract', 'court_judgment'])->nullable();
+            $table->enum('purchase_method', ['court_judgment', 'regular_contract', 'commercial_register_contract'])->nullable();
+            $table->string('case_number')->nullable();
+            $table->string('decision_number')->nullable();
+            $table->string('authority')->nullable();
+            $table->date('judgment_date')->nullable();
+            $table->date('regular_contract_date')->nullable();
+            $table->string('contract_number')->nullable();
+            $table->date('commercial_contract_date')->nullable();
             $table->timestamps();
 
             $table->index('owner_id', 'owner_property_card_owner_id_index');

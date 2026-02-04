@@ -14,6 +14,14 @@ class OwnerPropertyCard extends Pivot
         'purchase_date' => 'date',
         'sale_date' => 'date',
         'purchase_method' => 'string',
+        'case_number' => 'string',
+        'decision_number' => 'string',
+        'authority' => 'string',
+        'judgment_date' => 'date',
+        'regular_contract_date' => 'date',
+        'contract_number' => 'string',
+        'commercial_contract_date' => 'date',
+
     ];
 
     public function owner()

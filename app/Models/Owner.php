@@ -48,6 +48,14 @@ class Owner extends Model
                 'purchase_date',
                 'sale_date',
                 'purchase_method',
+                'case_number',
+                'decision_number',
+                'authority',
+                'judgment_date',
+                'regular_contract_date',
+                'contract_number',
+                'commercial_contract_date',
+
             ])
             ->withTimestamps();
     }
