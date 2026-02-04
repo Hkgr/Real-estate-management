@@ -387,11 +387,63 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->label('طريقة الشراء')
                             ->native(false)
                             ->options([
-                                'sale_contract' => 'عقد بيع',
                                 'court_judgment' => 'حكم قضائي',
+                                'regular_contract' => 'عقد عادي',
+                                'commercial_register_contract' => 'عقد سجل تجاري',
+
                             ])
                             ->nullable()
                             ->live(onBlur: true),
+                        TextInput::make('case_number')
+                            ->label('رقم الأساس')
+                            ->maxLength(100)
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                        TextInput::make('decision_number')
+                            ->label('رقم القرار')
+                            ->maxLength(100)
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                        TextInput::make('authority')
+                            ->label('الجهة')
+                            ->maxLength(150)
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                        DatePicker::make('judgment_date')
+                            ->label('التاريخ')
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true),
+
+                        DatePicker::make('regular_contract_date')
+                            ->label('التاريخ')
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'regular_contract')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'regular_contract')
+                            ->live(onBlur: true),
+
+                        TextInput::make('contract_number')
+                            ->label('رقم العقد')
+                            ->maxLength(100)
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                        DatePicker::make('commercial_contract_date')
+                            ->label('التاريخ')
+                            ->visible(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                            ->live(onBlur: true),
+
                 
                         DatePicker::make('sale_date')
                             ->label('تاريخ البيع')
