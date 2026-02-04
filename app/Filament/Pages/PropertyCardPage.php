@@ -1211,8 +1211,16 @@ class PropertyCardPage extends Page implements HasSchemas
         $payload['signals'] = $record->signals
             ->map(function ($signal): array {
                 $data = $signal->toArray();
-                $data['signal_owners'] = $signal->signal_owners ?? [];
-                $data['signal_victims'] = $signal->signal_victims ?? [];
+                $data['signal_owners'] = $this->normalizeSignalOwnersForForm(
+                    $signal->signal_owners ?? [],
+                    $signal->signal_owner ?? null,
+                    $signal->owners ?? collect()
+                );
+                $data['signal_victims'] = $this->normalizeSignalVictimsForForm(
+                    $signal->signal_victims ?? [],
+                    $signal->signal_victim ?? null
+                );
+
                 return $data;
             })
             ->values()
@@ -1227,6 +1235,74 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->form->fill($payload);
         $this->resetFileInputs();
     }
+    private function normalizeSignalOwnersForForm(array $owners, ?string $legacyOwner, $ownersRelation): array
+    {
+        if (count($owners) > 0) {
+            $first = $owners[0] ?? null;
+
+            if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+                return $owners;
+            }
+
+            return collect($owners)->map(function (array $owner): array {
+                return [
+                    'owner_from_owner' => (bool) ($owner['is_owner'] ?? false),
+                    'owner_id' => $owner['owner_id'] ?? null,
+                    'owner_name' => $owner['name'] ?? null,
+                ];
+            })->values()->all();
+        }
+
+        if ($ownersRelation instanceof \Illuminate\Support\Collection && $ownersRelation->isNotEmpty()) {
+            return $ownersRelation->map(function ($owner): array {
+                return [
+                    'owner_from_owner' => true,
+                    'owner_id' => $owner->id ?? null,
+                    'owner_name' => $owner->full_name ?? null,
+                ];
+            })->values()->all();
+        }
+
+        if (filled($legacyOwner)) {
+            return [[
+                'owner_from_owner' => false,
+                'owner_id' => null,
+                'owner_name' => $legacyOwner,
+            ]];
+        }
+
+        return [];
+    }
+
+    private function normalizeSignalVictimsForForm(array $victims, ?string $legacyVictim): array
+    {
+        if (count($victims) > 0) {
+            $first = $victims[0] ?? null;
+
+            if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+                return $victims;
+            }
+
+            return collect($victims)->map(function (array $victim): array {
+                return [
+                    'victim_from_owner' => (bool) ($victim['is_owner'] ?? false),
+                    'victim_owner_id' => $victim['owner_id'] ?? null,
+                    'victim_name' => $victim['name'] ?? null,
+                ];
+            })->values()->all();
+        }
+
+        if (filled($legacyVictim)) {
+            return [[
+                'victim_from_owner' => false,
+                'victim_owner_id' => null,
+                'victim_name' => $legacyVictim,
+            ]];
+        }
+
+        return [];
+    }
+
 
     protected function resetFileInputs(): void
     {
