@@ -42,17 +42,18 @@ class ViewOwner extends ViewRecord
                             return Owner::query()
                                 ->where('national_id', 'like', "%{$search}%")
                                 ->orWhere('full_name', 'like', "%{$search}%")
-                                ->orderBy('full_name')
+                                ->orWhere('company_name', 'like', "%{$search}%")
+                                ->orderByRaw('coalesce(company_name, full_name)')
                                 ->limit(10)
                                 ->get()
                                 ->mapWithKeys(fn (Owner $o) => [
-                                    $o->getKey() => "{$o->full_name} — {$o->national_id}",
+                                    $o->getKey() => "{$o->display_name} — {$o->national_id}",
                                 ])
                                 ->all();
                         })
                         ->getOptionLabelUsing(function ($value): ?string {
                             $o = Owner::query()->find($value);
-                            return $o ? "{$o->full_name} — {$o->national_id}" : null;
+                            return $o ? "{$o->display_name} — {$o->national_id}" : null;
                         }),
                 ])
                 ->action(function (array $data): void {
