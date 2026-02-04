@@ -17,8 +17,6 @@ return new class extends Migration
 
             // موجود سابقاً
             $table->string('region_name');                 // اسم المنطقة
-            $table->string('cadastral_zone_number', 50);   // رقم المنطقة العقارية
-            $table->string('property_number', 50);         // رقم العقار
 
             $table->decimal('total_area', 12, 2);          // مساحة العقار الكلية
             $table->decimal('owned_area', 12, 2);          // المساحة المملوكة

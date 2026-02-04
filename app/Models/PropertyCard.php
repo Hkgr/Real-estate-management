@@ -15,7 +15,6 @@ class PropertyCard extends Model
         'card_subdivision',
         'card_region_name',
         'card_property_number',
-        'card_record_number',
         'card_total_area',
         'card_status',
         'card_investment_type',
