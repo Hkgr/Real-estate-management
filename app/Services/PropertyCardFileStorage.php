@@ -6,7 +6,6 @@ use App\Models\PropertyCard;
 use App\Models\PropertyCardFile;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -22,10 +21,7 @@ class PropertyCardFileStorage
         $diskName = $diskName ?? config('filesystems.default');
         $disk = Storage::disk($diskName);
 
-        $directory = $this->buildDirectory(
-            $propertyCard->card_governorate,
-            $propertyCard->card_record_number
-        );
+        $directory = $this->buildDirectory($propertyCard);
 
         $disk->makeDirectory($directory);
 
@@ -47,21 +43,44 @@ class PropertyCardFileStorage
         ]);
     }
 
-    public function buildDirectory(?string $governorate, ?string $recordNumber): string
+    public function buildDirectory(PropertyCard $propertyCard): string
     {
-        $safeGovernorate = $this->sanitizeSegment($governorate ?: 'unknown');
-        $safeRecordNumber = $this->sanitizeSegment($recordNumber ?: 'record');
+        $identifier = $propertyCard->getKey();
+        if ($identifier) {
+            return "property_cards/{$identifier}";
+        }
 
-        return "property-cards/{$safeGovernorate}/{$safeRecordNumber}";
+        $recordNumber = $this->sanitizeSegment((string) ($propertyCard->card_record_number ?? ''));
+        if ($recordNumber !== 'unknown') {
+            return "property_cards/{$recordNumber}";
+        }
+
+        $fallbackSource = trim(implode('|', array_filter([
+            $propertyCard->card_governorate,
+            $propertyCard->card_subdivision,
+            $propertyCard->card_region_name,
+            $propertyCard->card_property_number,
+        ])));
+
+        if ($fallbackSource !== '') {
+            $safeFallback = $this->sanitizeSegment($fallbackSource);
+            $hash = substr(sha1($fallbackSource), 0, 12);
+
+            return "property_cards/{$safeFallback}-{$hash}";
+        }
+
+        return 'property_cards/unknown';
     }
 
     private function sanitizeSegment(string $value): string
     {
         $value = trim($value);
 
-        $slug = Str::slug($value, '-');
+        $value = preg_replace('/[^\p{L}\p{N}\s\-_]/u', '', $value);
+        $value = preg_replace('/[\s\-_]+/u', '-', $value);
+        $value = trim($value, '-');
 
-        return $slug !== '' ? $slug : 'unknown';
+        return $value !== '' ? $value : 'unknown';
     }
 
     private function normalizeFileName(string $originalName): string
