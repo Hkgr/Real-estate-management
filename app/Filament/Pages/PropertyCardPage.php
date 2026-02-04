@@ -156,19 +156,6 @@ class PropertyCardPage extends Page implements HasSchemas
                         ]),
 
                         Grid::make(1)->schema([
-                            Select::make('card_purchase_method')
-                                ->label('طريقة الشراء')
-                                ->native(false)
-                                ->options([
-                                    'regular_contract' => 'عقد عادي',
-                                    'court_judgment' => 'حكم قضائي',
-                                    'commercial_register_contract' => 'عقد سجل عقاري',
-                                ])
-                                ->nullable()
-                                ->live(onBlur: true),
-                        ]),
-
-                        Grid::make(1)->schema([
                            TextInput::make('card_google_maps_url')
                                 ->label('رابط خريطة Google')
                                 ->url()
@@ -396,6 +383,16 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->nullable()
                             ->live(onBlur: true),
 
+                        Select::make('purchase_method')
+                            ->label('طريقة الشراء')
+                            ->native(false)
+                            ->options([
+                                'sale_contract' => 'عقد بيع',
+                                'court_judgment' => 'حكم قضائي',
+                            ])
+                            ->nullable()
+                            ->live(onBlur: true),
+                
                         DatePicker::make('sale_date')
                             ->label('تاريخ البيع')
                             ->nullable()
@@ -1495,7 +1492,6 @@ protected function resetFileInputs(): void
             'card_subdivision' => 'المقسم',
             'card_status' => 'حالة العقار',
             'card_investment_type' => 'نوع الاستثمار',
-            'card_purchase_method' => 'طريقة الشراء',
             'card_google_maps_url' => 'رابط خريطة Google',
             'card_property_details' => 'وصف العقار',
             'card_total_area' => 'مساحة العقار الكلية',
@@ -1505,6 +1501,7 @@ protected function resetFileInputs(): void
             'ownership_percentage' => 'نسبة التملك',
             'is_current' => 'الملكية الحالية',
             'purchase_date' => 'تاريخ الشراء',
+            'purchase_method' => 'طريقة الشراء',
             'sale_date' => 'تاريخ البيع',
             'full_name' => 'الاسم الرباعي',
             'birth_date' => 'تاريخ الميلاد',
@@ -1513,7 +1510,7 @@ protected function resetFileInputs(): void
             'email' => 'البريد الإلكتروني',
             'is_active' => 'نشط',
             'signals' => 'الإشارات',
-            'signal_id' => 'رقم الإشارة',
+            'signal_id' => 'رقم عقد الإشارة',
             'signal_date' => 'تاريخ الإشارة',
             'type' => 'نوع الإشارة',
             'signal_source' => 'الجهة',
