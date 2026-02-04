@@ -1,113 +1,121 @@
 <x-filament-panels::page>
-    <style>
-        :root{
-            --rwad:#f25f2c;
-            --bd: rgba(0,0,0,.10);
-            --muted: rgba(0,0,0,.60);
-        }
-        .dark :root{
-            --bd: rgba(255,255,255,.12);
-            --muted: rgba(255,255,255,.65);
-        }
-        .rwad-box{
-            border:1px solid var(--bd);
-            border-radius:16px;
-            padding:16px;
-            background: rgba(255,255,255,.70);
-            backdrop-filter: blur(10px);
-        }
-        .dark .rwad-box{ background: rgba(17,24,39,.55); }
-
-        .rwad-title{
-            font-weight: 800;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        .rwad-title b{ color: var(--rwad); }
-
-        .rwad-row{
-            display:flex;
-            justify-content:space-between;
-            gap: 12px;
-            padding: 10px 0;
-            border-top: 1px solid var(--bd);
-        }
-        .rwad-row:first-of-type{ border-top:0; padding-top:0; }
-        .rwad-k{ font-size:12px; color: var(--muted); }
-        .rwad-v{ font-size:13px; font-weight:700; word-break:break-word; }
-        .rwad-link{ color: var(--rwad); font-weight:800; text-decoration: underline; text-underline-offset: 4px; }
-    </style>
-
     {{-- شريط البحث --}}
     {{ $this->form }}
 
     @php
         $p = $this->property;
         $loc = (string) ($p->location ?? '');
-        $date = optional($p->purchase_date)->format('Y-m-d') ?? '—';
-        $maps = ($p->latitude && $p->longitude) ? ('https://www.google.com/maps?q='.$p->latitude.','.$p->longitude) : null;
+        $date = optional($p->purchase_date)->format('Y-m-d');
+        $maps = ($p->latitude && $p->longitude) ? ('https://www.google.com/maps?q=' . $p->latitude . ',' . $p->longitude) : null;
+
+        $fields = [
+            [
+                'label' => 'اسم المنطقة',
+                'value' => $p->region_name,
+            ],
+            [
+                'label' => 'رقم المنطقة العقارية',
+                'value' => $p->cadastral_zone_number,
+            ],
+            [
+                'label' => 'المساحة الكلية',
+                'value' => $p->total_area,
+                'format' => fn ($value) => number_format((float) $value, 2) . ' م²',
+            ],
+            [
+                'label' => 'المساحة المملوكة',
+                'value' => $p->owned_area,
+                'format' => fn ($value) => number_format((float) $value, 2) . ' م²',
+            ],
+            [
+                'label' => 'نسبة الملكية',
+                'value' => $p->ownership_percentage,
+                'format' => fn ($value) => number_format((float) $value, 2) . '%',
+            ],
+            [
+                'label' => 'تاريخ الشراء',
+                'value' => $date,
+            ],
+        ];
     @endphp
 
-    <div class="rwad-box" style="margin-top:14px;">
-        <div class="rwad-title">
-            عرض العقار <b>#{{ $p->property_number }}</b>
-        </div>
+    <x-filament::section class="mt-6">
+        <x-slot name="heading">
+            بطاقة العقار
+        </x-slot>
 
-        <div class="rwad-row">
-            <div class="rwad-k">اسم المنطقة</div>
-            <div class="rwad-v">{{ $p->region_name }}</div>
-        </div>
+        <x-slot name="description">
+            تنظيم الحقول الأساسية مع إظهار العناصر المتوفرة فقط.
+        </x-slot>
 
-        <div class="rwad-row">
-            <div class="rwad-k">رقم المنطقة العقارية</div>
-            <div class="rwad-v">{{ $p->cadastral_zone_number }}</div>
-        </div>
+        <x-slot name="headerEnd">
+            <x-filament::badge color="primary" icon="heroicon-o-home">
+                #{{ $p->property_number }}
+            </x-filament::badge>
+        </x-slot>
 
-        <div class="rwad-row">
-            <div class="rwad-k">المساحة الكلية</div>
-            <div class="rwad-v">{{ number_format((float) $p->total_area, 2) }} م²</div>
-        </div>
+        <x-filament::grid default="1" md="2" xl="3" class="gap-4">
+            @foreach ($fields as $field)
+                @php
+                    $value = $field['value'] ?? null;
+                    $display = $value;
+                    if (! is_null($value) && ($field['format'] ?? null)) {
+                        $display = $field['format']($value);
+                    }
+                @endphp
 
-        <div class="rwad-row">
-            <div class="rwad-k">المساحة المملوكة</div>
-            <div class="rwad-v">{{ number_format((float) $p->owned_area, 2) }} م²</div>
-        </div>
-
-        <div class="rwad-row">
-            <div class="rwad-k">نسبة الملكية</div>
-            <div class="rwad-v">{{ number_format((float) $p->ownership_percentage, 2) }}%</div>
-        </div>
-
-        <div class="rwad-row">
-            <div class="rwad-k">تاريخ الشراء</div>
-            <div class="rwad-v">{{ $date }}</div>
-        </div>
-
-        <div class="rwad-row">
-            <div class="rwad-k">موقع العقار</div>
-            <div class="rwad-v">
-                @if($loc === '')
-                    —
-                @elseif(str_starts_with($loc, 'http://') || str_starts_with($loc, 'https://'))
-                    <a class="rwad-link" href="{{ $loc }}" target="_blank" rel="noopener">فتح الرابط</a>
-                @else
-                    {{ $loc }}
+                @if (! is_null($value) && $value !== '')
+                    <x-filament::card class="space-y-1 bg-gray-50/70 dark:bg-gray-900/40">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            {{ $field['label'] }}
+                        </p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ $display }}
+                        </p>
+                    </x-filament::card>
                 @endif
-                @if($maps)
-                    <div style="margin-top:6px;">
-                        <a class="rwad-link" href="{{ $maps }}" target="_blank" rel="noopener">فتح الإحداثيات على الخرائط</a>
+            @endforeach
+
+            @if ($loc !== '' || $maps)
+                <x-filament::card class="space-y-2 bg-amber-50/60 dark:bg-gray-900/40">
+                    <div class="flex items-center gap-2">
+                        <x-filament::icon icon="heroicon-o-map-pin" class="h-4 w-4 text-amber-600" />
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">موقع العقار</p>
                     </div>
-                @endif
-            </div>
-        </div>
+                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                        @if ($loc === '')
+                            —
+                        @elseif (str_starts_with($loc, 'http://') || str_starts_with($loc, 'https://'))
+                            <a class="text-primary-600 hover:text-primary-500 underline underline-offset-4" href="{{ $loc }}" target="_blank" rel="noopener">
+                                فتح الرابط
+                            </a>
+                        @else
+                            {{ $loc }}
+                        @endif
+                    </div>
+                    @if ($maps)
+                        <div>
+                            <a class="text-primary-600 hover:text-primary-500 text-sm font-semibold underline underline-offset-4" href="{{ $maps }}" target="_blank" rel="noopener">
+                                فتح الإحداثيات على الخرائط
+                            </a>
+                        </div>
+                    @endif
+                </x-filament::card>
+            @endif
 
-        @if(!is_null($p->latitude) || !is_null($p->longitude))
-            <div class="rwad-row">
-                <div class="rwad-k">الإحداثيات</div>
-                <div class="rwad-v">Lat: {{ $p->latitude ?? '—' }} | Lng: {{ $p->longitude ?? '—' }}</div>
-            </div>
-        @endif
-    </div>
+            @if (! is_null($p->latitude) || ! is_null($p->longitude))
+                <x-filament::card class="space-y-1 bg-sky-50/60 dark:bg-gray-900/40">
+                    <div class="flex items-center gap-2">
+                        <x-filament::icon icon="heroicon-o-globe-alt" class="h-4 w-4 text-sky-600" />
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">الإحداثيات</p>
+                    </div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                        Lat: {{ $p->latitude ?? '—' }} | Lng: {{ $p->longitude ?? '—' }}
+                    </p>
+                </x-filament::card>
+            @endif
+        </x-filament::grid>
+    </x-filament::section>
 
     <x-filament-actions::modals />
 </x-filament-panels::page>
