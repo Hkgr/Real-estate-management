@@ -255,6 +255,7 @@ class PropertyCardPage extends Page implements HasSchemas
                             ]),
                         Placeholder::make('uploaded_files')
                             ->label('الملفات المرفوعة')
+                            ->live()
                             ->content(fn () => $this->renderUploadedFiles())
                             ->visible(fn () => filled($this->currentRecordId))
                             ->columnSpanFull(),
@@ -858,6 +859,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 $this->bindFormToRecord($record);
                 $this->form->fill($record->toArray());
                 $this->resetFileInputs();
+                $this->dispatch('$refresh');
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -968,6 +970,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 }
 
                 $this->resetFileInputs();
+                $this->dispatch('$refresh');
 
                 Notification::make()->title('تم رفع الملف بنجاح')->success()->send();
             });
@@ -1123,6 +1126,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
+                $this->dispatch('$refresh');
                 Notification::make()->title('تم التعديل بنجاح')->success()->send();
             });
 
