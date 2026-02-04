@@ -796,13 +796,7 @@ class PropertyCardPage extends Page implements HasSchemas
             return;
         }
 
-        $this->currentRecordId = $record->id;
-
-        // ✅ تحميل Pivot + المالك داخلها
-        $record->load('ownerships.owner', 'signals.owners', 'payments');
-        $this->bindFormToRecord($record);
-        $this->form->fill($record->toArray());
-        $this->resetFileInputs();
+        $this->loadRecordIntoForm($record);
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -823,11 +817,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->currentRecordId = $record->id;
-                $record->load('ownerships.owner', 'signals.owners', 'payments');
-                $this->bindFormToRecord($record);
-                $this->form->fill($record->toArray());
-                $this->resetFileInputs();
+                $this->loadRecordIntoForm($record);
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -861,11 +851,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->currentRecordId = $record->id;
-                $record->load('ownerships.owner', 'signals.owners', 'payments');
-                $this->bindFormToRecord($record);
-                $this->form->fill($record->toArray());
-                $this->resetFileInputs();
+                $this->loadRecordIntoForm($record);
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
@@ -992,11 +978,7 @@ class PropertyCardPage extends Page implements HasSchemas
             return null;
         }
 
-        $this->currentRecordId = $record->id;
-        $record->load('ownerships.owner', 'signals.owners', 'payments');
-        $this->bindFormToRecord($record);
-        $this->form->fill($record->toArray());
-        $this->resetFileInputs();
+        $this->loadRecordIntoForm($record);
 
         return $record;
     }
@@ -1201,6 +1183,37 @@ class PropertyCardPage extends Page implements HasSchemas
     protected function bindFormToRecord(?PropertyCard $record): void
     {
         $this->form->model($record ?? new PropertyCard());
+    }
+
+    protected function loadRecordIntoForm(PropertyCard $record): void
+    {
+        $this->currentRecordId = $record->id;
+
+        $record->load('ownerships.owner', 'signals.owners', 'payments', 'files');
+
+        $payload = $record->toArray();
+        $payload['ownerships'] = $record->ownerships
+            ->map(fn ($ownership) => $ownership->toArray())
+            ->values()
+            ->all();
+        $payload['signals'] = $record->signals
+            ->map(function ($signal): array {
+                $data = $signal->toArray();
+                $data['signal_owners'] = $signal->signal_owners ?? [];
+                $data['signal_victims'] = $signal->signal_victims ?? [];
+                return $data;
+            })
+            ->values()
+            ->all();
+        $payload['payments'] = $record->payments
+            ->map(fn ($payment) => $payment->toArray())
+            ->values()
+            ->all();
+        $payload['files'] = [];
+
+        $this->bindFormToRecord($record);
+        $this->form->fill($payload);
+        $this->resetFileInputs();
     }
 
     protected function resetFileInputs(): void
