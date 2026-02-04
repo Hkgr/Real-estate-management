@@ -13,6 +13,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -304,27 +305,27 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->searchable()
                             ->preload()
                             ->createOptionForm([
-                                Select::make('owner_type')
+                                ToggleButtons::make('owner_type')
                                     ->label('نوع المالك')
                                     ->options([
                                         'individual' => 'فرد',
                                         'company' => 'شركة',
                                     ])
-                                    ->native(false)
                                     ->required()
                                     ->default('individual')
-                                    ->live(),
+                                  ->live()
+                                    ->inline(),
 
                                 TextInput::make('full_name')
                                     ->label('اسم المالك (للفرد) أو اسم المفوض')
-                                    ->required()
-                                    ->maxLength(200)
+                                    ->required(fn (Get $get) => $get('owner_type') === 'individual')                                    ->maxLength(200)
                                     ->live(onBlur: true)
                                     ->columnSpanFull(),
 
                                 TextInput::make('company_name')
                                     ->label('اسم الشركة')
                                     ->maxLength(200)
+                                    ->visible(fn (Get $get) => $get('owner_type') === 'individual')
                                     ->nullable()
                                     ->visible(fn (Get $get) => $get('owner_type') === 'company')
                                     ->required(fn (Get $get) => $get('owner_type') === 'company')
@@ -336,12 +337,14 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->maxLength(100)
                                     ->nullable()
                                     ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                                    ->required(fn (Get $get) => $get('owner_type') === 'company')
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                                 DatePicker::make('birth_date')
                                     ->label('تاريخ الميلاد')
                                     ->nullable()
+                                    ->visible(fn (Get $get) => $get('owner_type') === 'individual')
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
@@ -349,6 +352,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->label('الرقم الوطني')
                                     ->required()
                                     ->maxLength(50)
+                                    ->visible(fn (Get $get) => $get('owner_type') === 'individual')
                                     ->live(onBlur: true)
                                     ->unique(Owner::class, 'national_id'),
 
@@ -357,6 +361,8 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->tel()
                                     ->maxLength(50)
                                     ->nullable()
+                                    ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                                    ->required(fn (Get $get) => $get('owner_type') === 'company')
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
