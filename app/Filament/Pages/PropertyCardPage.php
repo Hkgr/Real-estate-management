@@ -1462,7 +1462,29 @@ class PropertyCardPage extends Page implements HasSchemas
 
         // NOT NULL / no default
         if (in_array($driverCode, [1048, 1364], true)) {
-            return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+            $column = null;
+
+            if (preg_match("/Column '([^']+)' cannot be null/i", $message, $match)) {
+                $column = $match[1];
+            }
+
+            if (! $column && preg_match("/Field '([^']+)' doesn't have a default value/i", $message, $match)) {
+                $column = $match[1];
+            }
+
+            if (! $column && preg_match('/null value in column \"([^\"]+)\"/i', $message, $match)) {
+                $column = $match[1];
+            }
+
+            if (! $column && preg_match('/fails? to satisfy NOT NULL constraint/i', $message)) {
+                if (preg_match('/column \"([^\"]+)\"/i', $message, $match)) {
+                    $column = $match[1];
+                }
+            }
+
+            return $column
+                ? "تعذر تنفيذ العملية لأن الحقل \"{$column}\" إلزامي أو لا يملك قيمة افتراضية. يرجى تعبئته."
+                : 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
         }
 
         return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
