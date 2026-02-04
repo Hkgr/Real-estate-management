@@ -362,8 +362,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->tel()
                                     ->maxLength(50)
                                     ->nullable()
-                                    ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                                    ->required(fn (Get $get) => $get('owner_type') === 'company')
+
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
@@ -372,8 +371,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->email()
                                     ->maxLength(150)
                                     ->nullable()
-                                   ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                                    ->required(fn (Get $get) => $get('owner_type') === 'company')
+
 
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
