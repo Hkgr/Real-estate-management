@@ -718,13 +718,7 @@ class PropertyCardPage extends Page implements HasSchemas
             ->default([])
             ->relationship('payments')
             ->schema([
-                Select::make('owner_id')
-                    ->label('المالك')
-                    ->native(false)
-                    ->searchable()
-                    ->options(fn () => $this->getAllOwnerOptions())
-                    ->required()
-                    ->live(onBlur: true),
+
 
                 TextInput::make('debit')
                     ->label('مدين')
