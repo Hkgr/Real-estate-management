@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Signals\Schemas;
 
 use App\Models\Owner;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -120,6 +121,15 @@ class SignalForm
                             ->all();
                     }),
                 TextInput::make('signal_source')
+                    ->default(null),
+                TextInput::make('signal_source_number')
+                    ->label('رقم الجهة')
+                    ->maxLength(50)
+                    ->nullable()
+                    ->default(null),
+                DatePicker::make('signal_source_date')
+                    ->label('تاريخ الجهة')
+                    ->nullable()
                     ->default(null),
                 Repeater::make('signal_victims')
                     ->label('المتضرّرون')

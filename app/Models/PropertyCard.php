@@ -16,9 +16,11 @@ class PropertyCard extends Model
         'card_region_name',
         'card_cadastral_zone_number',
         'card_property_number',
+        'card_record_number',
         'card_total_area',
-        'card_area_unit',
         'card_status',
+        'card_investment_type',
+        'card_purchase_method',
         'card_sale_date',
         'card_property_details',
         'card_google_maps_url',
@@ -27,6 +29,7 @@ class PropertyCard extends Model
     protected $casts = [
         'card_total_area' => 'decimal:2',
         'card_sale_date' => 'date',
+        'card_purchase_method' => 'string',
 
     ];
     public function owners()
@@ -39,6 +42,7 @@ class PropertyCard extends Model
                 'is_current',
                 'purchase_date',
                 'sale_date',
+                'purchase_method',
             ])
             ->withTimestamps();
     }
@@ -51,5 +55,21 @@ class PropertyCard extends Model
     {
         return $this->hasMany(Signal::class);
     }
+
+      public function files(): HasMany
+    {
+        return $this->hasMany(PropertyCardFile::class);
+    }
+
+    public function propertyOwnerPayments(): HasMany
+    {
+        return $this->hasMany(PropertyOwnerPayment::class);
+    }
+   public function payments(): HasMany
+    {
+        return $this->hasMany(PropertyOwnerPayment::class);
+    }
+
+
 
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class Owner extends Model
 {
     use SoftDeletes;
@@ -32,6 +33,7 @@ class Owner extends Model
                 'is_current',
                 'purchase_date',
                 'sale_date',
+                'purchase_method',
             ])
             ->withTimestamps();
     }
@@ -46,6 +48,7 @@ class Owner extends Model
                 'is_current',
                 'purchase_date',
                 'sale_date',
+                'purchase_method',
             ])
             ->withTimestamps();
     }
@@ -54,6 +57,11 @@ class Owner extends Model
         return $this->belongsToMany(Signal::class, 'owner_signal')
             ->withTimestamps();
 
+    }
+
+    public function propertyOwnerPayments(): HasMany
+    {
+        return $this->hasMany(PropertyOwnerPayment::class);
     }
 
 }
