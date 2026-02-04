@@ -11,6 +11,9 @@ class Owner extends Model
 
     protected $fillable = [
         'full_name',
+        'owner_type',
+        'company_name',
+        'commercial_register_number',
         'birth_date',
         'national_id',
         'phone',
@@ -19,8 +22,18 @@ class Owner extends Model
     ];
     protected $casts = [
         'birth_date' => 'date',
+        'owner_type' => 'string',
         'is_active' => 'boolean',
     ];
+
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->owner_type === 'company') {
+            return $this->company_name ?: $this->full_name;
+        }
+
+        return $this->full_name;
+    }
 
     public function properties()
     {

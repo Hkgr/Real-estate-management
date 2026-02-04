@@ -300,16 +300,44 @@ class PropertyCardPage extends Page implements HasSchemas
                     ->schema([
                         Select::make('owner_id')
                             ->label('المالك')
-                            ->relationship('owner', 'full_name') // belongsTo داخل Pivot
+                            ->relationship('owner', 'display_name') // belongsTo داخل Pivot
                             ->searchable()
                             ->preload()
                             ->createOptionForm([
+                                Select::make('owner_type')
+                                    ->label('نوع المالك')
+                                    ->options([
+                                        'individual' => 'فرد',
+                                        'company' => 'شركة',
+                                    ])
+                                    ->native(false)
+                                    ->required()
+                                    ->default('individual')
+                                    ->live(),
+
                                 TextInput::make('full_name')
-                                    ->label('الاسم الرباعي')
+                                    ->label('اسم المالك (للفرد) أو اسم المفوض')
                                     ->required()
                                     ->maxLength(200)
                                     ->live(onBlur: true)
                                     ->columnSpanFull(),
+
+                                TextInput::make('company_name')
+                                    ->label('اسم الشركة')
+                                    ->maxLength(200)
+                                    ->nullable()
+                                    ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                                    ->required(fn (Get $get) => $get('owner_type') === 'company')
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                                TextInput::make('commercial_register_number')
+                                    ->label('رقم السجل التجاري')
+                                    ->maxLength(100)
+                                    ->nullable()
+                                    ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                                    ->live(onBlur: true)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                                 DatePicker::make('birth_date')
                                     ->label('تاريخ الميلاد')
@@ -607,7 +635,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 return [
                                     'owner_from_owner' => true,
                                     'owner_id' => $owner['id'] ?? null,
-                                    'owner_name' => $owner['full_name'] ?? null,
+                                    'owner_name' => $owner['display_name'] ?? $owner['full_name'] ?? null,
                                 ];
                             })->all();
 
@@ -1299,7 +1327,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 return [
                     'owner_from_owner' => true,
                     'owner_id' => $owner->id ?? null,
-                    'owner_name' => $owner->full_name ?? null,
+                    'owner_name' => $owner->display_name ?? $owner->full_name ?? null,
                 ];
             })->values()->all();
         }
@@ -1549,7 +1577,7 @@ protected function resetFileInputs(): void
             'purchase_date' => 'تاريخ الشراء',
             'purchase_method' => 'طريقة الشراء',
             'sale_date' => 'تاريخ البيع',
-            'full_name' => 'الاسم الرباعي',
+            'full_name' => 'اسم المالك',
             'birth_date' => 'تاريخ الميلاد',
             'national_id' => 'الرقم الوطني',
             'phone' => 'رقم الهاتف',
@@ -1602,8 +1630,9 @@ protected function resetFileInputs(): void
     protected function getAllOwnerOptions(): array
     {
         return Owner::query()
-            ->orderBy('full_name')
-            ->pluck('full_name', 'id')
+            ->orderByRaw('coalesce(company_name, full_name)')
+            ->get()
+            ->mapWithKeys(fn (Owner $owner) => [$owner->getKey() => $owner->display_name])
             ->all();
     }
 

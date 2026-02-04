@@ -121,7 +121,7 @@ public static function infolist(Schema $schema): Schema
 
                             return sprintf(
                                 '%s — نسبة التملك: %s | معيار التملك: %s | حالة المالك: %s | شراء: %s | بيع: %s',
-                                $owner->full_name,
+                                $owner->display_name,
                                 $ownershipPercentageText,
                                 $ownershipMetricText,
                                 $ownerStatusText,

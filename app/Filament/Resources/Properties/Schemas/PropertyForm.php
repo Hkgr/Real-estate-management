@@ -80,7 +80,7 @@ class PropertyForm
                             ->schema([
                                 Select::make('owner_id')
                                     ->label('المالك')
-                                    ->relationship('owner', 'full_name')
+                                    ->relationship('owner', 'display_name')
                                     ->searchable()
                                     ->preload()
                                     ->required(),

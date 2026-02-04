@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Get;
 use Illuminate\Database\QueryException;
 
 class OwnerCardPage extends Page implements HasSchemas
@@ -66,11 +67,35 @@ class OwnerCardPage extends Page implements HasSchemas
                 Section::make('البيانات الشخصية')
                     ->schema([
                         Grid::make(3)->schema([
+                            Select::make('owner_type')
+                                ->label('نوع المالك')
+                                ->options([
+                                    'individual' => 'فرد',
+                                    'company' => 'شركة',
+                                ])
+                                ->native(false)
+                                ->required()
+                                ->default('individual')
+                                ->live(),
+
                             TextInput::make('full_name')
-                                ->label('الاسم الرباعي')
+                                ->label('اسم المالك (للفرد) أو اسم المفوض')
                                 ->maxLength(200)
                                 ->required()
                                 ->placeholder('مثال: أحمد محمد علي حسن'),
+
+                            TextInput::make('company_name')
+                                ->label('اسم الشركة')
+                                ->maxLength(200)
+                                ->nullable()
+                                ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                                ->required(fn (Get $get) => $get('owner_type') === 'company'),
+
+                            TextInput::make('commercial_register_number')
+                                ->label('رقم السجل التجاري')
+                                ->maxLength(100)
+                                ->nullable()
+                                ->visible(fn (Get $get) => $get('owner_type') === 'company'),
 
                             DatePicker::make('birth_date')
                                 ->label('تاريخ الميلاد')
