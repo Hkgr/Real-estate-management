@@ -17,7 +17,6 @@ return new class extends Migration
 
             $table->string('card_region_name');
                         $table->string('card_subdivision', 100)->nullable();    // المقسم                     // اسم المنطقة
-            $table->string('card_cadastral_zone_number', 50);       // رقم المنطقة العقارية
             $table->string('card_property_number', 50);             // رقم العقار
 
             $table->decimal('card_total_area', 12, 2);              // مساحة العقار الكلية
@@ -38,7 +37,6 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['card_governorate', 'card_region_name']);
-            $table->unique(['card_cadastral_zone_number', 'card_property_number'], 'property_cards_unique_zone_property');
         });
     }
 
