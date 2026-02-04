@@ -14,9 +14,8 @@ class PropertyCard extends Model
         'card_governorate',
         'card_subdivision',
         'card_region_name',
-        'card_cadastral_zone_number',
-        'card_property_number',
         'card_record_number',
+        'card_property_number',
         'card_total_area',
         'card_status',
         'card_investment_type',
@@ -30,6 +29,7 @@ class PropertyCard extends Model
         'card_total_area' => 'decimal:2',
         'card_sale_date' => 'date',
         'card_purchase_method' => 'string',
+        'card_record_number' => 'string',
 
     ];
     public function owners()

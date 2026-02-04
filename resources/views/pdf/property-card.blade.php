@@ -26,29 +26,42 @@
     <table>
         <tr><th>المحافظة</th><td>{{ $record->card_governorate }}</td></tr>
         <tr><th>اسم المنطقة</th><td>{{ $record->card_region_name }}</td></tr>
-        <tr><th>المالك السابق</th><td>{{ $record->card_previous_owner ?: '—' }}</td></tr>
+        <tr><th>المقسم</th><td>{{ $record->card_subdivision ?: '—' }}</td></tr>
         <tr><th>حالة العقار</th><td>{{ $record->card_status === 'frozen' ? 'مجمد' : 'فاعل' }}</td></tr>
         <tr><th>نوع الاستثمار</th><td>{{ $record->card_investment_type ?: '—' }}</td></tr>
-        <tr><th>تاريخ الشراء</th><td><span class="ltr">{{ optional($record->card_purchase_date)->format('Y-m-d') ?: '—' }}</span></td></tr>
         <tr>
             <th>طريقة الشراء</th>
             <td>
                 @php
-                    $purchaseMethod = $record->ownerships->first()?->purchase_method;
-                    $purchaseMethodLabel = match ($purchaseMethod) {
+                    $purchaseMethodLabel = match ($record->card_purchase_method) {
                         'regular_contract' => 'عقد عادي',
                         'court_judgment' => 'حكم قضائي',
                         'commercial_register_contract' => 'عقد سجل تجاري',
                         default => '—',
                     };
+                    $areaUnitLabel = match ($record->card_area_unit) {
+                        'percentage' => '%',
+                        'shares' => 'سهم',
+                        default => 'م²',
+                    };
                 @endphp
                 {{ $purchaseMethodLabel }}
             </td>
         </tr>
-        <tr><th>المساحة الكلية</th><td><span class="ltr">{{ number_format((float)$record->card_total_area, 2) }}</span> م²</td></tr>
-        <tr><th>المساحة المملوكة</th><td><span class="ltr">{{ number_format((float)$record->card_owned_area, 2) }}</span> م²</td></tr>
-        <tr><th>الموقع</th><td>{{ $record->card_location }}</td></tr>
-        <tr><th>الإحداثيات</th><td><span class="ltr">{{ $record->card_latitude ?: '—' }}</span> , <span class="ltr">{{ $record->card_longitude ?: '—' }}</span></td></tr>
+        <tr><th>المساحة الكلية</th><td><span class="ltr">{{ number_format((float)$record->card_total_area, 2) }}</span> {{ $areaUnitLabel }}</td></tr>
+        <tr><th>تفصيل العقار</th><td>{{ $record->card_property_details ?: '—' }}</td></tr>
+        <tr>
+            <th>رابط خريطة Google</th>
+            <td>
+                @if (filled($record->card_google_maps_url))
+                    <a href="{{ $record->card_google_maps_url }}" class="ltr" target="_blank" rel="noopener">
+                        {{ $record->card_google_maps_url }}
+                    </a>
+                @else
+                    —
+                @endif
+            </td>
+        </tr>
     </table>
 </body>
 </html>

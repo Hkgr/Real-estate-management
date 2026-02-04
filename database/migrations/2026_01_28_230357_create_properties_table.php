@@ -24,12 +24,10 @@ return new class extends Migration
             $table->decimal('owned_area', 12, 2);          // المساحة المملوكة
             $table->date('purchase_date');                 // تاريخ الشراء
 
+            $table->decimal('ownership_percentage', 5, 2); // نسبة الملكية
+
             // جديد: حالة العقار
             $table->enum('status', ['active', 'frozen'])->default('active'); // فاعل/مجمد
-
-            // جديد: نظام الملكية (وحدة + قيمة)
-            $table->enum('ownership_unit', ['percent', 'shares', 'meters'])->default('percent');
-            $table->decimal('ownership_value', 12, 2); // % أو أسهم أو م² حسب ownership_unit
 
             $table->text('location');                      // موقع العقار (عنوان/وصف)
             $table->decimal('latitude', 10, 7)->nullable();
@@ -40,9 +38,9 @@ return new class extends Migration
 
             // فهارس وقيود
             $table->index('region_name');
+            $table->index('property_number');
             $table->index('governorate_name');
             $table->index('status');
-            $table->index('ownership_unit');
 
             $table->unique(['cadastral_zone_number', 'property_number']);
         });

@@ -304,9 +304,10 @@ class PropertyCardPage extends Page implements HasSchemas
 
     protected function ownershipsRepeater(): Repeater
     {
-        $repeater = Repeater::make('ownerships')
+        return Repeater::make('ownerships')
             ->label('الملاك')
             ->default([])
+            ->relationship('ownerships')
             ->schema([
                 Grid::make(2)
                     ->schema([
@@ -402,25 +403,19 @@ class PropertyCardPage extends Page implements HasSchemas
                             ->visible(fn (Get $get) => ! (bool) $get('is_current')),
                     ]),
             ]);
-
-        if (filled($this->currentRecordId)) {
-            $repeater->relationship('ownerships');
-        } else {
-            $repeater
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText('حمّل بطاقة أولاً لإضافة الملاك.');
-        }
-
-        return $repeater;
     }
 
     protected function signalsRepeater(): Repeater
     {
-        $repeater = Repeater::make('signals')
+        return Repeater::make('signals')
             ->label('الإشارات')
             ->default([])
+            ->relationship('signals')
             ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                if (filled($data['signal_date'] ?? null) && blank($data['signal_year'] ?? null)) {
+                    $data['signal_year'] = \Illuminate\Support\Carbon::parse($data['signal_date'])->format('Y');
+                }
+
                 if (isset($data['signal_owners'])) {
                     $data['signal_owners'] = collect($data['signal_owners'])
                         ->map(fn (array $item): array => Arr::only($item, ['is_owner', 'owner_id', 'name']))
@@ -719,25 +714,23 @@ class PropertyCardPage extends Page implements HasSchemas
                 'default' => 1,
                 'md' => 2,
             ]);
-
-        if (filled($this->currentRecordId)) {
-            $repeater->relationship('signals');
-        } else {
-            $repeater
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText('حمّل بطاقة أولاً لإضافة الإشارات.');
-        }
-
-        return $repeater;
     }
 
     protected function paymentsRepeater(): Repeater
     {
-        $repeater = Repeater::make('payments')
+        return Repeater::make('payments')
             ->label('الدفعات')
             ->default([])
+            ->relationship('payments')
             ->schema([
+                Select::make('owner_id')
+                    ->label('المالك')
+                    ->native(false)
+                    ->searchable()
+                    ->options(fn () => $this->getAllOwnerOptions())
+                    ->required()
+                    ->live(onBlur: true),
+
                 TextInput::make('debit')
                     ->label('مدين')
                     ->numeric()
@@ -791,17 +784,6 @@ class PropertyCardPage extends Page implements HasSchemas
                 'default' => 1,
                 'md' => 6,
             ]);
-
-        if (filled($this->currentRecordId)) {
-            $repeater->relationship('payments');
-        } else {
-            $repeater
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText('حمّل بطاقة أولاً لإضافة الدفعات.');
-        }
-
-        return $repeater;
     }
 
     // =========================
@@ -826,13 +808,7 @@ class PropertyCardPage extends Page implements HasSchemas
             return;
         }
 
-        $this->currentRecordId = $record->id;
-
-        // ✅ تحميل Pivot + المالك داخلها
-        $record->load('ownerships.owner', 'signals.owners', 'payments');
-        $this->bindFormToRecord($record);
-        $this->form->fill($record->toArray());
-        $this->resetFileInputs();
+        $this->loadRecordIntoForm($record);
 
         Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
     }
@@ -853,11 +829,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->currentRecordId = $record->id;
-                $record->load('ownerships.owner', 'signals.owners', 'payments');
-                $this->bindFormToRecord($record);
-                $this->form->fill($record->toArray());
-                $this->resetFileInputs();
+                $this->loadRecordIntoForm($record);
 
                 Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
@@ -891,11 +863,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $this->currentRecordId = $record->id;
-                $record->load('ownerships.owner', 'signals.owners', 'payments');
-                $this->bindFormToRecord($record);
-                $this->form->fill($record->toArray());
-                $this->resetFileInputs();
+                $this->loadRecordIntoForm($record);
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
             });
@@ -915,59 +883,16 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = [
-                    'files' => $this->data['files'] ?? [],
-                ];
+                $files = $this->data['files'] ?? [];
+                $validatedFiles = $this->validateFileUploads($files, true);
 
-                $validator = Validator::make($payload, [
-                    'files' => ['required', 'array', 'min:1'],
-                    'files.*.file_upload' => ['required', 'array', 'min:1'],
-                    'files.*.file_upload.*' => ['file', 'max:10240'],
-                    'files.*.file_name' => ['nullable', 'string', 'max:255'],
-                    'files.*.file_issued_at' => ['nullable', 'date'],
-                ], [
-                    'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
-                    'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
-                    'files.*.file_upload.*.max' => 'حجم الملف يجب ألا يتجاوز :max كيلوبايت.',
-                    'files.*.file_upload.*.mimes' => 'صيغة الملف غير مدعومة. الصيغ المسموحة: :values.',
-                    'files.*.file_upload.*.mimetypes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: :values.',
-                ]);
-
-                if ($validator->fails()) {
-                    $exception = ValidationException::withMessages($validator->errors()->toArray());
-                    Notification::make()
-                        ->title('يرجى تصحيح أخطاء الحقول')
-                        ->body($this->formatValidationErrors($exception))
-                        ->danger()
-                        ->send();
+                if ($validatedFiles === null) {
                     return;
                 }
 
-                foreach ($payload['files'] as $fileRow) {
-                    $uploadedFiles = Arr::wrap($fileRow['file_upload'] ?? []);
-
-                    foreach ($uploadedFiles as $uploadedFile) {
-                        if (! $uploadedFile instanceof UploadedFile) {
-                            Notification::make()->title('الملف غير صالح')->danger()->send();
-                            return;
-                        }
-
-                        $fileName = $this->normalizeUploadedFileName($fileRow['file_name'] ?? null, $uploadedFile);
-                        $issuedAt = filled($fileRow['file_issued_at'] ?? null)
-                            ? \Illuminate\Support\Carbon::parse($fileRow['file_issued_at'])
-                            : null;
-
-                        app(PropertyCardFileStorage::class)->store(
-                            $record,
-                            $uploadedFile,
-                            $issuedAt,
-                            null,
-                            $fileName
-                        );
-                    }
+                if (! $this->storeValidatedFileUploads($record, $validatedFiles)) {
+                    return;
                 }
-
-                $this->resetFileInputs();
 
                 Notification::make()->title('تم رفع الملف بنجاح')->success()->send();
             });
@@ -989,6 +914,11 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         $state = $this->getFormPayload($validated);
+        $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
+
+        if ($validatedFiles === null) {
+            return null;
+        }
 
         $recordNumber = $state['card_record_number'] ?? null;
 
@@ -1025,6 +955,7 @@ class PropertyCardPage extends Page implements HasSchemas
             $record = PropertyCard::create($attributes);
             $this->form->model($record)->saveRelationships();
             $this->syncSignalOwners($record, $state);
+            $this->storeValidatedFileUploads($record, $validatedFiles);
         } catch (QueryException $exception) {
             Notification::make()
                 ->title('فشل الحفظ')
@@ -1059,11 +990,7 @@ class PropertyCardPage extends Page implements HasSchemas
             return null;
         }
 
-        $this->currentRecordId = $record->id;
-        $record->load('ownerships.owner', 'signals.owners', 'payments');
-        $this->bindFormToRecord($record);
-        $this->form->fill($record->toArray());
-        $this->resetFileInputs();
+        $this->loadRecordIntoForm($record);
 
         return $record;
     }
@@ -1102,6 +1029,11 @@ class PropertyCardPage extends Page implements HasSchemas
                 $this->bindFormToRecord($record);
 
                 $state = $this->getFormPayload($validated);
+                $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
+
+                if ($validatedFiles === null) {
+                    return;
+                }
                 $attributes = Arr::except($state, [
                     'owners',
                     'ownerships',
@@ -1114,6 +1046,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     $record->update($attributes);
                     $this->form->model($record)->saveRelationships();
                     $this->syncSignalOwners($record, $state);
+                    $this->storeValidatedFileUploads($record, $validatedFiles);
                 } catch (QueryException $exception) {
                     Notification::make()
                         ->title('فشل التعديل')
@@ -1184,7 +1117,7 @@ class PropertyCardPage extends Page implements HasSchemas
                 $filename = 'property-card-' .
                     ($record->card_record_number ?? 'record') . '.pdf';
 
-                $html = view('pdf.property-card-browser', [
+                $html = view('pdf.property-card', [
                     'record' => $record->load('ownerships.owner'),
                 ])->render();
 
@@ -1264,6 +1197,113 @@ class PropertyCardPage extends Page implements HasSchemas
         $this->form->model($record ?? new PropertyCard());
     }
 
+    protected function loadRecordIntoForm(PropertyCard $record): void
+    {
+        $this->currentRecordId = $record->id;
+
+        $record->load('ownerships.owner', 'signals.owners', 'payments', 'files');
+
+        $payload = $record->toArray();
+        $payload['ownerships'] = $record->ownerships
+            ->map(fn ($ownership) => $ownership->toArray())
+            ->values()
+            ->all();
+        $payload['signals'] = $record->signals
+            ->map(function ($signal): array {
+                $data = $signal->toArray();
+                $data['signal_owners'] = $this->normalizeSignalOwnersForForm(
+                    $signal->signal_owners ?? [],
+                    $signal->signal_owner ?? null,
+                    $signal->owners ?? collect()
+                );
+                $data['signal_victims'] = $this->normalizeSignalVictimsForForm(
+                    $signal->signal_victims ?? [],
+                    $signal->signal_victim ?? null
+                );
+
+                return $data;
+            })
+            ->values()
+            ->all();
+        $payload['payments'] = $record->payments
+            ->map(fn ($payment) => $payment->toArray())
+            ->values()
+            ->all();
+        $payload['files'] = [];
+
+        $this->bindFormToRecord($record);
+        $this->form->fill($payload);
+        $this->resetFileInputs();
+    }
+    private function normalizeSignalOwnersForForm(array $owners, ?string $legacyOwner, $ownersRelation): array
+    {
+        if (count($owners) > 0) {
+            $first = $owners[0] ?? null;
+
+            if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+                return $owners;
+            }
+
+            return collect($owners)->map(function (array $owner): array {
+                return [
+                    'owner_from_owner' => (bool) ($owner['is_owner'] ?? false),
+                    'owner_id' => $owner['owner_id'] ?? null,
+                    'owner_name' => $owner['name'] ?? null,
+                ];
+            })->values()->all();
+        }
+
+        if ($ownersRelation instanceof \Illuminate\Support\Collection && $ownersRelation->isNotEmpty()) {
+            return $ownersRelation->map(function ($owner): array {
+                return [
+                    'owner_from_owner' => true,
+                    'owner_id' => $owner->id ?? null,
+                    'owner_name' => $owner->full_name ?? null,
+                ];
+            })->values()->all();
+        }
+
+        if (filled($legacyOwner)) {
+            return [[
+                'owner_from_owner' => false,
+                'owner_id' => null,
+                'owner_name' => $legacyOwner,
+            ]];
+        }
+
+        return [];
+    }
+
+    private function normalizeSignalVictimsForForm(array $victims, ?string $legacyVictim): array
+    {
+        if (count($victims) > 0) {
+            $first = $victims[0] ?? null;
+
+            if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+                return $victims;
+            }
+
+            return collect($victims)->map(function (array $victim): array {
+                return [
+                    'victim_from_owner' => (bool) ($victim['is_owner'] ?? false),
+                    'victim_owner_id' => $victim['owner_id'] ?? null,
+                    'victim_name' => $victim['name'] ?? null,
+                ];
+            })->values()->all();
+        }
+
+        if (filled($legacyVictim)) {
+            return [[
+                'victim_from_owner' => false,
+                'victim_owner_id' => null,
+                'victim_name' => $legacyVictim,
+            ]];
+        }
+
+        return [];
+    }
+
+
     protected function resetFileInputs(): void
     {
         $this->data['files'] = [];
@@ -1329,6 +1369,114 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         return $fileName;
+    }
+
+    protected function validateFileUploads(array $files, bool $requireFiles = false): ?array
+    {
+        if (! $this->shouldHandleFileUploads($files)) {
+            if ($requireFiles) {
+                $exception = ValidationException::withMessages([
+                    'files' => ['يرجى إضافة ملف واحد على الأقل.'],
+                ]);
+                Notification::make()
+                    ->title('يرجى تصحيح أخطاء الحقول')
+                    ->body($this->formatValidationErrors($exception))
+                    ->danger()
+                    ->send();
+                return null;
+            }
+
+            return [];
+        }
+
+        $payload = [
+            'files' => $files,
+        ];
+
+        $validator = Validator::make($payload, [
+            'files' => ['required', 'array', 'min:1'],
+            'files.*.file_upload' => ['required', 'array', 'min:1'],
+            'files.*.file_upload.*' => ['file', 'max:10240'],
+            'files.*.file_name' => ['nullable', 'string', 'max:255'],
+            'files.*.file_issued_at' => ['nullable', 'date'],
+        ], [
+            'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
+            'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
+            'files.*.file_upload.*.max' => 'حجم الملف يجب ألا يتجاوز :max كيلوبايت.',
+            'files.*.file_upload.*.mimes' => 'صيغة الملف غير مدعومة. الصيغ المسموحة: :values.',
+            'files.*.file_upload.*.mimetypes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: :values.',
+        ]);
+
+        if ($validator->fails()) {
+            $exception = ValidationException::withMessages($validator->errors()->toArray());
+            Notification::make()
+                ->title('يرجى تصحيح أخطاء الحقول')
+                ->body($this->formatValidationErrors($exception))
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        return $payload['files'];
+    }
+
+    protected function storeValidatedFileUploads(PropertyCard $record, array $files): bool
+    {
+        if ($files === []) {
+            return true;
+        }
+
+        foreach ($files as $fileRow) {
+            $uploadedFiles = Arr::wrap($fileRow['file_upload'] ?? []);
+
+            foreach ($uploadedFiles as $uploadedFile) {
+                if (! $uploadedFile instanceof UploadedFile) {
+                    Notification::make()->title('الملف غير صالح')->danger()->send();
+                    return false;
+                }
+
+                $fileName = $this->normalizeUploadedFileName($fileRow['file_name'] ?? null, $uploadedFile);
+                $issuedAt = filled($fileRow['file_issued_at'] ?? null)
+                    ? \Illuminate\Support\Carbon::parse($fileRow['file_issued_at'])
+                    : null;
+
+                app(PropertyCardFileStorage::class)->store(
+                    $record,
+                    $uploadedFile,
+                    $issuedAt,
+                    null,
+                    $fileName
+                );
+            }
+        }
+
+        $this->resetFileInputs();
+
+        return true;
+    }
+
+    protected function shouldHandleFileUploads(array $files): bool
+    {
+        foreach ($files as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            if (! $this->isFileRowEmpty($row)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function isFileRowEmpty(array $row): bool
+    {
+        $fileUploads = Arr::wrap($row['file_upload'] ?? []);
+        $hasUploads = collect($fileUploads)->contains(fn ($file): bool => $file instanceof UploadedFile);
+        $hasMeta = filled($row['file_name'] ?? null) || filled($row['file_issued_at'] ?? null);
+
+        return ! $hasUploads && ! $hasMeta;
     }
 
     protected function formatValidationErrors(ValidationException $exception): string
@@ -1492,7 +1640,29 @@ class PropertyCardPage extends Page implements HasSchemas
 
         // NOT NULL / no default
         if (in_array($driverCode, [1048, 1364], true)) {
-            return 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
+            $column = null;
+
+            if (preg_match("/Column '([^']+)' cannot be null/i", $message, $match)) {
+                $column = $match[1];
+            }
+
+            if (! $column && preg_match("/Field '([^']+)' doesn't have a default value/i", $message, $match)) {
+                $column = $match[1];
+            }
+
+            if (! $column && preg_match('/null value in column \"([^\"]+)\"/i', $message, $match)) {
+                $column = $match[1];
+            }
+
+            if (! $column && preg_match('/fails? to satisfy NOT NULL constraint/i', $message)) {
+                if (preg_match('/column \"([^\"]+)\"/i', $message, $match)) {
+                    $column = $match[1];
+                }
+            }
+
+            return $column
+                ? "تعذر تنفيذ العملية لأن الحقل \"{$column}\" إلزامي أو لا يملك قيمة افتراضية. يرجى تعبئته."
+                : 'تعذر تنفيذ العملية بسبب حقل إلزامي فارغ أو لا يملك قيمة افتراضية. راجع القيم المدخلة.';
         }
 
         return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات. يرجى مراجعة القيم المدخلة.';
