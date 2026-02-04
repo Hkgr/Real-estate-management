@@ -885,59 +885,16 @@ class PropertyCardPage extends Page implements HasSchemas
                     return;
                 }
 
-                $payload = [
-                    'files' => $this->data['files'] ?? [],
-                ];
+                $files = $this->data['files'] ?? [];
+                $validatedFiles = $this->validateFileUploads($files, true);
 
-                $validator = Validator::make($payload, [
-                    'files' => ['required', 'array', 'min:1'],
-                    'files.*.file_upload' => ['required', 'array', 'min:1'],
-                    'files.*.file_upload.*' => ['file', 'max:10240'],
-                    'files.*.file_name' => ['nullable', 'string', 'max:255'],
-                    'files.*.file_issued_at' => ['nullable', 'date'],
-                ], [
-                    'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
-                    'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
-                    'files.*.file_upload.*.max' => 'حجم الملف يجب ألا يتجاوز :max كيلوبايت.',
-                    'files.*.file_upload.*.mimes' => 'صيغة الملف غير مدعومة. الصيغ المسموحة: :values.',
-                    'files.*.file_upload.*.mimetypes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: :values.',
-                ]);
-
-                if ($validator->fails()) {
-                    $exception = ValidationException::withMessages($validator->errors()->toArray());
-                    Notification::make()
-                        ->title('يرجى تصحيح أخطاء الحقول')
-                        ->body($this->formatValidationErrors($exception))
-                        ->danger()
-                        ->send();
+                if ($validatedFiles === null) {
                     return;
                 }
 
-                foreach ($payload['files'] as $fileRow) {
-                    $uploadedFiles = Arr::wrap($fileRow['file_upload'] ?? []);
-
-                    foreach ($uploadedFiles as $uploadedFile) {
-                        if (! $uploadedFile instanceof UploadedFile) {
-                            Notification::make()->title('الملف غير صالح')->danger()->send();
-                            return;
-                        }
-
-                        $fileName = $this->normalizeUploadedFileName($fileRow['file_name'] ?? null, $uploadedFile);
-                        $issuedAt = filled($fileRow['file_issued_at'] ?? null)
-                            ? \Illuminate\Support\Carbon::parse($fileRow['file_issued_at'])
-                            : null;
-
-                        app(PropertyCardFileStorage::class)->store(
-                            $record,
-                            $uploadedFile,
-                            $issuedAt,
-                            null,
-                            $fileName
-                        );
-                    }
+                if (! $this->storeValidatedFileUploads($record, $validatedFiles)) {
+                    return;
                 }
-
-                $this->resetFileInputs();
 
                 Notification::make()->title('تم رفع الملف بنجاح')->success()->send();
             });
@@ -959,6 +916,11 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         $state = $this->getFormPayload($validated);
+        $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
+
+        if ($validatedFiles === null) {
+            return null;
+        }
 
         $recordNumber = $state['card_record_number'] ?? null;
 
@@ -995,6 +957,7 @@ class PropertyCardPage extends Page implements HasSchemas
             $record = PropertyCard::create($attributes);
             $this->form->model($record)->saveRelationships();
             $this->syncSignalOwners($record, $state);
+            $this->storeValidatedFileUploads($record, $validatedFiles);
         } catch (QueryException $exception) {
             Notification::make()
                 ->title('فشل الحفظ')
@@ -1072,6 +1035,11 @@ class PropertyCardPage extends Page implements HasSchemas
                 $this->bindFormToRecord($record);
 
                 $state = $this->getFormPayload($validated);
+                $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
+
+                if ($validatedFiles === null) {
+                    return;
+                }
                 $attributes = Arr::except($state, [
                     'owners',
                     'ownerships',
@@ -1084,6 +1052,7 @@ class PropertyCardPage extends Page implements HasSchemas
                     $record->update($attributes);
                     $this->form->model($record)->saveRelationships();
                     $this->syncSignalOwners($record, $state);
+                    $this->storeValidatedFileUploads($record, $validatedFiles);
                 } catch (QueryException $exception) {
                     Notification::make()
                         ->title('فشل التعديل')
@@ -1299,6 +1268,114 @@ class PropertyCardPage extends Page implements HasSchemas
         }
 
         return $fileName;
+    }
+
+    protected function validateFileUploads(array $files, bool $requireFiles = false): ?array
+    {
+        if (! $this->shouldHandleFileUploads($files)) {
+            if ($requireFiles) {
+                $exception = ValidationException::withMessages([
+                    'files' => ['يرجى إضافة ملف واحد على الأقل.'],
+                ]);
+                Notification::make()
+                    ->title('يرجى تصحيح أخطاء الحقول')
+                    ->body($this->formatValidationErrors($exception))
+                    ->danger()
+                    ->send();
+                return null;
+            }
+
+            return [];
+        }
+
+        $payload = [
+            'files' => $files,
+        ];
+
+        $validator = Validator::make($payload, [
+            'files' => ['required', 'array', 'min:1'],
+            'files.*.file_upload' => ['required', 'array', 'min:1'],
+            'files.*.file_upload.*' => ['file', 'max:10240'],
+            'files.*.file_name' => ['nullable', 'string', 'max:255'],
+            'files.*.file_issued_at' => ['nullable', 'date'],
+        ], [
+            'files.required' => 'يرجى إضافة ملف واحد على الأقل.',
+            'files.*.file_upload.required' => 'يرجى اختيار ملف للرفع.',
+            'files.*.file_upload.*.max' => 'حجم الملف يجب ألا يتجاوز :max كيلوبايت.',
+            'files.*.file_upload.*.mimes' => 'صيغة الملف غير مدعومة. الصيغ المسموحة: :values.',
+            'files.*.file_upload.*.mimetypes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: :values.',
+        ]);
+
+        if ($validator->fails()) {
+            $exception = ValidationException::withMessages($validator->errors()->toArray());
+            Notification::make()
+                ->title('يرجى تصحيح أخطاء الحقول')
+                ->body($this->formatValidationErrors($exception))
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        return $payload['files'];
+    }
+
+    protected function storeValidatedFileUploads(PropertyCard $record, array $files): bool
+    {
+        if ($files === []) {
+            return true;
+        }
+
+        foreach ($files as $fileRow) {
+            $uploadedFiles = Arr::wrap($fileRow['file_upload'] ?? []);
+
+            foreach ($uploadedFiles as $uploadedFile) {
+                if (! $uploadedFile instanceof UploadedFile) {
+                    Notification::make()->title('الملف غير صالح')->danger()->send();
+                    return false;
+                }
+
+                $fileName = $this->normalizeUploadedFileName($fileRow['file_name'] ?? null, $uploadedFile);
+                $issuedAt = filled($fileRow['file_issued_at'] ?? null)
+                    ? \Illuminate\Support\Carbon::parse($fileRow['file_issued_at'])
+                    : null;
+
+                app(PropertyCardFileStorage::class)->store(
+                    $record,
+                    $uploadedFile,
+                    $issuedAt,
+                    null,
+                    $fileName
+                );
+            }
+        }
+
+        $this->resetFileInputs();
+
+        return true;
+    }
+
+    protected function shouldHandleFileUploads(array $files): bool
+    {
+        foreach ($files as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            if (! $this->isFileRowEmpty($row)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function isFileRowEmpty(array $row): bool
+    {
+        $fileUploads = Arr::wrap($row['file_upload'] ?? []);
+        $hasUploads = collect($fileUploads)->contains(fn ($file): bool => $file instanceof UploadedFile);
+        $hasMeta = filled($row['file_name'] ?? null) || filled($row['file_issued_at'] ?? null);
+
+        return ! $hasUploads && ! $hasMeta;
     }
 
     protected function formatValidationErrors(ValidationException $exception): string
