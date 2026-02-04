@@ -291,16 +291,15 @@ class PropertyCardPage extends Page implements HasSchemas
 
         $this->bindFormToRecord(null);
 
-        $this->form->fill([
+        $this->data = [
             'card_status' => 'active',
-            // ممكن تضيف defaults أخرى هنا
-        ]);
+            'ownerships' => [],
+            'signals' => [],
+            'payments' => [],
+            'files' => [],
+        ];
 
-        $this->data['ownerships'] = [];
-        $this->data['signals'] = [];
-        $this->data['payments'] = [];
-
-        $this->resetFileInputs();
+        $this->form->fill($this->data);
     }
 
     protected function ownershipsRepeater(): Repeater
@@ -530,36 +529,57 @@ class PropertyCardPage extends Page implements HasSchemas
                     ])
                     ->defaultItems(0)
                     ->afterStateHydrated(function ($state, $set, Get $get): void {
+                        if (is_array($state) && ! array_is_list($state)) {
+                            return;
+                        }
+
+                        $uuidKeyed = function (array $rows): array {
+                            return collect($rows)
+                                ->mapWithKeys(fn (array $row) => [\Illuminate\Support\Str::uuid()->toString() => $row])
+                                ->all();
+                        };
+
                         if (is_array($state) && count($state) > 0) {
-                            $set('signal_owners', collect($state)->map(function (array $item): array {
+                            $first = $state[0] ?? null;
+
+                            if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+                                $set('signal_owners', $uuidKeyed($state));
+                                return;
+                            }
+
+                            $rows = collect($state)->map(function (array $item): array {
                                 return [
                                     'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
                                     'owner_id' => $item['owner_id'] ?? null,
                                     'owner_name' => $item['name'] ?? null,
                                 ];
-                            })->all());
+                            })->all();
+
+                            $set('signal_owners', $uuidKeyed($rows));
                             return;
                         }
 
                         $owners = $get('owners') ?? [];
                         if (is_array($owners) && count($owners) > 0) {
-                            $set('signal_owners', collect($owners)->map(function (array $owner): array {
+                            $rows = collect($owners)->map(function (array $owner): array {
                                 return [
                                     'owner_from_owner' => true,
                                     'owner_id' => $owner['id'] ?? null,
                                     'owner_name' => $owner['full_name'] ?? null,
                                 ];
-                            })->all());
+                            })->all();
+
+                            $set('signal_owners', $uuidKeyed($rows));
                             return;
                         }
 
                         $legacyOwner = $get('signal_owner');
                         if (filled($legacyOwner)) {
-                            $set('signal_owners', [[
+                            $set('signal_owners', $uuidKeyed([[
                                 'owner_from_owner' => false,
                                 'owner_id' => null,
                                 'owner_name' => $legacyOwner,
-                            ]]);
+                            ]]));
                         }
                     })
                     ->dehydrateStateUsing(function ($state, Get $get): array {
@@ -626,25 +646,44 @@ class PropertyCardPage extends Page implements HasSchemas
                     ])
                     ->defaultItems(0)
                     ->afterStateHydrated(function ($state, $set, Get $get): void {
+                        if (is_array($state) && ! array_is_list($state)) {
+                            return;
+                        }
+
+                        $uuidKeyed = function (array $rows): array {
+                            return collect($rows)
+                                ->mapWithKeys(fn (array $row) => [\Illuminate\Support\Str::uuid()->toString() => $row])
+                                ->all();
+                        };
+
                         if (is_array($state) && count($state) > 0) {
-                            $set('signal_victims', collect($state)->map(function (array $item): array {
+                            $first = $state[0] ?? null;
+
+                            if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+                                $set('signal_victims', $uuidKeyed($state));
+                                return;
+                            }
+
+                            $rows = collect($state)->map(function (array $item): array {
                                 return [
                                     'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
                                     'victim_owner_id' => $item['owner_id'] ?? null,
                                     'victim_name' => $item['name'] ?? null,
                                 ];
-                            })->all());
+                            })->all();
+
+                            $set('signal_victims', $uuidKeyed($rows));
                             return;
                         }
 
                         $legacyVictim = $get('signal_victim');
 
                         if (filled($legacyVictim)) {
-                            $set('signal_victims', [[
+                            $set('signal_victims', $uuidKeyed([[
                                 'victim_from_owner' => false,
                                 'victim_owner_id' => null,
                                 'victim_name' => $legacyVictim,
-                            ]]);
+                            ]]));
                         }
                     })
                     ->dehydrateStateUsing(function ($state, Get $get): array {
@@ -1227,13 +1266,11 @@ class PropertyCardPage extends Page implements HasSchemas
 
     protected function resetFileInputs(): void
     {
-        $this->data['files'] = [
-            [
-                'file_name' => null,
-                'file_issued_at' => null,
-                'file_upload' => [],
-            ],
-        ];
+        $this->data['files'] = [];
+
+        $this->form->fill([
+            'files' => [],
+        ]);
     }
 
     protected function renderUploadedFiles(): HtmlString
