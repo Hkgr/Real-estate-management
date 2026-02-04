@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Owner extends Model
 {
     use SoftDeletes;
+    protected static function booted(): void
+    {
+        static::saving(function (Owner $owner): void {
+            if ($owner->owner_type === 'company' && blank($owner->full_name)) {
+                $owner->full_name = (string) ($owner->company_name ?? '');
+            }
+        });
+    }
+
 
     protected $fillable = [
         'full_name',

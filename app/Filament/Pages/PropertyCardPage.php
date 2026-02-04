@@ -314,7 +314,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ])
                                     ->required()
                                     ->default('individual')
-                                  ->live()
+                                    ->live()
                                     ->inline(),
 
                                 TextInput::make('full_name')
@@ -372,6 +372,9 @@ class PropertyCardPage extends Page implements HasSchemas
                                     ->email()
                                     ->maxLength(150)
                                     ->nullable()
+                                   ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                                    ->required(fn (Get $get) => $get('owner_type') === 'company')
+
                                     ->live(onBlur: true)
                                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
