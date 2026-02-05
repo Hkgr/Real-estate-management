@@ -1116,17 +1116,6 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->required()
                     ->live(onBlur: true),
 
-                Select::make('currency')
-                    ->label('العملة')
-                    ->prefixIcon('heroicon-o-banknotes')
-                    ->native(false)
-                    ->options([
-                        'syp_new' => 'ليرة سورية جديدة',
-                        'syp_old' => 'ليرة سورية قديمة',
-                        'usd' => 'دولار أمريكي',
-                    ])
-                    ->nullable()
-                    ->live(onBlur: true),
 
                 TextInput::make('debit')
                     ->label('مدين')
@@ -1608,53 +1597,62 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $this->form->model($record ?? new PropertyCard());
     }
 
-    protected function loadRecordIntoForm(PropertyCard $record): void
-    {
-        $this->currentRecordId = $record->id;
+protected function loadRecordIntoForm(PropertyCard $record): void
+{
+    $this->currentRecordId = $record->id;
 
-        $record->load('ownerships.owner', 'signals.owners', 'payments', 'files');
+    $record->load('ownerships.owner', 'signals.owners', 'payments');
 
-        $payload = $record->toArray();
-        $payload['ownerships'] = $record->ownerships->map(fn ($o) => $o->toArray())->values()->all();
+    // 1) خصائص البطاقة فقط (بدون علاقات)
+    $payload = $record->attributesToArray();
 
-        $payload['signals'] = $record->signals->map(function ($signal) {
+    // 2) علاقات relationship repeaters يجب أن تكون "keyed by record id"
+    $payload['ownerships'] = $record->ownerships
+        ->mapWithKeys(fn ($o) => [(string) $o->getKey() => $o->toArray()])
+        ->all();
+
+    $payload['payments'] = $record->payments
+        ->mapWithKeys(fn ($p) => [(string) $p->getKey() => $p->toArray()])
+        ->all();
+
+    $payload['signals'] = $record->signals
+        ->mapWithKeys(function ($signal) {
             $signalPayload = $signal->toArray();
 
             $normalizedOwners = $this->normalizeSignalOwnersForStorage($signalPayload['signal_owners'] ?? []);
-
             if (empty($normalizedOwners)) {
                 $normalizedOwners = $signal->owners
                     ->map(fn (Owner $owner) => [
                         'is_owner' => true,
                         'owner_id' => $owner->getKey(),
-                        'name' => $owner->display_name,
+                        'name'     => $owner->display_name,
                     ])
                     ->values()
                     ->all();
             }
 
-            $signalPayload['signal_owners'] = $normalizedOwners;
+            $signalPayload['signal_owners']  = $normalizedOwners;
             $signalPayload['signal_victims'] = $this->normalizeSignalVictimsForStorage($signalPayload['signal_victims'] ?? []);
+
             unset($signalPayload['owners']);
 
-            return $signalPayload;
-        })->values()->all();
+            return [(string) $signal->getKey() => $signalPayload];
+        })
+        ->all();
 
+    // 3) الملفات: لا تعيد تعبئة الفورم بالكامل لاحقاً
+    $payload['files'] = [[]];
 
-        $payload['payments'] = $record->payments->map(fn ($p) => $p->toArray())->values()->all();
-        $payload['files'] = [];
-
-        $this->bindFormToRecord($record);
-        $this->form->fill($payload);
-        $this->resetFileInputs();
-    }
+    $this->form->model($record)->fill($payload);
+}
 
     protected function resetFileInputs(): void
     {
         $state = $this->form->getState();
         $state['files'] = [[]];
-        $this->form->fill($state);
-    }
+    $this->form->fill([
+        'files' => [[]],
+    ]);    }
 
     protected function renderUploadedFiles(): HtmlString
     {
@@ -1941,7 +1939,6 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                 'voucher',
                 'payment_date',
                 'balance_movement',
-                'currency',
             ])))
             ->values();
 

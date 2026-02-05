@@ -15,7 +15,6 @@ class PropertyOwnerPayment extends Model
         'voucher',
         'payment_date',
         'balance_movement',
-        'currency',
     ];
 
     protected $casts = [
