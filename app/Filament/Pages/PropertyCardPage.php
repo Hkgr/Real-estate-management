@@ -25,6 +25,7 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Storage;
@@ -1571,8 +1572,29 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $payload = $record->toArray();
         $payload['ownerships'] = $record->ownerships->map(fn ($o) => $o->toArray())->values()->all();
 
-        // هنا أبقي منطقك لإشارات/ضحايا كما عندك إن كان يعمل
-        $payload['signals'] = $record->signals->map(fn ($s) => $s->toArray())->values()->all();
+        $payload['signals'] = $record->signals->map(function ($signal) {
+            $signalPayload = $signal->toArray();
+
+            $normalizedOwners = $this->normalizeSignalOwnersForStorage($signalPayload['signal_owners'] ?? []);
+
+            if (empty($normalizedOwners)) {
+                $normalizedOwners = $signal->owners
+                    ->map(fn (Owner $owner) => [
+                        'is_owner' => true,
+                        'owner_id' => $owner->getKey(),
+                        'name' => $owner->display_name,
+                    ])
+                    ->values()
+                    ->all();
+            }
+
+            $signalPayload['signal_owners'] = $normalizedOwners;
+            $signalPayload['signal_victims'] = $this->normalizeSignalVictimsForStorage($signalPayload['signal_victims'] ?? []);
+            unset($signalPayload['owners']);
+
+            return $signalPayload;
+        })->values()->all();
+
 
         $payload['payments'] = $record->payments->map(fn ($p) => $p->toArray())->values()->all();
         $payload['files'] = [];
@@ -1622,14 +1644,116 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
     protected function validateFileUploads(array $files, bool $requireFiles = false): ?array
     {
-        // استخدم كودك الحالي كما هو (لم أغيّره)
-        // ضع هنا نفس دالتك الموجودة عندك حرفياً
-        return $files; // عدّلها باستبدالها بكودك الأصلي
+       $normalizedFiles = [];
+
+        foreach (array_values($files) as $fileRow) {
+            if (! is_array($fileRow)) {
+                continue;
+            }
+
+            $inputName = isset($fileRow['file_name']) && is_string($fileRow['file_name'])
+                ? trim($fileRow['file_name'])
+                : null;
+            $issuedAt = $fileRow['file_issued_at'] ?? null;
+            $rawUploads = $fileRow['file_upload'] ?? [];
+
+            if ($rawUploads instanceof UploadedFile) {
+                $rawUploads = [$rawUploads];
+            }
+
+            if (! is_array($rawUploads)) {
+                $rawUploads = [];
+            }
+
+            $uploads = collect($rawUploads)
+                ->filter(fn (mixed $upload): bool => $upload instanceof UploadedFile)
+                ->values();
+
+            if ($uploads->isEmpty()) {
+                continue;
+            }
+
+            foreach ($uploads as $upload) {
+                $entry = [
+                    'file_name' => filled($inputName) ? $inputName : $upload->getClientOriginalName(),
+                    'file_issued_at' => filled($issuedAt) ? $issuedAt : null,
+                    'file_upload' => $upload,
+                ];
+
+                $validator = Validator::make($entry, [
+                    'file_name' => ['required', 'string', 'max:255'],
+                    'file_issued_at' => ['nullable', 'date'],
+                    'file_upload' => [
+                        'required',
+                        'file',
+                        'mimetypes:application/pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml',
+                        'max:10240',
+                    ],
+                ]);
+
+                if ($validator->fails()) {
+                    Notification::make()
+                        ->title('ملف غير صالح')
+                        ->body($validator->errors()->first())
+                        ->danger()
+                        ->send();
+
+                    return null;
+                }
+
+                $normalizedFiles[] = $entry;
+            }
+        }
+
+        if ($requireFiles && count($normalizedFiles) === 0) {
+            Notification::make()
+                ->title('يرجى اختيار ملف واحد على الأقل')
+                ->danger()
+                ->send();
+
+            return null;
+        }
+
+        return $normalizedFiles;
+
     }
 
     protected function storeValidatedFileUploads(PropertyCard $record, array $files): bool
     {
-        // استخدم كودك الحالي كما هو (لم أغيّره)
+        if (count($files) === 0) {
+            return true;
+        }
+
+        $storage = app(PropertyCardFileStorage::class);
+
+        try {
+            foreach ($files as $file) {
+                if (! isset($file['file_upload']) || ! ($file['file_upload'] instanceof UploadedFile)) {
+                    continue;
+                }
+
+                $issuedAt = filled($file['file_issued_at'] ?? null)
+                    ? Carbon::parse((string) $file['file_issued_at'])
+                    : null;
+
+                $storage->store(
+                    propertyCard: $record,
+                    file: $file['file_upload'],
+                    issuedAt: $issuedAt,
+                    fileName: $file['file_name'] ?? null,
+                );
+            }
+        } catch (\Throwable $exception) {
+            Notification::make()
+                ->title('تعذر حفظ الملفات')
+                ->body($exception->getMessage())
+                ->danger()
+                ->send();
+
+            return false;
+        }
+
+        $this->resetFileInputs();
         return true;
     }
 
@@ -1651,7 +1775,40 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
     protected function syncSignalOwners(PropertyCard $record, array $state): void
     {
-        // استخدم كودك الحالي كما هو (لم أغيّره)
+        $signalsState = $state['signals'] ?? [];
+
+        if (! is_array($signalsState)) {
+            return;
+        }
+
+        $signalsState = array_is_list($signalsState) ? $signalsState : array_values($signalsState);
+
+        $signalsById = collect($signalsState)
+            ->filter(fn ($signal) => is_array($signal) && filled($signal['id'] ?? null))
+            ->keyBy(fn ($signal) => (int) $signal['id']);
+
+        $record->loadMissing('signals');
+
+        foreach ($record->signals as $index => $signal) {
+            $signalState = $signalsById->get($signal->getKey(), $signalsState[$index] ?? []);
+
+            if (! is_array($signalState)) {
+                $signal->owners()->sync([]);
+                continue;
+            }
+
+            $normalizedOwners = $this->normalizeSignalOwnersForStorage($signalState['signal_owners'] ?? []);
+
+            $ownerIds = collect($normalizedOwners)
+                ->filter(fn (array $owner) => (bool) ($owner['is_owner'] ?? false) && filled($owner['owner_id'] ?? null))
+                ->pluck('owner_id')
+                ->map(fn ($ownerId) => (int) $ownerId)
+                ->unique()
+                ->values()
+                ->all();
+
+            $signal->owners()->sync($ownerIds);
+        }
     }
 
     protected function formatValidationErrors(ValidationException $exception): string
