@@ -738,7 +738,7 @@ protected function signalsRepeater(): Repeater
 
                         // إن كانت UI already
                         if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
-                            $set('signal_owners', $uuidKeyed($values));
+                            $set('signal_owners', $uuidKeyed($this->deduplicateSignalOwnerUiRows($values)));
                             return;
                         }
 
@@ -752,7 +752,7 @@ protected function signalsRepeater(): Repeater
                                 ];
                             })->all();
 
-                            $set('signal_owners', $uuidKeyed($rows));
+                            $set('signal_owners', $uuidKeyed($this->deduplicateSignalOwnerUiRows($rows)));
                             return;
                         }
                     }
@@ -768,7 +768,7 @@ protected function signalsRepeater(): Repeater
                             ];
                         })->all();
 
-                        $set('signal_owners', $uuidKeyed($rows));
+                        $set('signal_owners', $uuidKeyed($this->deduplicateSignalOwnerUiRows($rows)));
                         return;
                     }
 
@@ -855,7 +855,7 @@ protected function signalsRepeater(): Repeater
 
                         // UI already
                         if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
-                            $set('signal_victims', $uuidKeyed($values));
+                            $set('signal_victims', $uuidKeyed($this->deduplicateSignalVictimUiRows($values)));
                             return;
                         }
 
@@ -869,7 +869,7 @@ protected function signalsRepeater(): Repeater
                                 ];
                             })->all();
 
-                            $set('signal_victims', $uuidKeyed($rows));
+                            $set('signal_victims', $uuidKeyed($this->deduplicateSignalVictimUiRows($rows)));
                             return;
                         }
                     }
@@ -887,6 +887,42 @@ protected function signalsRepeater(): Repeater
         ])
         ->columns(['default' => 1, 'md' => 2]);
 }
+private function deduplicateSignalOwnerUiRows(array $rows): array
+{
+    return collect($rows)
+        ->filter(fn ($row) => is_array($row))
+        ->map(function (array $row): array {
+            return [
+                'owner_from_owner' => (bool) ($row['owner_from_owner'] ?? false),
+                'owner_id' => $row['owner_id'] ?? null,
+                'owner_name' => isset($row['owner_name']) && is_string($row['owner_name'])
+                    ? trim($row['owner_name'])
+                    : ($row['owner_name'] ?? null),
+            ];
+        })
+        ->unique(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+        ->values()
+        ->all();
+}
+
+private function deduplicateSignalVictimUiRows(array $rows): array
+{
+    return collect($rows)
+        ->filter(fn ($row) => is_array($row))
+        ->map(function (array $row): array {
+            return [
+                'victim_from_owner' => (bool) ($row['victim_from_owner'] ?? false),
+                'victim_owner_id' => $row['victim_owner_id'] ?? null,
+                'victim_name' => isset($row['victim_name']) && is_string($row['victim_name'])
+                    ? trim($row['victim_name'])
+                    : ($row['victim_name'] ?? null),
+            ];
+        })
+        ->unique(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+        ->values()
+        ->all();
+}
+
 private function decodeJsonToArray(mixed $value): mixed
 {
     if (! is_string($value)) {
@@ -1332,6 +1368,15 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     'payments',
                     'files',
                 ]);
+
+                if (! $this->hasPendingChanges($record, $attributes, $state)) {
+                    Notification::make()
+                        ->title('لا توجد تغييرات للحفظ')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
 
                 try {
                     $record->update($attributes);
@@ -1809,6 +1854,182 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
             $signal->owners()->sync($ownerIds);
         }
+    }
+
+    protected function hasPendingChanges(PropertyCard $record, array $attributes, array $state): bool
+    {
+        $record->loadMissing('ownerships', 'payments', 'signals.owners');
+
+        $currentAttributes = Arr::only($record->getAttributes(), array_keys($attributes));
+
+        if ($this->normalizeForComparison($attributes) !== $this->normalizeForComparison($currentAttributes)) {
+            return true;
+        }
+
+        if ($this->normalizeOwnershipsForComparison($state['ownerships'] ?? [])
+            !== $this->normalizeOwnershipsForComparison($record->ownerships->toArray())) {
+            return true;
+        }
+
+        if ($this->normalizePaymentsForComparison($state['payments'] ?? [])
+            !== $this->normalizePaymentsForComparison($record->payments->toArray())) {
+            return true;
+        }
+
+        if ($this->normalizeSignalsForComparison($state['signals'] ?? [])
+            !== $this->normalizeSignalsForComparison($record->signals->toArray(), $record->signals->pluck('owners')->all())) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function normalizeOwnershipsForComparison(mixed $rows): array
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+        $normalized = collect($rows)
+            ->filter(fn ($row) => is_array($row))
+            ->map(fn (array $row) => $this->normalizeForComparison(Arr::only($row, [
+                'owner_id',
+                'ownership_percentage',
+                'ownership_metric',
+                'is_current',
+                'purchase_date',
+                'sale_date',
+                'purchase_method',
+                'case_number',
+                'decision_number',
+                'authority',
+                'judgment_date',
+                'regular_contract_date',
+                'contract_number',
+                'commercial_contract_date',
+            ])))
+            ->map(fn (array $row) => array_filter($row, fn ($value) => $value !== null && $value !== ''))
+            ->values();
+
+        return $normalized
+            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->values()
+            ->all();
+    }
+
+    protected function normalizePaymentsForComparison(mixed $rows): array
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+        $normalized = collect($rows)
+            ->filter(fn ($row) => is_array($row))
+            ->map(fn (array $row) => $this->normalizeForComparison(Arr::only($row, [
+                'owner_id',
+                'debit',
+                'credit',
+                'statement',
+                'voucher',
+                'payment_date',
+                'balance_movement',
+                'currency',
+            ])))
+            ->values();
+
+        return $normalized
+            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->values()
+            ->all();
+    }
+
+    protected function normalizeSignalsForComparison(mixed $rows, array $signalOwners = []): array
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+        $normalized = collect($rows)
+            ->filter(fn ($row) => is_array($row))
+            ->map(function (array $row, int $index) use ($signalOwners): array {
+                $ownersFromRelation = $signalOwners[$index] ?? [];
+
+                if ($ownersFromRelation instanceof \Illuminate\Support\Collection) {
+                    $ownersFromRelation = $ownersFromRelation->pluck('id')->all();
+                }
+
+                $ownerIds = collect($this->normalizeSignalOwnersForStorage($row['signal_owners'] ?? []))
+                    ->filter(fn (array $owner) => (bool) ($owner['is_owner'] ?? false) && filled($owner['owner_id'] ?? null))
+                    ->pluck('owner_id')
+                    ->map(fn ($ownerId) => (int) $ownerId)
+                    ->merge(collect($ownersFromRelation)->map(fn ($ownerId) => (int) $ownerId))
+                    ->unique()
+                    ->sort()
+                    ->values()
+                    ->all();
+
+                return [
+                    'signal_id' => $row['signal_id'] ?? null,
+                    'signal_date' => $this->normalizeForComparison($row['signal_date'] ?? null),
+                    'type' => $row['type'] ?? null,
+                    'signal_source' => $row['signal_source'] ?? null,
+                    'signal_source_number' => $row['signal_source_number'] ?? null,
+                    'signal_source_date' => $this->normalizeForComparison($row['signal_source_date'] ?? null),
+                    'signal_owners' => collect($this->normalizeSignalOwnersForStorage($row['signal_owners'] ?? []))
+                        ->sortBy(fn (array $owner) => json_encode($this->normalizeForComparison($owner), JSON_UNESCAPED_UNICODE))
+                        ->values()
+                        ->all(),
+                    'signal_victims' => collect($this->normalizeSignalVictimsForStorage($row['signal_victims'] ?? []))
+                        ->sortBy(fn (array $victim) => json_encode($this->normalizeForComparison($victim), JSON_UNESCAPED_UNICODE))
+                        ->values()
+                        ->all(),
+                    'owner_ids' => $ownerIds,
+                ];
+            })
+            ->map(fn (array $row) => $this->normalizeForComparison($row))
+            ->values();
+
+        return $normalized
+            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->values()
+            ->all();
+    }
+
+    protected function normalizeForComparison(mixed $value): mixed
+    {
+        if ($value instanceof Carbon) {
+            return $value->toDateString();
+        }
+
+        if (is_array($value)) {
+            if (! array_is_list($value)) {
+                ksort($value);
+            }
+
+            foreach ($value as $key => $item) {
+                $value[$key] = $this->normalizeForComparison($item);
+            }
+
+            return $value;
+        }
+
+        if (is_bool($value)) {
+            return (int) $value;
+        }
+
+        return $value;
     }
 
     protected function formatValidationErrors(ValidationException $exception): string
