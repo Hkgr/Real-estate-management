@@ -1608,11 +1608,11 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
     // 2) علاقات relationship repeaters يجب أن تكون "keyed by record id"
     $payload['ownerships'] = $record->ownerships
-        ->mapWithKeys(fn ($o) => [(string) $o->getKey() => $o->toArray()])
+        ->mapWithKeys(fn ($o) => ['record-' . $o->getKey() => $o->toArray()])
         ->all();
 
     $payload['payments'] = $record->payments
-        ->mapWithKeys(fn ($p) => [(string) $p->getKey() => $p->toArray()])
+        ->mapWithKeys(fn ($p) => ['record-' . $p->getKey() => $p->toArray()])
         ->all();
 
     $payload['signals'] = $record->signals
@@ -1636,7 +1636,7 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
             unset($signalPayload['owners']);
 
-            return [(string) $signal->getKey() => $signalPayload];
+            return ['record-' . $signal->getKey() => $signalPayload];
         })
         ->all();
 

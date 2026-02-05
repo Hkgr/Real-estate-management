@@ -36,8 +36,11 @@ return new class extends Migration
         Schema::create('owners', function (Blueprint $table) {
             $table->id();
             $table->string('full_name', 200);
+            $table->string('owner_type', 20)->default('individual');
+            $table->string('company_name', 200)->nullable();
+            $table->string('commercial_register_number', 100)->nullable();
             $table->date('birth_date')->nullable();
-            $table->string('national_id', 50)->unique();
+            $table->string('national_id', 50)->nullable()->unique();
             $table->string('phone', 50)->nullable();
             $table->string('email', 150)->nullable();
             $table->boolean('is_active')->default(true);
@@ -45,7 +48,11 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index('full_name');
+            $table->index('owner_type');
+            $table->index('company_name');
             $table->index('phone');
+            $table->unique('commercial_register_number', 'owners_commercial_register_number_unique');
+
         });
 
         Schema::create('reservation_notices', function (Blueprint $table) {
@@ -172,18 +179,15 @@ return new class extends Migration
         Schema::create('property_owner_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_card_id')->constrained('property_cards')->cascadeOnDelete();
-            $table->foreignId('owner_id')->constrained('owners')->cascadeOnDelete();
             $table->decimal('debit', 12, 2)->default(0);
             $table->decimal('credit', 12, 2)->default(0);
             $table->string('statement')->nullable();
             $table->string('voucher')->nullable();
             $table->date('payment_date');
             $table->decimal('balance_movement', 12, 2)->default(0);
-            $table->string('currency', 20)->nullable();
             $table->timestamps();
 
             $table->index('property_card_id', 'property_owner_payments_property_card_id_index');
-            $table->index('owner_id', 'property_owner_payments_owner_id_index');
         });
 
         Schema::create('property_card_files', function (Blueprint $table) {
