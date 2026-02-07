@@ -341,238 +341,300 @@ class PropertyCardPage extends Page implements HasSchemas
     // =========================
     // Repeaters (توزيع مريح)
     // =========================
-
-    protected function ownershipsRepeater(): Repeater
-    {
-        return Repeater::make('ownerships')
+protected function ownershipsRepeater(): Repeater
+{
+    return Repeater::make('ownerships')
         ->label('الملاك')
         ->default([])
-        ->relationship('ownerships')
+        // ✅ لأن الحفظ يدوي عندك — لا تستخدم relationship هنا
+        // ->relationship('ownerships')
         ->addActionLabel('إضافة مالك')
         ->reorderable()
-        ->mutateRelationshipDataBeforeSaveUsing(fn (array $data) => Arr::except($data, [
-            'owner', 'created_at', 'updated_at', 'deleted_at',
-        ]))
-            ->schema([
-                            Hidden::make('id'), // ✅ مهم جداً
-                Grid::make(12)->schema([
 
-                    // Row 1: المالك + معيار + قيمة
-                    Select::make('owner_id')
-                        ->label('المالك')
-                        ->prefixIcon('heroicon-o-user')
-                        ->relationship('owner', 'full_name')
-                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->display_name)
-                        ->searchable()
-                        ->preload()
-                        ->createOptionForm([
-                            ToggleButtons::make('owner_type')
-                                ->label('نوع المالك')
-                                ->options(['individual' => 'فرد', 'company' => 'شركة'])
-                                ->required()
-                                ->default('individual')
-                                ->live()
-                                ->inline(),
+        // ✅ ضروري لأنك تعمل UUID keys عند التحميل، بينما الحفظ اليدوي يحتاج list
+        ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
 
-                            TextInput::make('full_name')
-                                ->label('اسم المالك (للفرد) أو اسم المفوض')
-                                ->prefixIcon('heroicon-o-identification')
-                                ->required(fn (Get $get) => $get('owner_type') === 'individual')
-                                ->maxLength(200)
-                                ->live(onBlur: true)
-                                ->columnSpanFull(),
+        ->itemLabel(function (array $state): string {
+            $name = $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null);
+            return filled($name) ? $name : 'مالك';
+        })
 
-                            TextInput::make('company_name')
-                                ->label('اسم الشركة')
-                                ->prefixIcon('heroicon-o-building-office')
-                                ->maxLength(200)
-                                ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                                ->required(fn (Get $get) => $get('owner_type') === 'company')
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+        ->schema([
+            // ✅ نحتاجه للحفظ اليدوي (update/delete by id) لكن لن يذهب للـ DB لأنك لا تحفظه ضمن allowed
+            Hidden::make('id'),
 
-                            TextInput::make('commercial_register_number')
-                                ->label('رقم السجل التجاري')
-                                ->prefixIcon('heroicon-o-clipboard-document-list')
-                                ->maxLength(100)
-                                ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                                ->required(fn (Get $get) => $get('owner_type') === 'company')
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+            Grid::make(12)->schema([
+                // =========================
+                // المالك
+                // =========================
+                Select::make('owner_id')
+                    ->label('المالك')
+                    ->prefixIcon('heroicon-o-user')
+                    ->native(false)
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => $this->getAllOwnerOptions())
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Owner::query()
+                            ->where(function ($q) use ($search) {
+                                $q->where('full_name', 'like', "%{$search}%")
+                                  ->orWhere('company_name', 'like', "%{$search}%");
+                            })
+                            ->orderByRaw('coalesce(company_name, full_name)')
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn (Owner $o) => [$o->getKey() => $o->display_name])
+                            ->all();
+                    })
+                    ->getOptionLabelUsing(fn ($value): ?string => Owner::find($value)?->display_name)
+                    ->createOptionForm([
+                        ToggleButtons::make('owner_type')
+                            ->label('نوع المالك')
+                            ->options(['individual' => 'فرد', 'company' => 'شركة'])
+                            ->required()
+                            ->default('individual')
+                            ->live()
+                            ->inline(),
 
-                            DatePicker::make('birth_date')
-                                ->label('تاريخ الميلاد')
-                                ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                                ->nullable()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                        TextInput::make('full_name')
+                            ->label('اسم المالك (للفرد) أو اسم المفوض')
+                            ->prefixIcon('heroicon-o-identification')
+                            ->required(fn (Get $get) => $get('owner_type') === 'individual')
+                            ->maxLength(200)
+                            ->live(onBlur: true)
+                            ->columnSpanFull(),
 
-                            TextInput::make('national_id')
-                                ->label('الرقم الوطني')
-                                ->prefixIcon('heroicon-o-finger-print')
-                                ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                                ->required(fn (Get $get) => $get('owner_type') === 'individual')
-                                ->maxLength(50)
-                                ->live(onBlur: true)
-                                ->unique(Owner::class, 'national_id'),
+                        TextInput::make('company_name')
+                            ->label('اسم الشركة')
+                            ->prefixIcon('heroicon-o-building-office')
+                            ->maxLength(200)
+                            ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                            ->required(fn (Get $get) => $get('owner_type') === 'company')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-                            TextInput::make('phone')
-                                ->label('رقم الهاتف')
-                                ->prefixIcon('heroicon-o-phone')
-                                ->tel()
-                                ->maxLength(50)
-                                ->nullable()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                        TextInput::make('commercial_register_number')
+                            ->label('رقم السجل التجاري')
+                            ->prefixIcon('heroicon-o-clipboard-document-list')
+                            ->maxLength(100)
+                            ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                            ->required(fn (Get $get) => $get('owner_type') === 'company')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-                            TextInput::make('email')
-                                ->label('البريد الإلكتروني')
-                                ->prefixIcon('heroicon-o-envelope')
-                                ->email()
-                                ->maxLength(150)
-                                ->nullable()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                        DatePicker::make('birth_date')
+                            ->label('تاريخ الميلاد')
+                            ->visible(fn (Get $get) => $get('owner_type') === 'individual')
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-                            Toggle::make('is_active')->label('فعّال')->default(false)->live(),
-                        ])
-                        ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
-                        ->required()
-                        ->columnSpan(['default' => 12, 'md' => 6]),
+                        TextInput::make('national_id')
+                            ->label('الرقم الوطني')
+                            ->prefixIcon('heroicon-o-finger-print')
+                            ->visible(fn (Get $get) => $get('owner_type') === 'individual')
+                            ->required(fn (Get $get) => $get('owner_type') === 'individual')
+                            ->maxLength(50)
+                            ->live(onBlur: true)
+                            ->unique(Owner::class, 'national_id'),
 
-                    Select::make('ownership_metric')
-                        ->label('معيار التملك')
-                        ->prefixIcon('heroicon-o-scale')
-                        ->native(false)
-                        ->options(['أسهم' => 'أسهم', 'نسبة مئوية' => 'نسبة مئوية', 'م²' => 'م²'])
-                        ->required()
-                        ->live(onBlur: true)
-                        ->columnSpan(['default' => 6, 'md' => 3]),
+                        TextInput::make('phone')
+                            ->label('رقم الهاتف')
+                            ->prefixIcon('heroicon-o-phone')
+                            ->tel()
+                            ->maxLength(50)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-                    TextInput::make('ownership_percentage')
-                        ->label('قيمة التملك')
-                        ->prefixIcon('heroicon-o-calculator')
-                        ->numeric()
-                        ->minValue(0)
-                        ->maxValue(9999999999.99)
-                        ->required()
-                        ->live(onBlur: true)
-                        ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
-                            'أسهم' => 'سهم',
-                            'نسبة مئوية' => '%',
-                            'م²' => 'م²',
-                            default => null,
-                        })
-                        ->columnSpan(['default' => 6, 'md' => 3]),
+                        TextInput::make('email')
+                            ->label('البريد الإلكتروني')
+                            ->prefixIcon('heroicon-o-envelope')
+                            ->email()
+                            ->maxLength(150)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-                    // Row 2: حالات + تواريخ أساسية
-                    Toggle::make('is_current')
-                        ->label('مالك حالي')
-                        ->default(false)
-                        ->live()
-                        ->columnSpan(['default' => 6, 'md' => 3]),
+                        Toggle::make('is_active')
+                            ->label('فعّال')
+                            ->default(true)
+                            ->live(),
+                    ])
+                    ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
+                    ->required()
+                    ->columnSpan(['default' => 12, 'md' => 6]),
 
-                    DatePicker::make('purchase_date')
-                        ->label('تاريخ الشراء')
-                        ->nullable()
-                        ->live(onBlur: true)
-                        ->columnSpan(['default' => 6, 'md' => 3]),
+                // =========================
+                // معيار + قيمة
+                // =========================
+                Select::make('ownership_metric')
+                    ->label('معيار التملك')
+                    ->prefixIcon('heroicon-o-scale')
+                    ->native(false)
+                    ->options(['أسهم' => 'أسهم', 'نسبة مئوية' => 'نسبة مئوية', 'م²' => 'م²'])
+                    ->required()
+                    ->live()
+                    ->columnSpan(['default' => 6, 'md' => 3]),
 
-                    Select::make('purchase_method')
-                        ->label('طريقة الشراء')
-                        ->prefixIcon('heroicon-o-document-text')
-                        ->native(false)
-                        ->options([
-                            'court_judgment' => 'حكم قضائي',
-                            'regular_contract' => 'عقد عادي',
-                            'commercial_register_contract' => 'عقد سجل تجاري',
-                        ])
-                        ->nullable()
-                        ->live(onBlur: true)
-                        ->columnSpan(['default' => 12, 'md' => 6]),
+                TextInput::make('ownership_percentage')
+                    ->label('قيمة التملك')
+                    ->prefixIcon('heroicon-o-calculator')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(9999999999.99)
+                    ->required()
+                    ->live(onBlur: true)
+                    ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
+                        'أسهم' => 'سهم',
+                        'نسبة مئوية' => '%',
+                        'م²' => 'م²',
+                        default => null,
+                    })
+                    ->columnSpan(['default' => 6, 'md' => 3]),
 
-                    DatePicker::make('sale_date')
-                        ->label('تاريخ البيع')
-                        ->nullable()
-                        ->live(onBlur: true)
-                        ->visible(fn (Get $get) => ! (bool) $get('is_current'))
-                        ->columnSpan(['default' => 12, 'md' => 3]),
+                // =========================
+                // حالات + تواريخ
+                // =========================
+                Toggle::make('is_current')
+                    ->label('مالك حالي')
+                    ->default(true)
+                    ->live()
+                    ->columnSpan(['default' => 6, 'md' => 3]),
 
-                    // Blocks: تفاصيل حسب الطريقة (تظهر بانسيابية)
-                    Grid::make(12)
-                        ->schema([
-                            TextInput::make('case_number')
-                                ->label('رقم الأساس')
-                                ->prefixIcon('heroicon-o-hashtag')
-                                ->maxLength(100)
-                                ->required()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->columnSpan(['default' => 12, 'md' => 3]),
+                DatePicker::make('purchase_date')
+                    ->label('تاريخ الشراء')
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                    ->columnSpan(['default' => 6, 'md' => 3]),
 
-                            TextInput::make('decision_number')
-                                ->label('رقم القرار')
-                                ->prefixIcon('heroicon-o-hashtag')
-                                ->maxLength(100)
-                                ->required()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->columnSpan(['default' => 12, 'md' => 3]),
+                Select::make('purchase_method')
+                    ->label('طريقة الشراء')
+                    ->prefixIcon('heroicon-o-document-text')
+                    ->native(false)
+                    ->options([
+                        'court_judgment' => 'حكم قضائي',
+                        'regular_contract' => 'عقد عادي',
+                        'commercial_register_contract' => 'عقد سجل تجاري',
+                    ])
+                    ->nullable()
+                    ->live()
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                    ->columnSpan(['default' => 12, 'md' => 6]),
 
-                            TextInput::make('authority')
-                                ->label('الجهة')
-                                ->prefixIcon('heroicon-o-building-library')
-                                ->maxLength(150)
-                                ->required()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                DatePicker::make('sale_date')
+                    ->label('تاريخ البيع')
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->visible(fn (Get $get) => ! (bool) $get('is_current'))
+                    ->dehydrateStateUsing(fn ($state, Get $get) => (bool) $get('is_current') ? null : (filled($state) ? $state : null))
+                    ->columnSpan(['default' => 12, 'md' => 3]),
 
-                            DatePicker::make('judgment_date')
-                                ->label('تاريخ الحكم')
-                                ->required()
-                                ->live(onBlur: true)
-                                ->columnSpan(['default' => 12, 'md' => 2]),
-                        ])
-                        ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                        ->columnSpanFull(),
+                // =========================
+                // تفاصيل حكم قضائي
+                // =========================
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('case_number')
+                            ->label('رقم الأساس')
+                            ->prefixIcon('heroicon-o-hashtag')
+                            ->maxLength(100)
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 3]),
 
-                    Grid::make(12)
-                        ->schema([
-                            DatePicker::make('regular_contract_date')
-                                ->label('تاريخ العقد')
-                                ->required()
-                                ->live(onBlur: true)
-                                ->columnSpan(['default' => 12, 'md' => 6]),
-                        ])
-                        ->visible(fn (Get $get) => $get('purchase_method') === 'regular_contract')
-                        ->columnSpanFull(),
+                        TextInput::make('decision_number')
+                            ->label('رقم القرار')
+                            ->prefixIcon('heroicon-o-hashtag')
+                            ->maxLength(100)
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 3]),
 
-                    Grid::make(12)
-                        ->schema([
-                            TextInput::make('contract_number')
-                                ->label('رقم العقد')
-                                ->prefixIcon('heroicon-o-document-duplicate')
-                                ->maxLength(100)
-                                ->required()
-                                ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                                ->columnSpan(['default' => 12, 'md' => 6]),
+                        TextInput::make('authority')
+                            ->label('الجهة')
+                            ->prefixIcon('heroicon-o-building-library')
+                            ->maxLength(150)
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 4]),
 
-                            DatePicker::make('commercial_contract_date')
-                                ->label('تاريخ عقد السجل')
-                                ->required()
-                                ->live(onBlur: true)
-                                ->columnSpan(['default' => 12, 'md' => 6]),
-                        ])
-                        ->visible(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
-                        ->columnSpanFull(),
-                ]),
-            ]);
-    }
+                        DatePicker::make('judgment_date')
+                            ->label('تاريخ الحكم')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 2]),
+                    ])
+                    ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
+                    ->columnSpanFull(),
+
+                // =========================
+                // تفاصيل عقد عادي
+                // =========================
+                Grid::make(12)
+                    ->schema([
+                        DatePicker::make('regular_contract_date')
+                            ->label('تاريخ العقد')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'regular_contract')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'regular_contract' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                    ])
+                    ->visible(fn (Get $get) => $get('purchase_method') === 'regular_contract')
+                    ->columnSpanFull(),
+
+                // =========================
+                // تفاصيل عقد سجل تجاري
+                // =========================
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('contract_number')
+                            ->label('رقم العقد')
+                            ->prefixIcon('heroicon-o-document-duplicate')
+                            ->maxLength(100)
+                            ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+
+                        DatePicker::make('commercial_contract_date')
+                            ->label('تاريخ عقد السجل')
+                            ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                    ])
+                    ->visible(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                    ->columnSpanFull(),
+            ]),
+        ]);
+}
 
 protected function signalsRepeater(): Repeater
 {
+    // تحويل أي شكل (UUID keyed / list / JSON string) إلى list نظيف
+    $toList = function (mixed $state): array {
+        $state = $this->decodeJsonToArray($state);
+
+        if (! is_array($state)) {
+            return [];
+        }
+
+        return array_is_list($state) ? $state : array_values($state);
+    };
+
+    // إعادة keying للواجهة (Repeater يفضل مفاتيح ثابتة)
+    $uuidKeyed = function (array $rows): array {
+        return collect($rows)
+            ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
+            ->all();
+    };
+
     return Repeater::make('signals')
         ->label('الإشارات')
         ->default([])
@@ -581,13 +643,13 @@ protected function signalsRepeater(): Repeater
         ->reorderable()
         ->itemLabel(fn (array $state) => filled($state['signal_id'] ?? null) ? ('إشارة #' . $state['signal_id']) : 'إشارة')
 
-        // ✅ أهم تعديل: التطبيع النهائي قبل الحفظ (يدعم UI-shape و stored-shape و UUID-keyed و JSON string)
+        // ✅ التطبيع قبل الحفظ (JSON owners/victims)
         ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
             $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
             $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
 
             return Arr::except($data, [
-                // قد تأتي من toArray() أو علاقات أو حقول قديمة
+                // حقول قد تصل من toArray() أو علاقات
                 'owners',
                 'signal_victim_id',
                 'signal_victim_from_owner',
@@ -596,6 +658,8 @@ protected function signalsRepeater(): Repeater
         })
 
         ->schema([
+            // ✅ مهم جداً لتحديث/عدم تكرار السجلات
+            Hidden::make('id')->dehydrated(),
 
             // =========================
             // معلومات الإشارة الأساسية
@@ -665,8 +729,12 @@ protected function signalsRepeater(): Repeater
                 ->label('أصحاب الإشارة')
                 ->addActionLabel('إضافة صاحب إشارة')
                 ->default([])
+                ->defaultItems(0)
+                // ✅ ضمان أن قيمة هذا الـ repeater تُرسل دائماً كـ list (بدون UUID keys)
+                ->dehydrateStateUsing(fn ($state) => $toList($state))
                 ->itemLabel(function (array $state): string {
                     $fromOwner = (bool) ($state['owner_from_owner'] ?? false);
+
                     $name = $fromOwner
                         ? $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null)
                         : ($state['owner_name'] ?? null);
@@ -688,6 +756,8 @@ protected function signalsRepeater(): Repeater
                             ->searchable()
                             ->options(fn () => $this->getAllOwnerOptions())
                             ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
+                            ->required(fn (Get $get) => (bool) $get('owner_from_owner'))      // ✅
+                            ->dehydrated(fn (Get $get) => (bool) $get('owner_from_owner'))    // ✅
                             ->placeholder('اختر مالكًا')
                             ->columnSpan(['default' => 12, 'md' => 5]),
 
@@ -695,84 +765,69 @@ protected function signalsRepeater(): Repeater
                             ->label('اسم صاحب الإشارة')
                             ->prefixIcon('heroicon-o-identification')
                             ->maxLength(150)
-                            ->nullable()
-                            ->live(onBlur: true)
                             ->visible(fn (Get $get) => ! (bool) $get('owner_from_owner'))
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->required(fn (Get $get) => ! (bool) $get('owner_from_owner'))    // ✅
+                            ->dehydrated(fn (Get $get) => ! (bool) $get('owner_from_owner'))  // ✅
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
                             ->placeholder('اكتب الاسم يدوياً')
                             ->columnSpan(['default' => 12, 'md' => 5]),
                     ]),
                 ])
-                ->defaultItems(0)
+                // ✅ تحميل: stored(list/object/JSON) -> UI -> UUID keyed
+                ->afterStateHydrated(function ($state, $set, Get $get) use ($toList, $uuidKeyed): void {
+                    $values = $toList($state);
 
-                // ✅ تعديل التحميل: يدعم stored list + stored object(UUID) + JSON string
-                ->afterStateHydrated(function ($state, $set, Get $get): void {
-                    $state = $this->decodeJsonToArray($state);
+                    $rows = [];
 
-                    // إذا state associative و بصيغة الواجهة (owner_from_owner) لا تعيد keying
-                    if (is_array($state) && ! array_is_list($state)) {
-                        $firstVal = reset($state);
-                        if (is_array($firstVal) && array_key_exists('owner_from_owner', $firstVal)) {
-                            return;
+                    if (count($values) > 0 && is_array($values[0] ?? null)) {
+                        $first = $values[0];
+
+                        // UI already
+                        if (array_key_exists('owner_from_owner', $first)) {
+                            $rows = $values;
                         }
-                    }
-
-                    $uuidKeyed = function (array $rows): array {
-                        return collect($rows)
-                            ->mapWithKeys(fn (array $row) => [\Illuminate\Support\Str::uuid()->toString() => $row])
-                            ->all();
-                    };
-
-                    // إذا الداتا موجودة (سواء list أو associative) نحولها لصيغة UI
-                    if (is_array($state) && count($state) > 0) {
-                        $values = array_is_list($state) ? $state : array_values($state);
-                        $first = $values[0] ?? null;
-
-                        // إن كانت UI already
-                        if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
-                            $set('signal_owners', $uuidKeyed($this->deduplicateSignalOwnerUiRows($values)));
-                            return;
-                        }
-
-                        // stored shape: is_owner/owner_id/name
-                        if (is_array($first) && array_key_exists('is_owner', $first)) {
+                        // stored shape
+                        elseif (array_key_exists('is_owner', $first)) {
                             $rows = collect($values)->map(function (array $item): array {
                                 return [
                                     'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
-                                    'owner_id' => $item['owner_id'] ?? null,
-                                    'owner_name' => $item['name'] ?? null,
+                                    'owner_id'         => $item['owner_id'] ?? null,
+                                    'owner_name'       => $item['name'] ?? null,
                                 ];
                             })->all();
-
-                            $set('signal_owners', $uuidKeyed($this->deduplicateSignalOwnerUiRows($rows)));
-                            return;
                         }
                     }
 
-                    // fallback من علاقة owners (إن وجدت)
-                    $owners = $get('owners') ?? [];
-                    if (is_array($owners) && count($owners) > 0) {
-                        $rows = collect($owners)->map(function (array $owner): array {
-                            return [
-                                'owner_from_owner' => true,
-                                'owner_id' => $owner['id'] ?? null,
-                                'owner_name' => $owner['display_name'] ?? $owner['full_name'] ?? null,
-                            ];
-                        })->all();
-
-                        $set('signal_owners', $uuidKeyed($this->deduplicateSignalOwnerUiRows($rows)));
-                        return;
+                    // fallback من علاقة owners pivot إن كانت موجودة بالـ state
+                    if (count($rows) === 0) {
+                        $owners = $get('owners') ?? [];
+                        if (is_array($owners) && count($owners) > 0) {
+                            $rows = collect($owners)->map(function (array $owner): array {
+                                return [
+                                    'owner_from_owner' => true,
+                                    'owner_id'         => $owner['id'] ?? null,
+                                    'owner_name'       => $owner['display_name'] ?? $owner['full_name'] ?? null,
+                                ];
+                            })->all();
+                        }
                     }
 
-                    // fallback من حقل قديم signal_owner
-                    $legacyOwner = $get('signal_owner');
-                    if (filled($legacyOwner)) {
-                        $set('signal_owners', $uuidKeyed([[
-                            'owner_from_owner' => false,
-                            'owner_id' => null,
-                            'owner_name' => $legacyOwner,
-                        ]]));
+                    // fallback من legacy signal_owner
+                    if (count($rows) === 0) {
+                        $legacy = $get('signal_owner');
+                        if (filled($legacy)) {
+                            $rows = [[
+                                'owner_from_owner' => false,
+                                'owner_id'         => null,
+                                'owner_name'       => (string) $legacy,
+                            ]];
+                        }
                     }
+
+                    $rows = $this->deduplicateSignalOwnerUiRows($rows);
+
+                    // نثبتها كمفاتيح UUID للواجهة
+                    $set('signal_owners', $uuidKeyed($rows));
                 }),
 
             // =========================
@@ -782,8 +837,12 @@ protected function signalsRepeater(): Repeater
                 ->label('المدعى عليهم في الإشارة')
                 ->addActionLabel('إضافة مدعى عليه')
                 ->default([])
+                ->defaultItems(0)
+                // ✅ ضمان list
+                ->dehydrateStateUsing(fn ($state) => $toList($state))
                 ->itemLabel(function (array $state): string {
                     $fromOwner = (bool) ($state['victim_from_owner'] ?? false);
+
                     $name = $fromOwner
                         ? $this->resolveOwnerNameFromAllOwners($state['victim_owner_id'] ?? null)
                         : ($state['victim_name'] ?? null);
@@ -796,7 +855,6 @@ protected function signalsRepeater(): Repeater
                             ->label('من المالكين')
                             ->default(true)
                             ->live()
-                            ->reactive()
                             ->columnSpan(['default' => 12, 'md' => 2]),
 
                         Select::make('victim_owner_id')
@@ -806,6 +864,8 @@ protected function signalsRepeater(): Repeater
                             ->searchable()
                             ->options(fn () => $this->getAllOwnerOptions())
                             ->visible(fn (Get $get) => (bool) $get('victim_from_owner'))
+                            ->required(fn (Get $get) => (bool) $get('victim_from_owner'))      // ✅
+                            ->dehydrated(fn (Get $get) => (bool) $get('victim_from_owner'))    // ✅
                             ->placeholder('اختر من المالكين')
                             ->columnSpan(['default' => 12, 'md' => 5]),
 
@@ -813,72 +873,59 @@ protected function signalsRepeater(): Repeater
                             ->label('اسم المدعى عليه')
                             ->prefixIcon('heroicon-o-identification')
                             ->maxLength(150)
-                            ->nullable()
-                            ->live(onBlur: true)
                             ->visible(fn (Get $get) => ! (bool) $get('victim_from_owner'))
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->required(fn (Get $get) => ! (bool) $get('victim_from_owner'))    // ✅
+                            ->dehydrated(fn (Get $get) => ! (bool) $get('victim_from_owner'))  // ✅
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
                             ->placeholder('اكتب الاسم يدوياً')
                             ->columnSpan(['default' => 12, 'md' => 5]),
                     ]),
                 ])
-                ->defaultItems(0)
+                // ✅ تحميل: stored(list/object/JSON) -> UI -> UUID keyed
+                ->afterStateHydrated(function ($state, $set, Get $get) use ($toList, $uuidKeyed): void {
+                    $values = $toList($state);
 
-                // ✅ تعديل التحميل: يدعم stored list + stored object(UUID) + JSON string
-                ->afterStateHydrated(function ($state, $set, Get $get): void {
-                    $state = $this->decodeJsonToArray($state);
+                    $rows = [];
 
-                    // إذا state associative و بصيغة الواجهة (victim_from_owner) لا تعيد keying
-                    if (is_array($state) && ! array_is_list($state)) {
-                        $firstVal = reset($state);
-                        if (is_array($firstVal) && array_key_exists('victim_from_owner', $firstVal)) {
-                            return;
-                        }
-                    }
-
-                    $uuidKeyed = function (array $rows): array {
-                        return collect($rows)
-                            ->mapWithKeys(fn (array $row) => [\Illuminate\Support\Str::uuid()->toString() => $row])
-                            ->all();
-                    };
-
-                    if (is_array($state) && count($state) > 0) {
-                        $values = array_is_list($state) ? $state : array_values($state);
-                        $first = $values[0] ?? null;
+                    if (count($values) > 0 && is_array($values[0] ?? null)) {
+                        $first = $values[0];
 
                         // UI already
-                        if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
-                            $set('signal_victims', $uuidKeyed($this->deduplicateSignalVictimUiRows($values)));
-                            return;
+                        if (array_key_exists('victim_from_owner', $first)) {
+                            $rows = $values;
                         }
-
                         // stored shape
-                        if (is_array($first) && array_key_exists('is_owner', $first)) {
+                        elseif (array_key_exists('is_owner', $first)) {
                             $rows = collect($values)->map(function (array $item): array {
                                 return [
                                     'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
-                                    'victim_owner_id' => $item['owner_id'] ?? null,
-                                    'victim_name' => $item['name'] ?? null,
+                                    'victim_owner_id'   => $item['owner_id'] ?? null,
+                                    'victim_name'       => $item['name'] ?? null,
                                 ];
                             })->all();
-
-                            $set('signal_victims', $uuidKeyed($this->deduplicateSignalVictimUiRows($rows)));
-                            return;
                         }
                     }
 
-                    // fallback من حقل قديم signal_victim
-                    $legacyVictim = $get('signal_victim');
-                    if (filled($legacyVictim)) {
-                        $set('signal_victims', $uuidKeyed([[
-                            'victim_from_owner' => false,
-                            'victim_owner_id' => null,
-                            'victim_name' => $legacyVictim,
-                        ]]));
+                    // fallback من legacy signal_victim
+                    if (count($rows) === 0) {
+                        $legacy = $get('signal_victim');
+                        if (filled($legacy)) {
+                            $rows = [[
+                                'victim_from_owner' => false,
+                                'victim_owner_id'   => null,
+                                'victim_name'       => (string) $legacy,
+                            ]];
+                        }
                     }
+
+                    $rows = $this->deduplicateSignalVictimUiRows($rows);
+
+                    $set('signal_victims', $uuidKeyed($rows));
                 }),
         ])
         ->columns(['default' => 1, 'md' => 2]);
 }
+
 private function deduplicateSignalOwnerUiRows(array $rows): array
 {
     return collect($rows)
@@ -1300,298 +1347,115 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
         return $this->uniformAction($action);
     }
-public function updateAction(): Action
-{
-    $action = Action::make('update')
-        ->label('تعديل')
-        ->icon('heroicon-o-pencil-square')
-        ->color('primary')
-        ->disabled(fn () => blank($this->currentRecordId))
-        ->action(function () {
-            if (! $this->currentRecordId) {
-                Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
-                return;
-            }
+        public function updateAction(): Action
+        {
+            return $this->uniformAction(
+                Action::make('update')
+                    ->label('تعديل')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('primary')
+                    ->disabled(fn () => blank($this->currentRecordId))
+                    ->action(function () {
 
-            try {
-                $validated = $this->form->validate();
-            } catch (ValidationException $exception) {
-                Notification::make()
-                    ->title('يرجى تصحيح أخطاء الحقول')
-                    ->body($this->formatValidationErrors($exception))
-                    ->danger()
-                    ->send();
-                return;
-            }
+                        // ✅ تعريفه دائماً (حل نهائي للـ Undefined variable)
+                        $validatedFiles = [];
 
-            $record = PropertyCard::find($this->currentRecordId);
-
-            if (! $record) {
-                $this->currentRecordId = null;
-                Notification::make()->title('السجل لم يعد موجودًا')->danger()->send();
-                return;
-            }
-
-            $this->bindFormToRecord($record);
-
-            $state = $this->getFormPayload($validated);
-            $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
-
-            if ($validatedFiles === null) {
-                return;
-            }
-
-            $attributes = Arr::except($state, [
-                'owners',
-                'ownerships',
-                'signals',
-                'payments',
-                'files',
-            ]);
-
-            if (! $this->hasPendingChanges($record, $attributes, $state)) {
-                Notification::make()
-                    ->title('لا توجد تغييرات للحفظ')
-                    ->warning()
-                    ->send();
-                return;
-            }
-
-            // Helpers داخلية
-            $toList = function (mixed $rows): array {
-                $rows = $this->decodeJsonToArray($rows);
-
-                if (! is_array($rows)) {
-                    return [];
-                }
-
-                return array_is_list($rows) ? $rows : array_values($rows);
-            };
-
-            $nullifyEmptyStrings = function (array $data): array {
-                foreach ($data as $k => $v) {
-                    if (is_string($v) && trim($v) === '') {
-                        $data[$k] = null;
-                    }
-                }
-                return $data;
-            };
-
-            $step = 'بدء الحفظ';
-
-            try {
-                DB::transaction(function () use (
-                    $record,
-                    $attributes,
-                    $state,
-                    $toList,
-                    $nullifyEmptyStrings,
-                    &$step
-                ) {
-                    // 1) تحديث بيانات البطاقة
-                    $step = 'تحديث بيانات البطاقة';
-                    $record->update($attributes);
-
-                    // 2) حفظ الملاك (owner_property_card) يدويًا
-                    $step = 'حفظ الملاك';
-                    $ownershipRows = $toList($state['ownerships'] ?? []);
-
-                    $allowedOwnership = [
-                        'owner_id',
-                        'ownership_metric',
-                        'ownership_percentage',
-                        'is_current',
-                        'purchase_date',
-                        'sale_date',
-                        'purchase_method',
-                        'case_number',
-                        'decision_number',
-                        'authority',
-                        'judgment_date',
-                        'regular_contract_date',
-                        'contract_number',
-                        'commercial_contract_date',
-                    ];
-
-                    // ids الموجودة فعلاً في الواجهة (للأسطر القديمة فقط)
-                    $incomingOwnershipIds = collect($ownershipRows)
-                        ->pluck('id')
-                        ->filter()
-                        ->map(fn ($id) => (int) $id)
-                        ->unique()
-                        ->values()
-                        ->all();
-
-                    // حذف الأسطر التي أزيلت من الواجهة
-                    if (count($incomingOwnershipIds) > 0) {
-                        $record->ownerships()->whereNotIn('id', $incomingOwnershipIds)->delete();
-                    } else {
-                        $record->ownerships()->delete();
-                    }
-
-                    foreach ($ownershipRows as $row) {
-                        if (! is_array($row)) continue;
-
-                        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-                        $data = Arr::only($row, $allowedOwnership);
-                        $data = $nullifyEmptyStrings($data);
-
-                        // بما أن الفورم validated، المفروض هذه موجودة
-                        if (! filled($data['owner_id'] ?? null)) continue;
-                        if (! filled($data['ownership_metric'] ?? null)) continue;
-                        if (! isset($data['ownership_percentage'])) continue;
-
-                        if ($id && $record->ownerships()->whereKey($id)->exists()) {
-                            $record->ownerships()->whereKey($id)->update($data);
-                        } else {
-                            // مهم: لا تمرر id عند الإنشاء
-                            $record->ownerships()->create($data);
-                        }
-                    }
-
-                    // 3) حفظ الحركات (property_owner_payments)
-                    $step = 'حفظ الحركات';
-                    $paymentRows = $toList($state['payments'] ?? []);
-
-                    $allowedPayments = [
-                        'debit',
-                        'credit',
-                        'statement',
-                        'voucher',
-                        'payment_date',
-                        'balance_movement',
-                    ];
-
-                    $incomingPaymentIds = collect($paymentRows)
-                        ->pluck('id')
-                        ->filter()
-                        ->map(fn ($id) => (int) $id)
-                        ->unique()
-                        ->values()
-                        ->all();
-
-                    if (count($incomingPaymentIds) > 0) {
-                        $record->payments()->whereNotIn('id', $incomingPaymentIds)->delete();
-                    } else {
-                        $record->payments()->delete();
-                    }
-
-                    foreach ($paymentRows as $row) {
-                        if (! is_array($row)) continue;
-
-                        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-                        $data = Arr::only($row, $allowedPayments);
-                        $data = $nullifyEmptyStrings($data);
-
-                        if (! filled($data['payment_date'] ?? null)) continue;
-
-                        if ($id && $record->payments()->whereKey($id)->exists()) {
-                            $record->payments()->whereKey($id)->update($data);
-                        } else {
-                            $record->payments()->create($data);
-                        }
-                    }
-
-                    // 4) حفظ الإشارات (signals) + sync مالكي الإشارة
-                    $step = 'حفظ الإشارات';
-                    $signalRows = $toList($state['signals'] ?? []);
-
-                    $allowedSignals = [
-                        'signal_id',
-                        'signal_date',
-                        'type',
-                        'signal_source',
-                        'signal_source_number',
-                        'signal_source_date',
-                        'signal_owners',
-                        'signal_victims',
-                        'signal_owner',
-                        'signal_victim',
-                    ];
-
-                    $incomingSignalIds = collect($signalRows)
-                        ->pluck('id')
-                        ->filter()
-                        ->map(fn ($id) => (int) $id)
-                        ->unique()
-                        ->values()
-                        ->all();
-
-                    if (count($incomingSignalIds) > 0) {
-                        $record->signals()->whereNotIn('id', $incomingSignalIds)->delete(); // لديك softDeletes على signals
-                    } else {
-                        $record->signals()->delete();
-                    }
-
-                    foreach ($signalRows as $row) {
-                        if (! is_array($row)) continue;
-
-                        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-                        $data = Arr::only($row, $allowedSignals);
-                        $data = $nullifyEmptyStrings($data);
-
-                        // تطبيع JSON
-                        $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
-                        $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
-
-                        if (! filled($data['signal_id'] ?? null)) continue;
-                        if (! filled($data['type'] ?? null)) continue;
-
-                        if ($id && $record->signals()->whereKey($id)->exists()) {
-                            $record->signals()->whereKey($id)->update($data);
-                            $signal = $record->signals()->whereKey($id)->first();
-                        } else {
-                            $signal = $record->signals()->create($data);
+                        if (! $this->currentRecordId) {
+                            Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
+                            return;
                         }
 
-                        // Sync owners pivot
-                        $ownerIds = collect($data['signal_owners'])
-                            ->filter(fn (array $o) => (bool) ($o['is_owner'] ?? false) && filled($o['owner_id'] ?? null))
-                            ->pluck('owner_id')
-                            ->map(fn ($x) => (int) $x)
-                            ->unique()
-                            ->values()
-                            ->all();
+                        $record = PropertyCard::find($this->currentRecordId);
 
-                        $signal?->owners()->sync($ownerIds);
-                    }
+                        if (! $record) {
+                            $this->currentRecordId = null;
+                            Notification::make()->title('السجل غير موجود')->danger()->send();
+                            return;
+                        }
 
-                    $step = 'انتهى حفظ DB';
-                });
+                        // اربط الفورم بالسجل
+                        $this->bindFormToRecord($record);
 
-            } catch (QueryException $exception) {
-                report($exception);
+                        // ✅ Validate الفورم
+                        try {
+                            $this->form->validate();
+                        } catch (ValidationException $exception) {
+                            Notification::make()
+                                ->title('يرجى تصحيح أخطاء الحقول')
+                                ->body($this->formatValidationErrors($exception))
+                                ->danger()
+                                ->send();
+                            return;
+                        }
 
-                Notification::make()
-                    ->title("فشل التعديل — خطوة: {$step}")
-                    ->body($this->formatQueryExceptionMessage($exception))
-                    ->danger()
-                    ->send();
-                return;
-            }
+                        // ✅ payload
+                        $state = $this->getFormPayload($this->form->getState());
 
-            // 5) الملفات (خارج transaction لتفادي مشاكل rollback مع التخزين)
-            try {
-                $this->storeValidatedFileUploads($record, $validatedFiles);
-            } catch (\Throwable $exception) {
-                report($exception);
+                        // ✅ Validate الملفات (اختياري)
+                        $tmp = $this->validateFileUploads($state['files'] ?? []);
+                        if ($tmp === null) {
+                            return; // الدالة نفسها سترسل Notification
+                        }
+                        $validatedFiles = $tmp; // الآن مضمون أنه array
 
-                Notification::make()
-                    ->title('تم حفظ البيانات لكن فشل رفع/حفظ الملفات')
-                    ->body($exception->getMessage())
-                    ->danger()
-                    ->send();
-                return;
-            }
+                        // ✅ attributes
+                        $attributes = Arr::except($state, [
+                            'owners',
+                            'ownerships',
+                            'signals',
+                            'payments',
+                            'files',
+                        ]);
 
-            Notification::make()->title('تم التعديل بنجاح')->success()->send();
-        });
+                        // ✅ DB transaction (مثل باقي الأقسام)
+                        try {
+                            DB::transaction(function () use ($record, $attributes, $state) {
+                                $record->update($attributes);
 
-    return $this->uniformAction($action);
-}
+                                $this->persistOwnerships($record, $state['ownerships'] ?? []);
+                                $this->persistPayments($record, $state['payments'] ?? []);
+                                $this->persistSignals($record, $state['signals'] ?? []);
+                            });
+                        } catch (QueryException $exception) {
+                            report($exception);
+                            Notification::make()
+                                ->title('فشل التعديل')
+                                ->body($this->formatQueryExceptionMessage($exception))
+                                ->danger()
+                                ->send();
+                            return;
+                        } catch (\Throwable $exception) {
+                            report($exception);
+                            Notification::make()
+                                ->title('فشل التعديل')
+                                ->body($exception->getMessage())
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        // ✅ حفظ الملفات (خارج transaction)
+                        try {
+                            if (! empty($validatedFiles)) {
+                                $this->storeValidatedFileUploads($record->refresh(), $validatedFiles);
+                            }
+                        } catch (\Throwable $exception) {
+                            report($exception);
+                            Notification::make()
+                                ->title('تم حفظ البيانات لكن فشل رفع الملفات')
+                                ->body($exception->getMessage())
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        // ✅ Reload UI
+                        $this->loadRecordIntoForm($record->refresh());
+
+                        Notification::make()->title('تم التعديل بنجاح')->success()->send();
+                    })
+            );
+        }
 
 
     public function deleteAction(): Action
@@ -1675,66 +1539,124 @@ public function updateAction(): Action
     // Helpers (باقي كودك كما هو: حفظ، ملفات، تهيئة..)
     // =========================
 
-    protected function persistNewRecordFromForm(): ?PropertyCard
-    {
-        try {
-            $validated = $this->form->validate();
-        } catch (ValidationException $exception) {
-            Notification::make()
-                ->title('يرجى تصحيح أخطاء الحقول')
-                ->body($this->formatValidationErrors($exception))
-                ->danger()
-                ->send();
-            return null;
-        }
+   protected function persistNewRecordFromForm(): ?PropertyCard
+{
+    // ✅ دائماً عرّفها لتفادي أي Undefined لاحقاً
+    $validatedFiles = [];
 
-        $state = $this->getFormPayload($validated);
-        $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
+    // 1) Validate form
+    try {
+        $this->form->validate();
+    } catch (ValidationException $exception) {
+        Notification::make()
+            ->title('يرجى تصحيح أخطاء الحقول')
+            ->body($this->formatValidationErrors($exception))
+            ->danger()
+            ->send();
 
-        if ($validatedFiles === null) {
-            return null;
-        }
-
-        $recordNumber = $state['card_record_number'] ?? null;
-
-        if ($this->isMissingKeyValue($recordNumber)) {
-            Notification::make()->title('يرجى إدخال رقم المحضر')->danger()->send();
-            return null;
-        }
-
-        $existingRecord = PropertyCard::withTrashed()
-            ->where('card_record_number', $recordNumber)
-            ->first();
-
-        if ($existingRecord) {
-            $message = $existingRecord->trashed()
-                ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
-                : 'هذا العقار موجود مسبقًا بنفس المفتاح';
-
-            Notification::make()->title($message)->danger()->send();
-            return null;
-        }
-
-        $attributes = Arr::except($state, ['owners','ownerships','signals','payments','files']);
-
-        try {
-    $record = PropertyCard::create($attributes);
-
-    $this->persistOwnerships($record, $state['ownerships'] ?? []);
-    $this->persistPayments($record, $state['payments'] ?? []);
-    $this->persistSignals($record, $state['signals'] ?? []);
-    $this->storeValidatedFileUploads($record, $validatedFiles);
-        } catch (QueryException $exception) {
-            Notification::make()
-                ->title('فشل الحفظ')
-                ->body($this->formatQueryExceptionMessage($exception))
-                ->danger()
-                ->send();
-            return null;
-        }
-
-        return $record;
+        return null;
     }
+
+    // 2) Payload
+    $state = $this->getFormPayload($this->form->getState());
+
+    // 3) Validate files (اختياري أثناء الإنشاء)
+    $tmp = $this->validateFileUploads($state['files'] ?? []);
+    if ($tmp === null) {
+        return null; // الدالة نفسها تعرض Notification
+    }
+    $validatedFiles = $tmp;
+
+    // 4) Key check
+    $recordNumber = $state['card_record_number'] ?? null;
+    if ($this->isMissingKeyValue($recordNumber)) {
+        Notification::make()
+            ->title('يرجى إدخال رقم المحضر')
+            ->danger()
+            ->send();
+
+        return null;
+    }
+
+    // 5) Uniqueness (حتى مع soft delete)
+    $existingRecord = PropertyCard::withTrashed()
+        ->where('card_record_number', $recordNumber)
+        ->first();
+
+    if ($existingRecord) {
+        Notification::make()
+            ->title($existingRecord->trashed()
+                ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
+                : 'هذا العقار موجود مسبقًا بنفس المفتاح'
+            )
+            ->danger()
+            ->send();
+
+        return null;
+    }
+
+    // 6) Attributes فقط
+    $attributes = Arr::except($state, [
+        'owners',
+        'ownerships',
+        'signals',
+        'payments',
+        'files',
+    ]);
+
+    // 7) DB transaction
+    try {
+        $record = DB::transaction(function () use ($attributes, $state) {
+            $record = PropertyCard::create($attributes);
+
+            $this->persistOwnerships($record, $state['ownerships'] ?? []);
+            $this->persistPayments($record, $state['payments'] ?? []);
+            $this->persistSignals($record, $state['signals'] ?? []);
+
+            return $record;
+        });
+    } catch (QueryException $exception) {
+        report($exception);
+
+        Notification::make()
+            ->title('فشل الحفظ')
+            ->body($this->formatQueryExceptionMessage($exception))
+            ->danger()
+            ->send();
+
+        return null;
+    } catch (\Throwable $exception) {
+        report($exception);
+
+        Notification::make()
+            ->title('فشل الحفظ')
+            ->body($exception->getMessage())
+            ->danger()
+            ->send();
+
+        return null;
+    }
+
+    // 8) Files خارج transaction
+    try {
+        if (! empty($validatedFiles)) {
+            $this->storeValidatedFileUploads($record, $validatedFiles);
+        }
+    } catch (\Throwable $exception) {
+        report($exception);
+
+        Notification::make()
+            ->title('تم حفظ البطاقة لكن فشل رفع الملفات')
+            ->body($exception->getMessage())
+            ->danger()
+            ->send();
+
+        // لا نرجّع null لأن السجل انحفظ فعلاً
+    }
+
+    return $record;
+}
+
 
     protected function resolveRecordForFileUpload(): ?PropertyCard
     {
