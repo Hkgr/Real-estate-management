@@ -179,12 +179,12 @@ return new class extends Migration
         Schema::create('property_owner_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_card_id')->constrained('property_cards')->cascadeOnDelete();
-            $table->decimal('debit', 12, 2)->default(0);
-            $table->decimal('credit', 12, 2)->default(0);
+            $table->decimal('debit', 25, 2)->default(0)->nullable();
+            $table->decimal('credit', 25, 2)->default(0)->nullable();
             $table->string('statement')->nullable();
             $table->string('voucher')->nullable();
             $table->date('payment_date');
-            $table->decimal('balance_movement', 12, 2)->default(0);
+            $table->decimal('balance_movement', 25, 2)->default(0);
             $table->timestamps();
 
             $table->index('property_card_id', 'property_owner_payments_property_card_id_index');
