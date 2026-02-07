@@ -35,6 +35,11 @@ use App\Models\PropertyCardFile;
 use App\Services\PropertyCardFileStorage;
 use Spatie\Browsershot\Browsershot;
 use UnitEnum;
+use Filament\Forms\Components\Hidden;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+
+
 
 class PropertyCardPage extends Page implements HasSchemas
 {
@@ -340,29 +345,16 @@ class PropertyCardPage extends Page implements HasSchemas
     protected function ownershipsRepeater(): Repeater
     {
         return Repeater::make('ownerships')
-            ->label('الملاك')
-            ->default([])
-            ->relationship('ownerships')
-            ->addActionLabel('إضافة مالك')
-            ->reorderable()
-            ->itemLabel(function (array $state): string {
-                $name = $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null);
-                $metric = $state['ownership_metric'] ?? null;
-                $value = $state['ownership_percentage'] ?? null;
-
-                $suffix = match ($metric) {
-                    'أسهم' => 'سهم',
-                    'نسبة مئوية' => '%',
-                    'م²' => 'م²',
-                    default => '',
-                };
-
-                $left = $name ?: 'مالك';
-                $right = ($value !== null && $value !== '') ? ($value . ' ' . $suffix) : '';
-
-                return trim($left . ($right ? (' — ' . $right) : ''));
-            })
+        ->label('الملاك')
+        ->default([])
+        ->relationship('ownerships')
+        ->addActionLabel('إضافة مالك')
+        ->reorderable()
+        ->mutateRelationshipDataBeforeSaveUsing(fn (array $data) => Arr::except($data, [
+            'owner', 'created_at', 'updated_at', 'deleted_at',
+        ]))
             ->schema([
+                            Hidden::make('id'), // ✅ مهم جداً
                 Grid::make(12)->schema([
 
                     // Row 1: المالك + معيار + قيمة
@@ -1308,84 +1300,299 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
         return $this->uniformAction($action);
     }
+public function updateAction(): Action
+{
+    $action = Action::make('update')
+        ->label('تعديل')
+        ->icon('heroicon-o-pencil-square')
+        ->color('primary')
+        ->disabled(fn () => blank($this->currentRecordId))
+        ->action(function () {
+            if (! $this->currentRecordId) {
+                Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
+                return;
+            }
 
-    public function updateAction(): Action
-    {
-        $action = Action::make('update')
-            ->label('تعديل')
-            ->icon('heroicon-o-pencil-square')
-            ->color('primary')
-            ->disabled(fn () => blank($this->currentRecordId))
-            ->action(function () {
-                if (! $this->currentRecordId) {
-                    Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
-                    return;
+            try {
+                $validated = $this->form->validate();
+            } catch (ValidationException $exception) {
+                Notification::make()
+                    ->title('يرجى تصحيح أخطاء الحقول')
+                    ->body($this->formatValidationErrors($exception))
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            $record = PropertyCard::find($this->currentRecordId);
+
+            if (! $record) {
+                $this->currentRecordId = null;
+                Notification::make()->title('السجل لم يعد موجودًا')->danger()->send();
+                return;
+            }
+
+            $this->bindFormToRecord($record);
+
+            $state = $this->getFormPayload($validated);
+            $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
+
+            if ($validatedFiles === null) {
+                return;
+            }
+
+            $attributes = Arr::except($state, [
+                'owners',
+                'ownerships',
+                'signals',
+                'payments',
+                'files',
+            ]);
+
+            if (! $this->hasPendingChanges($record, $attributes, $state)) {
+                Notification::make()
+                    ->title('لا توجد تغييرات للحفظ')
+                    ->warning()
+                    ->send();
+                return;
+            }
+
+            // Helpers داخلية
+            $toList = function (mixed $rows): array {
+                $rows = $this->decodeJsonToArray($rows);
+
+                if (! is_array($rows)) {
+                    return [];
                 }
 
-                try {
-                    $validated = $this->form->validate();
-                } catch (ValidationException $exception) {
-                    Notification::make()
-                        ->title('يرجى تصحيح أخطاء الحقول')
-                        ->body($this->formatValidationErrors($exception))
-                        ->danger()
-                        ->send();
-                    return;
+                return array_is_list($rows) ? $rows : array_values($rows);
+            };
+
+            $nullifyEmptyStrings = function (array $data): array {
+                foreach ($data as $k => $v) {
+                    if (is_string($v) && trim($v) === '') {
+                        $data[$k] = null;
+                    }
                 }
+                return $data;
+            };
 
-                $record = PropertyCard::find($this->currentRecordId);
+            $step = 'بدء الحفظ';
 
-                if (! $record) {
-                    $this->currentRecordId = null;
-                    Notification::make()->title('السجل لم يعد موجودًا')->danger()->send();
-                    return;
-                }
-
-                $this->bindFormToRecord($record);
-
-                $state = $this->getFormPayload($validated);
-                $validatedFiles = $this->validateFileUploads($state['files'] ?? []);
-
-                if ($validatedFiles === null) {
-                    return;
-                }
-
-                $attributes = Arr::except($state, [
-                    'owners',
-                    'ownerships',
-                    'signals',
-                    'payments',
-                    'files',
-                ]);
-
-                if (! $this->hasPendingChanges($record, $attributes, $state)) {
-                    Notification::make()
-                        ->title('لا توجد تغييرات للحفظ')
-                        ->warning()
-                        ->send();
-
-                    return;
-                }
-
-                try {
+            try {
+                DB::transaction(function () use (
+                    $record,
+                    $attributes,
+                    $state,
+                    $toList,
+                    $nullifyEmptyStrings,
+                    &$step
+                ) {
+                    // 1) تحديث بيانات البطاقة
+                    $step = 'تحديث بيانات البطاقة';
                     $record->update($attributes);
-                    $this->form->model($record)->saveRelationships();
-                    $this->syncSignalOwners($record, $state);
-                    $this->storeValidatedFileUploads($record, $validatedFiles);
-                } catch (QueryException $exception) {
-                    Notification::make()
-                        ->title('فشل التعديل')
-                        ->body($this->formatQueryExceptionMessage($exception))
-                        ->danger()
-                        ->send();
-                    return;
-                }
 
-                Notification::make()->title('تم التعديل بنجاح')->success()->send();
-            });
+                    // 2) حفظ الملاك (owner_property_card) يدويًا
+                    $step = 'حفظ الملاك';
+                    $ownershipRows = $toList($state['ownerships'] ?? []);
 
-        return $this->uniformAction($action);
-    }
+                    $allowedOwnership = [
+                        'owner_id',
+                        'ownership_metric',
+                        'ownership_percentage',
+                        'is_current',
+                        'purchase_date',
+                        'sale_date',
+                        'purchase_method',
+                        'case_number',
+                        'decision_number',
+                        'authority',
+                        'judgment_date',
+                        'regular_contract_date',
+                        'contract_number',
+                        'commercial_contract_date',
+                    ];
+
+                    // ids الموجودة فعلاً في الواجهة (للأسطر القديمة فقط)
+                    $incomingOwnershipIds = collect($ownershipRows)
+                        ->pluck('id')
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    // حذف الأسطر التي أزيلت من الواجهة
+                    if (count($incomingOwnershipIds) > 0) {
+                        $record->ownerships()->whereNotIn('id', $incomingOwnershipIds)->delete();
+                    } else {
+                        $record->ownerships()->delete();
+                    }
+
+                    foreach ($ownershipRows as $row) {
+                        if (! is_array($row)) continue;
+
+                        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+                        $data = Arr::only($row, $allowedOwnership);
+                        $data = $nullifyEmptyStrings($data);
+
+                        // بما أن الفورم validated، المفروض هذه موجودة
+                        if (! filled($data['owner_id'] ?? null)) continue;
+                        if (! filled($data['ownership_metric'] ?? null)) continue;
+                        if (! isset($data['ownership_percentage'])) continue;
+
+                        if ($id && $record->ownerships()->whereKey($id)->exists()) {
+                            $record->ownerships()->whereKey($id)->update($data);
+                        } else {
+                            // مهم: لا تمرر id عند الإنشاء
+                            $record->ownerships()->create($data);
+                        }
+                    }
+
+                    // 3) حفظ الحركات (property_owner_payments)
+                    $step = 'حفظ الحركات';
+                    $paymentRows = $toList($state['payments'] ?? []);
+
+                    $allowedPayments = [
+                        'debit',
+                        'credit',
+                        'statement',
+                        'voucher',
+                        'payment_date',
+                        'balance_movement',
+                    ];
+
+                    $incomingPaymentIds = collect($paymentRows)
+                        ->pluck('id')
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    if (count($incomingPaymentIds) > 0) {
+                        $record->payments()->whereNotIn('id', $incomingPaymentIds)->delete();
+                    } else {
+                        $record->payments()->delete();
+                    }
+
+                    foreach ($paymentRows as $row) {
+                        if (! is_array($row)) continue;
+
+                        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+                        $data = Arr::only($row, $allowedPayments);
+                        $data = $nullifyEmptyStrings($data);
+
+                        if (! filled($data['payment_date'] ?? null)) continue;
+
+                        if ($id && $record->payments()->whereKey($id)->exists()) {
+                            $record->payments()->whereKey($id)->update($data);
+                        } else {
+                            $record->payments()->create($data);
+                        }
+                    }
+
+                    // 4) حفظ الإشارات (signals) + sync مالكي الإشارة
+                    $step = 'حفظ الإشارات';
+                    $signalRows = $toList($state['signals'] ?? []);
+
+                    $allowedSignals = [
+                        'signal_id',
+                        'signal_date',
+                        'type',
+                        'signal_source',
+                        'signal_source_number',
+                        'signal_source_date',
+                        'signal_owners',
+                        'signal_victims',
+                        'signal_owner',
+                        'signal_victim',
+                    ];
+
+                    $incomingSignalIds = collect($signalRows)
+                        ->pluck('id')
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    if (count($incomingSignalIds) > 0) {
+                        $record->signals()->whereNotIn('id', $incomingSignalIds)->delete(); // لديك softDeletes على signals
+                    } else {
+                        $record->signals()->delete();
+                    }
+
+                    foreach ($signalRows as $row) {
+                        if (! is_array($row)) continue;
+
+                        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+                        $data = Arr::only($row, $allowedSignals);
+                        $data = $nullifyEmptyStrings($data);
+
+                        // تطبيع JSON
+                        $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
+                        $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
+
+                        if (! filled($data['signal_id'] ?? null)) continue;
+                        if (! filled($data['type'] ?? null)) continue;
+
+                        if ($id && $record->signals()->whereKey($id)->exists()) {
+                            $record->signals()->whereKey($id)->update($data);
+                            $signal = $record->signals()->whereKey($id)->first();
+                        } else {
+                            $signal = $record->signals()->create($data);
+                        }
+
+                        // Sync owners pivot
+                        $ownerIds = collect($data['signal_owners'])
+                            ->filter(fn (array $o) => (bool) ($o['is_owner'] ?? false) && filled($o['owner_id'] ?? null))
+                            ->pluck('owner_id')
+                            ->map(fn ($x) => (int) $x)
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        $signal?->owners()->sync($ownerIds);
+                    }
+
+                    $step = 'انتهى حفظ DB';
+                });
+
+            } catch (QueryException $exception) {
+                report($exception);
+
+                Notification::make()
+                    ->title("فشل التعديل — خطوة: {$step}")
+                    ->body($this->formatQueryExceptionMessage($exception))
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            // 5) الملفات (خارج transaction لتفادي مشاكل rollback مع التخزين)
+            try {
+                $this->storeValidatedFileUploads($record, $validatedFiles);
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                Notification::make()
+                    ->title('تم حفظ البيانات لكن فشل رفع/حفظ الملفات')
+                    ->body($exception->getMessage())
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            Notification::make()->title('تم التعديل بنجاح')->success()->send();
+        });
+
+    return $this->uniformAction($action);
+}
+
 
     public function deleteAction(): Action
     {
@@ -1511,10 +1718,12 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $attributes = Arr::except($state, ['owners','ownerships','signals','payments','files']);
 
         try {
-            $record = PropertyCard::create($attributes);
-            $this->form->model($record)->saveRelationships();
-            $this->syncSignalOwners($record, $state);
-            $this->storeValidatedFileUploads($record, $validatedFiles);
+    $record = PropertyCard::create($attributes);
+
+    $this->persistOwnerships($record, $state['ownerships'] ?? []);
+    $this->persistPayments($record, $state['payments'] ?? []);
+    $this->persistSignals($record, $state['signals'] ?? []);
+    $this->storeValidatedFileUploads($record, $validatedFiles);
         } catch (QueryException $exception) {
             Notification::make()
                 ->title('فشل الحفظ')
@@ -1603,21 +1812,28 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
     $record->load('ownerships.owner', 'signals.owners', 'payments');
 
-    // 1) خصائص البطاقة فقط (بدون علاقات)
     $payload = $record->attributesToArray();
 
-    // 2) علاقات relationship repeaters يجب أن تكون "keyed by record id"
     $payload['ownerships'] = $record->ownerships
-        ->mapWithKeys(fn ($o) => [(string) $o->getKey() => $o->toArray()])
+        ->mapWithKeys(function ($o) {
+            $row = Arr::except($o->toArray(), ['owner', 'created_at', 'updated_at', 'deleted_at']);
+            $row['id'] = $o->getKey(); // ✅
+            return [Str::uuid()->toString() => $row];
+        })
         ->all();
 
     $payload['payments'] = $record->payments
-        ->mapWithKeys(fn ($p) => [(string) $p->getKey() => $p->toArray()])
+        ->mapWithKeys(function ($p) {
+            $row = Arr::except($p->toArray(), ['created_at', 'updated_at', 'deleted_at']);
+            $row['id'] = $p->getKey(); // ✅
+            return [Str::uuid()->toString() => $row];
+        })
         ->all();
 
     $payload['signals'] = $record->signals
         ->mapWithKeys(function ($signal) {
-            $signalPayload = $signal->toArray();
+            $signalPayload = Arr::except($signal->toArray(), ['owners', 'created_at', 'updated_at', 'deleted_at']);
+            $signalPayload['id'] = $signal->getKey(); // ✅
 
             $normalizedOwners = $this->normalizeSignalOwnersForStorage($signalPayload['signal_owners'] ?? []);
             if (empty($normalizedOwners)) {
@@ -1634,13 +1850,10 @@ protected function loadRecordIntoForm(PropertyCard $record): void
             $signalPayload['signal_owners']  = $normalizedOwners;
             $signalPayload['signal_victims'] = $this->normalizeSignalVictimsForStorage($signalPayload['signal_victims'] ?? []);
 
-            unset($signalPayload['owners']);
-
-            return [(string) $signal->getKey() => $signalPayload];
+            return [Str::uuid()->toString() => $signalPayload];
         })
         ->all();
 
-    // 3) الملفات: لا تعيد تعبئة الفورم بالكامل لاحقاً
     $payload['files'] = [[]];
 
     $this->form->model($record)->fill($payload);
@@ -2031,13 +2244,329 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
     protected function formatValidationErrors(ValidationException $exception): string
     {
-        // استخدم كودك الحالي كما هو (لم أغيّره)
+    $errors = $exception->errors();
+
+    if (! is_array($errors) || empty($errors)) {
         return 'يرجى مراجعة الأخطاء.';
     }
 
-    protected function formatQueryExceptionMessage(QueryException $exception): string
-    {
-        // استخدم كودك الحالي كما هو (لم أغيّره)
-        return 'تعذر تنفيذ العملية بسبب قيد في قاعدة البيانات.';
+    $lines = [];
+
+    foreach ($errors as $field => $messages) {
+        foreach ((array) $messages as $msg) {
+            $lines[] = "• {$msg}";
+        }
+    }
+
+    return implode("\n", $lines);
+    }
+protected function formatQueryExceptionMessage(QueryException $exception): string
+{
+    $sqlState  = $exception->errorInfo[0] ?? (string) $exception->getCode();
+    $errno     = $exception->errorInfo[1] ?? null;
+    $driverMsg = $exception->errorInfo[2] ?? $exception->getMessage();
+
+    $sql = method_exists($exception, 'getSql') ? (string) $exception->getSql() : null;
+    $bindings = method_exists($exception, 'getBindings') ? (array) $exception->getBindings() : [];
+
+    // قصّ النصوص الطويلة
+    $driverMsg = is_string($driverMsg) ? trim($driverMsg) : '—';
+
+    if ($sql && mb_strlen($sql) > 900) {
+        $sql = mb_substr($sql, 0, 900) . ' ...';
+    }
+
+    $bindingsJson = ! empty($bindings)
+        ? json_encode($bindings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        : null;
+
+    if ($bindingsJson && mb_strlen($bindingsJson) > 900) {
+        $bindingsJson = mb_substr($bindingsJson, 0, 900) . ' ...';
+    }
+
+    $hint = $this->mysqlHintFromException($errno, $driverMsg);
+
+    $lines = [];
+    $lines[] = "SQLSTATE: {$sqlState}";
+    if ($errno !== null) $lines[] = "Errno: {$errno}";
+    $lines[] = "Message: {$driverMsg}";
+    if ($hint) $lines[] = "Hint: {$hint}";
+    if ($sql) $lines[] = "SQL: {$sql}";
+    if ($bindingsJson) $lines[] = "Bindings: {$bindingsJson}";
+
+    return implode("\n", $lines);
+}
+
+    private function mysqlHintFromException(mixed $errno, string $message): string
+{
+    $errno = is_numeric($errno) ? (int) $errno : null;
+
+    // 1062 Duplicate entry
+    if ($errno === 1062) {
+        $key = null;
+        $entry = null;
+
+        if (preg_match("/Duplicate entry '([^']+)'/u", $message, $m)) {
+            $entry = $m[1] ?? null;
+        }
+        if (preg_match("/for key '([^']+)'/u", $message, $m)) {
+            $key = $m[1] ?? null;
+        }
+
+        $parts = [];
+        $parts[] = "تكرار قيمة ضمن فهرس UNIQUE.";
+        if ($key)   $parts[] = "الـ Key: {$key}";
+        if ($entry) $parts[] = "القيمة: {$entry}";
+
+        // تلميح خاص بمشكلتك (pivot + NULL)
+        $parts[] = "إذا كان التكرار على جدول pivot مثل owner_property_card: انتبه أن UNIQUE مع أعمدة Nullable يسمح بتكرار NULL في MySQL، وقد تحتاج جعل الحقول غير Nullable أو تعديل الـ unique index.";
+
+        return implode(' ', $parts);
+    }
+
+    // 1452 Foreign key fails
+    if ($errno === 1452) {
+        return "فشل قيد Foreign Key: يوجد owner_id / property_card_id يشير لسجل غير موجود، أو ترتيب الحفظ غير صحيح.";
+    }
+
+    // 1048 Column cannot be null
+    if ($errno === 1048) {
+        if (preg_match("/Column '([^']+)' cannot be null/u", $message, $m)) {
+            return "الحقل '{$m[1]}' لا يقبل NULL. تأكد أنه مُعبّأ أو غيّر المايغريشن ليكون nullable.";
+        }
+        return "حقل لا يقبل NULL تم تمريره فارغاً.";
+    }
+
+    // 1364 Field doesn't have a default value
+    if ($errno === 1364) {
+        if (preg_match("/Field '([^']+)' doesn't have a default value/u", $message, $m)) {
+            return "الحقل '{$m[1]}' مطلوب ولا يوجد Default. إمّا تملؤه أو تجعله nullable/Default في المايغريشن.";
+        }
+        return "حقل مطلوب بدون Default.";
+    }
+
+    // 1406 Data too long
+    if ($errno === 1406) {
+        if (preg_match("/Data too long for column '([^']+)'/u", $message, $m)) {
+            return "القيمة أطول من طول العمود '{$m[1]}'.";
+        }
+        return "قيمة أطول من طول العمود.";
+    }
+
+    // 1265 Data truncated
+    if ($errno === 1265) {
+        return "تم اقتطاع البيانات (Data truncated) غالباً بسبب نوع enum/decimal أو تاريخ غير صالح.";
+    }
+
+    // fallback
+    return "";
+}
+private function nullifyEmptyStrings(array $data): array
+{
+    foreach ($data as $k => $v) {
+        if (is_string($v) && trim($v) === '') {
+            $data[$k] = null;
+        }
+    }
+    return $data;
+}
+protected function persistOwnerships(PropertyCard $record, mixed $rows): void
+{
+    $rows = $this->decodeJsonToArray($rows);
+
+    if (! is_array($rows)) {
+        $rows = [];
+    }
+
+    // يدعم UUID keyed أو list
+    $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+    $allowed = [
+        'owner_id',
+        'ownership_metric',
+        'ownership_percentage',
+        'is_current',
+        'purchase_date',
+        'sale_date',
+        'purchase_method',
+        'case_number',
+        'decision_number',
+        'authority',
+        'judgment_date',
+        'regular_contract_date',
+        'contract_number',
+        'commercial_contract_date',
+    ];
+
+    $incomingIds = collect($rows)
+        ->pluck('id')
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values()
+        ->all();
+
+    // احذف ما تم إزالته من الواجهة
+    $record->ownerships()
+        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
+        ->when(count($incomingIds) === 0, fn ($q) => $q) // لو ما في أي id incoming احذف الكل
+        ->delete();
+
+    foreach ($rows as $row) {
+        if (! is_array($row)) continue;
+
+        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+        $data = Arr::only($row, $allowed);
+        $data = $this->nullifyEmptyStrings($data);
+
+        // تجاهل صف ناقص
+        if (! filled($data['owner_id'] ?? null)) continue;
+        if (! filled($data['ownership_metric'] ?? null)) continue;
+        if (! isset($data['ownership_percentage'])) continue;
+
+        if ($id) {
+            $existing = $record->ownerships()->whereKey($id)->first();
+            if ($existing) {
+                $existing->update($data);
+                continue;
+            }
+        }
+
+        // create جديد (بدون id)
+        $record->ownerships()->create($data);
     }
 }
+protected function persistPayments(PropertyCard $record, mixed $rows): void
+{
+    $rows = $this->decodeJsonToArray($rows);
+
+    if (! is_array($rows)) {
+        $rows = [];
+    }
+
+    $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+    $allowed = [
+        'debit',
+        'credit',
+        'statement',
+        'voucher',
+        'payment_date',
+        'balance_movement',
+    ];
+
+    $incomingIds = collect($rows)
+        ->pluck('id')
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values()
+        ->all();
+
+    $record->payments()
+        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
+        ->when(count($incomingIds) === 0, fn ($q) => $q)
+        ->delete();
+
+    foreach ($rows as $row) {
+        if (! is_array($row)) continue;
+
+        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+        $data = Arr::only($row, $allowed);
+        $data = $this->nullifyEmptyStrings($data);
+
+        if (! filled($data['payment_date'] ?? null)) continue;
+
+        if ($id) {
+            $existing = $record->payments()->whereKey($id)->first();
+            if ($existing) {
+                $existing->update($data);
+                continue;
+            }
+        }
+
+        $record->payments()->create($data);
+    }
+}
+protected function persistSignals(PropertyCard $record, mixed $rows): void
+{
+    $rows = $this->decodeJsonToArray($rows);
+
+    if (! is_array($rows)) {
+        $rows = [];
+    }
+
+    $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+    $allowed = [
+        'signal_id',
+        'signal_date',
+        'type',
+        'signal_source',
+        'signal_source_number',
+        'signal_source_date',
+        'signal_owners',
+        'signal_victims',
+        'signal_owner',   // legacy إن وجد
+        'signal_victim',  // legacy إن وجد
+    ];
+
+    $incomingIds = collect($rows)
+        ->pluck('id')
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values()
+        ->all();
+
+    // soft delete لمن تم حذفه من الواجهة
+    $record->signals()
+        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
+        ->when(count($incomingIds) === 0, fn ($q) => $q)
+        ->delete();
+
+    foreach ($rows as $row) {
+        if (! is_array($row)) continue;
+
+        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+        $data = Arr::only($row, $allowed);
+        $data = $this->nullifyEmptyStrings($data);
+
+        // تطبيع JSON owners/victims قبل التخزين
+        $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
+        $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
+
+        if (! filled($data['signal_id'] ?? null)) continue;
+        if (! filled($data['type'] ?? null)) continue;
+
+        if ($id) {
+            $signal = $record->signals()->whereKey($id)->first();
+            if ($signal) {
+                $signal->update($data);
+            } else {
+                $signal = $record->signals()->create($data);
+            }
+        } else {
+            $signal = $record->signals()->create($data);
+        }
+
+        // sync pivot owners
+        $ownerIds = collect($data['signal_owners'])
+            ->filter(fn (array $o) => (bool) ($o['is_owner'] ?? false) && filled($o['owner_id'] ?? null))
+            ->pluck('owner_id')
+            ->map(fn ($x) => (int) $x)
+            ->unique()
+            ->values()
+            ->all();
+
+        $signal->owners()->sync($ownerIds);
+    }
+}
+
+
+}
+
+
