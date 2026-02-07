@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     <style>
-        [x-cloak]{ display:none !important; }
+/*        [x-cloak]{ display:none !important; }
 
         @keyframes fiFadeUp {
             from { opacity: 0; transform: translateY(10px); }
@@ -13,7 +13,7 @@
         .fi-delay-3 { animation-delay: .18s; }
 
         .fi-soft-hover { transition: transform .2s ease, box-shadow .2s ease; }
-        .fi-soft-hover:hover { transform: translateY(-2px); }
+        .fi-soft-hover:hover { transform: translateY(-2px); } */
     </style>
 
     @php
