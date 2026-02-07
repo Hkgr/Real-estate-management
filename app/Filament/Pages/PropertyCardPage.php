@@ -340,26 +340,46 @@ class PropertyCardPage extends Page implements HasSchemas
                     ->collapsible()
                     ->schema([
                         Grid::make(12)->schema([
-                            Placeholder::make('payments_total_debit')
+                            TextInput::make('payments_total_debit')
                                 ->label('مجمل المدين')
-                                ->content(fn (Get $get) => (string) collect($get('payments') ?? [])
+                                ->hint('قراءة فقط')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->formatStateUsing(fn (Get $get) => (string) collect($get('payments') ?? [])
                                     ->sum(fn ($row) => (float) ($row['debit'] ?? 0)))
+                                ->extraAttributes([
+                                    'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
+                                ])
                                 ->columnSpan(['default' => 12, 'md' => 4]),
 
-                            Placeholder::make('payments_total_credit')
+                            TextInput::make('payments_total_credit')
                                 ->label('مجمل الدائن')
-                                ->content(fn (Get $get) => (string) collect($get('payments') ?? [])
+                                ->hint('قراءة فقط')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->formatStateUsing(fn (Get $get) => (string) collect($get('payments') ?? [])
                                     ->sum(fn ($row) => (float) ($row['credit'] ?? 0)))
+                                ->extraAttributes([
+                                    'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
+                                ])
                                 ->columnSpan(['default' => 12, 'md' => 4]),
 
-                            Placeholder::make('payments_total_balance')
+                            TextInput::make('payments_total_balance')
                                 ->label('مجموع الرصيد')
-                                ->content(fn (Get $get) => (string) (collect($get('payments') ?? [])
+                                ->hint('قراءة فقط')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->formatStateUsing(fn (Get $get) => (string) (collect($get('payments') ?? [])
                                     ->sum(fn ($row) => (float) ($row['debit'] ?? 0))
                                     - collect($get('payments') ?? [])
                                         ->sum(fn ($row) => (float) ($row['credit'] ?? 0))))
+                                ->extraAttributes([
+                                    'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
+                                ])
                                 ->columnSpan(['default' => 12, 'md' => 4]),
                         ]),
+
+
 
                         $this->paymentsRepeater(),
                     ]),
