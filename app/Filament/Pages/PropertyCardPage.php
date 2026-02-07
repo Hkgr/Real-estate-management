@@ -1814,50 +1814,137 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
     $payload = $record->attributesToArray();
 
+    // =========================
+    // ownerships (UUID keyed + keep id)
+    // =========================
     $payload['ownerships'] = $record->ownerships
         ->mapWithKeys(function ($o) {
             $row = Arr::except($o->toArray(), ['owner', 'created_at', 'updated_at', 'deleted_at']);
-            $row['id'] = $o->getKey(); // ✅
+            $row['id'] = $o->getKey();
             return [Str::uuid()->toString() => $row];
         })
         ->all();
 
+    // =========================
+    // payments (UUID keyed + keep id)
+    // =========================
     $payload['payments'] = $record->payments
         ->mapWithKeys(function ($p) {
             $row = Arr::except($p->toArray(), ['created_at', 'updated_at', 'deleted_at']);
-            $row['id'] = $p->getKey(); // ✅
+            $row['id'] = $p->getKey();
             return [Str::uuid()->toString() => $row];
         })
         ->all();
 
+    // =========================
+    // signals (UUID keyed + convert owners/victims to UI shape + UUID keyed)
+    // =========================
     $payload['signals'] = $record->signals
         ->mapWithKeys(function ($signal) {
             $signalPayload = Arr::except($signal->toArray(), ['owners', 'created_at', 'updated_at', 'deleted_at']);
-            $signalPayload['id'] = $signal->getKey(); // ✅
+            $signalPayload['id'] = $signal->getKey();
 
-            $normalizedOwners = $this->normalizeSignalOwnersForStorage($signalPayload['signal_owners'] ?? []);
-            if (empty($normalizedOwners)) {
-                $normalizedOwners = $signal->owners
-                    ->map(fn (Owner $owner) => [
-                        'is_owner' => true,
-                        'owner_id' => $owner->getKey(),
-                        'name'     => $owner->display_name,
-                    ])
-                    ->values()
-                    ->all();
+            // ---------
+            // Owners: stored -> UI -> UUID keyed
+            // ---------
+            $ownersStored = $signalPayload['signal_owners'] ?? [];
+            $ownersStored = $this->decodeJsonToArray($ownersStored);
+
+            if (! is_array($ownersStored)) {
+                $ownersStored = [];
             }
 
-            $signalPayload['signal_owners']  = $normalizedOwners;
-            $signalPayload['signal_victims'] = $this->normalizeSignalVictimsForStorage($signalPayload['signal_victims'] ?? []);
+            $ownersValues = array_is_list($ownersStored) ? $ownersStored : array_values($ownersStored);
+            $ownersUi = [];
+
+            if (count($ownersValues) > 0) {
+                $first = $ownersValues[0];
+
+                // UI already
+                if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+                    $ownersUi = $ownersValues;
+                }
+                // stored shape: is_owner/owner_id/name
+                elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+                    $ownersUi = collect($ownersValues)->map(function (array $item): array {
+                        $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                        return [
+                            'owner_from_owner' => $isOwner,
+                            'owner_id'   => $isOwner ? ($item['owner_id'] ?? null) : null,
+                            'owner_name' => $item['name'] ?? null,
+                        ];
+                    })->all();
+                }
+            }
+
+            // fallback من علاقة owners pivot إذا JSON فارغ
+            if (count($ownersUi) === 0 && $signal->relationLoaded('owners') && $signal->owners->count()) {
+                $ownersUi = $signal->owners->map(function (Owner $owner): array {
+                    return [
+                        'owner_from_owner' => true,
+                        'owner_id'   => $owner->getKey(),
+                        'owner_name' => $owner->display_name,
+                    ];
+                })->all();
+            }
+
+            $ownersUi = $this->deduplicateSignalOwnerUiRows($ownersUi);
+
+            $signalPayload['signal_owners'] = collect($ownersUi)
+                ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
+                ->all();
+
+            // ---------
+            // Victims: stored -> UI -> UUID keyed
+            // ---------
+            $victimsStored = $signalPayload['signal_victims'] ?? [];
+            $victimsStored = $this->decodeJsonToArray($victimsStored);
+
+            if (! is_array($victimsStored)) {
+                $victimsStored = [];
+            }
+
+            $victimsValues = array_is_list($victimsStored) ? $victimsStored : array_values($victimsStored);
+            $victimsUi = [];
+
+            if (count($victimsValues) > 0) {
+                $first = $victimsValues[0];
+
+                // UI already
+                if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+                    $victimsUi = $victimsValues;
+                }
+                // stored shape: is_owner/owner_id/name
+                elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+                    $victimsUi = collect($victimsValues)->map(function (array $item): array {
+                        $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                        return [
+                            'victim_from_owner' => $isOwner,
+                            'victim_owner_id' => $isOwner ? ($item['owner_id'] ?? null) : null,
+                            'victim_name'     => $item['name'] ?? null,
+                        ];
+                    })->all();
+                }
+            }
+
+            $victimsUi = $this->deduplicateSignalVictimUiRows($victimsUi);
+
+            $signalPayload['signal_victims'] = collect($victimsUi)
+                ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
+                ->all();
 
             return [Str::uuid()->toString() => $signalPayload];
         })
         ->all();
 
+    // الملفات لا نملؤها من DB (واجهة فقط)
     $payload['files'] = [[]];
 
     $this->form->model($record)->fill($payload);
 }
+
 
     protected function resetFileInputs(): void
     {
@@ -2564,6 +2651,89 @@ protected function persistSignals(PropertyCard $record, mixed $rows): void
 
         $signal->owners()->sync($ownerIds);
     }
+}
+
+private function signalOwnersToUiKeyed(mixed $stored, $ownersRelation = null): array
+{
+    $stored = $this->decodeJsonToArray($stored);
+
+    $rows = [];
+
+    if (is_array($stored) && count($stored) > 0) {
+        $values = array_is_list($stored) ? $stored : array_values($stored);
+        $first  = $values[0] ?? null;
+
+        // إذا كانت UI already (owner_from_owner)
+        if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+            $rows = $values;
+        }
+        // إذا كانت stored shape (is_owner)
+        elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+            foreach ($values as $item) {
+                if (! is_array($item)) continue;
+
+                $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                $rows[] = [
+                    'owner_from_owner' => $isOwner,
+                    'owner_id'   => $isOwner ? ($item['owner_id'] ?? null) : null,
+                    'owner_name' => $isOwner ? ($item['name'] ?? null) : ($item['name'] ?? null),
+                ];
+            }
+        }
+    }
+
+    // fallback من علاقة owners pivot إن كان JSON فارغ
+    if (count($rows) === 0 && $ownersRelation && $ownersRelation instanceof \Illuminate\Support\Collection && $ownersRelation->count()) {
+        $rows = $ownersRelation->map(fn ($o) => [
+            'owner_from_owner' => true,
+            'owner_id'   => $o->getKey(),
+            'owner_name' => $o->display_name ?? $o->full_name ?? null,
+        ])->all();
+    }
+
+    $rows = $this->deduplicateSignalOwnerUiRows($rows);
+
+    return collect($rows)
+        ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
+        ->all();
+}
+
+private function signalVictimsToUiKeyed(mixed $stored): array
+{
+    $stored = $this->decodeJsonToArray($stored);
+
+    $rows = [];
+
+    if (is_array($stored) && count($stored) > 0) {
+        $values = array_is_list($stored) ? $stored : array_values($stored);
+        $first  = $values[0] ?? null;
+
+        // UI already (victim_from_owner)
+        if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+            $rows = $values;
+        }
+        // stored shape (is_owner)
+        elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+            foreach ($values as $item) {
+                if (! is_array($item)) continue;
+
+                $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                $rows[] = [
+                    'victim_from_owner' => $isOwner,
+                    'victim_owner_id' => $isOwner ? ($item['owner_id'] ?? null) : null,
+                    'victim_name'     => $isOwner ? ($item['name'] ?? null) : ($item['name'] ?? null),
+                ];
+            }
+        }
+    }
+
+    $rows = $this->deduplicateSignalVictimUiRows($rows);
+
+    return collect($rows)
+        ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
+        ->all();
 }
 
 
