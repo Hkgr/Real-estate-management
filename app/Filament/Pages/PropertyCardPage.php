@@ -638,7 +638,7 @@ protected function signalsRepeater(): Repeater
     return Repeater::make('signals')
         ->label('الإشارات')
         ->default([])
-        ->relationship('signals')
+        ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
         ->addActionLabel('إضافة إشارة')
         ->reorderable()
         ->itemLabel(fn (array $state) => filled($state['signal_id'] ?? null) ? ('إشارة #' . $state['signal_id']) : 'إشارة')
