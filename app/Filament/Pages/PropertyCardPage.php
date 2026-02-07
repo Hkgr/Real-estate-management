@@ -313,8 +313,16 @@ class PropertyCardPage extends Page implements HasSchemas
                                         ->multiple()
                                         ->storeFiles(false)
                                         ->live()
-                                        ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                        ->helperText('مسموح: PDF أو صور فقط.')
+                                       ->acceptedFileTypes([
+                                            'application/pdf',
+                                            'image/*',
+                                            'application/vnd.ms-excel',
+                                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                            'application/msword',
+                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        ])
+                                        ->maxSize(51200)
+                                        ->helperText('مسموح: PDF، صور، Excel، Word حتى 50MB.')
                                         ->columnSpan(['default' => 12, 'md' => 4]),
                                 ]),
                             ])
@@ -1879,36 +1887,95 @@ protected function loadRecordIntoForm(PropertyCard $record): void
         'files' => [[]],
     ]);    }
 
-    protected function renderUploadedFiles(): HtmlString
-    {
-        if (! $this->currentRecordId) {
-            return new HtmlString('<span class="text-sm text-gray-500">حمّل بطاقة لعرض الملفات.</span>');
-        }
-
-        $files = PropertyCardFile::query()
-            ->where('property_card_id', $this->currentRecordId)
-            ->orderByDesc('issued_at')
-            ->get();
-
-        if ($files->isEmpty()) {
-            return new HtmlString('<span class="text-sm text-gray-500">لا توجد ملفات مرفوعة بعد.</span>');
-        }
-
-        $items = $files->map(function (PropertyCardFile $file): string {
-            $url = Storage::disk($file->storage_disk)->url($file->storage_path);
-            $name = e($file->file_name);
-            $issuedAt = $file->issued_at?->format('Y-m-d');
-            $issuedLabel = $issuedAt ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>" : '';
-            $downloadLink = "<a href=\"{$url}\" class=\"text-primary-600 hover:underline\" download>تنزيل</a>";
-            $previewLink = (is_string($file->mime_type) && (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf'))
-                ? " | <a href=\"{$url}\" class=\"text-primary-600 hover:underline\" target=\"_blank\" rel=\"noopener\">معاينة</a>"
-                : '';
-
-            return "<li class=\"text-sm\"><span class=\"font-medium\">{$name}</span>{$issuedLabel} — {$downloadLink}{$previewLink}</li>";
-        });
-
-        return new HtmlString('<ul class="space-y-1">' . $items->implode('') . '</ul>');
+protected function renderUploadedFiles(): HtmlString
+{
+    if (! $this->currentRecordId) {
+        return new HtmlString('<span class="text-sm text-gray-500">حمّل بطاقة لعرض الملفات.</span>');
     }
+
+    $files = PropertyCardFile::query()
+        ->where('property_card_id', $this->currentRecordId)
+        ->orderByDesc('issued_at')
+        ->get();
+
+    if ($files->isEmpty()) {
+        return new HtmlString('<span class="text-sm text-gray-500">لا توجد ملفات مرفوعة بعد.</span>');
+    }
+
+    $items = $files->map(function (PropertyCardFile $file): string {
+        $downloadUrl = route('property-card-files.download', $file);
+        $previewUrl  = route('property-card-files.download', ['propertyCardFile' => $file->id, 'preview' => 1]);
+
+        $name = e($file->file_name ?? '—');
+
+        $issuedAt = $file->issued_at?->format('Y-m-d');
+        $issuedLabel = $issuedAt
+            ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>"
+            : '';
+
+        $downloadLink = "<a href=\"{$downloadUrl}\" class=\"text-primary-600 hover:underline\" download>تنزيل</a>";
+
+        $previewLink = (is_string($file->mime_type) && (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf'))
+            ? " | <a href=\"{$previewUrl}\" class=\"text-primary-600 hover:underline\" target=\"_blank\" rel=\"noopener\">معاينة</a>"
+            : '';
+
+        // ✅ حذف مع تأكيد (Alpine موجود داخل Filament)
+        $deleteButton = " | <button type=\"button\" class=\"text-danger-600 hover:underline\"
+            x-on:click.prevent=\"if(confirm('هل أنت متأكد من حذف هذا الملف؟')) { \$wire.deleteUploadedFile({$file->id}) }\">
+            حذف
+        </button>";
+
+        return "<li class=\"text-sm flex items-center justify-between gap-3\">
+                    <div class=\"min-w-0\">
+                        <span class=\"font-medium break-words\">{$name}</span>{$issuedLabel}
+                    </div>
+                    <div class=\"shrink-0 whitespace-nowrap\">
+                        {$downloadLink}{$previewLink}{$deleteButton}
+                    </div>
+                </li>";
+    });
+
+    return new HtmlString('<ul class="space-y-2">' . $items->implode('') . '</ul>');
+}
+
+
+public function deleteUploadedFile(int $fileId): void
+{
+    if (! $this->currentRecordId) {
+        Notification::make()->title('حمّل بطاقة أولاً')->warning()->send();
+        return;
+    }
+
+    $file = PropertyCardFile::query()
+        ->where('property_card_id', $this->currentRecordId)
+        ->whereKey($fileId)
+        ->first();
+
+    if (! $file) {
+        Notification::make()->title('الملف غير موجود')->warning()->send();
+        return;
+    }
+
+    try {
+        $disk = $file->storage_disk;
+        $path = $file->storage_path;
+
+        if (filled($disk) && filled($path) && Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
+        }
+
+        $file->delete();
+
+        Notification::make()->title('تم حذف الملف')->success()->send();
+
+        // يجبر Livewire يعيد رسم الـ Placeholder فوراً
+        $this->dispatch('$refresh');
+    } catch (\Throwable $e) {
+        report($e);
+        Notification::make()->title('فشل حذف الملف')->body($e->getMessage())->danger()->send();
+    }
+}
+
 
     protected function validateFileUploads(array $files, bool $requireFiles = false): ?array
     {
@@ -1954,8 +2021,8 @@ protected function loadRecordIntoForm(PropertyCard $record): void
                     'file_upload' => [
                         'required',
                         'file',
-                        'mimetypes:application/pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml',
-                        'max:10240',
+                        'mimetypes:application/pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'max:51200',
                     ],
                 ]);
 
