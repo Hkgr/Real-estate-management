@@ -86,8 +86,12 @@ class PropertyCardFileStorage
     private function normalizeFileName(string $originalName): string
     {
         $originalName = trim($originalName);
+        $originalName = str_replace(["\0", "\r", "\n"], '', $originalName);
         $originalName = basename($originalName);
+        $originalName = preg_replace('/[\/\\\\]+/u', '-', $originalName);
+        $originalName = preg_replace('/[\\x00-\\x1F\\x7F]/u', '', $originalName);
 
-        return str_replace(['\\', '/'], '-', $originalName);
+        return $originalName !== '' ? $originalName : 'file';
+
     }
 }

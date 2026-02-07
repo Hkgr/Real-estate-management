@@ -313,8 +313,16 @@ class PropertyCardPage extends Page implements HasSchemas
                                         ->multiple()
                                         ->storeFiles(false)
                                         ->live()
-                                        ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                        ->helperText('مسموح: PDF أو صور فقط.')
+                                       ->acceptedFileTypes([
+                                            'application/pdf',
+                                            'image/*',
+                                            'application/vnd.ms-excel',
+                                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                            'application/msword',
+                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        ])
+                                        ->maxSize(51200)
+                                        ->helperText('مسموح: PDF، صور، Excel، Word حتى 50MB.')
                                         ->columnSpan(['default' => 12, 'md' => 4]),
                                 ]),
                             ])
@@ -1903,11 +1911,48 @@ protected function loadRecordIntoForm(PropertyCard $record): void
             $previewLink = (is_string($file->mime_type) && (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf'))
                 ? " | <a href=\"{$url}\" class=\"text-primary-600 hover:underline\" target=\"_blank\" rel=\"noopener\">معاينة</a>"
                 : '';
-
+           $deleteButton = " | <button type=\"button\" class=\"text-danger-600 hover:underline\" onclick=\"return confirm('هل تريد حذف هذا الملف؟')\" wire:click=\"deleteUploadedFile({$file->id})\">حذف</button>";
             return "<li class=\"text-sm\"><span class=\"font-medium\">{$name}</span>{$issuedLabel} — {$downloadLink}{$previewLink}</li>";
         });
 
         return new HtmlString('<ul class="space-y-1">' . $items->implode('') . '</ul>');
+    }
+
+    public function deleteUploadedFile(int $fileId): void
+    {
+        if (! $this->currentRecordId) {
+            Notification::make()->title('الرجاء تحميل بطاقة أولاً')->warning()->send();
+            return;
+        }
+
+        $file = PropertyCardFile::query()
+            ->where('property_card_id', $this->currentRecordId)
+            ->whereKey($fileId)
+            ->first();
+
+        if (! $file) {
+            Notification::make()->title('الملف غير موجود')->danger()->send();
+            return;
+        }
+
+        $disk = Storage::disk($file->storage_disk);
+        $deletedFromDisk = true;
+
+        if ($file->storage_path && $disk->exists($file->storage_path)) {
+            $deletedFromDisk = $disk->delete($file->storage_path);
+        }
+
+        $file->delete();
+
+        if (! $deletedFromDisk) {
+            Notification::make()
+                ->title('تم حذف سجل الملف، لكن فشل حذف الملف من التخزين')
+                ->warning()
+                ->send();
+            return;
+        }
+
+        Notification::make()->title('تم حذف الملف بنجاح')->success()->send();
     }
 
     protected function validateFileUploads(array $files, bool $requireFiles = false): ?array
@@ -1954,8 +1999,8 @@ protected function loadRecordIntoForm(PropertyCard $record): void
                     'file_upload' => [
                         'required',
                         'file',
-                        'mimetypes:application/pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml',
-                        'max:10240',
+                        'mimetypes:application/pdf,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'max:51200',
                     ],
                 ]);
 
