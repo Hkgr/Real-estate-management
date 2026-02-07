@@ -339,6 +339,28 @@ class PropertyCardPage extends Page implements HasSchemas
                 Section::make('الدفعات')
                     ->collapsible()
                     ->schema([
+                        Grid::make(12)->schema([
+                            Placeholder::make('payments_total_debit')
+                                ->label('مجمل المدين')
+                                ->content(fn (Get $get) => (string) collect($get('payments') ?? [])
+                                    ->sum(fn ($row) => (float) ($row['debit'] ?? 0)))
+                                ->columnSpan(['default' => 12, 'md' => 4]),
+
+                            Placeholder::make('payments_total_credit')
+                                ->label('مجمل الدائن')
+                                ->content(fn (Get $get) => (string) collect($get('payments') ?? [])
+                                    ->sum(fn ($row) => (float) ($row['credit'] ?? 0)))
+                                ->columnSpan(['default' => 12, 'md' => 4]),
+
+                            Placeholder::make('payments_total_balance')
+                                ->label('مجموع الرصيد')
+                                ->content(fn (Get $get) => (string) (collect($get('payments') ?? [])
+                                    ->sum(fn ($row) => (float) ($row['debit'] ?? 0))
+                                    - collect($get('payments') ?? [])
+                                        ->sum(fn ($row) => (float) ($row['credit'] ?? 0))))
+                                ->columnSpan(['default' => 12, 'md' => 4]),
+                        ]),
+
                         $this->paymentsRepeater(),
                     ]),
             ])
