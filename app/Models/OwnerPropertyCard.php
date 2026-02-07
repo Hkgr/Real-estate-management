@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 class OwnerPropertyCard extends Pivot
 {
     protected $table = 'owner_property_card';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
 
     protected $casts = [
         'ownership_percentage' => 'decimal:2',
