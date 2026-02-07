@@ -1196,6 +1196,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->label('الدفعات')
             ->default([])
             ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
+            ->live()
             ->addActionLabel('إضافة حركة')
             ->reorderable()
             ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('حركة بتاريخ ' . $state['payment_date']) : 'حركة')
@@ -1206,8 +1207,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                 DatePicker::make('payment_date')
                     ->label('التاريخ')
                     ->required()
-                    ->live(onBlur: true),
-
+                    ->live(debounce: 300),
 
                 TextInput::make('debit')
                     ->label('مدين')
@@ -1244,7 +1244,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->prefixIcon('heroicon-o-arrows-right-left')
                     ->maxLength(255)
                     ->nullable()
-                    ->live(onBlur: true)
+                    ->live(debounce: 300)
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
             ])
             ->columns(['default' => 1, 'md' => 6]);
