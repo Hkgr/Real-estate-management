@@ -23,6 +23,7 @@ class PropertyCard extends Model
         'card_sale_date',
         'card_property_details',
         'card_google_maps_url',
+        'final_balance',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class PropertyCard extends Model
         'card_sale_date' => 'date',
         'card_purchase_method' => 'string',
         'card_record_number' => 'string',
+        'final_balance' => 'decimal:2',
 
     ];
     public function owners()

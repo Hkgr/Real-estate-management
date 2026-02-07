@@ -337,6 +337,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
                 // 8) الدفعات
                 Section::make('الدفعات')
+                    ->description('جميع القيم بالدولار الأمريكي.')
                     ->collapsible()
                     ->schema([
                         Grid::make(12)->schema([
@@ -1245,6 +1246,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->maxLength(255)
                     ->nullable()
                     ->live(debounce: 300)
+                    ->helperText('القيمة بالدولار الأمريكي بتاريخ الحركة.')
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
             ])
             ->columns(['default' => 1, 'md' => 6]);
@@ -2567,6 +2569,8 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
     }
 
     $rows = array_is_list($rows) ? $rows : array_values($rows);
+    $totalDebit = 0.0;
+    $totalCredit = 0.0;
 
     $allowed = [
         'debit',
@@ -2598,6 +2602,10 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
         $data = Arr::only($row, $allowed);
         $data = $this->nullifyEmptyStrings($data);
 
+        $totalDebit += (float) ($data['debit'] ?? 0);
+        $totalCredit += (float) ($data['credit'] ?? 0);
+
+
         if (! filled($data['payment_date'] ?? null)) continue;
 
         if ($id) {
@@ -2610,7 +2618,12 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
 
         $record->payments()->create($data);
     }
+        $record->update([
+        'final_balance' => $totalDebit - $totalCredit,
+    ]);
+
 }
+
 protected function persistSignals(PropertyCard $record, mixed $rows): void
 {
     $rows = $this->decodeJsonToArray($rows);

@@ -24,6 +24,18 @@
         $status        = data_get($this->data, 'card_status', 'active');
         $investType    = data_get($this->data, 'card_investment_type');
         $mapsUrl       = data_get($this->data, 'card_google_maps_url');
+        $finalBalance  = data_get($this->data, 'final_balance');
+        $payments      = collect(data_get($this->data, 'payments', []));
+
+        if ($finalBalance === null) {
+            $finalBalance = $payments->sum(fn ($row) => (float) ($row['debit'] ?? 0))
+                - $payments->sum(fn ($row) => (float) ($row['credit'] ?? 0));
+        }
+
+        $finalBalanceValue = (float) $finalBalance;
+        $finalBalanceColor = $finalBalanceValue > 0 ? 'success' : ($finalBalanceValue < 0 ? 'danger' : 'gray');
+        $finalBalanceLabel = number_format($finalBalanceValue, 2, '.', ',');
+
     @endphp
 
     <div dir="rtl"
