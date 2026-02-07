@@ -1145,11 +1145,14 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         return Repeater::make('payments')
             ->label('الدفعات')
             ->default([])
-            ->relationship('payments')
+            ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
             ->addActionLabel('إضافة حركة')
             ->reorderable()
             ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('حركة بتاريخ ' . $state['payment_date']) : 'حركة')
             ->schema([
+                Hidden::make('id')
+                    ->dehydrated(),
+
                 DatePicker::make('payment_date')
                     ->label('التاريخ')
                     ->required()
