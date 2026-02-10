@@ -5,13 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 class Owner extends Model
 {
     use SoftDeletes;
+    protected static function booted(): void
+    {
+        static::saving(function (Owner $owner): void {
+            if ($owner->owner_type === 'company' && blank($owner->full_name)) {
+                $owner->full_name = (string) ($owner->company_name ?? '');
+            }
+        });
+    }
+
 
     protected $fillable = [
         'full_name',
+        'owner_type',
+        'company_name',
+        'commercial_register_number',
         'birth_date',
         'national_id',
         'phone',
@@ -20,8 +31,22 @@ class Owner extends Model
     ];
     protected $casts = [
         'birth_date' => 'date',
+        'owner_type' => 'string',
         'is_active' => 'boolean',
     ];
+    protected $appends = [
+        'display_name',
+    ];
+
+
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->owner_type === 'company') {
+            return $this->company_name ?: $this->full_name;
+        }
+
+        return $this->full_name;
+    }
 
     public function properties()
     {
@@ -49,6 +74,14 @@ class Owner extends Model
                 'purchase_date',
                 'sale_date',
                 'purchase_method',
+                'case_number',
+                'decision_number',
+                'authority',
+                'judgment_date',
+                'regular_contract_date',
+                'contract_number',
+                'commercial_contract_date',
+
             ])
             ->withTimestamps();
     }
@@ -59,9 +92,6 @@ class Owner extends Model
 
     }
 
-    public function propertyOwnerPayments(): HasMany
-    {
-        return $this->hasMany(PropertyOwnerPayment::class);
-    }
+
 
 }

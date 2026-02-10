@@ -24,7 +24,7 @@ class SignalForm
                     ->nullable(),
                 Select::make('owners')
                     ->label('المالكون')
-                    ->relationship('owners', 'full_name')
+                    ->relationship('owners', 'display_name')
                     ->searchable()
                     ->preload()
                     ->multiple(),
@@ -54,7 +54,11 @@ class SignalForm
                             ->label('المالك')
                             ->native(false)
                             ->searchable()
-                            ->options(fn () => Owner::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                            ->options(fn () => Owner::query()
+                                ->orderByRaw('coalesce(company_name, full_name)')
+                                ->get()
+                                ->mapWithKeys(fn (Owner $owner) => [$owner->getKey() => $owner->display_name])
+                                ->all())
                             ->visible(fn ($get) => (bool) $get('owner_from_owner'))
                             ->placeholder('اختر مالكًا'),
 
@@ -99,7 +103,7 @@ class SignalForm
                                 $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
                                 $ownerId = $row['owner_id'] ?? null;
                                 $name = $fromOwner
-                                    ? Owner::query()->whereKey($ownerId)->value('full_name')
+                                    ? Owner::query()->whereKey($ownerId)->first()?->display_name
                                     : ($row['owner_name'] ?? null);
 
                                 if ($fromOwner && ! filled($ownerId)) {
@@ -143,7 +147,11 @@ class SignalForm
                             ->label('المالك')
                             ->native(false)
                             ->searchable()
-                            ->options(fn () => Owner::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                            ->options(fn () => Owner::query()
+                                ->orderByRaw('coalesce(company_name, full_name)')
+                                ->get()
+                                ->mapWithKeys(fn (Owner $owner) => [$owner->getKey() => $owner->display_name])
+                                ->all())
                             ->visible(fn ($get) => (bool) $get('victim_from_owner'))
                             ->placeholder('اختر متضرّرًا'),
 
@@ -188,7 +196,7 @@ class SignalForm
                                 $fromOwner = (bool) ($row['victim_from_owner'] ?? false);
                                 $ownerId = $row['victim_owner_id'] ?? null;
                                 $name = $fromOwner
-                                    ? Owner::query()->whereKey($ownerId)->value('full_name')
+                                    ? Owner::query()->whereKey($ownerId)->first()?->display_name
                                     : ($row['victim_name'] ?? null);
 
                                 if ($fromOwner && ! filled($ownerId)) {

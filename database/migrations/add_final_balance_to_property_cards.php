@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('property_cards', function (Blueprint $table) {
-            $table->date('card_sale_date')->nullable();
+            $table->decimal('final_balance', 25, 2)->default(0)->after('card_sale_date');
         });
     }
 
     public function down(): void
     {
         Schema::table('property_cards', function (Blueprint $table) {
-            $table->dropColumn('card_sale_date');
+            $table->dropColumn('final_balance');
         });
     }
 };

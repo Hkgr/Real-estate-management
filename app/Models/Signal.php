@@ -10,7 +10,6 @@ class Signal extends Model
 {
       protected $fillable = [
         'signal_id',
-        'signal_year',
         'signal_date',
         'type',
         'signal_owner',
@@ -26,7 +25,8 @@ class Signal extends Model
     protected $casts = [
         'signal_owners' => 'array',
         'signal_victims' => 'array',
-        'signal_source_date' => 'date',
+    'signal_date'        => 'date',
+    'signal_source_date' => 'date',
     ];
 
     public function property(): BelongsTo

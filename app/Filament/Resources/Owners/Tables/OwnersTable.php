@@ -20,10 +20,21 @@ class OwnersTable
     {
         return $table
             ->columns([
-                TextColumn::make('full_name')
-                    ->label('الاسم الرباعي')
+                TextColumn::make('display_name')
+                    ->label('اسم المالك')
+                    ->searchable(['full_name', 'company_name'])
+                    ->sortable(query: fn ($query, string $direction): mixed => $query->orderByRaw(
+                        "coalesce(company_name, full_name) {$direction}"
+                    )),
+
+                TextColumn::make('owner_type')
+                    ->label('النوع')
+                    ->toggleable(),
+
+                TextColumn::make('commercial_register_number')
+                    ->label('رقم السجل التجاري')
                     ->searchable()
-                    ->sortable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('national_id')
                     ->label('الرقم الوطني')

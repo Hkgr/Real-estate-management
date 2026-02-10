@@ -25,7 +25,7 @@ class OwnerResource extends Resource
     protected static ?string $modelLabel = 'مالك';
     protected static ?string $pluralModelLabel = 'المالكون';
 
-    protected static ?string $recordTitleAttribute = 'full_name';
+    protected static ?string $recordTitleAttribute = 'display_name';
 
     public static function form(Schema $schema): Schema
     {
@@ -44,7 +44,10 @@ class OwnerResource extends Resource
             Section::make('بيانات المالك')
                 ->columns(['default' => 1, 'md' => 3])
                 ->schema([
-                    TextEntry::make('full_name')->label('الاسم الرباعي'),
+                    TextEntry::make('display_name')->label('اسم المالك'),
+                    TextEntry::make('owner_type')->label('نوع المالك'),
+                    TextEntry::make('company_name')->label('اسم الشركة')->placeholder('—'),
+                    TextEntry::make('commercial_register_number')->label('رقم السجل التجاري')->placeholder('—'),
                     TextEntry::make('birth_date')->label('تاريخ الميلاد')->date(),
                     TextEntry::make('national_id')->label('الرقم الوطني'),
                     TextEntry::make('phone')->label('الهاتف')->placeholder('—'),

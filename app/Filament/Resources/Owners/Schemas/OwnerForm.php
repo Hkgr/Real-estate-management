@@ -7,6 +7,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Get;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -18,11 +19,37 @@ class OwnerForm
             ->components([
                 Section::make('البيانات الأساسية')
                     ->schema([
+                        Select::make('owner_type')
+                            ->label('نوع المالك')
+                            ->options([
+                                'individual' => 'فرد',
+                                'company' => 'شركة',
+                            ])
+                            ->native(false)
+                            ->required()
+                            ->default('individual')
+                            ->live(),
+
                         TextInput::make('full_name')
-                            ->label('الاسم الرباعي')
+                            ->label('اسم المالك (للفرد) أو اسم المفوض')
                             ->required()
                             ->maxLength(200)
                             ->columnSpanFull(),
+
+                        TextInput::make('company_name')
+                            ->label('اسم الشركة')
+                            ->maxLength(200)
+                            ->nullable()
+                            ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                            ->required(fn (Get $get) => $get('owner_type') === 'company')
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+                        TextInput::make('commercial_register_number')
+                            ->label('رقم السجل التجاري')
+                            ->maxLength(100)
+                            ->nullable()
+                            ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
                         DatePicker::make('birth_date')
                             ->label('تاريخ الميلاد')

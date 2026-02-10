@@ -9,14 +9,12 @@ class PropertyOwnerPayment extends Model
 {
     protected $fillable = [
         'property_card_id',
-        'owner_id',
         'debit',
         'credit',
         'statement',
         'voucher',
         'payment_date',
         'balance_movement',
-        'currency',
     ];
 
     protected $casts = [
@@ -31,8 +29,4 @@ class PropertyOwnerPayment extends Model
         return $this->belongsTo(PropertyCard::class);
     }
 
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(Owner::class);
-    }
 }
