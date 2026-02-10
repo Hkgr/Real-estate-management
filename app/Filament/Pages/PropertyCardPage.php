@@ -143,6 +143,7 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->label('الحركات')
                                 ->content(fn (Get $get) => (string) count($get('payments') ?? []))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
+
                         ]),
                     ]),
 
