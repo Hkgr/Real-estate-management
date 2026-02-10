@@ -25,7 +25,7 @@
         $investType    = data_get($this->data, 'card_investment_type');
         $mapsUrl       = data_get($this->data, 'card_google_maps_url');
         $finalBalance  = data_get($this->data, 'final_balance');
-        $payments      = collect(data_get($this->data, 'payments', []));
+        $payments     = collect(data_get($this->data, 'payments', []));
 
         if ($finalBalance === null) {
             $finalBalance = $payments->sum(fn ($row) => (float) ($row['debit'] ?? 0))
