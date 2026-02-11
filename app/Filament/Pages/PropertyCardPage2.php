@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Owner;
 use App\Models\PropertyCard;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -41,7 +40,7 @@ use Illuminate\Support\Facades\DB;
 
 
 
-class PropertyCardPage extends Page implements HasSchemas
+class PropertyCardPage2 extends Page implements HasSchemas
 {
     use InteractsWithSchemas;
 
@@ -49,7 +48,7 @@ class PropertyCardPage extends Page implements HasSchemas
     protected static ?string $navigationLabel = 'بطاقة العقار (الإصدار الثاني)';
     protected static UnitEnum|string|null $navigationGroup = 'العقارات';
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-home-modern';
-    protected static ?string $slug = 'property-card';
+    protected static ?string $slug = 'property-card-2';
 
     public ?int $currentRecordId = null;
 
@@ -57,7 +56,7 @@ class PropertyCardPage extends Page implements HasSchemas
 
     public function getView(): string
     {
-        return 'filament.pages.property-card-page';
+        return 'filament.pages.property-card-page-2';
     }
 
     public function mount(): void
@@ -2786,5 +2785,4 @@ private function signalVictimsToUiKeyed(mixed $stored): array
 
 
 }
-
 

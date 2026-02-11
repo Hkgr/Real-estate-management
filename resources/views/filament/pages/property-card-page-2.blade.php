@@ -37,6 +37,9 @@
         $finalBalanceLabel = number_format($finalBalanceValue, 2, '.', ',');
 
     @endphp
+
+
+                    
     <div dir="rtl"
          x-data="{ mounted: false }"
          x-init="requestAnimationFrame(() => mounted = true)"
@@ -59,7 +62,7 @@
                     <div class="space-y-1">
                         <div class="flex flex-wrap items-center gap-2">
                             <h1 class="text-lg font-bold text-gray-900 dark:text-white">
-                                بطاقة العقار
+                                بطاقة العقار 2
                             </h1>
 
                             <x-filament::badge :color="$recordId ? 'success' : 'gray'">
