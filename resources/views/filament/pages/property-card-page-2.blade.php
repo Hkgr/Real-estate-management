@@ -185,8 +185,8 @@
                 </div>
 
                 <div class="flex flex-wrap justify-end gap-2">
-                    {{ $this->createAction() }}
                     {{ $this->searchAction() }}
+                    {{ $this->createAction() }}
                     {{ $this->updateAction() }}
                     {{ $this->deleteAction() }}
                {{--     {{ $this->uploadFileAction() }}
