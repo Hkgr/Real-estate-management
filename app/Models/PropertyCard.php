@@ -71,6 +71,12 @@ class PropertyCard extends Model
     {
         return $this->hasMany(PropertyOwnerPayment::class);
     }
+    public function operations(): HasMany
+    {
+        return $this->hasMany(PropertyOperation::class);
+    }
+
+
 
 
 
