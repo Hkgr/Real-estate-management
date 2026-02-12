@@ -112,9 +112,9 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 )
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
-                            Placeholder::make('summary_payments')
-                                ->label('الحركات')
-                                ->content(fn (Get $get) => (string) count($get('payments') ?? []))
+                            Placeholder::make('summary_installments')
+                                ->label('الدفعات')
+                                ->content(fn (Get $get) => (string) count($get('installments') ?? []))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                         ]),
@@ -321,39 +321,33 @@ class PropertyCardPage2 extends Page implements HasSchemas
                     ->collapsible()
                     ->schema([
                         Grid::make(12)->schema([
-                            TextInput::make('payments_total_debit')
-                                ->label('مجمل المدين')
+                            TextInput::make('owned_property_value_usd')
+                                ->label('قيمة العقار المملوكة بالدولار')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(9999999999.99)
+                                ->live(onBlur: true)
+                                ->columnSpan(['default' => 12, 'md' => 4]),
+
+                            TextInput::make('installments_total_paid')
+                                ->label('مجموع الدفعات')
                                 ->hint('قراءة فقط')
                                 ->disabled()
                                 ->dehydrated(false)
-                                ->formatStateUsing(fn (Get $get) => (string) collect($get('payments') ?? [])
-                                    ->sum(fn ($row) => (float) ($row['debit'] ?? 0)))
+                                ->formatStateUsing(fn (Get $get) => (string) collect($get('installments') ?? [])
+                                    ->sum(fn ($row) => (float) ($row['amount'] ?? 0)))
                                 ->extraAttributes([
                                     'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
                                 ])
                                 ->columnSpan(['default' => 12, 'md' => 4]),
 
-                            TextInput::make('payments_total_credit')
-                                ->label('مجمل الدائن')
+                            TextInput::make('installments_total_remaining')
+                                ->label('المتبقي')
                                 ->hint('قراءة فقط')
                                 ->disabled()
                                 ->dehydrated(false)
-                                ->formatStateUsing(fn (Get $get) => (string) collect($get('payments') ?? [])
-                                    ->sum(fn ($row) => (float) ($row['credit'] ?? 0)))
-                                ->extraAttributes([
-                                    'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
-                                ])
-                                ->columnSpan(['default' => 12, 'md' => 4]),
-
-                            TextInput::make('payments_total_balance')
-                                ->label('مجموع الرصيد')
-                                ->hint('قراءة فقط')
-                                ->disabled()
-                                ->dehydrated(false)
-                                ->formatStateUsing(fn (Get $get) => (string) (collect($get('payments') ?? [])
-                                    ->sum(fn ($row) => (float) ($row['debit'] ?? 0))
-                                    - collect($get('payments') ?? [])
-                                        ->sum(fn ($row) => (float) ($row['credit'] ?? 0))))
+                                ->formatStateUsing(fn (Get $get) => (string) ((float) ($get('owned_property_value_usd') ?? 0)
+                                    - collect($get('installments') ?? [])->sum(fn ($row) => (float) ($row['amount'] ?? 0))))
                                 ->extraAttributes([
                                     'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
                                 ])
@@ -362,7 +356,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
 
 
-                        $this->paymentsRepeater(),
+                        $this->installmentsRepeater(),
                     ]),
             ])
             ->statePath('data')
@@ -1318,64 +1312,64 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
 
 
-    protected function paymentsRepeater(): Repeater
+    protected function installmentsRepeater(): Repeater
     {
-        // ترتيب الحقول بصرياً: (تاريخ+عملة) ثم (مدين/دائن) ثم (سند/بيان) ثم (حركة الرصيد)
-        return Repeater::make('payments')
+        // ترتيب الحقول بصرياً: (قيمة + تاريخ) ثم (المتبقي)
+        return Repeater::make('installments')
             ->label('الدفعات')
             ->default([])
             ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
             ->live()
-            ->addActionLabel('إضافة حركة')
+            ->addActionLabel('إضافة دفعة')
             ->reorderable()
-            ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('حركة بتاريخ ' . $state['payment_date']) : 'حركة')
+            ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('دفعة بتاريخ ' . $state['payment_date']) : 'دفعة')
             ->schema([
                 Hidden::make('id')
                     ->dehydrated(),
+
+                TextInput::make('amount')
+                    ->label('قيمة الدفعة')
+                    ->numeric()
+                    ->required()
+                    ->minValue(0)
+                    ->live(onBlur: true),
 
                 DatePicker::make('payment_date')
                     ->label('التاريخ')
                     ->required()
                     ->live(debounce: 300),
 
-                TextInput::make('debit')
-                    ->label('مدين')
-                    ->prefixIcon('heroicon-o-arrow-trending-down')
-                    ->numeric()
-                    ->minValue(0)
-                    ->live(onBlur: true),
+                TextInput::make('remaining')
+                    ->label('المتبقي')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->formatStateUsing(function (Get $get): string {
+                        $installments = $get('../../installments') ?? [];
+                        if (! is_array($installments)) {
+                            return '0';
+                        }
 
-                TextInput::make('credit')
-                    ->label('دائن')
-                    ->prefixIcon('heroicon-o-arrow-trending-up')
-                    ->numeric()
-                    ->minValue(0)
-                    ->live(onBlur: true),
+                        $currentAmount = (float) ($get('amount') ?? 0);
+                        $ownedValue = (float) ($get('../../owned_property_value_usd') ?? 0);
+                        $cumulative = 0.0;
 
-                TextInput::make('voucher')
-                    ->label('سند')
-                    ->prefixIcon('heroicon-o-receipt-refund')
-                    ->maxLength(150)
-                    ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                        foreach ($installments as $row) {
+                            if (! is_array($row)) {
+                                continue;
+                            }
 
-                TextInput::make('statement')
-                    ->label('البيان')
-                    ->prefixIcon('heroicon-o-chat-bubble-left-right')
-                    ->maxLength(255)
-                    ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                            $amount = (float) ($row['amount'] ?? 0);
+                            $cumulative += $amount;
 
-                TextInput::make('balance_movement')
-                    ->label('حركة الرصيد')
-                    ->prefixIcon('heroicon-o-arrows-right-left')
-                    ->maxLength(255)
-                    ->nullable()
-                    ->live(debounce: 300)
-                    ->helperText('القيمة بالدولار الأمريكي بتاريخ الحركة.')
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                            if ((float) ($row['amount'] ?? 0) === $currentAmount
+                                && ($row['payment_date'] ?? null) === ($get('payment_date') ?? null)) {
+                                break;
+                            }
+                        }
+
+                        return (string) ($ownedValue - $cumulative);
+                    })
+                    ->helperText('المتبقي = قيمة العقار المملوكة - مجموع الدفعات حتى هذه الدفعة.'),
             ])
             ->columns(['default' => 1, 'md' => 6]);
     }
@@ -1407,7 +1401,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             'ownerships' => [],
             'signals' => [],
             'operations' => [],
-            'payments' => [],
+            'installments' => [],
             'files' => [],
         ];
 
@@ -1579,7 +1573,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                             'ownerships',
                             'operations',
                             'signals',
-                            'payments',
+                            'installments',
                             'files',
                         ]);
 
@@ -1590,7 +1584,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
                                 $this->persistOwnerships($record, $state['ownerships'] ?? []);
                                 $this->persistOperations($record, (array) ($state['operations'] ?? []));
-                                $this->persistPayments($record, $state['payments'] ?? []);
+                                $this->persistInstallments($record, $state['installments'] ?? []);
                                 $this->persistSignals($record, $state['signals'] ?? []);
                             });
                         } catch (QueryException $exception) {
@@ -1778,7 +1772,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         'ownerships',
         'operations',
         'signals',
-        'payments',
+        'installments',
         'files',
     ]);
 
@@ -1789,7 +1783,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
             $this->persistOwnerships($record, $state['ownerships'] ?? []);
             $this->persistOperations($record, (array) ($state['operations'] ?? []));
-            $this->persistPayments($record, $state['payments'] ?? []);
+            $this->persistInstallments($record, $state['installments'] ?? []);
             $this->persistSignals($record, $state['signals'] ?? []);
 
             return $record;
@@ -1912,7 +1906,7 @@ protected function loadRecordIntoForm(PropertyCard $record): void
     $this->currentRecordId = $record->id;
 
 
-    $record->load('ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'payments');
+    $record->load('ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
 
     $payload = $record->attributesToArray();
 
@@ -1954,9 +1948,9 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
 
     // =========================
-    // payments (UUID keyed + keep id)
+    // installments (UUID keyed + keep id)
     // =========================
-    $payload['payments'] = $record->payments
+    $payload['installments'] = $record->installments
         ->mapWithKeys(function ($p) {
             $row = Arr::except($p->toArray(), ['created_at', 'updated_at', 'deleted_at']);
             $row['id'] = $p->getKey();
@@ -2343,7 +2337,7 @@ public function deleteUploadedFile(int $fileId): void
 
     protected function hasPendingChanges(PropertyCard $record, array $attributes, array $state): bool
     {
-       $record->loadMissing('ownerships', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'payments', 'signals.owners');
+       $record->loadMissing('ownerships', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'installments', 'signals.owners');
         $currentAttributes = Arr::only($record->getAttributes(), array_keys($attributes));
 
         if ($this->normalizeForComparison($attributes) !== $this->normalizeForComparison($currentAttributes)) {
@@ -2355,8 +2349,8 @@ public function deleteUploadedFile(int $fileId): void
             return true;
         }
 
-        if ($this->normalizePaymentsForComparison($state['payments'] ?? [])
-            !== $this->normalizePaymentsForComparison($record->payments->toArray())) {
+        if ($this->normalizeInstallmentsForComparison($state['installments'] ?? [])
+            !== $this->normalizeInstallmentsForComparison($record->installments->toArray())) {
             return true;
         }
 
@@ -2411,7 +2405,7 @@ public function deleteUploadedFile(int $fileId): void
             ->all();
     }
 
-    protected function normalizePaymentsForComparison(mixed $rows): array
+    protected function normalizeInstallmentsForComparison(mixed $rows): array
     {
         $rows = $this->decodeJsonToArray($rows);
 
@@ -2424,13 +2418,8 @@ public function deleteUploadedFile(int $fileId): void
         $normalized = collect($rows)
             ->filter(fn ($row) => is_array($row))
             ->map(fn (array $row) => $this->normalizeForComparison(Arr::only($row, [
-                'owner_id',
-                'debit',
-                'credit',
-                'statement',
-                'voucher',
+                'amount',
                 'payment_date',
-                'balance_movement',
             ])))
             ->values();
 
@@ -2811,7 +2800,7 @@ protected function persistOwnerships(PropertyCard $record, mixed $rows): void
         $record->ownerships()->create($data);
     }
 }
-protected function persistPayments(PropertyCard $record, mixed $rows): void
+protected function persistInstallments(PropertyCard $record, mixed $rows): void
 {
     $rows = $this->decodeJsonToArray($rows);
 
@@ -2820,16 +2809,13 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
     }
 
     $rows = array_is_list($rows) ? $rows : array_values($rows);
-    $totalDebit = 0.0;
-    $totalCredit = 0.0;
+    $totalPaid = 0.0;
+    $ownedValue = (float) ($record->owned_property_value_usd ?? 0);
 
     $allowed = [
-        'debit',
-        'credit',
-        'statement',
-        'voucher',
+        'amount',
         'payment_date',
-        'balance_movement',
+        'remaining_after_payment',
     ];
 
     $incomingIds = collect($rows)
@@ -2840,7 +2826,7 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
         ->values()
         ->all();
 
-    $record->payments()
+    $record->installments()
         ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
         ->when(count($incomingIds) === 0, fn ($q) => $q)
         ->delete();
@@ -2853,24 +2839,24 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
         $data = Arr::only($row, $allowed);
         $data = $this->nullifyEmptyStrings($data);
 
-        $totalDebit += (float) ($data['debit'] ?? 0);
-        $totalCredit += (float) ($data['credit'] ?? 0);
-
-
         if (! filled($data['payment_date'] ?? null)) continue;
+        if (! isset($data['amount'])) continue;
+
+        $totalPaid += (float) ($data['amount'] ?? 0);
+        $data['remaining_after_payment'] = $ownedValue - $totalPaid;
 
         if ($id) {
-            $existing = $record->payments()->whereKey($id)->first();
+            $existing = $record->installments()->whereKey($id)->first();
             if ($existing) {
                 $existing->update($data);
                 continue;
             }
         }
 
-        $record->payments()->create($data);
+        $record->installments()->create($data);
     }
         $record->update([
-        'final_balance' => $totalDebit - $totalCredit,
+        'final_balance' => $ownedValue - $totalPaid,
     ]);
 
 }
@@ -3168,4 +3154,3 @@ private function signalVictimsToUiKeyed(mixed $stored): array
 
 
 }
-
