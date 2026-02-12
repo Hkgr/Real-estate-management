@@ -244,6 +244,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                 // 5) الملاك
                 Section::make('الملاك')
                     ->description('إدخال سريع ومريح: اسم المالك + معيار التملك + طريقة الشراء، مع حقول تظهر حسب الاختيار.')
+                    ->hidden()
                     ->collapsible()
                     ->schema([
                         $this->ownershipsRepeater(),
@@ -868,32 +869,17 @@ protected function signalsRepeater(): Repeater
                     ->columnSpan(['default' => 12, 'md' => 6]),
             ]),
 
-            Grid::make(12)->schema([
-                TextInput::make('signal_source')
-                    ->label('الجهة/المصدر')
-                    ->prefixIcon('heroicon-o-building-library')
-                    ->maxLength(150)
-                    ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                    ->columnSpan(['default' => 12, 'md' => 5]),
-
-                TextInput::make('signal_source_number')
-                    ->label('رقم الجهة')
-                    ->prefixIcon('heroicon-o-hashtag')
-                    ->maxLength(50)
-                    ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                    ->columnSpan(['default' => 12, 'md' => 3]),
-
-                DatePicker::make('signal_source_date')
-                    ->label('تاريخ الجهة')
-                    ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                    ->columnSpan(['default' => 12, 'md' => 4]),
-            ]),
+            Section::make('ملاحظات الإشارة')
+                ->schema([
+                    Textarea::make('signal_notes')
+                        ->label('الملاحظات')
+                        ->rows(3)
+                        ->maxLength(1000)
+                        ->nullable()
+                        ->live(onBlur: true)
+                        ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
+                        ->columnSpanFull(),
+                ]),
 
             // =========================
             // أصحاب الإشارة
@@ -1419,7 +1405,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
     public function createAction(): Action
     {
         $action = Action::make('create')
-            ->label('إضافة')
+            ->label('جديد')
             ->icon('heroicon-o-plus')
             ->color('success')
             ->action(function () {
@@ -2475,6 +2461,7 @@ public function deleteUploadedFile(int $fileId): void
                     'signal_source' => $row['signal_source'] ?? null,
                     'signal_source_number' => $row['signal_source_number'] ?? null,
                     'signal_source_date' => $this->normalizeForComparison($row['signal_source_date'] ?? null),
+                    'signal_notes' => $row['signal_notes'] ?? null,
                     'signal_owners' => collect($this->normalizeSignalOwnersForStorage($row['signal_owners'] ?? []))
                         ->sortBy(fn (array $owner) => json_encode($this->normalizeForComparison($owner), JSON_UNESCAPED_UNICODE))
                         ->values()
@@ -3023,6 +3010,7 @@ protected function persistSignals(PropertyCard $record, mixed $rows): void
         'signal_source',
         'signal_source_number',
         'signal_source_date',
+        'signal_notes',
         'signal_owners',
         'signal_victims',
         'signal_owner',   // legacy إن وجد
