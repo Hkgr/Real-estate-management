@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\PropertyCard;
 use App\Models\Owner;
+use App\Models\PropertyOperation;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -1405,6 +1406,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             'card_status' => 'active',
             'ownerships' => [],
             'signals' => [],
+            'operations' => [],
             'payments' => [],
             'files' => [],
         ];
@@ -1568,6 +1570,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                         $attributes = Arr::except($state, [
                             'owners',
                             'ownerships',
+                            'operations',
                             'signals',
                             'payments',
                             'files',
@@ -1579,6 +1582,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                                 $record->update($attributes);
 
                                 $this->persistOwnerships($record, $state['ownerships'] ?? []);
+                                $this->persistOperations($record, (array) ($state['operations'] ?? []));
                                 $this->persistPayments($record, $state['payments'] ?? []);
                                 $this->persistSignals($record, $state['signals'] ?? []);
                             });
@@ -1765,6 +1769,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
     $attributes = Arr::except($state, [
         'owners',
         'ownerships',
+        'operations',
         'signals',
         'payments',
         'files',
@@ -1776,6 +1781,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             $record = PropertyCard::create($attributes);
 
             $this->persistOwnerships($record, $state['ownerships'] ?? []);
+            $this->persistOperations($record, (array) ($state['operations'] ?? []));
             $this->persistPayments($record, $state['payments'] ?? []);
             $this->persistSignals($record, $state['signals'] ?? []);
 
@@ -1898,7 +1904,8 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 {
     $this->currentRecordId = $record->id;
 
-    $record->load('ownerships.owner', 'signals.owners', 'payments');
+
+    $record->load('ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'payments');
 
     $payload = $record->attributesToArray();
 
@@ -1912,6 +1919,32 @@ protected function loadRecordIntoForm(PropertyCard $record): void
             return [Str::uuid()->toString() => $row];
         })
         ->all();
+   $payload['operations'] = $record->operations
+        ->mapWithKeys(function (PropertyOperation $operation): array {
+            $row = Arr::except($operation->toArray(), ['old_owners', 'new_owners', 'witnesses', 'created_at', 'updated_at']);
+            $row['id'] = $operation->getKey();
+            $row['old_owners'] = $operation->oldOwners->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+            $row['new_owners'] = $operation->newOwners->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+
+            if ($operation->operation_method === 'regular_contract') {
+                $row['regular_contract_number'] = $operation->contract_number;
+                $row['regular_contract_date'] = $operation->contract_date;
+            }
+
+            if ($operation->operation_method === 'commercial_register_contract') {
+                $row['commercial_register_contract_number'] = $operation->contract_number;
+                $row['commercial_register_contract_date'] = $operation->contract_date;
+            }
+
+            $row['witnesses'] = $operation->witnesses
+                ->mapWithKeys(fn ($witness): array => [Str::uuid()->toString() => ['name' => $witness->witness_name]])
+                ->all();
+
+            return [Str::uuid()->toString() => $row];
+        })
+        ->all();
+
+
 
     // =========================
     // payments (UUID keyed + keep id)
@@ -2303,8 +2336,7 @@ public function deleteUploadedFile(int $fileId): void
 
     protected function hasPendingChanges(PropertyCard $record, array $attributes, array $state): bool
     {
-        $record->loadMissing('ownerships', 'payments', 'signals.owners');
-
+       $record->loadMissing('ownerships', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'payments', 'signals.owners');
         $currentAttributes = Arr::only($record->getAttributes(), array_keys($attributes));
 
         if ($this->normalizeForComparison($attributes) !== $this->normalizeForComparison($currentAttributes)) {
@@ -2320,6 +2352,12 @@ public function deleteUploadedFile(int $fileId): void
             !== $this->normalizePaymentsForComparison($record->payments->toArray())) {
             return true;
         }
+
+        if ($this->normalizeOperationsForComparison($state['operations'] ?? [])
+            !== $this->normalizeOperationsForComparison($record->operations->toArray())) {
+            return true;
+        }
+
 
         if ($this->normalizeSignalsForComparison($state['signals'] ?? [])
             !== $this->normalizeSignalsForComparison($record->signals->toArray(), $record->signals->pluck('owners')->all())) {
@@ -2446,6 +2484,101 @@ public function deleteUploadedFile(int $fileId): void
             ->values();
 
         return $normalized
+            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->values()
+            ->all();
+    }
+  protected function normalizeOperationsForComparison(mixed $rows): array
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+        return collect($rows)
+            ->filter(fn ($row) => is_array($row))
+            ->map(function (array $row): array {
+                $oldOwners = $row['old_owners'] ?? [];
+                $newOwners = $row['new_owners'] ?? [];
+                $witnesses = $row['witnesses'] ?? [];
+
+                if (isset($row['old_owners']) && is_array($row['old_owners']) && ! array_is_list($row['old_owners'])) {
+                    $oldOwners = array_values($row['old_owners']);
+                }
+
+                if (isset($row['new_owners']) && is_array($row['new_owners']) && ! array_is_list($row['new_owners'])) {
+                    $newOwners = array_values($row['new_owners']);
+                }
+
+                if (isset($row['witnesses']) && is_array($row['witnesses']) && ! array_is_list($row['witnesses'])) {
+                    $witnesses = array_values($row['witnesses']);
+                }
+
+                $method = (string) ($row['operation_method'] ?? '');
+
+                $normalized = [
+                    'operation_type' => $row['operation_type'] ?? null,
+                    'transaction_amount' => $row['transaction_amount'] ?? null,
+                    'transaction_unit' => $row['transaction_unit'] ?? null,
+                    'operation_method' => $row['operation_method'] ?? null,
+                    'case_number' => $method === 'court_judgment' ? ($row['case_number'] ?? null) : null,
+                    'decision_number' => $method === 'court_judgment' ? ($row['decision_number'] ?? null) : null,
+                    'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
+                    'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
+                    'contract_number' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_number'] ?? $row[$method === 'regular_contract' ? 'regular_contract_number' : 'commercial_register_contract_number'] ?? null)
+                        : null,
+                    'contract_date' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_date'] ?? $row[$method === 'regular_contract' ? 'regular_contract_date' : 'commercial_register_contract_date'] ?? null)
+                        : null,
+                    'old_owners' => collect($oldOwners)
+                        ->map(function ($item): int {
+                            if (is_array($item)) {
+                                return (int) ($item['id'] ?? $item['owner_id'] ?? 0);
+                            }
+
+                            return (int) $item;
+                        })
+                        ->filter()
+                        ->unique()
+                        ->sort()
+                        ->values()
+                        ->all(),
+                    'new_owners' => collect($newOwners)
+                        ->map(function ($item): int {
+                            if (is_array($item)) {
+                                return (int) ($item['id'] ?? $item['owner_id'] ?? 0);
+                            }
+
+                            return (int) $item;
+                        })
+                        ->filter()
+                        ->unique()
+                        ->sort()
+                        ->values()
+                        ->all(),
+                    'witnesses' => collect($witnesses)
+                        ->map(function ($item): ?string {
+                            if (is_array($item)) {
+                                $name = $item['name'] ?? $item['witness_name'] ?? null;
+                            } else {
+                                $name = $item;
+                            }
+
+                            return is_string($name) ? trim($name) : null;
+                        })
+                        ->filter()
+                        ->unique()
+                        ->sort()
+                        ->values()
+                        ->all(),
+                ];
+
+                return $this->normalizeForComparison($normalized);
+            })
             ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
             ->values()
             ->all();
@@ -2734,6 +2867,138 @@ protected function persistPayments(PropertyCard $record, mixed $rows): void
     ]);
 
 }
+protected function persistOperations(PropertyCard $record, array $rows): void
+{
+    $rows = $this->decodeJsonToArray($rows);
+
+    if (! is_array($rows)) {
+        $rows = [];
+    }
+
+    $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+    $allowed = [
+        'operation_type',
+        'transaction_amount',
+        'transaction_unit',
+        'operation_method',
+        'case_number',
+        'decision_number',
+        'authority',
+        'judgment_date',
+        'contract_number',
+        'contract_date',
+        'regular_contract_number',
+        'regular_contract_date',
+        'commercial_register_contract_number',
+        'commercial_register_contract_date',
+        'old_owners',
+        'new_owners',
+        'witnesses',
+    ];
+
+    $incomingIds = collect($rows)
+        ->pluck('id')
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values()
+        ->all();
+
+    $record->operations()
+        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
+        ->when(count($incomingIds) === 0, fn ($q) => $q)
+        ->delete();
+
+    foreach ($rows as $row) {
+        if (! is_array($row)) {
+            continue;
+        }
+
+        $id = isset($row['id']) ? (int) $row['id'] : null;
+
+        $data = Arr::only($row, $allowed);
+        $data = $this->nullifyEmptyStrings($data);
+
+        $method = (string) ($data['operation_method'] ?? '');
+
+        if ($method === 'regular_contract') {
+            $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
+            $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
+        } elseif ($method === 'commercial_register_contract') {
+            $data['contract_number'] = $data['commercial_register_contract_number'] ?? $data['contract_number'] ?? null;
+            $data['contract_date'] = $data['commercial_register_contract_date'] ?? $data['contract_date'] ?? null;
+        }
+
+        $oldOwners = collect($data['old_owners'] ?? [])
+            ->map(function ($ownerId): int {
+                if (is_array($ownerId)) {
+                    return (int) ($ownerId['id'] ?? $ownerId['owner_id'] ?? 0);
+                }
+
+                return (int) $ownerId;
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+        $newOwners = collect($data['new_owners'] ?? [])
+            ->map(function ($ownerId): int {
+                if (is_array($ownerId)) {
+                    return (int) ($ownerId['id'] ?? $ownerId['owner_id'] ?? 0);
+                }
+
+                return (int) $ownerId;
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+        $witnesses = collect($data['witnesses'] ?? [])
+            ->map(function ($witness): ?string {
+                if (is_array($witness)) {
+                    $witness = $witness['name'] ?? null;
+                }
+
+                return is_string($witness) ? trim($witness) : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        unset(
+            $data['regular_contract_number'],
+            $data['regular_contract_date'],
+            $data['commercial_register_contract_number'],
+            $data['commercial_register_contract_date'],
+            $data['old_owners'],
+            $data['new_owners'],
+            $data['witnesses']
+        );
+
+        if (! filled($data['operation_type'] ?? null) || ! filled($data['operation_method'] ?? null) || ! filled($data['transaction_amount'] ?? null) || ! filled($data['transaction_unit'] ?? null)) {
+            continue;
+        }
+
+        $operation = null;
+
+        if ($id) {
+            $operation = $record->operations()->whereKey($id)->first();
+            if ($operation) {
+                $operation->update($data);
+            }
+        }
+
+        if (! $operation) {
+            $operation = $record->operations()->create($data);
+        }
+
+        $operation->oldOwners()->sync($oldOwners);
+        $operation->newOwners()->sync($newOwners);
+        $operation->syncWitnesses($witnesses);
+    }
+}
+
 
 protected function persistSignals(PropertyCard $record, mixed $rows): void
 {
