@@ -435,7 +435,6 @@ protected function ownershipsRepeater(): Repeater
                     ->options([
                         'court_judgment' => 'حكم قضائي',
                         'regular_contract' => 'عقد عادي',
-                        'commercial_register_contract' => 'عقد سجل تجاري',
                     ])
                     ->nullable()
                     ->live()
@@ -592,10 +591,10 @@ protected function operationsRepeater(): Repeater
                     ->options([
                         'court_judgment' => 'حكم محكم',
                         'regular_contract' => 'عقد عادي',
-                        'commercial_register_contract' => 'عقد سجل تجاري',
                     ])
                     ->live()
                     ->required()
+                    ->in(['court_judgment', 'regular_contract'])
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Grid::make(12)
@@ -634,24 +633,11 @@ protected function operationsRepeater(): Repeater
                     ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
                     ->columnSpanFull(),
 
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('commercial_register_contract_number')
-                            ->label('رقم العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                        DatePicker::make('commercial_register_contract_date')
-                            ->label('تاريخ العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                    ])
-                    ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                    ->columnSpanFull(),
 
                 Textarea::make('contract_notes')
                     ->label('ملاحظات العقد')
                     ->rows(3)
-                    ->visible(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'commercial_register_contract'], true))
+                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract') 
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
@@ -1962,11 +1948,6 @@ protected function loadRecordIntoForm(PropertyCard $record): void
                 $row['regular_contract_date'] = $operation->contract_date;
             }
 
-            if ($operation->operation_method === 'commercial_register_contract') {
-                $row['commercial_register_contract_number'] = $operation->contract_number;
-                $row['commercial_register_contract_date'] = $operation->contract_date;
-            }
-
             $row['witnesses'] = $operation->witnesses
                 ->mapWithKeys(fn ($witness): array => [Str::uuid()->toString() => ['name' => $witness->witness_name]])
                 ->all();
@@ -2563,11 +2544,12 @@ public function deleteUploadedFile(int $fileId): void
                     'decision_number' => $method === 'court_judgment' ? ($row['decision_number'] ?? null) : null,
                     'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
                     'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
-                    'contract_number' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
-                        ? ($row['contract_number'] ?? $row[$method === 'regular_contract' ? 'regular_contract_number' : 'commercial_register_contract_number'] ?? null)
+                    'contract_number' => $method === 'regular_contract'
+                        ? ($row['contract_number'] ?? $row['regular_contract_number'] ?? null)
                         : null,
-                    'contract_date' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
-                        ? ($row['contract_date'] ?? $row[$method === 'regular_contract' ? 'regular_contract_date' : 'commercial_register_contract_date'] ?? null)
+                    'contract_date' => $method === 'regular_contract'
+                        ? ($row['contract_date'] ?? $row['regular_contract_date'] ?? null)
+
                         : null,
                     'old_owners' => collect($oldOwners)
                         ->map(function ($item): int {
@@ -2925,8 +2907,6 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         'contract_date',
         'regular_contract_number',
         'regular_contract_date',
-        'commercial_register_contract_number',
-        'commercial_register_contract_date',
         'old_owners',
         'new_owners',
         'witnesses',
@@ -2957,12 +2937,14 @@ protected function persistOperations(PropertyCard $record, array $rows): void
 
         $method = (string) ($data['operation_method'] ?? '');
 
+        if (! in_array($method, ['court_judgment', 'regular_contract'], true)) {
+            continue;
+        }
+
+
         if ($method === 'regular_contract') {
             $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
             $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
-        } elseif ($method === 'commercial_register_contract') {
-            $data['contract_number'] = $data['commercial_register_contract_number'] ?? $data['contract_number'] ?? null;
-            $data['contract_date'] = $data['commercial_register_contract_date'] ?? $data['contract_date'] ?? null;
         }
 
         $oldOwners = collect($data['old_owners'] ?? [])
@@ -3004,8 +2986,6 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         unset(
             $data['regular_contract_number'],
             $data['regular_contract_date'],
-            $data['commercial_register_contract_number'],
-            $data['commercial_register_contract_date'],
             $data['old_owners'],
             $data['new_owners'],
             $data['witnesses']
