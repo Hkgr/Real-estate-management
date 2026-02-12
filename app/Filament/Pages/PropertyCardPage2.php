@@ -92,14 +92,6 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
                     ->schema([
                         Grid::make(12)->schema([
-                            TextInput::make('card_record_number')
-                                ->label('رقم المحضر')
-                                ->prefixIcon('heroicon-o-key')
-                                ->maxLength(50)
-                                ->required()
-                                ->placeholder('مثال: 2024/105')
-                                ->columnSpan(['default' => 12, 'md' => 8]),
-
                             Select::make('card_status')
                                 ->label('حالة العقار')
                                 ->prefixIcon('heroicon-o-check-badge')
@@ -159,13 +151,22 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->columnSpan(['default' => 12, 'md' => 3]),
 
                             TextInput::make('card_region_name')
-                                ->label('اسم المنطقة')
+                                ->label('المنطقة العقارية')
                                 ->prefixIcon('heroicon-o-map-pin')
                                 ->maxLength(255)
                                 ->required()
                                 ->live(onBlur: true)
                                 ->placeholder('مثال: الحمدانية')
                                 ->columnSpan(['default' => 12, 'md' => 5]),
+
+
+                            TextInput::make('card_record_number')
+                                ->label('المحضر')
+                                ->prefixIcon('heroicon-o-key')
+                                ->maxLength(50)
+                                ->required()
+                                ->placeholder('مثال: 2024/105')
+                                ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('card_subdivision')
                                 ->label('المقسم')
@@ -175,25 +176,10 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->live(onBlur: true)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->placeholder('مثال: المقسم 22')
-                                ->columnSpan(['default' => 12, 'md' => 2]),
-
-                            Select::make('card_investment_type')
-                                ->label('نوع الاستثمار')
-                                ->prefixIcon('heroicon-o-building-office-2')
-                                ->native(false)
-                                ->options([
-                                    'سكني' => 'سكني',
-                                    'تجاري' => 'تجاري',
-                                    'أرض زراعية' => 'أرض زراعية',
-                                    'صناعي' => 'صناعي',
-                                ])
-                                ->nullable()
-                                ->live(onBlur: true)
-                                ->columnSpan(['default' => 12, 'md' => 2]),
-
+                                ->columnSpan(['default' => 12, 'md' => 3]),
                             TextInput::make('card_google_maps_url')
-                                ->label('رابط خريطة Google')
-                                ->prefixIcon('heroicon-o-globe-alt')
+                                ->label('رابط موقع العقار')
+                            ->prefixIcon('heroicon-o-globe-alt')
                                 ->url()
                                 ->maxLength(2048)
                                 ->nullable()
@@ -201,23 +187,17 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->helperText('ألصق رابط الموقع من Google Maps.')
                                 ->placeholder('https://maps.google.com/?q=...')
-                                ->columnSpan(['default' => 12, 'md' => 8]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
 
                             Textarea::make('card_property_details')
-                                ->label('تفصيل العقار')
+                                ->label('بيانات تفصيلية')
                                 ->rows(3)
                                 ->nullable()
                                 ->live(onBlur: true)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->columnSpan(12)
                                 ->placeholder('اختياري'),
-                        ]),
-                    ]),
 
-                // 4) المساحات + مؤشر مجموع التملك (مريح بصرياً)
-                Section::make('المساحات والملكية')
-                    ->schema([
-                        Grid::make(12)->schema([
                             TextInput::make('card_total_area')
                                 ->label('مساحة العقار الكلية')
                                 ->prefixIcon('heroicon-o-arrows-pointing-out')
@@ -229,7 +209,13 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->suffix('م²')
                                 ->placeholder('مثال: 400')
                                 ->columnSpan(['default' => 12, 'md' => 4]),
+                        ]),
+                    ]),
 
+                // 4) المساحات + مؤشر مجموع التملك (مريح بصرياً)
+                Section::make('المساحات والملكية')
+                    ->schema([
+                        Grid::make(12)->schema([
                             Placeholder::make('ownership_total_hint')
                                 ->label('إجمالي التملك (حسب المعيار)')
                                 ->content(function (Get $get): string {
