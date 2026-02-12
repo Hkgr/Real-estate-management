@@ -17,6 +17,7 @@ class Signal extends Model
         'signal_source',
         'signal_source_number',
         'signal_source_date',
+        'signal_notes',
         'signal_victims',
         'signal_victim',
         'property_id',
