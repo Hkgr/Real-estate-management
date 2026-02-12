@@ -1459,23 +1459,30 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->label('المقسم')
                     ->prefixIcon('heroicon-o-squares-2x2')
                     ->maxLength(100)
-                    ->required(),
             ])
             ->action(function (array $data) {
                 $recordNumber = trim((string) ($data['card_record_number'] ?? ''));
                 $subdivision = trim((string) ($data['card_subdivision'] ?? ''));
-                $recordNumber = $data['card_record_number'] ?? null;
 
-                $record = PropertyCard::query()
-                    ->where('card_record_number', $recordNumber)
-                    ->where('card_subdivision', $subdivision)
+                if ($recordNumber === '' && $subdivision === '') {
+                    Notification::make()->title('يرجى إدخال رقم المحضر أو المقسم')->warning()->send();
+                    return;
+                }
+
+                $recordQuery = PropertyCard::query()
+
                     ->orderByDesc('id')
-                    ->first();
+                    ->when($recordNumber !== '', fn ($query) => $query->where('card_record_number', $recordNumber))
+                    ->when($subdivision !== '', fn ($query) => $query->where('card_subdivision', $subdivision));
+
+                $record = $recordQuery->first();
+
 
                 if (! $record) {
                     $this->currentRecordId = null;
-                    Notification::make()->title('لا يوجد سجل مطابق (رقم المحضر + المقسم)')->warning()->send();
-                                            return;
+                    Notification::make()->title('لا يوجد سجل مطابق للبحث المدخل')->warning()->send();
+                    return;
+
                 }
 
                 $this->loadRecordIntoForm($record);
