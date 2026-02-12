@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\PropertyCard;
+use App\Models\Owner;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -247,6 +248,12 @@ class PropertyCardPage2 extends Page implements HasSchemas
                         $this->ownershipsRepeater(),
                     ]),
 
+                Section::make('عمليات العقار')
+                    ->collapsible()
+                    ->schema([
+                        $this->operationsRepeater(),
+                    ]),
+
                 // 6) الإشارات
                 Section::make('الإشارات')
                     ->collapsible()
@@ -390,101 +397,7 @@ protected function ownershipsRepeater(): Repeater
                 // =========================
                 // المالك
                 // =========================
-                Select::make('owner_id')
-                    ->label('المالك')
-                    ->prefixIcon('heroicon-o-user')
-                    ->native(false)
-                    ->searchable()
-                    ->preload()
-                    ->options(fn () => $this->getAllOwnerOptions())
-                    ->getSearchResultsUsing(function (string $search): array {
-                        return Owner::query()
-                            ->where(function ($q) use ($search) {
-                                $q->where('full_name', 'like', "%{$search}%")
-                                  ->orWhere('company_name', 'like', "%{$search}%");
-                            })
-                            ->orderByRaw('coalesce(company_name, full_name)')
-                            ->limit(50)
-                            ->get()
-                            ->mapWithKeys(fn (Owner $o) => [$o->getKey() => $o->display_name])
-                            ->all();
-                    })
-                    ->getOptionLabelUsing(fn ($value): ?string => Owner::find($value)?->display_name)
-                    ->createOptionForm([
-                        ToggleButtons::make('owner_type')
-                            ->label('نوع المالك')
-                            ->options(['individual' => 'فرد', 'company' => 'شركة'])
-                            ->required()
-                            ->default('individual')
-                            ->live()
-                            ->inline(),
-
-                        TextInput::make('full_name')
-                            ->label('اسم المالك (للفرد) أو اسم المفوض')
-                            ->prefixIcon('heroicon-o-identification')
-                            ->required(fn (Get $get) => $get('owner_type') === 'individual')
-                            ->maxLength(200)
-                            ->live(onBlur: true)
-                            ->columnSpanFull(),
-
-                        TextInput::make('company_name')
-                            ->label('اسم الشركة')
-                            ->prefixIcon('heroicon-o-building-office')
-                            ->maxLength(200)
-                            ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                            ->required(fn (Get $get) => $get('owner_type') === 'company')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                        TextInput::make('commercial_register_number')
-                            ->label('رقم السجل التجاري')
-                            ->prefixIcon('heroicon-o-clipboard-document-list')
-                            ->maxLength(100)
-                            ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                            ->required(fn (Get $get) => $get('owner_type') === 'company')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                        DatePicker::make('birth_date')
-                            ->label('تاريخ الميلاد')
-                            ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                            ->nullable()
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                        TextInput::make('national_id')
-                            ->label('الرقم الوطني')
-                            ->prefixIcon('heroicon-o-finger-print')
-                            ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                            ->required(fn (Get $get) => $get('owner_type') === 'individual')
-                            ->maxLength(50)
-                            ->live(onBlur: true)
-                            ->unique(Owner::class, 'national_id'),
-
-                        TextInput::make('phone')
-                            ->label('رقم الهاتف')
-                            ->prefixIcon('heroicon-o-phone')
-                            ->tel()
-                            ->maxLength(50)
-                            ->nullable()
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                        TextInput::make('email')
-                            ->label('البريد الإلكتروني')
-                            ->prefixIcon('heroicon-o-envelope')
-                            ->email()
-                            ->maxLength(150)
-                            ->nullable()
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
-
-                        Toggle::make('is_active')
-                            ->label('فعّال')
-                            ->default(true)
-                            ->live(),
-                    ])
-                    ->createOptionUsing(fn (array $data): int => Owner::create($data)->id)
+                $this->ownerSelectField('owner_id', 'المالك')
                     ->required()
                     ->columnSpan(['default' => 12, 'md' => 6]),
 
@@ -637,6 +550,248 @@ protected function ownershipsRepeater(): Repeater
             ]),
         ]);
 }
+
+protected function operationsRepeater(): Repeater
+{
+    return Repeater::make('operations')
+        ->label('عمليات العقار')
+        ->default([])
+        ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
+        ->addActionLabel('إضافة عملية')
+        ->reorderable()
+        ->schema([
+            Grid::make(12)->schema([
+                Select::make('operation_type')
+                    ->label('نوع العملية')
+                    ->native(false)
+                    ->options([
+                        'sale' => 'بيع',
+                        'purchase' => 'شراء',
+                    ])
+                    ->required()
+                    ->columnSpan(['default' => 12, 'md' => 4]),
+
+                $this->ownerSelectField('old_owners', 'المالكون السابقون', true)
+                    ->columnSpan(['default' => 12, 'md' => 4]),
+
+                $this->ownerSelectField('new_owners', 'المالكون الجدد', true)
+                    ->columnSpan(['default' => 12, 'md' => 4]),
+
+                TextInput::make('transaction_amount')
+                    ->label('قيمة العملية')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(9999999999.99)
+                    ->required()
+                    ->columnSpan(['default' => 12, 'md' => 4]),
+
+                Select::make('transaction_unit')
+                    ->label('وحدة العملية')
+                    ->native(false)
+                    ->options([
+                        'share' => 'سهم',
+                        'square_meter' => 'متر مربع',
+                        'percentage' => 'نسبة مئوية',
+                    ])
+                    ->required()
+                    ->columnSpan(['default' => 12, 'md' => 4]),
+
+                Select::make('operation_method')
+                    ->label('طريقة العملية')
+                    ->native(false)
+                    ->options([
+                        'court_judgment' => 'حكم محكم',
+                        'regular_contract' => 'عقد عادي',
+                        'commercial_register_contract' => 'عقد سجل تجاري',
+                    ])
+                    ->live()
+                    ->required()
+                    ->columnSpan(['default' => 12, 'md' => 4]),
+
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('case_number')
+                            ->label('رقم الأساس')
+                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                            ->columnSpan(['default' => 12, 'md' => 3]),
+                        TextInput::make('decision_number')
+                            ->label('رقم القرار')
+                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                            ->columnSpan(['default' => 12, 'md' => 3]),
+                        TextInput::make('authority')
+                            ->label('الجهة')
+                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                            ->columnSpan(['default' => 12, 'md' => 3]),
+                        DatePicker::make('judgment_date')
+                            ->label('تاريخ الحكم')
+                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                            ->columnSpan(['default' => 12, 'md' => 3]),
+                    ])
+                    ->visible(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                    ->columnSpanFull(),
+
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('regular_contract_number')
+                            ->label('رقم العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                        DatePicker::make('regular_contract_date')
+                            ->label('تاريخ العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                    ])
+                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                    ->columnSpanFull(),
+
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('commercial_register_contract_number')
+                            ->label('رقم العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                        DatePicker::make('commercial_register_contract_date')
+                            ->label('تاريخ العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                    ])
+                    ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                    ->columnSpanFull(),
+
+                Repeater::make('witnesses')
+                    ->label('الشهود')
+                    ->default([])
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('اسم الشاهد')
+                            ->required()
+                            ->maxLength(200),
+                    ])
+                    ->rules([
+                        function () {
+                            return function (string $attribute, mixed $value, \Closure $fail): void {
+                                $items = is_array($value) ? array_values($value) : [];
+
+                                if (count($items) === 0) {
+                                    return;
+                                }
+
+                                if (count($items) < 2 || count($items) > 4) {
+                                    $fail('عدد الشهود يجب أن يكون بين 2 و4 عند إدخال شهود.');
+                                }
+                            };
+                        },
+                    ])
+                    ->columnSpanFull(),
+            ]),
+        ]);
+}
+
+protected function ownerSelectField(string $name, string $label, bool $multiple = false): Select
+{
+    $field = Select::make($name)
+        ->label($label)
+        ->prefixIcon('heroicon-o-user')
+        ->native(false)
+        ->searchable()
+        ->preload()
+        ->options(fn () => $this->getAllOwnerOptions())
+        ->getSearchResultsUsing(function (string $search): array {
+            return Owner::query()
+                ->where(function ($q) use ($search) {
+                    $q->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('company_name', 'like', "%{$search}%");
+                })
+                ->orderByRaw('coalesce(company_name, full_name)')
+                ->limit(50)
+                ->get()
+                ->mapWithKeys(fn (Owner $o) => [$o->getKey() => $o->display_name])
+                ->all();
+        })
+        ->getOptionLabelUsing(fn ($value): ?string => Owner::find($value)?->display_name)
+        ->createOptionForm([
+            ToggleButtons::make('owner_type')
+                ->label('نوع المالك')
+                ->options(['individual' => 'فرد', 'company' => 'شركة'])
+                ->required()
+                ->default('individual')
+                ->live()
+                ->inline(),
+
+            TextInput::make('full_name')
+                ->label('اسم المالك (للفرد) أو اسم المفوض')
+                ->prefixIcon('heroicon-o-identification')
+                ->required(fn (Get $get) => $get('owner_type') === 'individual')
+                ->maxLength(200)
+                ->live(onBlur: true)
+                ->columnSpanFull(),
+
+            TextInput::make('company_name')
+                ->label('اسم الشركة')
+                ->prefixIcon('heroicon-o-building-office')
+                ->maxLength(200)
+                ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                ->required(fn (Get $get) => $get('owner_type') === 'company')
+                ->live(onBlur: true)
+                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+            TextInput::make('commercial_register_number')
+                ->label('رقم السجل التجاري')
+                ->prefixIcon('heroicon-o-clipboard-document-list')
+                ->maxLength(100)
+                ->visible(fn (Get $get) => $get('owner_type') === 'company')
+                ->required(fn (Get $get) => $get('owner_type') === 'company')
+                ->live(onBlur: true)
+                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+            DatePicker::make('birth_date')
+                ->label('تاريخ الميلاد')
+                ->visible(fn (Get $get) => $get('owner_type') === 'individual')
+                ->nullable()
+                ->live(onBlur: true)
+                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+            TextInput::make('national_id')
+                ->label('الرقم الوطني')
+                ->prefixIcon('heroicon-o-finger-print')
+                ->visible(fn (Get $get) => $get('owner_type') === 'individual')
+                ->required(fn (Get $get) => $get('owner_type') === 'individual')
+                ->maxLength(50)
+                ->live(onBlur: true)
+                ->unique(Owner::class, 'national_id'),
+
+            TextInput::make('phone')
+                ->label('رقم الهاتف')
+                ->prefixIcon('heroicon-o-phone')
+                ->tel()
+                ->maxLength(50)
+                ->nullable()
+                ->live(onBlur: true)
+                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+            TextInput::make('email')
+                ->label('البريد الإلكتروني')
+                ->prefixIcon('heroicon-o-envelope')
+                ->email()
+                ->maxLength(150)
+                ->nullable()
+                ->live(onBlur: true)
+                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+
+            Toggle::make('is_active')
+                ->label('فعّال')
+                ->default(true)
+                ->live(),
+        ])
+        ->createOptionUsing(fn (array $data): int => Owner::create($data)->id);
+
+    if ($multiple) {
+        $field->multiple();
+    }
+
+    return $field;
+}
+
 
 protected function signalsRepeater(): Repeater
 {
