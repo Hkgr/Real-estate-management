@@ -90,7 +90,7 @@
                         </div>
 
                         <p class="text-sm text-gray-600 dark:text-gray-300">
-                            أدخل رقم المحضر للبحث التلقائي، ثم أكمل البيانات ضمن أقسام مرتبة وقابلة للطي.
+                            أدخل رقم المحضر ثم استخدم زر "بحث" من النافذة المنبثقة لتحميل السجل يدويًا، ثم أكمل البيانات ضمن أقسام مرتبة وقابلة للطي.
                         </p>
                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                             <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-700">

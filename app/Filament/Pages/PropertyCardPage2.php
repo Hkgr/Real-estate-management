@@ -87,8 +87,9 @@ class PropertyCardPage2 extends Page implements HasSchemas
             ->components([
 
                 // 1) المفتاح + الحالة (توزيع مريح)
-                Section::make('المفتاح (بحث تلقائي)')
-                    ->description('اكتب رقم المحضر ثم اخرج من الحقل ليتم تحميل بطاقة العقار تلقائياً إن وُجد.')
+                Section::make('المفتاح (بحث يدوي)')
+                    ->description('أدخل رقم المحضر ثم استخدم زر "بحث" لتحميل بطاقة العقار يدويًا إن وُجدت.')
+
                     ->schema([
                         Grid::make(12)->schema([
                             TextInput::make('card_record_number')
@@ -96,8 +97,6 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->prefixIcon('heroicon-o-key')
                                 ->maxLength(50)
                                 ->required()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(fn () => $this->tryAutoSearch())
                                 ->placeholder('مثال: 2024/105')
                                 ->columnSpan(['default' => 12, 'md' => 8]),
 
@@ -1285,32 +1284,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $this->form->fill($this->data);
     }
 
-    // =========================
-    // Auto Search
-    // =========================
 
-    public function tryAutoSearch(): void
-    {
-        $recordNumber = $this->data['card_record_number'] ?? null;
-
-        if (! filled($recordNumber)) {
-            return;
-        }
-
-        $record = PropertyCard::query()
-            ->where('card_record_number', $recordNumber)
-            ->first();
-
-        if (! $record) {
-            $this->currentRecordId = null;
-            Notification::make()->title('لا يوجد سجل مطابق لهذا المفتاح')->warning()->send();
-            return;
-        }
-
-        $this->loadRecordIntoForm($record);
-
-        Notification::make()->title('تم تحميل البطاقة تلقائياً')->success()->send();
-    }
 
     // =========================
     // Actions
