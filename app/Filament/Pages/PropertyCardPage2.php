@@ -123,19 +123,6 @@ class PropertyCardPage2 extends Page implements HasSchemas
                 // 3) البيانات الأساسية (Grid 12 منطقي)
                 Section::make('البيانات الأساسية')
                     ->schema([
-                            Select::make('card_status')
-                                ->label('حالة العقار')
-                                ->prefixIcon('heroicon-o-check-badge')
-                                ->native(false)
-                                ->options([
-                                    'active' => 'فاعل',
-                                    'frozen' => 'مجمد',
-                                ])
-                                ->required()
-                                ->live(onBlur: true)
-                                ->columnSpan(['default' => 12, 'md' => 3]),
-
-
                         Grid::make(12)->schema([
                             TextInput::make('card_governorate')
                                 ->label('المحافظة')
@@ -1475,6 +1462,43 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         return $this->uniformAction($action);
     }
 
+    public function toggleCardStatusAction(): Action
+    {
+        $action = Action::make('toggle_card_status')
+            ->label('تفعيل/تجميد')
+            ->icon(fn (): string => (($this->data['card_status'] ?? 'active') === 'active')
+                ? 'heroicon-o-pause-circle'
+                : 'heroicon-o-check-circle')
+            ->color(fn (): string => (($this->data['card_status'] ?? 'active') === 'active') ? 'warning' : 'success')
+            ->disabled(fn () => blank($this->currentRecordId))
+            ->action(function (): void {
+                if (! $this->currentRecordId) {
+                    Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
+                    return;
+                }
+
+                $record = PropertyCard::find($this->currentRecordId);
+
+                if (! $record) {
+                    $this->currentRecordId = null;
+                    Notification::make()->title('السجل غير موجود')->danger()->send();
+                    return;
+                }
+
+                $nextStatus = $record->card_status === 'active' ? 'frozen' : 'active';
+                $record->update(['card_status' => $nextStatus]);
+
+                $this->loadRecordIntoForm($record->refresh());
+
+                Notification::make()
+                    ->title($nextStatus === 'active' ? 'تم تفعيل العقار' : 'تم تجميد العقار')
+                    ->success()
+                    ->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+
     public function uploadFileAction(): Action
     {
         $action = Action::make('upload_file')
@@ -1850,7 +1874,12 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $payload = $payload ?? $this->form->getState();
 
         if (array_key_exists('data', $payload) && is_array($payload['data'])) {
-            return $payload['data'];
+            $payload = $payload['data'];
+        }
+
+        if (blank($payload['card_status'] ?? null)) {
+            $payload['card_status'] = 'active';
+
         }
 
         return $payload;
