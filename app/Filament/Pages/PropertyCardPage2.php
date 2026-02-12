@@ -1398,6 +1398,8 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
         $this->data = [
             'card_status' => 'active',
+            'owned_property_value_usd' => 0,
+            'remaining_balance' => 0,
             'ownerships' => [],
             'signals' => [],
             'operations' => [],
@@ -1957,6 +1959,14 @@ protected function loadRecordIntoForm(PropertyCard $record): void
             return [Str::uuid()->toString() => $row];
         })
         ->all();
+
+
+    $ownedPropertyValueUsd = (float) ($record->owned_property_value_usd ?? 0);
+    $totalPaid = (float) $record->installments->sum(fn ($installment) => (float) ($installment->amount ?? 0));
+    $payload['remaining_balance'] = $ownedPropertyValueUsd - $totalPaid;
+    // للإبقاء على التوافق مع أي استخدامات قديمة لـ final_balance.
+    $payload['final_balance'] = $payload['remaining_balance'];
+
 
     // =========================
     // signals (UUID keyed + convert owners/victims to UI shape + UUID keyed)
@@ -2855,8 +2865,11 @@ protected function persistInstallments(PropertyCard $record, mixed $rows): void
 
         $record->installments()->create($data);
     }
-        $record->update([
-        'final_balance' => $ownedValue - $totalPaid,
+    $remainingBalance = $ownedValue - $totalPaid;
+
+    $record->update([
+        // إعادة تعريف final_balance ليعبّر عن المتبقي.
+        'final_balance' => $remainingBalance,
     ]);
 
 }
