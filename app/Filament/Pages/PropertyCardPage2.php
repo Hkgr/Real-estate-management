@@ -251,7 +251,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                     ]),
 
                 // 7) ملفات البطاقة
-                Section::make('ملفات البطاقة')
+                Section::make('ملحقات البطاقة')
                     ->description('يمكنك رفع الملفات أثناء إنشاء البطاقة، وسيتم حفظها تلقائياً عند أول رفع.')
                     ->collapsible()
                     ->schema([
@@ -559,6 +559,13 @@ protected function operationsRepeater(): Repeater
 
                 $this->ownerSelectField('new_owners', 'المالكون الجدد', true)
                     ->columnSpan(['default' => 12, 'md' => 4]),
+
+
+                $this->ownerSelectField('team_one_members', 'أعضاء الفريق الأول', true)
+                    ->columnSpan(['default' => 12, 'md' => 6]),
+
+                $this->ownerSelectField('team_two_members', 'أعضاء الفريق الثاني', true)
+                    ->columnSpan(['default' => 12, 'md' => 6]),
 
                 TextInput::make('transaction_amount')
                     ->label('قيمة العملية')

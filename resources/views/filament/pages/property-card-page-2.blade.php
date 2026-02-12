@@ -190,7 +190,7 @@
                     {{ $this->createAction() }}
                     {{ $this->updateAction() }}
                     {{ $this->deleteAction() }}
-               {{--     {{ $this->uploadFileAction() }}
+               {{-- {{ $this->uploadFileAction() }}
                     {{ $this->pdfBrowserAction() }}         --}}  
                 </div>
             </div>
