@@ -648,6 +648,12 @@ protected function operationsRepeater(): Repeater
                     ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
                     ->columnSpanFull(),
 
+                Textarea::make('contract_notes')
+                    ->label('ملاحظات العقد')
+                    ->rows(3)
+                    ->visible(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'commercial_register_contract'], true))
+                    ->columnSpanFull(),
+
                 Repeater::make('witnesses')
                     ->label('الشهود')
                     ->default([])

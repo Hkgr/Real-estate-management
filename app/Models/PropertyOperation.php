@@ -23,6 +23,7 @@ class PropertyOperation extends Model
         'judgment_date',
         'contract_number',
         'contract_date',
+        'contract_notes',
     ];
 
     protected $casts = [
