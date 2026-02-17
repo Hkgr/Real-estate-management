@@ -2,20 +2,22 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Illuminate\Contracts\View\View;
-use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 class RashadPanelProvider extends PanelProvider
 {
@@ -32,24 +34,16 @@ class RashadPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-
-            // ✅ أهم شي: خليه يكتشف الموارد والصفحات
             ->resources([])
             ->pages([
                 \App\Filament\Pages\PropertyCardPage::class,
                 \App\Filament\Pages\OwnerCardPage::class,
                 \App\Filament\Pages\SignalCardPage::class,
-
             ])
-
-            // ✅ الغينا كل widgets المضافة (هي اللي كانت طالعة فوق)
-            // لو عندك Widgets مخصصة وتريدها لاحقاً بنرجع نضيفها بعد ما يستقر كل شيء.
             ->widgets([
                 \App\Filament\Widgets\AppStatsOverview::class,
             ])
             ->renderHook('panels::topbar.end', fn (): View => view('filament.components.realtime-notifications'))
-
-
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
