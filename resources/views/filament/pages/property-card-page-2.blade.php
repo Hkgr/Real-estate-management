@@ -37,6 +37,9 @@
         $finalBalanceLabel = number_format($finalBalanceValue, 2, '.', ',');
 
     @endphp
+
+
+                    
     <div dir="rtl"
          x-data="{ mounted: false }"
          x-init="requestAnimationFrame(() => mounted = true)"
@@ -59,7 +62,7 @@
                     <div class="space-y-1">
                         <div class="flex flex-wrap items-center gap-2">
                             <h1 class="text-lg font-bold text-gray-900 dark:text-white">
-                                بطاقة العقار
+                                بطاقة العقار 2
                             </h1>
 
                             <x-filament::badge :color="$recordId ? 'success' : 'gray'">
@@ -87,7 +90,7 @@
                         </div>
 
                         <p class="text-sm text-gray-600 dark:text-gray-300">
-                            أدخل رقم المحضر للبحث التلقائي، ثم أكمل البيانات ضمن أقسام مرتبة وقابلة للطي.
+                            أدخل رقم المحضر ثم استخدم زر "بحث" من النافذة المنبثقة لتحميل السجل يدويًا، ثم أكمل البيانات ضمن أقسام مرتبة وقابلة للطي.
                         </p>
                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                             <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-700">
@@ -182,8 +185,8 @@
                 </div>
 
                 <div class="flex flex-wrap justify-end gap-2">
-                    {{ $this->createAction() }}
                     {{ $this->searchAction() }}
+                    {{ $this->createAction() }}
                     {{ $this->updateAction() }}
                     {{ $this->deleteAction() }}
                {{--     {{ $this->uploadFileAction() }}

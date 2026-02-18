@@ -85,6 +85,18 @@ class Owner extends Model
             ])
             ->withTimestamps();
     }
+   public function oldPropertyOperations(): BelongsToMany
+    {
+        return $this->belongsToMany(PropertyOperation::class, 'property_operation_old_owner')
+            ->withTimestamps();
+    }
+
+    public function newPropertyOperations(): BelongsToMany
+    {
+        return $this->belongsToMany(PropertyOperation::class, 'property_operation_new_owner')
+            ->withTimestamps();
+    }
+
     public function signals(): BelongsToMany
     {
         return $this->belongsToMany(Signal::class, 'owner_signal')

@@ -27,16 +27,13 @@ return $panel
     ->id('rashad')
     ->path('rashad')
 
-    ->middleware([
-    EncryptCookies::class,
-    AddQueuedCookiesToResponse::class,
-    StartSession::class,
-    AuthenticateSession::class, // <-- Illuminate one
-    ShareErrorsFromSession::class,
-    VerifyCsrfToken::class,
-    SubstituteBindings::class,
-    DisableBladeIconComponents::class,
-    DispatchServingFilamentEvent::class,
+            // ✅ أهم شي: خليه يكتشف الموارد والصفحات
+            ->resources([])
+            ->pages([
+                \App\Filament\Pages\PropertyCardPage::class,
+                \App\Filament\Pages\OwnerCardPage::class,
+                \App\Filament\Pages\PropertyCardPage2::class,
+                \App\Filament\Pages\SignalCardPage::class,
 
     \App\Http\Middleware\ProbeCookie::class,
     ])
