@@ -123,19 +123,6 @@ class PropertyCardPage2 extends Page implements HasSchemas
                 // 3) البيانات الأساسية (Grid 12 منطقي)
                 Section::make('البيانات الأساسية')
                     ->schema([
-                            Select::make('card_status')
-                                ->label('حالة العقار')
-                                ->prefixIcon('heroicon-o-check-badge')
-                                ->native(false)
-                                ->options([
-                                    'active' => 'فاعل',
-                                    'frozen' => 'مجمد',
-                                ])
-                                ->required()
-                                ->live(onBlur: true)
-                                ->columnSpan(['default' => 12, 'md' => 3]),
-
-
                         Grid::make(12)->schema([
                             TextInput::make('card_governorate')
                                 ->label('المحافظة')
@@ -264,7 +251,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                     ]),
 
                 // 7) ملفات البطاقة
-                Section::make('ملفات البطاقة')
+                Section::make('ملحقات البطاقة')
                     ->description('يمكنك رفع الملفات أثناء إنشاء البطاقة، وسيتم حفظها تلقائياً عند أول رفع.')
                     ->collapsible()
                     ->schema([
@@ -448,7 +435,6 @@ protected function ownershipsRepeater(): Repeater
                     ->options([
                         'court_judgment' => 'حكم قضائي',
                         'regular_contract' => 'عقد عادي',
-                        'commercial_register_contract' => 'عقد سجل تجاري',
                     ])
                     ->nullable()
                     ->live()
@@ -573,6 +559,13 @@ protected function operationsRepeater(): Repeater
                 $this->ownerSelectField('new_owners', 'المالكون الجدد', true)
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
+
+                $this->ownerSelectField('team_one_members', 'أعضاء الفريق الأول', true)
+                    ->columnSpan(['default' => 12, 'md' => 6]),
+
+                $this->ownerSelectField('team_two_members', 'أعضاء الفريق الثاني', true)
+                    ->columnSpan(['default' => 12, 'md' => 6]),
+
                 TextInput::make('transaction_amount')
                     ->label('قيمة العملية')
                     ->numeric()
@@ -598,10 +591,10 @@ protected function operationsRepeater(): Repeater
                     ->options([
                         'court_judgment' => 'حكم محكم',
                         'regular_contract' => 'عقد عادي',
-                        'commercial_register_contract' => 'عقد سجل تجاري',
                     ])
                     ->live()
                     ->required()
+                    ->in(['court_judgment', 'regular_contract'])
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Grid::make(12)
@@ -640,18 +633,11 @@ protected function operationsRepeater(): Repeater
                     ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
                     ->columnSpanFull(),
 
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('commercial_register_contract_number')
-                            ->label('رقم العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                        DatePicker::make('commercial_register_contract_date')
-                            ->label('تاريخ العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                    ])
-                    ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+
+                Textarea::make('contract_notes')
+                    ->label('ملاحظات العقد')
+                    ->rows(3)
+                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract') 
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
@@ -1475,6 +1461,43 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         return $this->uniformAction($action);
     }
 
+    public function toggleCardStatusAction(): Action
+    {
+        $action = Action::make('toggle_card_status')
+            ->label('تفعيل/تجميد')
+            ->icon(fn (): string => (($this->data['card_status'] ?? 'active') === 'active')
+                ? 'heroicon-o-pause-circle'
+                : 'heroicon-o-check-circle')
+            ->color(fn (): string => (($this->data['card_status'] ?? 'active') === 'active') ? 'warning' : 'success')
+            ->disabled(fn () => blank($this->currentRecordId))
+            ->action(function (): void {
+                if (! $this->currentRecordId) {
+                    Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
+                    return;
+                }
+
+                $record = PropertyCard::find($this->currentRecordId);
+
+                if (! $record) {
+                    $this->currentRecordId = null;
+                    Notification::make()->title('السجل غير موجود')->danger()->send();
+                    return;
+                }
+
+                $nextStatus = $record->card_status === 'active' ? 'frozen' : 'active';
+                $record->update(['card_status' => $nextStatus]);
+
+                $this->loadRecordIntoForm($record->refresh());
+
+                Notification::make()
+                    ->title($nextStatus === 'active' ? 'تم تفعيل العقار' : 'تم تجميد العقار')
+                    ->success()
+                    ->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+
     public function uploadFileAction(): Action
     {
         $action = Action::make('upload_file')
@@ -1850,7 +1873,12 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $payload = $payload ?? $this->form->getState();
 
         if (array_key_exists('data', $payload) && is_array($payload['data'])) {
-            return $payload['data'];
+            $payload = $payload['data'];
+        }
+
+        if (blank($payload['card_status'] ?? null)) {
+            $payload['card_status'] = 'active';
+
         }
 
         return $payload;
@@ -1918,11 +1946,6 @@ protected function loadRecordIntoForm(PropertyCard $record): void
             if ($operation->operation_method === 'regular_contract') {
                 $row['regular_contract_number'] = $operation->contract_number;
                 $row['regular_contract_date'] = $operation->contract_date;
-            }
-
-            if ($operation->operation_method === 'commercial_register_contract') {
-                $row['commercial_register_contract_number'] = $operation->contract_number;
-                $row['commercial_register_contract_date'] = $operation->contract_date;
             }
 
             $row['witnesses'] = $operation->witnesses
@@ -2521,11 +2544,12 @@ public function deleteUploadedFile(int $fileId): void
                     'decision_number' => $method === 'court_judgment' ? ($row['decision_number'] ?? null) : null,
                     'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
                     'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
-                    'contract_number' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
-                        ? ($row['contract_number'] ?? $row[$method === 'regular_contract' ? 'regular_contract_number' : 'commercial_register_contract_number'] ?? null)
+                    'contract_number' => $method === 'regular_contract'
+                        ? ($row['contract_number'] ?? $row['regular_contract_number'] ?? null)
                         : null,
-                    'contract_date' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
-                        ? ($row['contract_date'] ?? $row[$method === 'regular_contract' ? 'regular_contract_date' : 'commercial_register_contract_date'] ?? null)
+                    'contract_date' => $method === 'regular_contract'
+                        ? ($row['contract_date'] ?? $row['regular_contract_date'] ?? null)
+
                         : null,
                     'old_owners' => collect($oldOwners)
                         ->map(function ($item): int {
@@ -2883,8 +2907,6 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         'contract_date',
         'regular_contract_number',
         'regular_contract_date',
-        'commercial_register_contract_number',
-        'commercial_register_contract_date',
         'old_owners',
         'new_owners',
         'witnesses',
@@ -2915,12 +2937,14 @@ protected function persistOperations(PropertyCard $record, array $rows): void
 
         $method = (string) ($data['operation_method'] ?? '');
 
+        if (! in_array($method, ['court_judgment', 'regular_contract'], true)) {
+            continue;
+        }
+
+
         if ($method === 'regular_contract') {
             $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
             $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
-        } elseif ($method === 'commercial_register_contract') {
-            $data['contract_number'] = $data['commercial_register_contract_number'] ?? $data['contract_number'] ?? null;
-            $data['contract_date'] = $data['commercial_register_contract_date'] ?? $data['contract_date'] ?? null;
         }
 
         $oldOwners = collect($data['old_owners'] ?? [])
@@ -2962,8 +2986,6 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         unset(
             $data['regular_contract_number'],
             $data['regular_contract_date'],
-            $data['commercial_register_contract_number'],
-            $data['commercial_register_contract_date'],
             $data['old_owners'],
             $data['new_owners'],
             $data['witnesses']
