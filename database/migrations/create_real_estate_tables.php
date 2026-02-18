@@ -87,6 +87,7 @@ return new class extends Migration
             $table->string('card_purchase_method')->nullable();
             $table->string('card_google_maps_url', 2048)->nullable();
             $table->date('card_sale_date')->nullable();
+            $table->decimal('final_balance', 25, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
 
