@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, HasRoles;
+
+    protected string $guard_name = 'web';
 
     protected $fillable = [
         'name',
@@ -29,10 +33,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function isViewer(): bool
-{
-    // عدّل اسم العمود حسب جدولك: role / type / user_type ...
-    return ($this->role ?? $this->type ?? $this->user_type ?? null) === 'viewer';
-}
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // مؤقتاً افتح الوصول للتأكد أن 403 انتهت:
+        return true;
+
+        // وبعد التأكد رجّعها شرط role:
+        // return $this->hasRole('super_admin');
+    }
 }
