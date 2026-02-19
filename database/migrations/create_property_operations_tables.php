@@ -14,12 +14,13 @@ return new class extends Migration
             $table->enum('operation_type', ['sale', 'purchase']);
             $table->decimal('transaction_amount', 14, 2);
             $table->enum('transaction_unit', ['shares', 'square_meter', 'percentage']);
-            $table->enum('operation_method', ['court_judgment', 'regular_contract', 'commercial_register_contract']);
+            $table->enum('operation_method', ['court_judgment', 'regular_contract']);
             $table->string('case_number')->nullable();
             $table->string('decision_number')->nullable();
             $table->string('authority')->nullable();
             $table->date('judgment_date')->nullable();
             $table->string('contract_number')->nullable();
+            $table->text('contract_notes')->nullable();
             $table->date('contract_date')->nullable();
             $table->timestamps();
 

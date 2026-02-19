@@ -80,6 +80,7 @@ return new class extends Migration
             $table->string('card_subdivision', 100)->nullable();
             $table->string('card_record_number', 50)->nullable();
             $table->decimal('card_total_area', 12, 2);
+            $table->decimal('owned_property_value_usd', 25, 2)->nullable();
             $table->enum('card_area_unit', ['percentage', 'shares', 'meters'])->default('meters');
             $table->text('card_property_details')->nullable();
             $table->enum('card_status', ['active', 'frozen'])->default('active');
@@ -127,6 +128,7 @@ return new class extends Migration
             $table->json('signal_owners')->nullable();
             $table->string('signal_source', 200)->nullable();
             $table->json('signal_sources')->nullable();
+            $table->text('signal_notes')->nullable();
             $table->string('signal_source_number', 50)->nullable();
             $table->date('signal_source_date')->nullable();
             $table->string('signal_victim', 200)->nullable();
@@ -191,6 +193,19 @@ return new class extends Migration
             $table->index('property_card_id', 'property_owner_payments_property_card_id_index');
         });
 
+
+
+        Schema::create('property_installments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('property_card_id')->constrained('property_cards')->cascadeOnDelete();
+            $table->decimal('amount', 25, 2);
+            $table->date('payment_date');
+            $table->decimal('remaining_after_payment', 25, 2)->nullable();
+            $table->timestamps();
+
+            $table->index('property_card_id', 'property_installments_property_card_id_index');
+            $table->index('payment_date', 'property_installments_payment_date_index');
+        });
         Schema::create('property_card_files', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_card_id')->constrained('property_cards')->cascadeOnDelete();
@@ -209,6 +224,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('property_card_files');
+        Schema::dropIfExists('property_installments');
         Schema::dropIfExists('property_owner_payments');
         Schema::dropIfExists('owner_property_card');
         Schema::dropIfExists('owner_signal');
