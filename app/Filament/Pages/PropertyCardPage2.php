@@ -1395,15 +1395,26 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->icon('heroicon-o-plus')
             ->color('success')
             ->action(function () {
-                $record = $this->persistNewRecordFromForm();
+                try {
+                    $record = $this->persistNewRecordFromForm();
 
-                if (! $record) {
-                    return;
+                    if (! $record) {
+                        return;
+                    }
+
+                    $this->loadRecordIntoForm($record);
+
+                    Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
+                } catch (\Throwable $exception) {
+                    report($exception);
+
+                    Notification::make()
+                        ->title('فشل إنشاء البطاقة')
+                        ->body('حدث خطأ غير متوقع أثناء إنشاء البطاقة. يرجى المحاولة مرة أخرى.')
+                        ->danger()
+                        ->send();
                 }
 
-                $this->loadRecordIntoForm($record);
-
-                Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
