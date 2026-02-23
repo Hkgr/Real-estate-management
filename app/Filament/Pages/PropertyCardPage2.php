@@ -654,6 +654,11 @@ protected function operationsRepeater(): Repeater
                             ->label('تاريخ الحكم')
                             ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->columnSpan(['default' => 12, 'md' => 3]),
+                        Textarea::make('judgment_notes')
+                            ->label('ملاحظات الحكم')
+                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
                     ->visible(fn (Get $get) => $get('operation_method') === 'court_judgment')
                     ->columnSpanFull(),
@@ -662,21 +667,18 @@ protected function operationsRepeater(): Repeater
                     ->schema([
                         TextInput::make('regular_contract_number')
                             ->label('رقم العقد')
-                            ->required(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
+                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
                         DatePicker::make('regular_contract_date')
                             ->label('تاريخ العقد')
-                            ->required(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
+                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
+                        Textarea::make('contract_notes')
+                            ->label('ملاحظات العقد')
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
-                    ->visible(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
-                    ->columnSpanFull(),
-
-
-                Textarea::make('contract_notes')
-                    ->label('ملاحظات العقد')
-                    ->rows(3)
-                    ->visible(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
+                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
@@ -2600,6 +2602,7 @@ public function deleteUploadedFile(int $fileId): void
                     'decision_number' => $method === 'court_judgment' ? ($row['decision_number'] ?? null) : null,
                     'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
                     'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
+                    'judgment_notes' => $method === 'court_judgment' ? ($row['judgment_notes'] ?? null) : null,
                     'contract_number' => $method === 'regular_contract'
                         ? ($row['contract_number'] ?? $row['regular_contract_number'] ?? null)
                         : null,
@@ -2607,6 +2610,7 @@ public function deleteUploadedFile(int $fileId): void
                         ? ($row['contract_date'] ?? $row['regular_contract_date'] ?? null)
 
                         : null,
+                    'contract_notes' => $method === 'regular_contract' ? ($row['contract_notes'] ?? null) : null,
                     'old_owners' => collect($oldOwners)
                         ->map(function ($item): int {
                             if (is_array($item)) {
@@ -2979,6 +2983,8 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         'decision_number',
         'authority',
         'judgment_date',
+        'judgment_notes',
+        'contract_notes',
         'contract_number',
         'contract_date',
         'regular_contract_number',
@@ -3021,6 +3027,17 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         if ($method === 'regular_contract') {
             $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
             $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
+            $data['case_number'] = null;
+            $data['decision_number'] = null;
+            $data['authority'] = null;
+            $data['judgment_date'] = null;
+            $data['judgment_notes'] = null;
+        }
+
+        if ($method === 'court_judgment') {
+            $data['contract_number'] = null;
+            $data['contract_date'] = null;
+            $data['contract_notes'] = null;
         }
 
         $oldOwners = collect($data['old_owners'] ?? [])
