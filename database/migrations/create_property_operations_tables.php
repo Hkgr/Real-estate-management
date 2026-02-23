@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('property_operations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('property_card_id')->constrained('property_cards')->cascadeOnDelete();
+            $table->unsignedBigInteger('property_card_id');
             $table->enum('operation_type', ['sale', 'purchase']);
             $table->decimal('transaction_amount', 14, 2);
             $table->enum('transaction_unit', ['shares', 'square_meter', 'percentage']);
@@ -32,7 +32,7 @@ return new class extends Migration
         Schema::create('property_operation_old_owner', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_operation_id')->constrained('property_operations')->cascadeOnDelete();
-            $table->foreignId('owner_id')->constrained('owners')->cascadeOnDelete();
+            $table->unsignedBigInteger('owner_id');
             $table->timestamps();
 
             $table->unique(['property_operation_id', 'owner_id'], 'property_operation_old_owner_unique');
@@ -41,7 +41,7 @@ return new class extends Migration
         Schema::create('property_operation_new_owner', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_operation_id')->constrained('property_operations')->cascadeOnDelete();
-            $table->foreignId('owner_id')->constrained('owners')->cascadeOnDelete();
+            $table->unsignedBigInteger('owner_id');
             $table->timestamps();
 
             $table->unique(['property_operation_id', 'owner_id'], 'property_operation_new_owner_unique');

@@ -1410,7 +1410,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
                     Notification::make()
                         ->title('فشل إنشاء البطاقة')
-                        ->body('حدث خطأ غير متوقع أثناء إنشاء البطاقة. يرجى المحاولة مرة أخرى.')
+                        ->body($this->formatCreateCardFailureReason($exception))              
                         ->danger()
                         ->send();
                 }
@@ -2655,6 +2655,26 @@ public function deleteUploadedFile(int $fileId): void
 
     return implode("\n", $lines);
     }
+    
+    protected function formatCreateCardFailureReason(\Throwable $exception): string
+    {
+        if ($exception instanceof ValidationException) {
+            return "تعذر إنشاء البطاقة بسبب أخطاء في الحقول:\n" . $this->formatValidationErrors($exception);
+        }
+
+        if ($exception instanceof QueryException) {
+            return "تعذر إنشاء البطاقة بسبب خطأ في قاعدة البيانات:\n" . $this->formatQueryExceptionMessage($exception);
+        }
+
+        $message = trim($exception->getMessage());
+
+        if ($message === '') {
+            return 'تعذر إنشاء البطاقة بسبب خطأ غير معروف. يرجى المحاولة مرة أخرى أو التواصل مع الدعم التقني.';
+        }
+
+        return "تعذر إنشاء البطاقة بسبب: {$message}";
+    }
+
 protected function formatQueryExceptionMessage(QueryException $exception): string
 {
     $sqlState  = $exception->errorInfo[0] ?? (string) $exception->getCode();
