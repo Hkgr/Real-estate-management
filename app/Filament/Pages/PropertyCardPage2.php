@@ -606,7 +606,7 @@ protected function operationsRepeater(): Repeater
                     ->columnSpan(['default' => 12, 'md' => 6]),
 
                 TextInput::make('transaction_amount')
-                    ->label('قيمة العملية')
+                    ->label('مقدار التصرّف')
                     ->numeric()
                     ->minValue(0)
                     ->maxValue(9999999999.99)
@@ -614,7 +614,7 @@ protected function operationsRepeater(): Repeater
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Select::make('transaction_unit')
-                    ->label('وحدة العملية')
+                    ->label('وحدة التصرّف')
                     ->native(false)
                     ->options([
                         'share' => 'سهم',
@@ -628,7 +628,7 @@ protected function operationsRepeater(): Repeater
                     ->label('طريقة العملية')
                     ->native(false)
                     ->options([
-                        'court_judgment' => 'حكم محكم',
+                        'court_judgment' => 'حكم محكمة',
                         'regular_contract' => 'عقد عادي',
                     ])
                     ->live()
@@ -662,21 +662,21 @@ protected function operationsRepeater(): Repeater
                     ->schema([
                         TextInput::make('regular_contract_number')
                             ->label('رقم العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                            ->required(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
                             ->columnSpan(['default' => 12, 'md' => 6]),
                         DatePicker::make('regular_contract_date')
                             ->label('تاريخ العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                            ->required(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
                             ->columnSpan(['default' => 12, 'md' => 6]),
                     ])
-                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                    ->visible(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
                     ->columnSpanFull(),
 
 
                 Textarea::make('contract_notes')
                     ->label('ملاحظات العقد')
                     ->rows(3)
-                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract') 
+                    ->visible(fn (Get $get) => in_array($get('operation_method'), ['regular_contract', 'court_judgment'], true))
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
