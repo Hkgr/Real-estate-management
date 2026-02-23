@@ -96,12 +96,35 @@ class PropertyCardPage2 extends Page implements HasSchemas
                         Grid::make(12)->schema([
                             Placeholder::make('summary_owners')
                                 ->label('الملاك')
-                                ->content(fn (Get $get) => (string) count($get('ownerships') ?? []))
+                                ->content(function (Get $get): string {
+                                    $ownerships = $get('ownerships') ?? [];
+
+                                    if (! is_array($ownerships)) {
+                                        return '0';
+                                    }
+
+                                    return (string) count(array_filter(
+                                        $ownerships,
+                                        fn ($ownership) => is_array($ownership)
+                                            && (! blank($ownership['owner_id'] ?? null) || ! blank($ownership['owner_name'] ?? null))
+                                    ));
+                                })
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_signals')
                                 ->label('الإشارات')
-                                ->content(fn (Get $get) => (string) count($get('signals') ?? []))
+                                ->content(function (Get $get): string {
+                                    $signals = $get('signals') ?? [];
+
+                                    if (! is_array($signals)) {
+                                        return '0';
+                                    }
+
+                                    return (string) count(array_filter(
+                                        $signals,
+                                        fn ($signal) => is_array($signal) && ! blank($signal['signal_type'] ?? null)
+                                    ));
+                                })
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_files')
@@ -114,7 +137,19 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
                             Placeholder::make('summary_installments')
                                 ->label('الدفعات')
-                                ->content(fn (Get $get) => (string) count($get('installments') ?? []))
+                                ->content(function (Get $get): string {
+                                    $installments = $get('installments') ?? [];
+
+                                    if (! is_array($installments)) {
+                                        return '0';
+                                    }
+
+                                    return (string) count(array_filter(
+                                        $installments,
+                                        fn ($installment) => is_array($installment)
+                                            && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
+                                    ));
+                                })
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                         ]),
@@ -124,6 +159,10 @@ class PropertyCardPage2 extends Page implements HasSchemas
                 Section::make('البيانات الأساسية')
                     ->schema([
                         Grid::make(12)->schema([
+                            Hidden::make('card_status')
+                                ->default('active')
+                                ->dehydrated(true),
+
                             TextInput::make('card_governorate')
                                 ->label('المحافظة')
                                 ->prefixIcon('heroicon-o-map')
@@ -1495,8 +1534,14 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     return;
                 }
 
-                $nextStatus = $record->card_status === 'active' ? 'frozen' : 'active';
+                $currentStatus = in_array($record->card_status, ['active', 'frozen'], true)
+                    ? $record->card_status
+                    : 'active';
+
+                $nextStatus = $currentStatus === 'active' ? 'frozen' : 'active';
                 $record->update(['card_status' => $nextStatus]);
+
+                $this->data['card_status'] = $nextStatus;
 
                 $this->loadRecordIntoForm($record->refresh());
 
