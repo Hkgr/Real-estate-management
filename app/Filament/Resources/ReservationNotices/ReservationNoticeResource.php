@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ReservationNotices;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\ReservationNotices\Pages\CreateReservationNotice;
 use App\Filament\Resources\ReservationNotices\Pages\EditReservationNotice;
 use App\Filament\Resources\ReservationNotices\Pages\ListReservationNotices;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 
 class ReservationNoticeResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
     protected static ?string $navigationLabel = 'إدارة إشارات الحجز';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-bookmark-square';
     protected static ?int $navigationSort = 20;

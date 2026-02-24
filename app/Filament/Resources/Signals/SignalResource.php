@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Signals;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\Signals\Pages\CreateSignal;
 use App\Filament\Resources\Signals\Pages\EditSignal;
 use App\Filament\Resources\Signals\Pages\ListSignals;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 
 class SignalResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
 
     protected static ?string $title = 'بطاقة الإشارة';
     protected static ?string $navigationLabel = 'بطاقة الإشارة (جديدة)';

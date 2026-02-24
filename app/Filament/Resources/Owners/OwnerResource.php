@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Owners;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\Owners\Pages;
 use App\Filament\Resources\Owners\Schemas\OwnerForm;
 use App\Filament\Resources\Owners\Tables\OwnersTable;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OwnerResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
     protected static ?string $model = Owner::class;
 
     // ✅ فقط عنصر واحد بالنافبار

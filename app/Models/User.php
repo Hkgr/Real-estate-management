@@ -36,10 +36,14 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        // مؤقتاً افتح الوصول للتأكد أن 403 انتهت:
-        return true;
+        if ($panel->getId() === 'viewer') {
+            return $this->hasRole(['viewer', 'super_admin']);
+        }
 
-        // وبعد التأكد رجّعها شرط role:
-        // return $this->hasRole('super_admin');
+        if ($panel->getId() === 'rashad') {
+            return $this->hasRole(['data_entry', 'super_admin']);
+        }
+
+        return false;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Properties;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\Properties\Pages\CreateProperty;
 use App\Filament\Resources\Properties\Pages\EditProperty;
 use App\Filament\Resources\Properties\Pages\ListProperties;
@@ -22,6 +23,8 @@ use Filament\Schemas\Components\Section;
 
 class PropertyResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
 protected static ?string $model = Property::class;
 
 protected static ?string $navigationLabel = 'إدارة العقارات';
