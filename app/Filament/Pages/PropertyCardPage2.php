@@ -69,12 +69,20 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
     public function updated(string $propertyName): void
     {
-                if ($this->isSyncingOperationDetails) {
+        if ($this->isSyncingOperationDetails) {
             return;
+        }
+
+        if ($propertyName === 'data.card_total_area') {
+            $this->syncAllOperationConversionLines();
         }
 
         if (preg_match('/^data\.operations\.(\d+)\.(transaction_amount|transaction_unit)$/', $propertyName, $matches) === 1) {
             $this->syncOperationConversionLine((int) $matches[1]);
+        }
+
+        if ($propertyName === 'data.operations') {
+            $this->syncAllOperationConversionLines();
         }
 
         if (! str_starts_with($propertyName, 'data.')) {
@@ -87,7 +95,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
             // Filament/Livewire سيعرض الأخطاء
         }
     }
-  protected function syncOperationConversionLine(int $operationIndex): void
+    protected function syncOperationConversionLine(int $operationIndex): void
     {
         $operations = data_get($this->data, 'operations', []);
         $totalArea = (float) data_get($this->data, 'card_total_area', 0);
@@ -126,6 +134,21 @@ class PropertyCardPage2 extends Page implements HasSchemas
         $this->isSyncingOperationDetails = true;
         data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
         $this->isSyncingOperationDetails = false;
+    }
+
+    protected function syncAllOperationConversionLines(): void
+    {
+        $operations = data_get($this->data, 'operations', []);
+
+        if (! is_array($operations)) {
+            return;
+        }
+
+        foreach (array_keys($operations) as $operationIndex) {
+            if (is_numeric($operationIndex)) {
+                $this->syncOperationConversionLine((int) $operationIndex);
+            }
+        }
     }
 
     protected function operationConversionLinePrefix(int $operationIndex): string
@@ -681,12 +704,14 @@ protected function operationsRepeater(): Repeater
                     ->numeric()
                     ->minValue(0)
                     ->maxValue(9999999999.99)
+                    ->live(onBlur: true)
                     ->required()
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Select::make('transaction_unit')
                     ->label('وحدة التصرّف')
                     ->native(false)
+                    ->live()
                     ->options([
                         'shares' => 'سهم',
                         'square_meter' => 'متر مربع',
