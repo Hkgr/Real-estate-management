@@ -97,7 +97,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
         if (is_array($operations) && isset($operations[$operationIndex]) && is_array($operations[$operationIndex]) && $totalArea > 0) {
             $amount = (float) ($operations[$operationIndex]['transaction_amount'] ?? 0);
-            $unit = (string) ($operations[$operationIndex]['transaction_unit'] ?? '');
+            $unit = $this->normalizeTransactionUnit($operations[$operationIndex]['transaction_unit'] ?? null);
             $squareMetersPerShare = $totalArea / 2400;
 
             if ($amount > 0 && $squareMetersPerShare > 0) {
@@ -138,7 +138,16 @@ class PropertyCardPage2 extends Page implements HasSchemas
         return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
     }
 
+    protected function normalizeTransactionUnit(mixed $unit): ?string
+    {
+        $unit = is_string($unit) ? trim($unit) : null;
 
+        if ($unit === 'share') {
+            return 'shares';
+        }
+
+        return filled($unit) ? $unit : null;
+    }
 
 
     // =========================
@@ -679,7 +688,7 @@ protected function operationsRepeater(): Repeater
                     ->label('وحدة التصرّف')
                     ->native(false)
                     ->options([
-                        'share' => 'سهم',
+                        'shares' => 'سهم',
                         'square_meter' => 'متر مربع',
                         'percentage' => 'نسبة مئوية',
                     ])
@@ -3145,6 +3154,8 @@ protected function persistOperations(PropertyCard $record, array $rows): void
             $data['new_owners'],
             $data['witnesses']
         );
+
+        $data['transaction_unit'] = $this->normalizeTransactionUnit($data['transaction_unit'] ?? null);
 
         if (! filled($data['operation_type'] ?? null) || ! filled($data['operation_method'] ?? null) || ! filled($data['transaction_amount'] ?? null) || ! filled($data['transaction_unit'] ?? null)) {
             continue;
