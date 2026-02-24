@@ -21,6 +21,7 @@ class PropertyOperation extends Model
         'decision_number',
         'authority',
         'judgment_date',
+        'judgment_notes',
         'contract_number',
         'contract_date',
         'contract_notes',

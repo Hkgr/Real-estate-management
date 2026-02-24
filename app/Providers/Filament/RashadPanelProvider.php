@@ -27,7 +27,7 @@ class RashadPanelProvider extends PanelProvider
             ->id('rashad')
             ->path('rashad')
             ->login()
-
+            ->default()
             ->font('Cairo')
             ->maxContentWidth('full')
             ->viteTheme('resources/css/filament/rashad/theme.css')

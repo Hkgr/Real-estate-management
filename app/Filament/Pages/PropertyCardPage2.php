@@ -46,6 +46,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
 {
     use InteractsWithSchemas;
 
+    protected bool $isSyncingOperationDetails = false;
     protected static ?string $title = 'بطاقة العقار';
     protected static ?string $navigationLabel = 'بطاقة العقار (الإصدار الثاني)';
     protected static UnitEnum|string|null $navigationGroup = 'العقارات';
@@ -66,18 +67,168 @@ class PropertyCardPage2 extends Page implements HasSchemas
         $this->resetCardForm();
     }
 
-    public function updated(string $propertyName): void
-    {
-        if (! str_starts_with($propertyName, 'data.')) {
-            return;
+public function updated(string $propertyName): void
+{
+    if ($this->isSyncingOperationDetails) {
+        return;
+    }
+
+    // تغيير مساحة العقار → حدّث كل التحويلات
+    if ($propertyName === 'data.card_total_area') {
+        $this->syncAllOperationConversionLines();
+    }
+
+    // أي تعديل داخل العمليات (UUID أو رقم) على amount أو unit → حدّث سطر العملية نفسها
+    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName, $m) === 1) {
+        $this->syncOperationConversionLine((string) $m[1]);
+    }
+
+    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث الكل
+    if (str_starts_with($propertyName, 'data.operations') && ! str_contains($propertyName, '.transaction_')) {
+        $this->syncAllOperationConversionLines();
+    }
+
+    if (! str_starts_with($propertyName, 'data.')) {
+        return;
+    }
+
+    try {
+        $this->form->validate();
+    } catch (ValidationException) {
+        // Filament/Livewire سيعرض الأخطاء
+    }
+}
+    protected function syncOperationConversionLine(string $operationKey): void
+{
+    $operations = data_get($this->data, 'operations', []);
+    $totalArea  = (float) data_get($this->data, 'card_total_area', 0);
+
+    if (! is_array($operations) || $totalArea <= 0) {
+        $this->removeOperationConversionLine($operationKey);
+        return;
+    }
+
+    if (! isset($operations[$operationKey]) || ! is_array($operations[$operationKey])) {
+        $this->removeOperationConversionLine($operationKey);
+        return;
+    }
+
+    $row   = $operations[$operationKey];
+    $amount = (float) ($row['transaction_amount'] ?? 0);
+    $unit   = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+
+    $sqmPerShare = $totalArea / 2400;
+
+    $line = null;
+
+    if ($amount > 0 && $sqmPerShare > 0 && in_array($unit, ['shares', 'square_meter'], true)) {
+        $tag    = $this->operationConversionTag($operationKey, $row); // ثابت
+        $prefix = $this->operationConversionLinePrefix($tag);
+
+        $amountPretty     = $this->normalizeNumericValue($amount);
+        $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
+
+        if ($unit === 'shares') {
+            $converted = $amount * $sqmPerShare;
+            $convertedPretty = $this->normalizeNumericValue($converted);
+
+            $line = $prefix . ' '
+                . $amountPretty . ' سهم ≈ ' . $convertedPretty . ' م²'
+                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
         }
 
-        try {
-            $this->form->validate();
-        } catch (ValidationException) {
-            // Filament/Livewire سيعرض الأخطاء
+        if ($unit === 'square_meter') {
+            $converted = $amount / $sqmPerShare;
+            $convertedPretty = $this->normalizeNumericValue($converted);
+
+            $line = $prefix . ' '
+                . $amountPretty . ' م² ≈ ' . $convertedPretty . ' سهم'
+                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
         }
     }
+
+    $this->upsertOperationConversionLine($operationKey, $line);
+}
+
+protected function upsertOperationConversionLine(string $operationKey, ?string $line): void
+{
+    $operations = data_get($this->data, 'operations', []);
+    $row = is_array($operations) && isset($operations[$operationKey]) && is_array($operations[$operationKey])
+        ? $operations[$operationKey]
+        : [];
+
+    $tag = $this->operationConversionTag($operationKey, $row);
+    $prefix = $this->operationConversionLinePrefix($tag);
+
+    $details = (string) data_get($this->data, 'card_property_details', '');
+    $lines = array_values(array_filter(
+        preg_split('/\R/u', $details) ?: [],
+        fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
+    ));
+
+    if (filled($line)) {
+        $lines[] = $line;
+    }
+
+    $this->isSyncingOperationDetails = true;
+    data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
+    $this->isSyncingOperationDetails = false;
+}
+
+protected function removeOperationConversionLine(string $operationKey): void
+{
+    $this->upsertOperationConversionLine($operationKey, null);
+}
+
+protected function syncAllOperationConversionLines(): void
+{
+    $operations = data_get($this->data, 'operations', []);
+
+    if (! is_array($operations)) {
+        return;
+    }
+
+    foreach (array_keys($operations) as $key) {
+        $this->syncOperationConversionLine((string) $key);
+    }
+}
+
+protected function operationConversionLinePrefix(string $tag): string
+{
+    return 'تحويل مقدار التصرّف (' . $tag . '):';
+}
+
+protected function operationConversionTag(string $operationKey, array $row): string
+{
+    // إذا العملية محفوظة ولها id استخدمه (أفضل)
+    if (filled($row['id'] ?? null)) {
+        return 'ID' . (int) $row['id'];
+    }
+
+
+    // وإلا استخدم جزء ثابت من UUID
+    $clean = preg_replace('/[^a-zA-Z0-9]/', '', (string) $operationKey);
+    return 'UI' . substr($clean, 0, 10);
+}
+
+
+
+    protected function normalizeNumericValue(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
+    }
+
+    protected function normalizeTransactionUnit(mixed $unit): ?string
+    {
+        $unit = is_string($unit) ? trim($unit) : null;
+
+        if ($unit === 'share') {
+            return 'shares';
+        }
+
+        return filled($unit) ? $unit : null;
+    }
+
 
     // =========================
     // Form
@@ -96,12 +247,35 @@ class PropertyCardPage2 extends Page implements HasSchemas
                         Grid::make(12)->schema([
                             Placeholder::make('summary_owners')
                                 ->label('الملاك')
-                                ->content(fn (Get $get) => (string) count($get('ownerships') ?? []))
+                                ->content(function (Get $get): string {
+                                    $ownerships = $get('ownerships') ?? [];
+
+                                    if (! is_array($ownerships)) {
+                                        return '0';
+                                    }
+
+                                    return (string) count(array_filter(
+                                        $ownerships,
+                                        fn ($ownership) => is_array($ownership)
+                                            && (! blank($ownership['owner_id'] ?? null) || ! blank($ownership['owner_name'] ?? null))
+                                    ));
+                                })
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_signals')
                                 ->label('الإشارات')
-                                ->content(fn (Get $get) => (string) count($get('signals') ?? []))
+                                ->content(function (Get $get): string {
+                                    $signals = $get('signals') ?? [];
+
+                                    if (! is_array($signals)) {
+                                        return '0';
+                                    }
+
+                                    return (string) count(array_filter(
+                                        $signals,
+                                        fn ($signal) => is_array($signal) && ! blank($signal['signal_type'] ?? null)
+                                    ));
+                                })
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_files')
@@ -114,7 +288,19 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
                             Placeholder::make('summary_installments')
                                 ->label('الدفعات')
-                                ->content(fn (Get $get) => (string) count($get('installments') ?? []))
+                                ->content(function (Get $get): string {
+                                    $installments = $get('installments') ?? [];
+
+                                    if (! is_array($installments)) {
+                                        return '0';
+                                    }
+
+                                    return (string) count(array_filter(
+                                        $installments,
+                                        fn ($installment) => is_array($installment)
+                                            && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
+                                    ));
+                                })
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                         ]),
@@ -124,6 +310,10 @@ class PropertyCardPage2 extends Page implements HasSchemas
                 Section::make('البيانات الأساسية')
                     ->schema([
                         Grid::make(12)->schema([
+                            Hidden::make('card_status')
+                                ->default('active')
+                                ->dehydrated(true),
+
                             TextInput::make('card_governorate')
                                 ->label('المحافظة')
                                 ->prefixIcon('heroicon-o-map')
@@ -131,7 +321,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->required()
                                 ->live(onBlur: true)
                                 ->placeholder('مثال: حلب')
-                                ->columnSpan(['default' => 12, 'md' => 3]),
+                                ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('card_region_name')
                                 ->label('المنطقة العقارية')
@@ -149,7 +339,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->maxLength(50)
                                 ->required()
                                 ->placeholder('مثال: 2024/105')
-                                ->columnSpan(['default' => 12, 'md' => 2]),
+                                ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('card_subdivision')
                                 ->label('المقسم')
@@ -159,7 +349,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->live(onBlur: true)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->placeholder('مثال: المقسم 22')
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
                             TextInput::make('card_google_maps_url')
                                 ->label('رابط موقع العقار')
                             ->prefixIcon('heroicon-o-globe-alt')
@@ -170,7 +360,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->helperText('ألصق رابط الموقع من Google Maps.')
                                 ->placeholder('https://maps.google.com/?q=...')
-                                ->columnSpan(['default' => 12, 'md' => 8]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
 
                             Textarea::make('card_property_details')
                                 ->label('بيانات تفصيلية')
@@ -191,7 +381,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->live(onBlur: true)
                                 ->suffix('م²')
                                 ->placeholder('مثال: 400')
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
                             Placeholder::make('ownership_total_hint')
                                 ->label('إجمالي التملك (حسب المعيار)')
                                 ->content(function (Get $get): string {
@@ -224,7 +414,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
                                     return $pretty === '' ? '—' : ($pretty . ' ' . $suffix);
                                 })
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
                         ]),
                     ]),
 
@@ -542,6 +732,7 @@ protected function operationsRepeater(): Repeater
         ->addActionLabel('إضافة عملية')
         ->reorderable()
         ->schema([
+            Hidden::make('id')->dehydrated(),
             Grid::make(12)->schema([
                 Select::make('operation_type')
                     ->label('نوع العملية')
@@ -567,18 +758,20 @@ protected function operationsRepeater(): Repeater
                     ->columnSpan(['default' => 12, 'md' => 6]),
 
                 TextInput::make('transaction_amount')
-                    ->label('قيمة العملية')
+                    ->label('مقدار التصرّف')
                     ->numeric()
                     ->minValue(0)
                     ->maxValue(9999999999.99)
+                    ->live(onBlur: true)
                     ->required()
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Select::make('transaction_unit')
-                    ->label('وحدة العملية')
+                    ->label('وحدة التصرّف')
                     ->native(false)
+                    ->live()
                     ->options([
-                        'share' => 'سهم',
+                        'shares' => 'سهم',
                         'square_meter' => 'متر مربع',
                         'percentage' => 'نسبة مئوية',
                     ])
@@ -589,7 +782,7 @@ protected function operationsRepeater(): Repeater
                     ->label('طريقة العملية')
                     ->native(false)
                     ->options([
-                        'court_judgment' => 'حكم محكم',
+                        'court_judgment' => 'حكم محكمة',
                         'regular_contract' => 'عقد عادي',
                     ])
                     ->live()
@@ -615,6 +808,11 @@ protected function operationsRepeater(): Repeater
                             ->label('تاريخ الحكم')
                             ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->columnSpan(['default' => 12, 'md' => 3]),
+                        Textarea::make('judgment_notes')
+                            ->label('ملاحظات الحكم')
+                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
                     ->visible(fn (Get $get) => $get('operation_method') === 'court_judgment')
                     ->columnSpanFull(),
@@ -629,15 +827,12 @@ protected function operationsRepeater(): Repeater
                             ->label('تاريخ العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
+                        Textarea::make('contract_notes')
+                            ->label('ملاحظات العقد')
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
                     ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
-                    ->columnSpanFull(),
-
-
-                Textarea::make('contract_notes')
-                    ->label('ملاحظات العقد')
-                    ->rows(3)
-                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract') 
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
@@ -1395,15 +1590,26 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->icon('heroicon-o-plus')
             ->color('success')
             ->action(function () {
-                $record = $this->persistNewRecordFromForm();
+                try {
+                    $record = $this->persistNewRecordFromForm();
 
-                if (! $record) {
-                    return;
+                    if (! $record) {
+                        return;
+                    }
+
+                    $this->loadRecordIntoForm($record);
+
+                    Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
+                } catch (\Throwable $exception) {
+                    report($exception);
+
+                    Notification::make()
+                        ->title('فشل إنشاء البطاقة')
+                        ->body($this->formatCreateCardFailureReason($exception))              
+                        ->danger()
+                        ->send();
                 }
 
-                $this->loadRecordIntoForm($record);
-
-                Notification::make()->title('تمت الإضافة بنجاح')->success()->send();
             });
 
         return $this->uniformAction($action);
@@ -1484,8 +1690,14 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     return;
                 }
 
-                $nextStatus = $record->card_status === 'active' ? 'frozen' : 'active';
+                $currentStatus = in_array($record->card_status, ['active', 'frozen'], true)
+                    ? $record->card_status
+                    : 'active';
+
+                $nextStatus = $currentStatus === 'active' ? 'frozen' : 'active';
                 $record->update(['card_status' => $nextStatus]);
+
+                $this->data['card_status'] = $nextStatus;
 
                 $this->loadRecordIntoForm($record->refresh());
 
@@ -2544,6 +2756,7 @@ public function deleteUploadedFile(int $fileId): void
                     'decision_number' => $method === 'court_judgment' ? ($row['decision_number'] ?? null) : null,
                     'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
                     'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
+                    'judgment_notes' => $method === 'court_judgment' ? ($row['judgment_notes'] ?? null) : null,
                     'contract_number' => $method === 'regular_contract'
                         ? ($row['contract_number'] ?? $row['regular_contract_number'] ?? null)
                         : null,
@@ -2551,6 +2764,7 @@ public function deleteUploadedFile(int $fileId): void
                         ? ($row['contract_date'] ?? $row['regular_contract_date'] ?? null)
 
                         : null,
+                    'contract_notes' => $method === 'regular_contract' ? ($row['contract_notes'] ?? null) : null,
                     'old_owners' => collect($oldOwners)
                         ->map(function ($item): int {
                             if (is_array($item)) {
@@ -2644,6 +2858,26 @@ public function deleteUploadedFile(int $fileId): void
 
     return implode("\n", $lines);
     }
+    
+    protected function formatCreateCardFailureReason(\Throwable $exception): string
+    {
+        if ($exception instanceof ValidationException) {
+            return "تعذر إنشاء البطاقة بسبب أخطاء في الحقول:\n" . $this->formatValidationErrors($exception);
+        }
+
+        if ($exception instanceof QueryException) {
+            return "تعذر إنشاء البطاقة بسبب خطأ في قاعدة البيانات:\n" . $this->formatQueryExceptionMessage($exception);
+        }
+
+        $message = trim($exception->getMessage());
+
+        if ($message === '') {
+            return 'تعذر إنشاء البطاقة بسبب خطأ غير معروف. يرجى المحاولة مرة أخرى أو التواصل مع الدعم التقني.';
+        }
+
+        return "تعذر إنشاء البطاقة بسبب: {$message}";
+    }
+
 protected function formatQueryExceptionMessage(QueryException $exception): string
 {
     $sqlState  = $exception->errorInfo[0] ?? (string) $exception->getCode();
@@ -2903,6 +3137,8 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         'decision_number',
         'authority',
         'judgment_date',
+        'judgment_notes',
+        'contract_notes',
         'contract_number',
         'contract_date',
         'regular_contract_number',
@@ -2945,6 +3181,17 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         if ($method === 'regular_contract') {
             $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
             $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
+            $data['case_number'] = null;
+            $data['decision_number'] = null;
+            $data['authority'] = null;
+            $data['judgment_date'] = null;
+            $data['judgment_notes'] = null;
+        }
+
+        if ($method === 'court_judgment') {
+            $data['contract_number'] = null;
+            $data['contract_date'] = null;
+            $data['contract_notes'] = null;
         }
 
         $oldOwners = collect($data['old_owners'] ?? [])
@@ -2990,6 +3237,8 @@ protected function persistOperations(PropertyCard $record, array $rows): void
             $data['new_owners'],
             $data['witnesses']
         );
+
+        $data['transaction_unit'] = $this->normalizeTransactionUnit($data['transaction_unit'] ?? null);
 
         if (! filled($data['operation_type'] ?? null) || ! filled($data['operation_method'] ?? null) || ! filled($data['transaction_amount'] ?? null) || ! filled($data['transaction_unit'] ?? null)) {
             continue;
