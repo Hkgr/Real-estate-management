@@ -170,7 +170,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->required()
                                 ->live(onBlur: true)
                                 ->placeholder('مثال: حلب')
-                                ->columnSpan(['default' => 12, 'md' => 3]),
+                                ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('card_region_name')
                                 ->label('المنطقة العقارية')
@@ -188,7 +188,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->maxLength(50)
                                 ->required()
                                 ->placeholder('مثال: 2024/105')
-                                ->columnSpan(['default' => 12, 'md' => 2]),
+                                ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('card_subdivision')
                                 ->label('المقسم')
@@ -198,7 +198,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->live(onBlur: true)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->placeholder('مثال: المقسم 22')
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
                             TextInput::make('card_google_maps_url')
                                 ->label('رابط موقع العقار')
                             ->prefixIcon('heroicon-o-globe-alt')
@@ -209,7 +209,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                 ->helperText('ألصق رابط الموقع من Google Maps.')
                                 ->placeholder('https://maps.google.com/?q=...')
-                                ->columnSpan(['default' => 12, 'md' => 8]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
 
                             Textarea::make('card_property_details')
                                 ->label('بيانات تفصيلية')
@@ -230,7 +230,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
                                 ->live(onBlur: true)
                                 ->suffix('م²')
                                 ->placeholder('مثال: 400')
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
                             Placeholder::make('ownership_total_hint')
                                 ->label('إجمالي التملك (حسب المعيار)')
                                 ->content(function (Get $get): string {
@@ -263,7 +263,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
                                     return $pretty === '' ? '—' : ($pretty . ' ' . $suffix);
                                 })
-                                ->columnSpan(['default' => 12, 'md' => 4]),
+                                ->columnSpan(['default' => 12, 'md' => 6]),
                         ]),
                     ]),
 
