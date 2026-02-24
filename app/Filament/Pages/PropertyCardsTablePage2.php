@@ -25,6 +25,15 @@ class PropertyCardsTablePage2 extends Page implements HasTable
         return $table
             ->query(PropertyCard::query()->latest('id'))
             ->columns([
+                                TextColumn::make('row_number')
+                    ->label('تسلسل')
+                    ->state(function (mixed $record, mixed $rowLoop, HasTable $livewire): int {
+                        $currentPage = (int) ($livewire->getTablePage() ?? 1);
+                        $perPage = (int) ($livewire->getTableRecordsPerPage() ?? 10);
+
+                        return (($currentPage - 1) * $perPage) + $rowLoop->iteration;
+                    }),
+
                 TextColumn::make('id')
                     ->label('#')
                     ->sortable(),
