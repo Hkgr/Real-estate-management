@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\PropertyCardsTablePage2;
 use App\Filament\Widgets\AppStatsOverview;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -31,9 +32,9 @@ class ViewerPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->pages([
                 Dashboard::class,
+                PropertyCardsTablePage2::class,
             ])
             ->widgets([
                 AppStatsOverview::class,
