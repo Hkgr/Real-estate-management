@@ -46,6 +46,7 @@ class PropertyCardPage2 extends Page implements HasSchemas
 {
     use InteractsWithSchemas;
 
+    protected bool $isSyncingOperationDetails = false;
     protected static ?string $title = 'بطاقة العقار';
     protected static ?string $navigationLabel = 'بطاقة العقار (الإصدار الثاني)';
     protected static UnitEnum|string|null $navigationGroup = 'العقارات';
@@ -68,6 +69,14 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
     public function updated(string $propertyName): void
     {
+                if ($this->isSyncingOperationDetails) {
+            return;
+        }
+
+        if (preg_match('/^data\.operations\.(\d+)\.(transaction_amount|transaction_unit)$/', $propertyName, $matches) === 1) {
+            $this->syncOperationConversionLine((int) $matches[1]);
+        }
+
         if (! str_starts_with($propertyName, 'data.')) {
             return;
         }
@@ -78,6 +87,59 @@ class PropertyCardPage2 extends Page implements HasSchemas
             // Filament/Livewire سيعرض الأخطاء
         }
     }
+  protected function syncOperationConversionLine(int $operationIndex): void
+    {
+        $operations = data_get($this->data, 'operations', []);
+        $totalArea = (float) data_get($this->data, 'card_total_area', 0);
+        $linePrefix = $this->operationConversionLinePrefix($operationIndex);
+
+        $line = null;
+
+        if (is_array($operations) && isset($operations[$operationIndex]) && is_array($operations[$operationIndex]) && $totalArea > 0) {
+            $amount = (float) ($operations[$operationIndex]['transaction_amount'] ?? 0);
+            $unit = (string) ($operations[$operationIndex]['transaction_unit'] ?? '');
+            $squareMetersPerShare = $totalArea / 2400;
+
+            if ($amount > 0 && $squareMetersPerShare > 0) {
+                if ($unit === 'shares') {
+                    $converted = $amount * $squareMetersPerShare;
+                    $line = $linePrefix . ' ' . $this->normalizeNumericValue($amount) . ' سهم = ' . $this->normalizeNumericValue($converted) . ' م².';
+                }
+
+                if ($unit === 'square_meter') {
+                    $converted = $amount / $squareMetersPerShare;
+                    $line = $linePrefix . ' ' . $this->normalizeNumericValue($amount) . ' م² = ' . $this->normalizeNumericValue($converted) . ' سهم.';
+                }
+            }
+        }
+
+        $details = (string) data_get($this->data, 'card_property_details', '');
+        $lines = array_values(array_filter(
+            preg_split('/\R/u', $details) ?: [],
+            fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $linePrefix)
+        ));
+
+        if (filled($line)) {
+            $lines[] = $line;
+        }
+
+        $this->isSyncingOperationDetails = true;
+        data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
+        $this->isSyncingOperationDetails = false;
+    }
+
+    protected function operationConversionLinePrefix(int $operationIndex): string
+    {
+        return 'تحويل مقدار التصرف (عملية ' . ($operationIndex + 1) . '):';
+    }
+
+    protected function normalizeNumericValue(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
+    }
+
+
+
 
     // =========================
     // Form
