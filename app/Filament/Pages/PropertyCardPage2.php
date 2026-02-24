@@ -67,94 +67,151 @@ class PropertyCardPage2 extends Page implements HasSchemas
         $this->resetCardForm();
     }
 
-    public function updated(string $propertyName): void
-    {
-        if ($this->isSyncingOperationDetails) {
-            return;
-        }
-
-        if ($propertyName === 'data.card_total_area') {
-            $this->syncAllOperationConversionLines();
-        }
-
-        if (preg_match('/^data\.operations\.(\d+)\.(transaction_amount|transaction_unit)$/', $propertyName, $matches) === 1) {
-            $this->syncOperationConversionLine((int) $matches[1]);
-        }
-
-        if ($propertyName === 'data.operations') {
-            $this->syncAllOperationConversionLines();
-        }
-
-        if (! str_starts_with($propertyName, 'data.')) {
-            return;
-        }
-
-        try {
-            $this->form->validate();
-        } catch (ValidationException) {
-            // Filament/Livewire سيعرض الأخطاء
-        }
-    }
-    protected function syncOperationConversionLine(int $operationIndex): void
-    {
-        $operations = data_get($this->data, 'operations', []);
-        $totalArea = (float) data_get($this->data, 'card_total_area', 0);
-        $linePrefix = $this->operationConversionLinePrefix($operationIndex);
-
-        $line = null;
-
-        if (is_array($operations) && isset($operations[$operationIndex]) && is_array($operations[$operationIndex]) && $totalArea > 0) {
-            $amount = (float) ($operations[$operationIndex]['transaction_amount'] ?? 0);
-            $unit = $this->normalizeTransactionUnit($operations[$operationIndex]['transaction_unit'] ?? null);
-            $squareMetersPerShare = $totalArea / 2400;
-
-            if ($amount > 0 && $squareMetersPerShare > 0) {
-                if ($unit === 'shares') {
-                    $converted = $amount * $squareMetersPerShare;
-                    $line = $linePrefix . ' ' . $this->normalizeNumericValue($amount) . ' سهم = ' . $this->normalizeNumericValue($converted) . ' م².';
-                }
-
-                if ($unit === 'square_meter') {
-                    $converted = $amount / $squareMetersPerShare;
-                    $line = $linePrefix . ' ' . $this->normalizeNumericValue($amount) . ' م² = ' . $this->normalizeNumericValue($converted) . ' سهم.';
-                }
-            }
-        }
-
-        $details = (string) data_get($this->data, 'card_property_details', '');
-        $lines = array_values(array_filter(
-            preg_split('/\R/u', $details) ?: [],
-            fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $linePrefix)
-        ));
-
-        if (filled($line)) {
-            $lines[] = $line;
-        }
-
-        $this->isSyncingOperationDetails = true;
-        data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
-        $this->isSyncingOperationDetails = false;
+public function updated(string $propertyName): void
+{
+    if ($this->isSyncingOperationDetails) {
+        return;
     }
 
-    protected function syncAllOperationConversionLines(): void
-    {
-        $operations = data_get($this->data, 'operations', []);
+    // تغيير مساحة العقار → حدّث كل التحويلات
+    if ($propertyName === 'data.card_total_area') {
+        $this->syncAllOperationConversionLines();
+    }
 
-        if (! is_array($operations)) {
-            return;
+    // أي تعديل داخل العمليات (UUID أو رقم) على amount أو unit → حدّث سطر العملية نفسها
+    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName, $m) === 1) {
+        $this->syncOperationConversionLine((string) $m[1]);
+    }
+
+    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث الكل
+    if (str_starts_with($propertyName, 'data.operations') && ! str_contains($propertyName, '.transaction_')) {
+        $this->syncAllOperationConversionLines();
+    }
+
+    if (! str_starts_with($propertyName, 'data.')) {
+        return;
+    }
+
+    try {
+        $this->form->validate();
+    } catch (ValidationException) {
+        // Filament/Livewire سيعرض الأخطاء
+    }
+}
+    protected function syncOperationConversionLine(string $operationKey): void
+{
+    $operations = data_get($this->data, 'operations', []);
+    $totalArea  = (float) data_get($this->data, 'card_total_area', 0);
+
+    if (! is_array($operations) || $totalArea <= 0) {
+        $this->removeOperationConversionLine($operationKey);
+        return;
+    }
+
+    if (! isset($operations[$operationKey]) || ! is_array($operations[$operationKey])) {
+        $this->removeOperationConversionLine($operationKey);
+        return;
+    }
+
+    $row   = $operations[$operationKey];
+    $amount = (float) ($row['transaction_amount'] ?? 0);
+    $unit   = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+
+    $sqmPerShare = $totalArea / 2400;
+
+    $line = null;
+
+    if ($amount > 0 && $sqmPerShare > 0 && in_array($unit, ['shares', 'square_meter'], true)) {
+        $tag    = $this->operationConversionTag($operationKey, $row); // ثابت
+        $prefix = $this->operationConversionLinePrefix($tag);
+
+        $amountPretty     = $this->normalizeNumericValue($amount);
+        $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
+
+        if ($unit === 'shares') {
+            $converted = $amount * $sqmPerShare;
+            $convertedPretty = $this->normalizeNumericValue($converted);
+
+            $line = $prefix . ' '
+                . $amountPretty . ' سهم ≈ ' . $convertedPretty . ' م²'
+                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
         }
 
-        foreach (array_keys($operations) as $operationIndex) {
-            if (is_numeric($operationIndex)) {
-                $this->syncOperationConversionLine((int) $operationIndex);
-            }
+        if ($unit === 'square_meter') {
+            $converted = $amount / $sqmPerShare;
+            $convertedPretty = $this->normalizeNumericValue($converted);
+
+            $line = $prefix . ' '
+                . $amountPretty . ' م² ≈ ' . $convertedPretty . ' سهم'
+                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
         }
     }
 
-    protected function operationConversionLinePrefix(int $operationIndex): string
-    {
-        return 'تحويل مقدار التصرف (عملية ' . ($operationIndex + 1) . '):';
+    $this->upsertOperationConversionLine($operationKey, $line);
+}
+
+protected function upsertOperationConversionLine(string $operationKey, ?string $line): void
+{
+    $operations = data_get($this->data, 'operations', []);
+    $row = is_array($operations) && isset($operations[$operationKey]) && is_array($operations[$operationKey])
+        ? $operations[$operationKey]
+        : [];
+
+    $tag = $this->operationConversionTag($operationKey, $row);
+    $prefix = $this->operationConversionLinePrefix($tag);
+
+    $details = (string) data_get($this->data, 'card_property_details', '');
+    $lines = array_values(array_filter(
+        preg_split('/\R/u', $details) ?: [],
+        fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
+    ));
+
+    if (filled($line)) {
+        $lines[] = $line;
     }
+
+    $this->isSyncingOperationDetails = true;
+    data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
+    $this->isSyncingOperationDetails = false;
+}
+
+protected function removeOperationConversionLine(string $operationKey): void
+{
+    $this->upsertOperationConversionLine($operationKey, null);
+}
+
+protected function syncAllOperationConversionLines(): void
+{
+    $operations = data_get($this->data, 'operations', []);
+
+    if (! is_array($operations)) {
+        return;
+    }
+
+    foreach (array_keys($operations) as $key) {
+        $this->syncOperationConversionLine((string) $key);
+    }
+}
+
+protected function operationConversionLinePrefix(string $tag): string
+{
+    return 'تحويل مقدار التصرّف (' . $tag . '):';
+}
+
+protected function operationConversionTag(string $operationKey, array $row): string
+{
+    // إذا العملية محفوظة ولها id استخدمه (أفضل)
+    if (filled($row['id'] ?? null)) {
+        return 'ID' . (int) $row['id'];
+    }
+
+
+    // وإلا استخدم جزء ثابت من UUID
+    $clean = preg_replace('/[^a-zA-Z0-9]/', '', (string) $operationKey);
+    return 'UI' . substr($clean, 0, 10);
+}
+
+
 
     protected function normalizeNumericValue(float $value): string
     {
@@ -675,6 +732,7 @@ protected function operationsRepeater(): Repeater
         ->addActionLabel('إضافة عملية')
         ->reorderable()
         ->schema([
+            Hidden::make('id')->dehydrated(),
             Grid::make(12)->schema([
                 Select::make('operation_type')
                     ->label('نوع العملية')
