@@ -6,6 +6,7 @@ use App\Models\PropertyCard;
 use App\Models\PropertyCardFile;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -26,7 +27,8 @@ class PropertyCardFileStorage
         $disk->makeDirectory($directory);
 
         $originalName = $this->normalizeFileName($fileName ?: $file->getClientOriginalName());
-        $storedPath = $disk->putFileAs($directory, $file, $originalName);
+        $storedFileName = $this->buildStorageFileName($originalName, $file);
+        $storedPath = $disk->putFileAs($directory, $file, $storedFileName);
 
         if ($storedPath === false) {
             throw new RuntimeException('Failed to store property card file.');
@@ -94,4 +96,20 @@ class PropertyCardFileStorage
         return $originalName !== '' ? $originalName : 'file';
 
     }
+        private function buildStorageFileName(string $displayName, UploadedFile $file): string
+    {
+        $extension = pathinfo($displayName, PATHINFO_EXTENSION);
+
+        if ($extension === '') {
+            $extension = (string) $file->getClientOriginalExtension();
+        }
+
+        $extension = strtolower(trim($extension, '.'));
+        $extension = preg_replace('/[^a-z0-9]+/i', '', $extension ?? '');
+
+        $baseName = now()->format('YmdHisv') . '-' . Str::uuid();
+
+        return $extension !== '' ? "{$baseName}.{$extension}" : $baseName;
+    }
+
 }
