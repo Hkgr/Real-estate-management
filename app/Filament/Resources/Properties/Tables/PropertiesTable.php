@@ -58,7 +58,7 @@ class PropertiesTable
 
                 TextColumn::make('purchase_date')
                     ->label('تاريخ الشراء')
-                    ->date('Y-m-d')
+                    ->date('d/m/Y')
                     ->sortable(),
 
                 TextColumn::make('location')

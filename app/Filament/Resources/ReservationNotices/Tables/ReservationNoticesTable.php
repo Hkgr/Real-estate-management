@@ -26,7 +26,7 @@ class ReservationNoticesTable
 
                 TextColumn::make('notice_date')
                     ->label('تاريخ الإشارة')
-                    ->date('Y-m-d')
+                    ->date('d/m/Y')
                     ->sortable(),
 
                 TextColumn::make('property_number')

@@ -30,7 +30,7 @@ class SignalInfolist
                     ->placeholder('-'),
                 TextEntry::make('signal_source_date')
                     ->label('تاريخ الجهة')
-                    ->date()
+                    ->date('d/m/Y')
                     ->placeholder('-'),
                 TextEntry::make('signal_victims_label')
                     ->label('المتضرّرون')

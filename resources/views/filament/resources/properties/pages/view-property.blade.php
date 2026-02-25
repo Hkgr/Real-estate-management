@@ -5,7 +5,7 @@
     @php
         $p = $this->property;
         $loc = (string) ($p->location ?? '');
-        $date = optional($p->purchase_date)->format('Y-m-d');
+        $date = optional($p->purchase_date)->format('d/m/Y');
         $maps = ($p->latitude && $p->longitude) ? ('https://www.google.com/maps?q=' . $p->latitude . ',' . $p->longitude) : null;
 
         $fields = [
