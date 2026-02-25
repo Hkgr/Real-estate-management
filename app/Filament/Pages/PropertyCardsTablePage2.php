@@ -3,7 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Models\PropertyCard;
+use App\Models\PropertyCardFile;
+use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
+use App\Models\Signal;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -25,7 +28,7 @@ class PropertyCardsTablePage2 extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(PropertyCard::query()->with('operations')->latest('id'))
+            ->query(PropertyCard::query()->with(['operations', 'signals', 'files', 'installments'])->latest('id'))
             ->columns([
                                 TextColumn::make('row_number')
                     ->label('تسلسل')
@@ -79,9 +82,93 @@ class PropertyCardsTablePage2 extends Page implements HasTable
 
                         return new HtmlString('<div class="min-w-[24rem] space-y-2">' . $rows . '</div>');
                     }),
+                TextColumn::make('signals_summary')
+                    ->label('الإشارات')
+                    ->html()
+                    ->state(function (PropertyCard $record): HtmlString {
+                        if ($record->signals->isEmpty()) {
+                            return new HtmlString('<span class="text-gray-500">—</span>');
+                        }
+
+                        $rows = $record->signals
+                            ->map(fn (Signal $signal): string => $this->formatSignalRow($signal))
+                            ->implode('');
+
+                        return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
+                    }),
+                TextColumn::make('files_summary')
+                    ->label('ملحقات البطاقة')
+                    ->html()
+                    ->state(function (PropertyCard $record): HtmlString {
+                        if ($record->files->isEmpty()) {
+                            return new HtmlString('<span class="text-gray-500">—</span>');
+                        }
+
+                        $rows = $record->files
+                            ->map(fn (PropertyCardFile $file): string => $this->formatFileRow($file))
+                            ->implode('');
+
+                        return new HtmlString('<ul class="min-w-[18rem] list-disc space-y-1 pr-4">' . $rows . '</ul>');
+                    }),
+                TextColumn::make('installments_summary')
+                    ->label('الدفعات')
+                    ->html()
+                    ->state(function (PropertyCard $record): HtmlString {
+                        if ($record->installments->isEmpty()) {
+                            return new HtmlString('<span class="text-gray-500">—</span>');
+                        }
+
+                        $rows = $record->installments
+                            ->map(fn (PropertyInstallment $installment): string => $this->formatInstallmentRow($installment))
+                            ->implode('');
+
+                        return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
+                    }),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
+    }
+
+    protected function formatSignalRow(Signal $signal): string
+    {
+        $signalNumber = e($signal->signal_id ?: '—');
+        $signalType = e($signal->type ?: '—');
+        $signalDate = e($signal->signal_date?->format('Y-m-d') ?: '—');
+
+        return <<<HTML
+<div class="rounded-md border border-gray-200 bg-gray-50 p-2 text-right leading-6">
+    <div><span class="font-semibold">رقم الإشارة:</span> {$signalNumber}</div>
+    <div><span class="font-semibold">النوع:</span> {$signalType}</div>
+    <div><span class="font-semibold">التاريخ:</span> {$signalDate}</div>
+</div>
+HTML;
+    }
+
+    protected function formatFileRow(PropertyCardFile $file): string
+    {
+        $name = e($file->file_name ?: '—');
+        $downloadUrl = e(route('property-card-files.download', $file));
+
+        return <<<HTML
+<li>
+    <a href="{$downloadUrl}" class="text-primary-600 hover:underline" download>{$name}</a>
+</li>
+HTML;
+    }
+
+    protected function formatInstallmentRow(PropertyInstallment $installment): string
+    {
+        $amount = e(number_format((float) ($installment->amount ?? 0), 2));
+        $date = e($installment->payment_date?->format('Y-m-d') ?: '—');
+        $remaining = e(number_format((float) ($installment->remaining_after_payment ?? 0), 2));
+
+        return <<<HTML
+<div class="rounded-md border border-gray-200 bg-gray-50 p-2 text-right leading-6">
+    <div><span class="font-semibold">المبلغ:</span> {$amount}</div>
+    <div><span class="font-semibold">التاريخ:</span> {$date}</div>
+    <div><span class="font-semibold">المتبقي:</span> {$remaining}</div>
+</div>
+HTML;
     }
 
     protected function formatOperationRow(PropertyOperation $operation): string
