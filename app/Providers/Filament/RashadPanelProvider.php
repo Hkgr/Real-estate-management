@@ -29,7 +29,6 @@ class RashadPanelProvider extends PanelProvider
             ->login()
             ->default()
             ->font('Cairo')
-            ->defaultDateDisplayFormat('d/m/Y')
             ->maxContentWidth('full')
             ->viteTheme('resources/css/filament/rashad/theme.css')
             ->colors([
