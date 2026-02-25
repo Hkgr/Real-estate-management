@@ -2328,7 +2328,7 @@ protected function renderUploadedFiles(): HtmlString
 
         $name = e($file->file_name ?? '—');
 
-        $issuedAt = $file->issued_at?->format('Y-m-d');
+        $issuedAt = $file->issued_at?->format('d/m/Y');
         $issuedLabel = $issuedAt
             ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>"
             : '';

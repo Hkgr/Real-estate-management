@@ -133,7 +133,7 @@ class PropertyCardsTablePage2 extends Page implements HasTable
     {
         $signalNumber = e($signal->signal_id ?: '—');
         $signalType = e($signal->type ?: '—');
-        $signalDate = e($signal->signal_date?->format('Y-m-d') ?: '—');
+        $signalDate = e($signal->signal_date?->format('d/m/Y') ?: '—');
 
         return <<<HTML
 <div class="rounded-md border border-gray-200 bg-gray-50 p-2 text-right leading-6">
@@ -159,7 +159,7 @@ HTML;
     protected function formatInstallmentRow(PropertyInstallment $installment): string
     {
         $amount = e(number_format((float) ($installment->amount ?? 0), 2));
-        $date = e($installment->payment_date?->format('Y-m-d') ?: '—');
+        $date = e($installment->payment_date?->format('d/m/Y') ?: '—');
         $remaining = e(number_format((float) ($installment->remaining_after_payment ?? 0), 2));
 
         return <<<HTML

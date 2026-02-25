@@ -34,7 +34,7 @@ class SignalsTable
                     ->searchable(),
                 TextColumn::make('signal_source_date')
                     ->label('تاريخ الجهة')
-                    ->date()
+                    ->date('d/m/Y')
                     ->sortable(),
                 TextColumn::make('signal_victims_label')
                     ->label('المتضرّرون')
