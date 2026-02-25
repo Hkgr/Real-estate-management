@@ -499,7 +499,7 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                     ->label('الحصة الكلية للدكتور عبد القادر السنكري')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->dehydrated(false)
+                                    ->dehydrated(true)
                                     ->live(onBlur: true)
                                     ->suffix('سهم')
                                     ->extraAttributes([
@@ -510,7 +510,7 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                     ->label('الحصة الكاملة لرياض عسلي')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->dehydrated(false)
+                                    ->dehydrated(true)
                                     ->live(onBlur: true)
                                     ->suffix('سهم')
                                     ->extraAttributes([
@@ -1696,6 +1696,8 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $this->data = [
             'card_status' => 'active',
             'owned_property_value_usd' => 0,
+            'abdulqader_sankari_total_shares' => null,
+            'riyad_asali_total_shares' => null,
             'remaining_balance' => 0,
             'ownerships' => [],
             'signals' => [],
