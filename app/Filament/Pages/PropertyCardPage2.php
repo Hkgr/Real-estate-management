@@ -46,7 +46,10 @@ class PropertyCardPage2 extends Page implements HasSchemas
 {
     use InteractsWithSchemas;
 
+    protected const TOTAL_SHARES_REFERENCE = 2400.0;
+
     protected bool $isSyncingOperationDetails = false;
+    protected bool $isSyncingOwnedPropertyValue = false;
     protected static ?string $title = 'بطاقة العقار';
     protected static ?string $navigationLabel = 'بطاقة العقار (الإصدار الثاني)';
     protected static UnitEnum|string|null $navigationGroup = 'العقارات';
@@ -98,6 +101,17 @@ public function updated(string $propertyName): void
         $this->syncAllOperationConversionLines();
     }
 
+    if ($propertyName === 'data.owned_property_value_usd' && ! $this->isSyncingOwnedPropertyValue) {
+        data_set($this->data, 'owned_value_manually_overridden', true);
+    }
+
+    if (in_array($propertyName, [
+        'data.total_property_value_usd',
+        'data.abdulqader_sankari_total_shares',
+    ], true)) {
+        $this->recalculateOwnedPropertyValueFromShares();
+    }
+
     if (! str_starts_with($propertyName, 'data.')) {
         return;
     }
@@ -107,6 +121,37 @@ public function updated(string $propertyName): void
     } catch (ValidationException) {
         // Filament/Livewire سيعرض الأخطاء
     }
+}
+
+protected function recalculateOwnedPropertyValueFromShares(bool $force = false): void
+{
+    $isManuallyOverridden = (bool) data_get($this->data, 'owned_value_manually_overridden', false);
+
+    if (! $force && $isManuallyOverridden) {
+        return;
+    }
+
+    $calculatedValue = $this->calculateOwnedPropertyValueUsd(
+        (float) data_get($this->data, 'total_property_value_usd', 0),
+        (float) data_get($this->data, 'abdulqader_sankari_total_shares', 0),
+    );
+
+    $this->isSyncingOwnedPropertyValue = true;
+    data_set($this->data, 'owned_property_value_usd', $calculatedValue);
+    data_set($this->data, 'owned_value_manually_overridden', false);
+    $this->isSyncingOwnedPropertyValue = false;
+}
+
+protected function calculateOwnedPropertyValueUsd(float $totalPropertyValueUsd, float $abdulqaderShares): float
+{
+    if ($totalPropertyValueUsd <= 0 || $abdulqaderShares <= 0 || static::TOTAL_SHARES_REFERENCE <= 0) {
+        return 0.0;
+    }
+
+    return round(
+        $totalPropertyValueUsd * ($abdulqaderShares / static::TOTAL_SHARES_REFERENCE),
+        2,
+    );
 }
     protected function syncOperationConversionLine(string $operationKey): void
 {
@@ -569,6 +614,7 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                 ->minValue(0)
                                 ->maxValue(9999999999.99)
                                 ->live(onBlur: true)
+                                ->helperText('تُحتسب تلقائياً وفق المعادلة: قيمة العقار الكلية × (حصة عبد القادر ÷ 2400)، ويمكن تعديلها يدوياً عند الحاجة.')
                                 ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('installments_total_paid')
@@ -1673,6 +1719,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             'abdulqader_sankari_total_shares' => null,
             'riyad_asali_total_shares' => null,
             'remaining_balance' => 0,
+            'owned_value_manually_overridden' => false,
             'ownerships' => [],
             'signals' => [],
             'operations' => [],
@@ -1904,6 +1951,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                             'signals',
                             'installments',
                             'files',
+                            'owned_value_manually_overridden',
                         ]);
 
                         // ✅ DB transaction (مثل باقي الأقسام)
@@ -2103,6 +2151,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         'signals',
         'installments',
         'files',
+        'owned_value_manually_overridden',
     ]);
 
     // 7) DB transaction
@@ -2299,6 +2348,7 @@ protected function loadRecordIntoForm(PropertyCard $record): void
     $payload['remaining_balance'] = $ownedPropertyValueUsd - $totalPaid;
     // للإبقاء على التوافق مع أي استخدامات قديمة لـ final_balance.
     $payload['final_balance'] = $payload['remaining_balance'];
+    $payload['owned_value_manually_overridden'] = false;
 
 
     // =========================
