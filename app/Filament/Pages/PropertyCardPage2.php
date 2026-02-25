@@ -76,6 +76,16 @@ public function updated(string $propertyName): void
     // تغيير مساحة العقار → حدّث كل التحويلات
     if ($propertyName === 'data.card_total_area') {
         $this->syncAllOperationConversionLines();
+        $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
+        $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
+    }
+
+    if ($propertyName === 'data.abdulqader_sankari_total_shares') {
+        $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
+    }
+
+    if ($propertyName === 'data.riyad_asali_total_shares') {
+        $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
     }
 
     // أي تعديل داخل العمليات (UUID أو رقم) على amount أو unit → حدّث سطر العملية نفسها
@@ -191,6 +201,46 @@ protected function syncAllOperationConversionLines(): void
     foreach (array_keys($operations) as $key) {
         $this->syncOperationConversionLine((string) $key);
     }
+}
+
+protected function syncSpecialSharesDetailsLine(string $field, string $label): void
+{
+    $shares = (float) data_get($this->data, $field, 0);
+    $totalArea = (float) data_get($this->data, 'card_total_area', 0);
+
+    $line = null;
+
+    if ($shares > 0 && $totalArea > 0) {
+        $sqmPerShare = $totalArea / 2400;
+        $sharesPretty = $this->normalizeNumericValue($shares);
+        $sqmPretty = $this->normalizeNumericValue($shares * $sqmPerShare);
+        $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
+
+        $line = $label . ': '
+            . $sharesPretty . ' سهم ≈ ' . $sqmPretty . ' م²'
+            . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
+    }
+
+    $this->upsertSpecialSharesDetailsLine($label, $line);
+}
+
+protected function upsertSpecialSharesDetailsLine(string $label, ?string $line): void
+{
+    $prefix = $label . ':';
+    $details = (string) data_get($this->data, 'card_property_details', '');
+
+    $lines = array_values(array_filter(
+        preg_split('/\R/u', $details) ?: [],
+        fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
+    ));
+
+    if (filled($line)) {
+        $lines[] = $line;
+    }
+
+    $this->isSyncingOperationDetails = true;
+    data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
+    $this->isSyncingOperationDetails = false;
 }
 
 protected function operationConversionLinePrefix(string $tag): string
@@ -443,6 +493,31 @@ protected function operationConversionTag(string $operationKey, array $row): str
                 Section::make('عمليات العقار')
                     ->collapsible()
                     ->schema([
+                        Grid::make(12)
+                            ->schema([
+                                TextInput::make('abdulqader_sankari_total_shares')
+                                    ->label('الحصة الكلية للدكتور عبد القادر السنكري')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->dehydrated(false)
+                                    ->live(onBlur: true)
+                                    ->suffix('سهم')
+                                    ->extraAttributes([
+                                        'class' => 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-400/40 rounded-lg px-3 py-2',
+                                    ])
+                                    ->columnSpan(['default' => 12, 'md' => 6]),
+                                TextInput::make('riyad_asali_total_shares')
+                                    ->label('الحصة الكاملة لرياض عسلي')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->dehydrated(false)
+                                    ->live(onBlur: true)
+                                    ->suffix('سهم')
+                                    ->extraAttributes([
+                                        'class' => 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-400/40 rounded-lg px-3 py-2',
+                                    ])
+                                    ->columnSpan(['default' => 12, 'md' => 6]),
+                            ]),
                         $this->operationsRepeater(),
                     ]),
 
@@ -809,10 +884,11 @@ protected function operationsRepeater(): Repeater
                     ->options([
                         'court_judgment' => 'حكم محكمة',
                         'regular_contract' => 'عقد عادي',
+                        'commercial_register_contract' => 'عقد سجل عقاري',
                     ])
                     ->live()
                     ->required()
-                    ->in(['court_judgment', 'regular_contract'])
+                    ->in(['court_judgment', 'regular_contract', 'commercial_register_contract'])
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Grid::make(12)
@@ -837,7 +913,6 @@ protected function operationsRepeater(): Repeater
                             ->columnSpan(['default' => 12, 'md' => 3]),
                         Textarea::make('judgment_notes')
                             ->label('ملاحظات الحكم')
-                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
@@ -862,6 +937,26 @@ protected function operationsRepeater(): Repeater
                             ->columnSpanFull(),
                     ])
                     ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                    ->columnSpanFull(),
+
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('commercial_contract_number')
+                            ->label('رقم العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                        DatePicker::make('commercial_contract_date')
+                            ->label('تاريخ العقد')
+                            ->native(false)
+                            ->displayFormat('d/m/Y')
+                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                        Textarea::make('commercial_contract_notes')
+                            ->label('ملاحظات العقد')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
@@ -2195,6 +2290,12 @@ protected function loadRecordIntoForm(PropertyCard $record): void
                 $row['regular_contract_date'] = $operation->contract_date;
             }
 
+            if ($operation->operation_method === 'commercial_register_contract') {
+                $row['commercial_contract_number'] = $operation->contract_number;
+                $row['commercial_contract_date'] = $operation->contract_date;
+                $row['commercial_contract_notes'] = $operation->contract_notes;
+            }
+
             $row['witnesses'] = $operation->witnesses
                 ->mapWithKeys(fn ($witness): array => [Str::uuid()->toString() => ['name' => $witness->witness_name]])
                 ->all();
@@ -2792,14 +2893,22 @@ public function deleteUploadedFile(int $fileId): void
                     'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
                     'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
                     'judgment_notes' => $method === 'court_judgment' ? ($row['judgment_notes'] ?? null) : null,
-                    'contract_number' => $method === 'regular_contract'
-                        ? ($row['contract_number'] ?? $row['regular_contract_number'] ?? null)
+                    'contract_number' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_number']
+                            ?? $row['regular_contract_number']
+                            ?? $row['commercial_contract_number']
+                            ?? null)
                         : null,
-                    'contract_date' => $method === 'regular_contract'
-                        ? ($row['contract_date'] ?? $row['regular_contract_date'] ?? null)
+                    'contract_date' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_date']
+                            ?? $row['regular_contract_date']
+                            ?? $row['commercial_contract_date']
+                            ?? null)
 
                         : null,
-                    'contract_notes' => $method === 'regular_contract' ? ($row['contract_notes'] ?? null) : null,
+                    'contract_notes' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_notes'] ?? $row['commercial_contract_notes'] ?? null)
+                        : null,
                     'old_owners' => collect($oldOwners)
                         ->map(function ($item): int {
                             if (is_array($item)) {
@@ -3178,6 +3287,9 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         'contract_date',
         'regular_contract_number',
         'regular_contract_date',
+        'commercial_contract_number',
+        'commercial_contract_date',
+        'commercial_contract_notes',
         'old_owners',
         'new_owners',
         'witnesses',
@@ -3208,7 +3320,7 @@ protected function persistOperations(PropertyCard $record, array $rows): void
 
         $method = (string) ($data['operation_method'] ?? '');
 
-        if (! in_array($method, ['court_judgment', 'regular_contract'], true)) {
+        if (! in_array($method, ['court_judgment', 'regular_contract', 'commercial_register_contract'], true)) {
             continue;
         }
 
@@ -3216,6 +3328,18 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         if ($method === 'regular_contract') {
             $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
             $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
+            $data['contract_notes'] = $data['contract_notes'] ?? null;
+            $data['case_number'] = null;
+            $data['decision_number'] = null;
+            $data['authority'] = null;
+            $data['judgment_date'] = null;
+            $data['judgment_notes'] = null;
+        }
+
+        if ($method === 'commercial_register_contract') {
+            $data['contract_number'] = $data['commercial_contract_number'] ?? $data['contract_number'] ?? null;
+            $data['contract_date'] = $data['commercial_contract_date'] ?? $data['contract_date'] ?? null;
+            $data['contract_notes'] = $data['commercial_contract_notes'] ?? $data['contract_notes'] ?? null;
             $data['case_number'] = null;
             $data['decision_number'] = null;
             $data['authority'] = null;
@@ -3268,6 +3392,9 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         unset(
             $data['regular_contract_number'],
             $data['regular_contract_date'],
+            $data['commercial_contract_number'],
+            $data['commercial_contract_date'],
+            $data['commercial_contract_notes'],
             $data['old_owners'],
             $data['new_owners'],
             $data['witnesses']
