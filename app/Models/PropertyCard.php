@@ -18,6 +18,8 @@ class PropertyCard extends Model
         'card_property_number',
         'card_total_area',
         'owned_property_value_usd',
+        'abdulqader_sankari_total_shares',
+        'riyad_asali_total_shares',
         'card_status',
         'card_investment_type',
         'card_purchase_method',
@@ -30,6 +32,8 @@ class PropertyCard extends Model
     protected $casts = [
         'card_total_area' => 'decimal:2',
         'owned_property_value_usd' => 'decimal:2',
+        'abdulqader_sankari_total_shares' => 'decimal:2',
+        'riyad_asali_total_shares' => 'decimal:2',
         'card_sale_date' => 'date',
         'card_purchase_method' => 'string',
         'card_record_number' => 'string',
