@@ -28,7 +28,6 @@ class ViewerPanelProvider extends PanelProvider
             ->path('viewer')
             ->login()
             ->font('Cairo')
-            ->defaultDateDisplayFormat('d/m/Y')
             ->maxContentWidth('full')
             ->colors([
                 'primary' => Color::Blue,
