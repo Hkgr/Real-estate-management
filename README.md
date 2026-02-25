@@ -57,3 +57,36 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## File Storage Policy (Private vs Public)
+
+### 1) `FILESYSTEM_DISK=local` is private storage
+When `FILESYSTEM_DISK=local`, files are stored under `storage/app/private` (see `config/filesystems.php`) and are treated as **private files**.
+These files are **not** meant to be served directly by nginx/apache from a public URL.
+
+### 2) Official access path: route/controller only
+Private files must be downloaded or previewed only through application routes/controllers (for example: `property-card-files.download` handled by `PropertyCardFileDownloadController`).
+Do not expose direct filesystem paths for private files.
+
+### 3) Startup/runtime diagnostics for read failures
+The download controller logs `disk`, `path`, and `disk_root` whenever file reads fail. This helps diagnose server-side issues such as:
+- wrong storage path
+- wrong disk configuration
+- missing file
+- permissions problems
+
+### 4) If you need public files, use `public` disk explicitly
+If a file should be publicly accessible, store it explicitly on the `public` disk and create the symbolic link:
+
+```bash
+php artisan storage:link
+```
+
+Do not mix private (`local`) and public (`public`) access patterns for the same file workflow.
+
+### 5) Server permissions checklist
+On production/staging servers, ensure the web/PHP user can write to:
+- `storage/app/private`
+- `storage/framework`
+- `bootstrap/cache`
+

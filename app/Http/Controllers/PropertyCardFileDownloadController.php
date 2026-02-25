@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PropertyCardFile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -13,11 +14,22 @@ class PropertyCardFileDownloadController extends Controller
     {
         $disk = $propertyCardFile->storage_disk;
         $path = $propertyCardFile->storage_path;
+        $diskRoot = filled($disk) ? config("filesystems.disks.{$disk}.root") : null;
+        $fileExists = filled($disk) && filled($path)
+            ? Storage::disk($disk)->exists($path)
+            : false;
 
-        abort_unless(
-            filled($disk) && filled($path) && Storage::disk($disk)->exists($path),
-            404,
-        );
+        if (! $fileExists) {
+            Log::warning('Property card file read failed.', [
+                'property_card_file_id' => $propertyCardFile->id,
+                'disk' => $disk,
+                'path' => $path,
+                'disk_root' => $diskRoot,
+                'download_mode' => $request->boolean('preview') ? 'preview' : 'download',
+            ]);
+
+            abort(404);
+        }
 
         $fileName = $propertyCardFile->file_name ?: basename($path);
 
