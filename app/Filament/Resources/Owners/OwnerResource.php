@@ -115,6 +115,7 @@ class OwnerResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with(['creator', 'updater'])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 

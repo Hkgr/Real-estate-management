@@ -28,7 +28,7 @@ class PropertyCardsTablePage2 extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(PropertyCard::query()->with(['operations', 'signals', 'files', 'installments'])->latest('id'))
+            ->query(PropertyCard::query()->with(['operations', 'signals', 'files', 'installments', 'creator', 'updater'])->latest('id'))
             ->columns([
                                 TextColumn::make('row_number')
                     ->label('تسلسل')
@@ -124,6 +124,26 @@ class PropertyCardsTablePage2 extends Page implements HasTable
 
                         return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
                     }),
+                TextColumn::make('creator.name')
+                    ->label('أضيف بواسطة')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label('تاريخ الإضافة')
+                    ->dateTime('d/m/Y h:i A')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updater.name')
+                    ->label('آخر تعديل بواسطة')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->label('تاريخ آخر تعديل')
+                    ->dateTime('d/m/Y h:i A')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);

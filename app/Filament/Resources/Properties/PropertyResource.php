@@ -142,6 +142,15 @@ public static function infolist(Schema $schema): Schema
     ]);
 }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['creator', 'updater'])
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
