@@ -337,6 +337,19 @@ protected function operationConversionTag(string $operationKey, array $row): str
         }
     }
 
+    protected function formatDateTimeForDisplay(mixed $date): string
+    {
+        if (! filled($date)) {
+            return '-';
+        }
+
+        try {
+            return Carbon::parse((string) $date)->format('d/m/Y H:i');
+        } catch (\Throwable) {
+            return (string) $date;
+        }
+    }
+
 
     // =========================
     // Form
@@ -409,6 +422,26 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                             && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
                                     ));
                                 })
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_created_by')
+                                ->label('أُدخلت بواسطة')
+                                ->content(fn (Get $get): string => (string) ($get('created_by_name') ?: '-'))
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_updated_by')
+                                ->label('آخر تعديل بواسطة')
+                                ->content(fn (Get $get): string => (string) ($get('updated_by_name') ?: '-'))
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_created_at')
+                                ->label('تاريخ الإدخال')
+                                ->content(fn (Get $get): string => (string) ($get('created_at_label') ?: '-'))
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_updated_at')
+                                ->label('تاريخ آخر تعديل')
+                                ->content(fn (Get $get): string => (string) ($get('updated_at_label') ?: '-'))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                         ]),
@@ -1725,6 +1758,10 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             'operations' => [],
             'installments' => [],
             'files' => [],
+            'created_by_name' => null,
+            'updated_by_name' => null,
+            'created_at_label' => null,
+            'updated_at_label' => null,
         ];
 
         $this->form->fill($this->data);
@@ -2289,9 +2326,13 @@ protected function loadRecordIntoForm(PropertyCard $record): void
     $this->currentRecordId = $record->id;
 
 
-    $record->load('ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
+    $record->load('creator', 'updater', 'ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
 
     $payload = $record->attributesToArray();
+    $payload['created_by_name'] = $record->creator?->name ?? '-';
+    $payload['updated_by_name'] = $record->updater?->name ?? '-';
+    $payload['created_at_label'] = $this->formatDateTimeForDisplay($record->created_at);
+    $payload['updated_at_label'] = $this->formatDateTimeForDisplay($record->updated_at);
 
     // =========================
     // ownerships (UUID keyed + keep id)
