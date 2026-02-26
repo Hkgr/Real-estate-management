@@ -8,6 +8,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Signal extends Model
 {
+    protected static function booted(): void
+    {
+        static::creating(function (Signal $signal): void {
+            if (auth()->check()) {
+                $signal->created_by = auth()->id();
+                $signal->updated_by = auth()->id();
+            }
+        });
+
+        static::updating(function (Signal $signal): void {
+            if (auth()->check()) {
+                $signal->updated_by = auth()->id();
+            }
+        });
+    }
+
       protected $fillable = [
         'signal_id',
         'signal_date',
@@ -22,6 +38,8 @@ class Signal extends Model
         'signal_victim',
         'property_id',
         'property_card_id',
+        'created_by',
+        'updated_by',
     ];
     protected $casts = [
         'signal_owners' => 'array',
@@ -29,6 +47,17 @@ class Signal extends Model
     'signal_date'        => 'date',
     'signal_source_date' => 'date',
     ];
+
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 
     public function property(): BelongsTo
     {
