@@ -65,6 +65,30 @@ class PropertiesTable
                     ->label('الموقع')
                     ->limit(40)
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('creator.name')
+                    ->label('أضيف بواسطة')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->label('تاريخ الإضافة')
+                    ->dateTime('d/m/Y h:i A')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('updater.name')
+                    ->label('آخر تعديل بواسطة')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('updated_at')
+                    ->label('تاريخ آخر تعديل')
+                    ->dateTime('d/m/Y h:i A')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TrashedFilter::make(),
