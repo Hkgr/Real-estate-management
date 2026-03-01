@@ -30,44 +30,52 @@ class PropertyCardsTablePage2 extends Page implements HasTable
         return $table
             ->query(PropertyCard::query()->with(['operations', 'signals', 'files', 'installments', 'creator', 'updater'])->latest('id'))
             ->columns([
-                                TextColumn::make('row_number')
+                TextColumn::make('row_number')
                     ->label('تسلسل')
                     ->state(function (mixed $record, mixed $rowLoop, HasTable $livewire): int {
                         $currentPage = (int) ($livewire->getTablePage() ?? 1);
                         $perPage = (int) ($livewire->getTableRecordsPerPage() ?? 10);
 
                         return (($currentPage - 1) * $perPage) + $rowLoop->iteration;
-                    }),
+                    })
+                    ->toggleable(),
 
                 TextColumn::make('id')
                     ->label('#')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('card_record_number')
                     ->label('المحضر')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('card_governorate')
                     ->label('المحافظة')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('card_region_name')
                     ->label('المنطقة العقارية')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('card_subdivision')
                     ->label('المقسم')
                     ->toggleable(),
                 TextColumn::make('card_total_area')
                     ->label('مساحة العقار الكلية')
-                    ->formatStateUsing(fn ($state): string => filled($state) ? number_format((float) $state, 2) : '—'),
+                    ->formatStateUsing(fn ($state): string => filled($state) ? number_format((float) $state, 2) : '—')
+                    ->toggleable(),
                 TextColumn::make('card_google_maps_url')
                     ->label('رابط موقع العقار')
                     ->formatStateUsing(fn (?string $state): string => filled($state) ? $state : '—')
                     ->url(fn (?string $state): ?string => filled($state) ? $state : null, shouldOpenInNewTab: true)
                     ->limit(30)
-                    ->tooltip(fn (?string $state): ?string => filled($state) ? $state : null),
+                    ->tooltip(fn (?string $state): ?string => filled($state) ? $state : null)
+                    ->toggleable(),
                 TextColumn::make('card_property_details')
                     ->label('بيانات تفصيلية')
                     ->wrap()
                     ->limit(60)
-                    ->tooltip(fn (?string $state): ?string => filled($state) ? $state : null),
+                    ->tooltip(fn (?string $state): ?string => filled($state) ? $state : null)
+                    ->toggleable(),
                 TextColumn::make('operations_summary')
                     ->label('العمليات')
                     ->html()
@@ -81,7 +89,8 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                             ->implode('');
 
                         return new HtmlString('<div class="min-w-[24rem] space-y-2">' . $rows . '</div>');
-                    }),
+                    })
+                    ->toggleable(),
                 TextColumn::make('signals_summary')
                     ->label('الإشارات')
                     ->html()
@@ -95,7 +104,8 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                             ->implode('');
 
                         return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
-                    }),
+                    })
+                    ->toggleable(),
                 TextColumn::make('files_summary')
                     ->label('ملحقات البطاقة')
                     ->html()
@@ -109,7 +119,8 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                             ->implode('');
 
                         return new HtmlString('<ul class="min-w-[18rem] list-disc space-y-1 pr-4">' . $rows . '</ul>');
-                    }),
+                    })
+                    ->toggleable(),
                 TextColumn::make('installments_summary')
                     ->label('الدفعات')
                     ->html()
@@ -123,7 +134,8 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                             ->implode('');
 
                         return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
-                    }),
+                    })
+                    ->toggleable(),
                 TextColumn::make('creator.name')
                     ->label('أضيف بواسطة')
                     ->placeholder('-')
