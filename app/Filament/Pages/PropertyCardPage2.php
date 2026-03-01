@@ -1053,14 +1053,14 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
         ->prefixIcon('heroicon-o-user')
         ->native(false)
         ->searchable()
-        ->searchPrompt('اكتب أول حرفين على الأقل ليظهر الاقتراح، ثم اضغط Tab للاختيار السريع')
-        ->noSearchResultsMessage('ابدأ بكتابة حرفين على الأقل للبحث عن الأسماء')
+        ->searchPrompt('ابدأ الكتابة ليظهر الاقتراح تلقائياً، ثم اضغط Tab للاختيار السريع')
+        ->noSearchResultsMessage('لا توجد نتائج مطابقة، يمكنك إنشاء مالك جديد')
         ->preload()
         ->options(fn () => $this->getAllOwnerOptions())
         ->getSearchResultsUsing(function (string $search): array {
-                       $search = trim($search);
+            $search = trim($search);
 
-            if (mb_strlen($search) < 2) {
+            if (mb_strlen($search) < 1) {
                 return [];
             }
 
@@ -1091,6 +1091,16 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->required(fn (Get $get) => $get('owner_type') === 'individual')
                 ->maxLength(200)
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'owner_type' => $get('owner_type'),
+                        'full_name' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->columnSpanFull(),
 
             TextInput::make('company_name')
@@ -1100,6 +1110,16 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->visible(fn (Get $get) => $get('owner_type') === 'company')
                 ->required(fn (Get $get) => $get('owner_type') === 'company')
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'owner_type' => $get('owner_type'),
+                        'company_name' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             TextInput::make('commercial_register_number')
@@ -1109,6 +1129,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->visible(fn (Get $get) => $get('owner_type') === 'company')
                 ->required(fn (Get $get) => $get('owner_type') === 'company')
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'commercial_register_number' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             $this->dmyDateInput('birth_date', 'تاريخ الميلاد')
@@ -1122,6 +1151,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->required(fn (Get $get) => $get('owner_type') === 'individual')
                 ->maxLength(50)
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'national_id' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->unique(Owner::class, 'national_id'),
 
             TextInput::make('phone')
@@ -1131,6 +1169,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->maxLength(50)
                 ->nullable()
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'phone' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             TextInput::make('email')
@@ -1140,6 +1187,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->maxLength(150)
                 ->nullable()
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'email' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             Toggle::make('is_active')
@@ -1154,6 +1210,62 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
     }
 
     return $field;
+}
+
+private function findOwnerForAutofill(array $lookup): ?Owner
+{
+    $ownerType = $lookup['owner_type'] ?? null;
+    $nationalId = trim((string) ($lookup['national_id'] ?? ''));
+    $commercialRegister = trim((string) ($lookup['commercial_register_number'] ?? ''));
+    $phone = trim((string) ($lookup['phone'] ?? ''));
+    $email = trim((string) ($lookup['email'] ?? ''));
+    $fullName = trim((string) ($lookup['full_name'] ?? ''));
+    $companyName = trim((string) ($lookup['company_name'] ?? ''));
+
+    if ($nationalId !== '') {
+        return Owner::query()->where('national_id', $nationalId)->first();
+    }
+
+    if ($commercialRegister !== '') {
+        return Owner::query()->where('commercial_register_number', $commercialRegister)->first();
+    }
+
+    if ($email !== '') {
+        return Owner::query()->where('email', $email)->first();
+    }
+
+    if ($phone !== '') {
+        return Owner::query()->where('phone', $phone)->first();
+    }
+
+    if ($ownerType === 'individual' && $fullName !== '' && mb_strlen($fullName) >= 3) {
+        return Owner::query()
+            ->where('owner_type', 'individual')
+            ->where('full_name', $fullName)
+            ->first();
+    }
+
+    if ($ownerType === 'company' && $companyName !== '' && mb_strlen($companyName) >= 3) {
+        return Owner::query()
+            ->where('owner_type', 'company')
+            ->where('company_name', $companyName)
+            ->first();
+    }
+
+    return null;
+}
+
+private function fillOwnerCreateFormFromExistingOwner(Owner $owner, callable $set): void
+{
+    $set('owner_type', $owner->owner_type ?: 'individual');
+    $set('full_name', $owner->full_name);
+    $set('company_name', $owner->company_name);
+    $set('commercial_register_number', $owner->commercial_register_number);
+    $set('birth_date', $owner->birth_date ? Carbon::parse($owner->birth_date)->format('Y-m-d') : null);
+    $set('national_id', $owner->national_id);
+    $set('phone', $owner->phone);
+    $set('email', $owner->email);
+    $set('is_active', (bool) $owner->is_active);
 }
 
 
