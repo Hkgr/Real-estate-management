@@ -75,9 +75,11 @@ public function updated(string $propertyName): void
         return;
     }
 
+    $this->removeOperationConversionDetailsLines();
+
     // تغيير مساحة العقار → حدّث كل التحويلات
     if ($propertyName === 'data.card_total_area') {
-        $this->syncAllOperationConversionLines();
+        $this->recalculateOperationsTotalShares();
         $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
         $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
     }
@@ -90,14 +92,14 @@ public function updated(string $propertyName): void
         $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
     }
 
-    // أي تعديل داخل العمليات (UUID أو رقم) على amount أو unit → حدّث سطر العملية نفسها
-    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName, $m) === 1) {
-        $this->syncOperationConversionLine((string) $m[1]);
+    // أي تعديل داخل العمليات على amount أو unit → حدّث مجموع الأسهم
+    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName) === 1) {
+        $this->recalculateOperationsTotalShares();
     }
 
-    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث الكل
+    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث المجموع
     if (str_starts_with($propertyName, 'data.operations') && ! str_contains($propertyName, '.transaction_')) {
-        $this->syncAllOperationConversionLines();
+        $this->recalculateOperationsTotalShares();
     }
 
     if ($propertyName === 'data.owned_property_value_usd' && ! $this->isSyncingOwnedPropertyValue) {
@@ -120,6 +122,74 @@ public function updated(string $propertyName): void
     } catch (ValidationException) {
         // Filament/Livewire سيعرض الأخطاء
     }
+}
+
+protected function recalculateOperationsTotalShares(): void
+{
+    $operations = data_get($this->data, 'operations', []);
+
+    if (! is_array($operations)) {
+        data_set($this->data, 'operations_total_shares', 0);
+        return;
+    }
+
+    $totalArea = (float) data_get($this->data, 'card_total_area', 0);
+    $sqmPerShare = $totalArea > 0 ? $totalArea / static::TOTAL_SHARES_REFERENCE : 0;
+
+    $sum = 0.0;
+
+    foreach ($operations as $row) {
+        if (! is_array($row)) {
+            continue;
+        }
+
+        $amount = (float) ($row['transaction_amount'] ?? 0);
+        $unit = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+
+        if ($amount <= 0 || ! filled($unit)) {
+            continue;
+        }
+
+        if ($unit === 'shares') {
+            $sum += $amount;
+            continue;
+        }
+
+        if ($unit === 'square_meter' && $sqmPerShare > 0) {
+            $sum += $amount / $sqmPerShare;
+            continue;
+        }
+
+        if ($unit === 'percentage') {
+            $sum += static::TOTAL_SHARES_REFERENCE * ($amount / 100);
+        }
+    }
+
+    data_set($this->data, 'operations_total_shares', round($sum, 2));
+}
+
+protected function removeOperationConversionDetailsLines(): void
+{
+    $details = (string) data_get($this->data, 'card_property_details', '');
+
+    if ($details === '') {
+        return;
+    }
+
+    $lines = preg_split('/\R/u', $details) ?: [];
+
+    $filtered = array_values(array_filter(
+        $lines,
+        fn (string $line): bool => ! str_starts_with(trim($line), 'تحويل مقدار التصرّف (')
+    ));
+
+    if (count($filtered) === count($lines)) {
+        return;
+    }
+
+    $this->isSyncingOperationDetails = true;
+    data_set($this->data, 'card_property_details', implode(PHP_EOL, $filtered));
+    $this->isSyncingOperationDetails = false;
 }
 
 protected function recalculateOwnedPropertyValueFromShares(bool $force = false): void
@@ -151,100 +221,6 @@ protected function calculateOwnedPropertyValueUsd(float $totalPropertyValueUsd, 
         $totalPropertyValueUsd * ($abdulqaderShares / static::TOTAL_SHARES_REFERENCE),
         2,
     );
-}
-    protected function syncOperationConversionLine(string $operationKey): void
-{
-    $operations = data_get($this->data, 'operations', []);
-    $totalArea  = (float) data_get($this->data, 'card_total_area', 0);
-
-    if (! is_array($operations) || $totalArea <= 0) {
-        $this->removeOperationConversionLine($operationKey);
-        return;
-    }
-
-    if (! isset($operations[$operationKey]) || ! is_array($operations[$operationKey])) {
-        $this->removeOperationConversionLine($operationKey);
-        return;
-    }
-
-    $row   = $operations[$operationKey];
-    $amount = (float) ($row['transaction_amount'] ?? 0);
-    $unit   = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
-
-    $sqmPerShare = $totalArea / 2400;
-
-    $line = null;
-
-    if ($amount > 0 && $sqmPerShare > 0 && in_array($unit, ['shares', 'square_meter'], true)) {
-        $tag    = $this->operationConversionTag($operationKey, $row); // ثابت
-        $prefix = $this->operationConversionLinePrefix($tag);
-
-        $amountPretty     = $this->normalizeNumericValue($amount);
-        $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
-
-        if ($unit === 'shares') {
-            $converted = $amount * $sqmPerShare;
-            $convertedPretty = $this->normalizeNumericValue($converted);
-
-            $line = $prefix . ' '
-                . $amountPretty . ' سهم ≈ ' . $convertedPretty . ' م²'
-                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
-        }
-
-        if ($unit === 'square_meter') {
-            $converted = $amount / $sqmPerShare;
-            $convertedPretty = $this->normalizeNumericValue($converted);
-
-            $line = $prefix . ' '
-                . $amountPretty . ' م² ≈ ' . $convertedPretty . ' سهم'
-                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
-        }
-    }
-
-    $this->upsertOperationConversionLine($operationKey, $line);
-}
-
-protected function upsertOperationConversionLine(string $operationKey, ?string $line): void
-{
-    $operations = data_get($this->data, 'operations', []);
-    $row = is_array($operations) && isset($operations[$operationKey]) && is_array($operations[$operationKey])
-        ? $operations[$operationKey]
-        : [];
-
-    $tag = $this->operationConversionTag($operationKey, $row);
-    $prefix = $this->operationConversionLinePrefix($tag);
-
-    $details = (string) data_get($this->data, 'card_property_details', '');
-    $lines = array_values(array_filter(
-        preg_split('/\R/u', $details) ?: [],
-        fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
-    ));
-
-    if (filled($line)) {
-        $lines[] = $line;
-    }
-
-    $this->isSyncingOperationDetails = true;
-    data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
-    $this->isSyncingOperationDetails = false;
-}
-
-protected function removeOperationConversionLine(string $operationKey): void
-{
-    $this->upsertOperationConversionLine($operationKey, null);
-}
-
-protected function syncAllOperationConversionLines(): void
-{
-    $operations = data_get($this->data, 'operations', []);
-
-    if (! is_array($operations)) {
-        return;
-    }
-
-    foreach (array_keys($operations) as $key) {
-        $this->syncOperationConversionLine((string) $key);
-    }
 }
 
 protected function syncSpecialSharesDetailsLine(string $field, string $label): void
@@ -286,26 +262,6 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
     data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
     $this->isSyncingOperationDetails = false;
 }
-
-protected function operationConversionLinePrefix(string $tag): string
-{
-    return 'تحويل مقدار التصرّف (' . $tag . '):';
-}
-
-protected function operationConversionTag(string $operationKey, array $row): string
-{
-    // إذا العملية محفوظة ولها id استخدمه (أفضل)
-    if (filled($row['id'] ?? null)) {
-        return 'ID' . (int) $row['id'];
-    }
-
-
-    // وإلا استخدم جزء ثابت من UUID
-    $clean = preg_replace('/[^a-zA-Z0-9]/', '', (string) $operationKey);
-    return 'UI' . substr($clean, 0, 10);
-}
-
-
 
     protected function normalizeNumericValue(float $value): string
     {
@@ -623,6 +579,14 @@ protected function operationConversionTag(string $operationKey, array $row): str
                     ->schema([
                         Grid::make(12)
                             ->schema([
+                                TextInput::make('operations_total_shares')
+                                    ->label('مجموع الأسهم للعمليات')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->dehydrated(true)
+                                    ->live(onBlur: true)
+                                    ->suffix('سهم')
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
                                 TextInput::make('abdulqader_sankari_total_shares')
                                     ->label('الحصة الكلية للدكتور عبد القادر السنكري')
                                     ->numeric()
@@ -633,7 +597,7 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                     ->extraAttributes([
                                         'class' => 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-400/40 rounded-lg px-3 py-2',
                                     ])
-                                    ->columnSpan(['default' => 12, 'md' => 6]),
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
                                 TextInput::make('riyad_asali_total_shares')
                                     ->label('الحصة الكاملة لرياض عسلي')
                                     ->numeric()
@@ -644,7 +608,7 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                     ->extraAttributes([
                                         'class' => 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-400/40 rounded-lg px-3 py-2',
                                     ])
-                                    ->columnSpan(['default' => 12, 'md' => 6]),
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
                             ]),
                         $this->operationsRepeater(),
                     ]),
@@ -1778,6 +1742,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $this->data = [
             'card_status' => 'active',
             'owned_property_value_usd' => 0,
+            'operations_total_shares' => 0,
             'abdulqader_sankari_total_shares' => null,
             'riyad_asali_total_shares' => null,
             'remaining_balance' => 0,
@@ -2526,6 +2491,10 @@ protected function loadRecordIntoForm(PropertyCard $record): void
 
     // الملفات لا نملؤها من DB (واجهة فقط)
     $payload['files'] = [[]];
+
+    $this->data = $payload;
+    $this->recalculateOperationsTotalShares();
+    $payload['operations_total_shares'] = data_get($this->data, 'operations_total_shares', 0);
 
     $this->form->model($record)->fill($payload);
 }
