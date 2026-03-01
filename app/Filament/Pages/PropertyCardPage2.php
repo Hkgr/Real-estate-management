@@ -1053,9 +1053,17 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
         ->prefixIcon('heroicon-o-user')
         ->native(false)
         ->searchable()
+        ->searchPrompt('اكتب أول حرفين على الأقل ليظهر الاقتراح، ثم اضغط Tab للاختيار السريع')
+        ->noSearchResultsMessage('ابدأ بكتابة حرفين على الأقل للبحث عن الأسماء')
         ->preload()
         ->options(fn () => $this->getAllOwnerOptions())
         ->getSearchResultsUsing(function (string $search): array {
+                       $search = trim($search);
+
+            if (mb_strlen($search) < 2) {
+                return [];
+            }
+
             return Owner::query()
                 ->where(function ($q) use ($search) {
                     $q->where('full_name', 'like', "%{$search}%")
@@ -1220,8 +1228,9 @@ protected function signalsRepeater(): Repeater
                         'حجز' => 'حجز',
                         'دعوى' => 'دعوى',
                         'استيفاء رسوم' => 'استيفاء رسوم',
-                        'أخرى' => 'أخرى',
+                        'تأمين' => 'تأمين',
                         'استملاك' => 'استملاك',
+                        'أخرى' => 'أخرى',
                     ])
                     ->required()
                     ->columnSpan(['default' => 12, 'md' => 6]),
