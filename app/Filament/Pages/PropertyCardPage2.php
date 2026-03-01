@@ -7,7 +7,6 @@ use App\Models\Owner;
 use App\Models\PropertyOperation;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -350,6 +349,83 @@ protected function operationConversionTag(string $operationKey, array $row): str
         }
     }
 
+    protected function dmyDateInput(string $name, string $label): TextInput
+    {
+        return TextInput::make($name)
+            ->label($label)
+            ->placeholder('dd-mm-yyyy')
+            ->helperText('اكتب 8 أرقام: يوم(2) ثم شهر(2) ثم سنة(4) — مثال: 05032026')
+            ->extraInputAttributes([
+                'inputmode' => 'numeric',
+                'dir' => 'ltr',
+                'maxlength' => 10,
+                'x-on:input' => <<<'JS'
+                    const digits = ($el.value ?? '').replace(/\D/g, '').slice(0, 8);
+                    let out = '';
+
+                    if (digits.length <= 2) {
+                        out = digits;
+                    } else if (digits.length <= 4) {
+                        out = digits.slice(0, 2) + '-' + digits.slice(2);
+                    } else {
+                        out = digits.slice(0, 2) + '-' + digits.slice(2, 4) + '-' + digits.slice(4);
+                    }
+
+                    $el.value = out;
+                JS,
+            ], merge: true)
+            ->formatStateUsing(function ($state) {
+                if (! filled($state)) {
+                    return null;
+                }
+
+                try {
+                    return Carbon::parse((string) $state)->format('d-m-Y');
+                } catch (\Throwable) {
+                    return (string) $state;
+                }
+            })
+            ->dehydrateStateUsing(function ($state) {
+                $state = is_string($state) ? trim($state) : $state;
+
+                if (! filled($state)) {
+                    return null;
+                }
+
+                try {
+                    $dt = Carbon::createFromFormat('d-m-Y', (string) $state);
+
+                    if ($dt->format('d-m-Y') !== $state) {
+                        return $state;
+                    }
+
+                    return $dt->format('Y-m-d');
+                } catch (\Throwable) {
+                    return $state;
+                }
+            })
+            ->rule(function (): \Closure {
+                return function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! filled($value)) {
+                        return;
+                    }
+
+                    $value = trim((string) $value);
+
+                    try {
+                        $dt = Carbon::createFromFormat('d-m-Y', $value);
+
+                        if ($dt->format('d-m-Y') !== $value) {
+                            $fail('صيغة التاريخ يجب أن تكون dd-mm-yyyy مثل 31-12-2026.');
+                        }
+                    } catch (\Throwable) {
+                        $fail('صيغة التاريخ يجب أن تكون dd-mm-yyyy مثل 31-12-2026.');
+                    }
+                };
+            })
+            ->live(onBlur: true);
+    }
+
 
     // =========================
     // Form
@@ -599,13 +675,8 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                         ->placeholder('مثال: سند الملكية')
                                         ->columnSpan(['default' => 12, 'md' => 5]),
 
-                                    DatePicker::make('file_issued_at')
-                                        ->label('تاريخ الإصدار')
-                                        ->native(true)
-                                        ->displayFormat('d-m-Y')
+                                    $this->dmyDateInput('file_issued_at', 'تاريخ الإصدار')
                                         ->nullable()
-                                        ->live(onBlur: true)
-                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                         ->columnSpan(['default' => 12, 'md' => 3]),
 
                                     FileUpload::make('file_upload')
@@ -754,13 +825,8 @@ protected function ownershipsRepeater(): Repeater
                     ->live()
                     ->columnSpan(['default' => 6, 'md' => 3]),
 
-                DatePicker::make('purchase_date')
-                    ->label('تاريخ الشراء')
-                    ->native(true)
-                    ->displayFormat('d-m-Y')
+                $this->dmyDateInput('purchase_date', 'تاريخ الشراء')
                     ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                     ->columnSpan(['default' => 6, 'md' => 3]),
 
                 Select::make('purchase_method')
@@ -776,12 +842,8 @@ protected function ownershipsRepeater(): Repeater
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                     ->columnSpan(['default' => 12, 'md' => 6]),
 
-                DatePicker::make('sale_date')
-                    ->label('تاريخ البيع')
-                    ->native(true)
-                    ->displayFormat('d-m-Y')
+                $this->dmyDateInput('sale_date', 'تاريخ البيع')
                     ->nullable()
-                    ->live(onBlur: true)
                     ->visible(fn (Get $get) => ! (bool) $get('is_current'))
                     ->dehydrateStateUsing(fn ($state, Get $get) => (bool) $get('is_current') ? null : (filled($state) ? $state : null))
                     ->columnSpan(['default' => 12, 'md' => 3]),
@@ -818,12 +880,8 @@ protected function ownershipsRepeater(): Repeater
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 4]),
 
-                        DatePicker::make('judgment_date')
-                            ->label('تاريخ الحكم')
-                            ->native(true)
-                            ->displayFormat('d-m-Y')
+                        $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
                             ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 2]),
                     ])
@@ -835,12 +893,8 @@ protected function ownershipsRepeater(): Repeater
                 // =========================
                 Grid::make(12)
                     ->schema([
-                        DatePicker::make('regular_contract_date')
-                            ->label('تاريخ العقد')
-                            ->native(true)
-                            ->displayFormat('d-m-Y')
+                        $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
                             ->required(fn (Get $get) => $get('purchase_method') === 'regular_contract')
-                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'regular_contract' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 6]),
                     ])
@@ -861,12 +915,8 @@ protected function ownershipsRepeater(): Repeater
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 6]),
 
-                        DatePicker::make('commercial_contract_date')
-                            ->label('تاريخ عقد السجل')
-                            ->native(true)
-                            ->displayFormat('d-m-Y')
+                        $this->dmyDateInput('commercial_contract_date', 'تاريخ عقد السجل')
                             ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
-                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 6]),
                     ])
@@ -958,10 +1008,7 @@ protected function operationsRepeater(): Repeater
                             ->label('الجهة')
                             ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->columnSpan(['default' => 12, 'md' => 3]),
-                        DatePicker::make('judgment_date')
-                            ->label('تاريخ الحكم')
-                            ->native(true)
-                            ->displayFormat('d-m-Y')
+                        $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
                             ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->columnSpan(['default' => 12, 'md' => 3]),
                         Textarea::make('judgment_notes')
@@ -978,10 +1025,7 @@ protected function operationsRepeater(): Repeater
                             ->label('رقم العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
-                        DatePicker::make('regular_contract_date')
-                            ->label('تاريخ العقد')
-                            ->native(true)
-                            ->displayFormat('d-m-Y')
+                        $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
                         Textarea::make('contract_notes')
@@ -998,10 +1042,7 @@ protected function operationsRepeater(): Repeater
                             ->label('رقم العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
-                        DatePicker::make('commercial_contract_date')
-                            ->label('تاريخ العقد')
-                            ->native(true)
-                            ->displayFormat('d-m-Y')
+                        $this->dmyDateInput('commercial_contract_date', 'تاريخ العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
                         Textarea::make('commercial_contract_notes')
@@ -1098,14 +1139,9 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->live(onBlur: true)
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-            DatePicker::make('birth_date')
-                ->label('تاريخ الميلاد')
-                ->native(true)
-                ->displayFormat('d-m-Y')
+            $this->dmyDateInput('birth_date', 'تاريخ الميلاد')
                 ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                ->nullable()
-                ->live(onBlur: true)
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                ->nullable(),
 
             TextInput::make('national_id')
                 ->label('الرقم الوطني')
@@ -1207,12 +1243,8 @@ protected function signalsRepeater(): Repeater
                     ->live(onBlur: true)
                     ->columnSpan(['default' => 12, 'md' => 3]),
 
-                DatePicker::make('signal_date')
-                    ->label('تاريخ الإشارة')
-                    ->native(true)
-                    ->displayFormat('d-m-Y')
+                $this->dmyDateInput('signal_date', 'تاريخ الإشارة')
                     ->required()
-                    ->live(onBlur: true)
                     ->columnSpan(['default' => 12, 'md' => 3]),
 
                 Select::make('type')
@@ -1682,10 +1714,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->minValue(0)
                     ->live(onBlur: true),
 
-                DatePicker::make('payment_date')
-                    ->label('التاريخ')
-                    ->native(true)
-                    ->displayFormat('d-m-Y')
+                $this->dmyDateInput('payment_date', 'التاريخ')
                     ->required()
                     ->live(debounce: 300),
 
