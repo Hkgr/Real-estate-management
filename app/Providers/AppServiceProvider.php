@@ -19,15 +19,18 @@ class AppServiceProvider extends ServiceProvider
         DatePicker::configureUsing(function (DatePicker $component): void {
             $panelId = Filament::getCurrentPanel()?->getId();
             $format = config("filament_defaults.date_display_format.$panelId")
-                ?? config('filament_defaults.date_display_format.default', 'd/m/Y');
+                ?? config('filament_defaults.date_display_format.default', 'd-m-Y');
 
-            $component->displayFormat($format);
+            $component
+                ->native(false)
+                ->displayFormat($format)
+                ->placeholder('يوم - شهر - سنة');
         });
 
         DateTimePicker::configureUsing(function (DateTimePicker $component): void {
             $panelId = Filament::getCurrentPanel()?->getId();
             $format = config("filament_defaults.date_display_format.$panelId")
-                ?? config('filament_defaults.date_display_format.default', 'd/m/Y');
+                ?? config('filament_defaults.date_display_format.default', 'd-m-Y');
 
             $component->displayFormat($format);
         });
