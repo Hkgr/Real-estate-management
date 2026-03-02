@@ -28,7 +28,16 @@ class PropertyCardsTablePage2 extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(PropertyCard::query()->with(['operations', 'signals', 'files', 'installments', 'creator', 'updater'])->latest('id'))
+            ->query(PropertyCard::query()->with([
+                'operations.oldOwners',
+                'operations.newOwners',
+                'operations.witnesses',
+                'signals',
+                'files',
+                'installments',
+                'creator',
+                'updater',
+            ])->latest('id'))
             ->columns([
                 TextColumn::make('row_number')
                     ->label('تسلسل')
@@ -80,15 +89,22 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                     ->label('العمليات')
                     ->html()
                     ->state(function (PropertyCard $record): HtmlString {
-                        if ($record->operations->isEmpty()) {
-                            return new HtmlString('<span class="text-gray-500">—</span>');
+                        $operationsCount = $record->operations->count();
+
+                        if ($operationsCount === 0) {
+                            return new HtmlString('<span class="text-gray-500">عدد العمليات: 0</span>');
                         }
 
                         $rows = $record->operations
                             ->map(fn (PropertyOperation $operation): string => $this->formatOperationRow($operation))
                             ->implode('');
 
-                        return new HtmlString('<div class="min-w-[24rem] space-y-2">' . $rows . '</div>');
+                        return new HtmlString(<<<HTML
+<details class="min-w-[24rem] rounded-md border border-gray-200 bg-white p-2 text-right">
+    <summary class="cursor-pointer font-semibold text-primary-600">عدد العمليات: {$operationsCount}</summary>
+    <div class="mt-2 space-y-2">{$rows}</div>
+</details>
+HTML);
                     })
                     ->toggleable(),
                 TextColumn::make('signals_summary')
@@ -231,12 +247,35 @@ HTML;
         $type = e($typeLabel);
         $amountText = e($amount);
         $methodText = e($methodDetails);
+        $decisionNumber = e($operation->decision_number ?: '—');
+        $authority = e($operation->authority ?: '—');
+        $judgmentDate = e($operation->judgment_date?->format('d/m/Y') ?: '—');
+        $judgmentNotes = e($operation->judgment_notes ?: '—');
+        $contractDate = e($operation->contract_date?->format('d/m/Y') ?: '—');
+        $contractNotes = e($operation->contract_notes ?: '—');
+
+        $oldOwners = $operation->oldOwners->pluck('owner_name')->filter()->join('، ');
+        $newOwners = $operation->newOwners->pluck('owner_name')->filter()->join('، ');
+        $witnesses = $operation->witnesses->pluck('witness_name')->filter()->join('، ');
+
+        $oldOwnersText = e($oldOwners !== '' ? $oldOwners : '—');
+        $newOwnersText = e($newOwners !== '' ? $newOwners : '—');
+        $witnessesText = e($witnesses !== '' ? $witnesses : '—');
 
         return <<<HTML
 <div class="rounded-md border border-gray-200 bg-gray-50 p-2 text-right leading-6">
     <div><span class="font-semibold">نوع العملية:</span> {$type}</div>
     <div><span class="font-semibold">مقدار التصرّف:</span> {$amountText}</div>
     <div><span class="font-semibold">طريقة العملية:</span> {$methodText}</div>
+    <div><span class="font-semibold">رقم القرار:</span> {$decisionNumber}</div>
+    <div><span class="font-semibold">المرجع/الجهة:</span> {$authority}</div>
+    <div><span class="font-semibold">تاريخ الحكم:</span> {$judgmentDate}</div>
+    <div><span class="font-semibold">ملاحظات الحكم:</span> {$judgmentNotes}</div>
+    <div><span class="font-semibold">تاريخ العقد:</span> {$contractDate}</div>
+    <div><span class="font-semibold">ملاحظات العقد:</span> {$contractNotes}</div>
+    <div><span class="font-semibold">المالكون السابقون:</span> {$oldOwnersText}</div>
+    <div><span class="font-semibold">المالكون الجدد:</span> {$newOwnersText}</div>
+    <div><span class="font-semibold">الشهود:</span> {$witnessesText}</div>
 </div>
 HTML;
     }
