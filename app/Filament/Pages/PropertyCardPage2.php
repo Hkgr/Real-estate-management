@@ -398,22 +398,21 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                     ->visible(fn () => filled($this->currentRecordId))
                     ->schema([
                         Grid::make(12)->schema([
-                            Placeholder::make('summary_owners')
-                                ->label('الملاك')
+                            Placeholder::make('summary_operations')
+                                ->label('عدد العمليات')
                                 ->content(function (Get $get): string {
-                                    $ownerships = $get('ownerships') ?? [];
-
-                                    if (! is_array($ownerships)) {
+                                    $operations = $get('operations') ?? [];
+                                    if (! is_array($operations)) {
                                         return '0';
                                     }
 
                                     return (string) count(array_filter(
-                                        $ownerships,
-                                        fn ($ownership) => is_array($ownership)
-                                            && (! blank($ownership['owner_id'] ?? null) || ! blank($ownership['owner_name'] ?? null))
+                                        $operations,
+                                        fn ($operation) => is_array($operation) && ! blank($operation['operation_type'] ?? null)
+
                                     ));
                                 })
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_signals')
                                 ->label('الإشارات')
@@ -429,15 +428,15 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                         fn ($signal) => is_array($signal) && ! blank($signal['signal_type'] ?? null)
                                     ));
                                 })
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_files')
-                                ->label('الملفات')
+                                ->label('الملحقات')
                                 ->content(fn () => $this->currentRecordId
                                     ? (string) PropertyCardFile::where('property_card_id', $this->currentRecordId)->count()
                                     : '0'
                                 )
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_installments')
                                 ->label('الدفعات')
@@ -454,6 +453,7 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                             && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
                                     ));
                                 })
+                            
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_created_by')
