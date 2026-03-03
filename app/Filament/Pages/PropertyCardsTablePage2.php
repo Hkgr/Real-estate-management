@@ -2,21 +2,29 @@
 
 namespace App\Filament\Pages;
 
+use App\Exports\PropertyCardsExport;
 use App\Models\PropertyCard;
 use App\Models\PropertyCardFile;
 use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\RecordCheckboxPosition;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
+
 
 class PropertyCardsTablePage2 extends Page implements HasTable
 {
@@ -180,41 +188,66 @@ HTML);
             ->recordCheckboxPosition(RecordCheckboxPosition::BeforeCells)
             ->selectCurrentPageOnly(false)
             ->toolbarActions([
+                Action::make('export_visible')
+                    ->label('تصدير المعروض')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(fn (): BinaryFileResponse => $this->exportVisibleRecords()),
                 BulkActionGroup::make([
                     BulkAction::make('export_selected')
                         ->label('تصدير المحدد')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (\Illuminate\Support\Collection $records): StreamedResponse {
-                            $fileName = 'property-cards-selected-' . now()->format('Ymd_His') . '.csv';
-
-                            return response()->streamDownload(function () use ($records): void {
-                                $stream = fopen('php://output', 'w');
-
-                                // (اختياري لكن مفيد لفتح CSV بالعربية على Excel)
-                                fwrite($stream, "\xEF\xBB\xBF");
-
-                                fputcsv($stream, ['ID', 'رقم المحضر', 'المحافظة', 'المنطقة العقارية', 'المقسم']);
-
-                                foreach ($records as $record) {
-                                    fputcsv($stream, [
-                                        $record->id,
-                                        $record->card_record_number,
-                                        $record->card_governorate,
-                                        $record->card_region_name,
-                                        $record->card_subdivision,
-                                    ]);
-                                }
-
-                                fclose($stream);
-                            }, $fileName, [
-                                'Content-Type' => 'text/csv; charset=UTF-8',
-                            ]);
-                        }),
+                        ->action(fn (Collection $records): BinaryFileResponse => $this->exportSelectedRecords($records)),
                 ]),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
+    }
+    protected function exportVisibleRecords(): BinaryFileResponse
+    {
+        try {
+            /** @var Builder<PropertyCard> $query */
+            $query = $this->getFilteredSortedTableQuery();
+
+            Notification::make()
+                ->title('تم تجهيز تصدير السجلات المعروضة.')
+                ->success()
+                ->send();
+
+            return Excel::download(new PropertyCardsExport(query: $query), 'property-cards-visible.xlsx');
+        } catch (\Throwable $throwable) {
+            report($throwable);
+
+            Notification::make()
+                ->title('فشل تصدير السجلات المعروضة.')
+                ->danger()
+                ->send();
+
+            throw $throwable;
+        }
+    }
+
+    protected function exportSelectedRecords(Collection $records): BinaryFileResponse
+    {
+        try {
+            $selectedIds = $records->pluck('id')->all();
+
+            Notification::make()
+                ->title('تم تجهيز تصدير السجلات المحددة.')
+                ->success()
+                ->send();
+
+            return Excel::download(new PropertyCardsExport(selectedIds: $selectedIds), 'property-cards-selected.xlsx');
+        } catch (\Throwable $throwable) {
+            report($throwable);
+
+            Notification::make()
+                ->title('فشل تصدير السجلات المحددة.')
+                ->danger()
+                ->send();
+
+            throw $throwable;
+        }
     }
 
     protected function formatSignalRow(Signal $signal): string
