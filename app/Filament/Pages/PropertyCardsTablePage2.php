@@ -6,6 +6,7 @@ namespace App\Filament\Pages;
 
 use App\Exports\PropertyCardsExport;
 use App\Models\PropertyCard;
+use App\Services\PropertyCardsPdfExporter;
 use App\Models\PropertyCardFile;
 use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
@@ -23,6 +24,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class PropertyCardsTablePage2 extends Page implements HasTable
@@ -209,13 +211,18 @@ HTML);
                     ->label('تصدير إلى إكسل')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-
-                    // ✅ هذا يجعل Action يقرأ المحددات
                     ->accessSelectedRecords()
-
-                    // زر واحد: إذا فيه تحديد يصدر المحدد، وإذا لا فيه تحديد يصدر كل النتائج (حسب الفلاتر والترتيب)
                     ->action(function (Collection $selectedRecords): BinaryFileResponse {
                         return $this->exportExcel($selectedRecords);
+                    }),
+
+                Action::make('export_pdf')
+                    ->label('تصدير إلى PDF')
+                    ->icon('heroicon-o-document-text')
+                    ->color('warning')
+                    ->accessSelectedRecords()
+                    ->action(function (Collection $selectedRecords): Response {
+                        return $this->exportTableRecordsPdf($selectedRecords);
                     }),
             ])
             ->defaultSort('id', 'desc')
@@ -253,6 +260,45 @@ HTML);
                 new PropertyCardsExport(query: $query),
                 'property-cards-all.xlsx'
             );
+        } catch (Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->title('فشل تصدير البيانات.')
+                ->danger()
+                ->send();
+
+            throw $e;
+        }
+    }
+
+    protected function exportTableRecordsPdf(Collection $selectedRecords): Response
+    {
+        try {
+            $selectedIds = $selectedRecords->pluck('id')->all();
+
+            if ($selectedIds !== []) {
+                Notification::make()
+                    ->title('تم تجهيز تصدير السجلات المحددة.')
+                    ->body('سيتم تصدير السجلات التي قمت بتحديدها فقط.')
+                    ->success()
+                    ->send();
+
+                return (new PropertyCardsPdfExporter(selectedIds: $selectedIds))
+                    ->download('property-cards-selected.pdf');
+            }
+
+            /** @var Builder<PropertyCard> $query */
+            $query = $this->getFilteredSortedTableQuery();
+
+            Notification::make()
+                ->title('تم تجهيز تصدير السجلات.')
+                ->body('لا توجد سجلات محددة، لذلك سيتم تصدير كل السجلات حسب الفلاتر والترتيب الحالي.')
+                ->success()
+                ->send();
+
+            return (new PropertyCardsPdfExporter(query: $query))
+                ->download('property-cards-all.pdf');
         } catch (Throwable $e) {
             report($e);
 
