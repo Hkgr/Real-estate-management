@@ -1,19 +1,49 @@
 <x-filament-panels::page>
     <style>
-/*        [x-cloak]{ display:none !important; }
-
-        @keyframes fiFadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+        [x-cloak] {
+            display: none !important;
         }
 
-        .fi-fade-up { animation: fiFadeUp .45s ease-out both; }
-        .fi-delay-1 { animation-delay: .05s; }
-        .fi-delay-2 { animation-delay: .12s; }
-        .fi-delay-3 { animation-delay: .18s; }
+        @keyframes invalidFieldPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, .35);
+            }
 
-        .fi-soft-hover { transition: transform .2s ease, box-shadow .2s ease; }
-        .fi-soft-hover:hover { transform: translateY(-2px); } */
+            70% {
+                box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+            }
+        }
+
+        .fi-soft-hover {
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .fi-soft-hover:hover {
+            transform: translateY(-2px);
+        }
+
+        /* إبراز أي حقل فيه خطأ باللون الأحمر */
+        .fi-page:has([wire\:key*="property-card-page-2"]) input[aria-invalid="true"],
+        .fi-page:has([wire\:key*="property-card-page-2"]) textarea[aria-invalid="true"],
+        .fi-page:has([wire\:key*="property-card-page-2"]) select[aria-invalid="true"] {
+            border-color: rgb(220 38 38) !important;
+            box-shadow: 0 0 0 1px rgba(220, 38, 38, .55), 0 0 0 6px rgba(248, 113, 113, .18) !important;
+            animation: invalidFieldPulse 1.2s ease-out infinite;
+        }
+
+        /* توضيح رسالة السبب بشكل أوضح */
+        .fi-page:has([wire\:key*="property-card-page-2"]) .fi-fo-field-wrp-error-message {
+            font-weight: 700;
+            color: rgb(185 28 28) !important;
+        }
+
+        .fi-page:has([wire\:key*="property-card-page-2"]) .fi-fo-field-wrp-error-message::before {
+            content: 'سبب الخطأ: ';
+        }
     </style>
 
     @php
@@ -205,6 +235,17 @@
             x-transition:enter-start="opacity-0 translate-y-2"
             x-transition:enter-end="opacity-100 translate-y-0"
         >
+            @if ($errors->any())
+                <div class="mb-4 rounded-xl border border-danger-300 bg-danger-50 p-3 text-sm text-danger-700 dark:border-danger-700 dark:bg-danger-950/40 dark:text-danger-300">
+                    <p class="mb-2 font-semibold">يرجى تصحيح الحقول التالية:</p>
+                    <ul class="list-disc space-y-1 pe-5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{ $this->form }}
                     <x-filament::section
             class="sticky top-2 z-20 fi-soft-hover border border-gray-200/70 dark:border-gray-700/70"
@@ -241,5 +282,4 @@
     </div>
     
 </x-filament-panels::page>
-
 

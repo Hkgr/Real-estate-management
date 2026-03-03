@@ -4,12 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Owner extends Model
 {
     use SoftDeletes;
     protected static function booted(): void
     {
+        static::creating(function (Owner $owner): void {
+            if (auth()->check()) {
+                $owner->created_by = auth()->id();
+                $owner->updated_by = auth()->id();
+            }
+        });
+
+        static::updating(function (Owner $owner): void {
+            if (auth()->check()) {
+                $owner->updated_by = auth()->id();
+            }
+        });
+
         static::saving(function (Owner $owner): void {
             if ($owner->owner_type === 'company' && blank($owner->full_name)) {
                 $owner->full_name = (string) ($owner->company_name ?? '');
@@ -28,6 +42,8 @@ class Owner extends Model
         'phone',
         'email',
         'is_active',
+        'created_by',
+        'updated_by',
     ];
     protected $casts = [
         'birth_date' => 'date',
@@ -46,6 +62,17 @@ class Owner extends Model
         }
 
         return $this->full_name;
+    }
+
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     public function properties()

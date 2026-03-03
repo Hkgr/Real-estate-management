@@ -3,12 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Property extends Model
 {
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Property $property): void {
+            if (auth()->check()) {
+                $property->created_by = auth()->id();
+                $property->updated_by = auth()->id();
+            }
+        });
+
+        static::updating(function (Property $property): void {
+            if (auth()->check()) {
+                $property->updated_by = auth()->id();
+            }
+        });
+    }
 
     protected $fillable = [
         'region_name',
@@ -21,6 +38,8 @@ class Property extends Model
         'location',
         'latitude',
         'longitude',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -54,6 +73,16 @@ class Property extends Model
     public function signals(): HasMany
     {
         return $this->hasMany(Signal::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
 

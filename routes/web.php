@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\PropertyCardFileDownloadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/__probe_cookie', function () {
@@ -19,4 +19,8 @@ Route::get('/__headers_sent', function () {
         . " file=" . ($file ?? '-')
         . " line=" . ($line ?? '-')
         . PHP_EOL;
+});
+Route::middleware('auth')->group(function (): void {
+    Route::get('/property-card-files/{propertyCardFile}/download', [PropertyCardFileDownloadController::class, 'download'])
+        ->name('property-card-files.download');
 });

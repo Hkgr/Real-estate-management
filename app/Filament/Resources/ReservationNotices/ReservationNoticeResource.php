@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ReservationNotices;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\ReservationNotices\Pages\CreateReservationNotice;
 use App\Filament\Resources\ReservationNotices\Pages\EditReservationNotice;
 use App\Filament\Resources\ReservationNotices\Pages\ListReservationNotices;
@@ -15,9 +16,12 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ReservationNoticeResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
     protected static ?string $navigationLabel = 'إدارة إشارات الحجز';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-bookmark-square';
     protected static ?int $navigationSort = 20;
@@ -49,6 +53,12 @@ class ReservationNoticeResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['creator', 'updater']);
     }
 
     public static function getPages(): array

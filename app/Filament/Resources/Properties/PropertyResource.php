@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Properties;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\Properties\Pages\CreateProperty;
 use App\Filament\Resources\Properties\Pages\EditProperty;
 use App\Filament\Resources\Properties\Pages\ListProperties;
@@ -22,6 +23,8 @@ use Filament\Schemas\Components\Section;
 
 class PropertyResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
 protected static ?string $model = Property::class;
 
 protected static ?string $navigationLabel = 'إدارة العقارات';
@@ -84,7 +87,7 @@ public static function infolist(Schema $schema): Schema
                 TextEntry::make('total_area')->label('مساحة العقار الكلية')->numeric(decimalPlaces: 2)->suffix(' م²'),
                 TextEntry::make('owned_area')->label('المساحة المملوكة')->numeric(decimalPlaces: 2)->suffix(' م²'),
                 TextEntry::make('ownership_percentage')->label('نسبة الملكية')->numeric(decimalPlaces: 2)->suffix(' %'),
-                TextEntry::make('purchase_date')->label('تاريخ الشراء')->date('Y-m-d'),
+                TextEntry::make('purchase_date')->label('تاريخ الشراء')->date('d/m/Y'),
             ])
             ->columnSpanFull(),
 
@@ -116,8 +119,8 @@ public static function infolist(Schema $schema): Schema
 
                             $ownershipMetricText = $ownershipMetric ?: '—';
                             $ownerStatusText = $isCurrent === null ? '—' : ($isCurrent ? 'حالي' : 'سابق');
-                            $purchaseDateText = $purchaseDate ? $purchaseDate->format('Y-m-d') : '—';
-                            $saleDateText = $saleDate ? $saleDate->format('Y-m-d') : '—';
+                            $purchaseDateText = $purchaseDate ? $purchaseDate->format('d/m/Y') : '—';
+                            $saleDateText = $saleDate ? $saleDate->format('d/m/Y') : '—';
 
                             return sprintf(
                                 '%s — نسبة التملك: %s | معيار التملك: %s | حالة المالك: %s | شراء: %s | بيع: %s',
@@ -138,6 +141,15 @@ public static function infolist(Schema $schema): Schema
 
     ]);
 }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['creator', 'updater'])
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
 
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

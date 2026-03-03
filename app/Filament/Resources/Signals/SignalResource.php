@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Signals;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\Signals\Pages\CreateSignal;
 use App\Filament\Resources\Signals\Pages\EditSignal;
 use App\Filament\Resources\Signals\Pages\ListSignals;
@@ -15,9 +16,12 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class SignalResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
 
     protected static ?string $title = 'بطاقة الإشارة';
     protected static ?string $navigationLabel = 'بطاقة الإشارة (جديدة)';
@@ -47,6 +51,12 @@ class SignalResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['creator', 'updater']);
     }
 
     public static function getPages(): array

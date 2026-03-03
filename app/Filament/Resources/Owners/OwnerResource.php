@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Owners;
 
+use App\Filament\Concerns\ReadOnlyOnViewerPanel;
 use App\Filament\Resources\Owners\Pages;
 use App\Filament\Resources\Owners\Schemas\OwnerForm;
 use App\Filament\Resources\Owners\Tables\OwnersTable;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OwnerResource extends Resource
 {
+    use ReadOnlyOnViewerPanel;
+
     protected static ?string $model = Owner::class;
 
     // ✅ فقط عنصر واحد بالنافبار
@@ -48,7 +51,7 @@ class OwnerResource extends Resource
                     TextEntry::make('owner_type')->label('نوع المالك'),
                     TextEntry::make('company_name')->label('اسم الشركة')->placeholder('—'),
                     TextEntry::make('commercial_register_number')->label('رقم السجل التجاري')->placeholder('—'),
-                    TextEntry::make('birth_date')->label('تاريخ الميلاد')->date(),
+                    TextEntry::make('birth_date')->label('تاريخ الميلاد')->date('d/m/Y'),
                     TextEntry::make('national_id')->label('الرقم الوطني'),
                     TextEntry::make('phone')->label('الهاتف')->placeholder('—'),
                     TextEntry::make('email')->label('البريد')->placeholder('—'),
@@ -85,8 +88,8 @@ class OwnerResource extends Resource
 
                                 $ownershipMetricText = $ownershipMetric ?: '—';
                                 $ownerStatusText = $isCurrent === null ? '—' : ($isCurrent ? 'حالي' : 'سابق');
-                                $purchaseDateText = $purchaseDate ? $purchaseDate->format('Y-m-d') : '—';
-                                $saleDateText = $saleDate ? $saleDate->format('Y-m-d') : '—';
+                                $purchaseDateText = $purchaseDate ? $purchaseDate->format('d/m/Y') : '—';
+                                $saleDateText = $saleDate ? $saleDate->format('d/m/Y') : '—';
 
                                 return sprintf(
                                     'عقار %s — نسبة التملك: %s | معيار التملك: %s | حالة المالك: %s | شراء: %s | بيع: %s',
@@ -112,6 +115,7 @@ class OwnerResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with(['creator', 'updater'])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 

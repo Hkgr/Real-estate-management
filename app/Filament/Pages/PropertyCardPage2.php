@@ -7,7 +7,6 @@ use App\Models\Owner;
 use App\Models\PropertyOperation;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -29,6 +28,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -46,7 +46,10 @@ class PropertyCardPage2 extends Page implements HasSchemas
 {
     use InteractsWithSchemas;
 
+    protected const TOTAL_SHARES_REFERENCE = 2400.0;
+
     protected bool $isSyncingOperationDetails = false;
+    protected bool $isSyncingOwnedPropertyValue = false;
     protected static ?string $title = 'بطاقة العقار';
     protected static ?string $navigationLabel = 'بطاقة العقار (الإصدار الثاني)';
     protected static UnitEnum|string|null $navigationGroup = 'العقارات';
@@ -73,19 +76,42 @@ public function updated(string $propertyName): void
         return;
     }
 
+    $this->removeOperationConversionDetailsLines();
+
     // تغيير مساحة العقار → حدّث كل التحويلات
     if ($propertyName === 'data.card_total_area') {
-        $this->syncAllOperationConversionLines();
+        $this->recalculateOperationsTotalShares();
+        $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
+        $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
     }
 
-    // أي تعديل داخل العمليات (UUID أو رقم) على amount أو unit → حدّث سطر العملية نفسها
-    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName, $m) === 1) {
-        $this->syncOperationConversionLine((string) $m[1]);
+    if ($propertyName === 'data.abdulqader_sankari_total_shares') {
+        $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
     }
 
-    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث الكل
+    if ($propertyName === 'data.riyad_asali_total_shares') {
+        $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
+    }
+
+    // أي تعديل داخل العمليات على amount أو unit → حدّث مجموع الأسهم
+    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName) === 1) {
+        $this->recalculateOperationsTotalShares();
+    }
+
+    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث المجموع
     if (str_starts_with($propertyName, 'data.operations') && ! str_contains($propertyName, '.transaction_')) {
-        $this->syncAllOperationConversionLines();
+        $this->recalculateOperationsTotalShares();
+    }
+
+    if ($propertyName === 'data.owned_property_value_usd' && ! $this->isSyncingOwnedPropertyValue) {
+        data_set($this->data, 'owned_value_manually_overridden', true);
+    }
+
+    if (in_array($propertyName, [
+        'data.total_property_value_usd',
+        'data.abdulqader_sankari_total_shares',
+    ], true)) {
+        $this->recalculateOwnedPropertyValueFromShares();
     }
 
     if (! str_starts_with($propertyName, 'data.')) {
@@ -98,69 +124,132 @@ public function updated(string $propertyName): void
         // Filament/Livewire سيعرض الأخطاء
     }
 }
-    protected function syncOperationConversionLine(string $operationKey): void
+
+protected function recalculateOperationsTotalShares(): void
 {
     $operations = data_get($this->data, 'operations', []);
-    $totalArea  = (float) data_get($this->data, 'card_total_area', 0);
 
-    if (! is_array($operations) || $totalArea <= 0) {
-        $this->removeOperationConversionLine($operationKey);
+    if (! is_array($operations)) {
+        data_set($this->data, 'operations_total_shares', 0);
         return;
     }
 
-    if (! isset($operations[$operationKey]) || ! is_array($operations[$operationKey])) {
-        $this->removeOperationConversionLine($operationKey);
+    $totalArea = (float) data_get($this->data, 'card_total_area', 0);
+    $sqmPerShare = $totalArea > 0 ? $totalArea / static::TOTAL_SHARES_REFERENCE : 0;
+
+    $sum = 0.0;
+
+    foreach ($operations as $row) {
+        if (! is_array($row)) {
+            continue;
+        }
+
+        $amount = (float) ($row['transaction_amount'] ?? 0);
+        $unit = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+
+        if ($amount <= 0 || ! filled($unit)) {
+            continue;
+        }
+
+        if ($unit === 'shares') {
+            $sum += $amount;
+            continue;
+        }
+
+        if ($unit === 'square_meter' && $sqmPerShare > 0) {
+            $sum += $amount / $sqmPerShare;
+            continue;
+        }
+
+        if ($unit === 'percentage') {
+            $sum += static::TOTAL_SHARES_REFERENCE * ($amount / 100);
+        }
+    }
+
+    data_set($this->data, 'operations_total_shares', round($sum, 2));
+}
+
+protected function removeOperationConversionDetailsLines(): void
+{
+    $details = (string) data_get($this->data, 'card_property_details', '');
+
+    if ($details === '') {
         return;
     }
 
-    $row   = $operations[$operationKey];
-    $amount = (float) ($row['transaction_amount'] ?? 0);
-    $unit   = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+    $lines = preg_split('/\R/u', $details) ?: [];
 
-    $sqmPerShare = $totalArea / 2400;
+    $filtered = array_values(array_filter(
+        $lines,
+        fn (string $line): bool => ! str_starts_with(trim($line), 'تحويل مقدار التصرّف (')
+    ));
+
+    if (count($filtered) === count($lines)) {
+        return;
+    }
+
+    $this->isSyncingOperationDetails = true;
+    data_set($this->data, 'card_property_details', implode(PHP_EOL, $filtered));
+    $this->isSyncingOperationDetails = false;
+}
+
+protected function recalculateOwnedPropertyValueFromShares(bool $force = false): void
+{
+    $isManuallyOverridden = (bool) data_get($this->data, 'owned_value_manually_overridden', false);
+
+    if (! $force && $isManuallyOverridden) {
+        return;
+    }
+
+    $calculatedValue = $this->calculateOwnedPropertyValueUsd(
+        (float) data_get($this->data, 'total_property_value_usd', 0),
+        (float) data_get($this->data, 'abdulqader_sankari_total_shares', 0),
+    );
+
+    $this->isSyncingOwnedPropertyValue = true;
+    data_set($this->data, 'owned_property_value_usd', $calculatedValue);
+    data_set($this->data, 'owned_value_manually_overridden', false);
+    $this->isSyncingOwnedPropertyValue = false;
+}
+
+protected function calculateOwnedPropertyValueUsd(float $totalPropertyValueUsd, float $abdulqaderShares): float
+{
+    if ($totalPropertyValueUsd <= 0 || $abdulqaderShares <= 0 || static::TOTAL_SHARES_REFERENCE <= 0) {
+        return 0.0;
+    }
+
+    return round(
+        $totalPropertyValueUsd * ($abdulqaderShares / static::TOTAL_SHARES_REFERENCE),
+        2,
+    );
+}
+
+protected function syncSpecialSharesDetailsLine(string $field, string $label): void
+{
+    $shares = (float) data_get($this->data, $field, 0);
+    $totalArea = (float) data_get($this->data, 'card_total_area', 0);
 
     $line = null;
 
-    if ($amount > 0 && $sqmPerShare > 0 && in_array($unit, ['shares', 'square_meter'], true)) {
-        $tag    = $this->operationConversionTag($operationKey, $row); // ثابت
-        $prefix = $this->operationConversionLinePrefix($tag);
-
-        $amountPretty     = $this->normalizeNumericValue($amount);
+    if ($shares > 0 && $totalArea > 0) {
+        $sqmPerShare = $totalArea / 2400;
+        $sharesPretty = $this->normalizeNumericValue($shares);
+        $sqmPretty = $this->normalizeNumericValue($shares * $sqmPerShare);
         $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
 
-        if ($unit === 'shares') {
-            $converted = $amount * $sqmPerShare;
-            $convertedPretty = $this->normalizeNumericValue($converted);
-
-            $line = $prefix . ' '
-                . $amountPretty . ' سهم ≈ ' . $convertedPretty . ' م²'
-                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
-        }
-
-        if ($unit === 'square_meter') {
-            $converted = $amount / $sqmPerShare;
-            $convertedPretty = $this->normalizeNumericValue($converted);
-
-            $line = $prefix . ' '
-                . $amountPretty . ' م² ≈ ' . $convertedPretty . ' سهم'
-                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
-        }
+        $line = $label . ': '
+            . $sharesPretty . ' سهم ≈ ' . $sqmPretty . ' م²'
+            . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
     }
 
-    $this->upsertOperationConversionLine($operationKey, $line);
+    $this->upsertSpecialSharesDetailsLine($label, $line);
 }
 
-protected function upsertOperationConversionLine(string $operationKey, ?string $line): void
+protected function upsertSpecialSharesDetailsLine(string $label, ?string $line): void
 {
-    $operations = data_get($this->data, 'operations', []);
-    $row = is_array($operations) && isset($operations[$operationKey]) && is_array($operations[$operationKey])
-        ? $operations[$operationKey]
-        : [];
-
-    $tag = $this->operationConversionTag($operationKey, $row);
-    $prefix = $this->operationConversionLinePrefix($tag);
-
+    $prefix = $label . ':';
     $details = (string) data_get($this->data, 'card_property_details', '');
+
     $lines = array_values(array_filter(
         preg_split('/\R/u', $details) ?: [],
         fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
@@ -174,44 +263,6 @@ protected function upsertOperationConversionLine(string $operationKey, ?string $
     data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
     $this->isSyncingOperationDetails = false;
 }
-
-protected function removeOperationConversionLine(string $operationKey): void
-{
-    $this->upsertOperationConversionLine($operationKey, null);
-}
-
-protected function syncAllOperationConversionLines(): void
-{
-    $operations = data_get($this->data, 'operations', []);
-
-    if (! is_array($operations)) {
-        return;
-    }
-
-    foreach (array_keys($operations) as $key) {
-        $this->syncOperationConversionLine((string) $key);
-    }
-}
-
-protected function operationConversionLinePrefix(string $tag): string
-{
-    return 'تحويل مقدار التصرّف (' . $tag . '):';
-}
-
-protected function operationConversionTag(string $operationKey, array $row): string
-{
-    // إذا العملية محفوظة ولها id استخدمه (أفضل)
-    if (filled($row['id'] ?? null)) {
-        return 'ID' . (int) $row['id'];
-    }
-
-
-    // وإلا استخدم جزء ثابت من UUID
-    $clean = preg_replace('/[^a-zA-Z0-9]/', '', (string) $operationKey);
-    return 'UI' . substr($clean, 0, 10);
-}
-
-
 
     protected function normalizeNumericValue(float $value): string
     {
@@ -227,6 +278,109 @@ protected function operationConversionTag(string $operationKey, array $row): str
         }
 
         return filled($unit) ? $unit : null;
+    }
+
+    protected function formatDateForDisplay(mixed $date): string
+    {
+        if (! filled($date)) {
+            return '';
+        }
+
+        try {
+            return Carbon::parse((string) $date)->format('d/m/Y');
+        } catch (\Throwable) {
+            return (string) $date;
+        }
+    }
+
+    protected function formatDateTimeForDisplay(mixed $date): string
+    {
+        if (! filled($date)) {
+            return '-';
+        }
+
+        try {
+            return Carbon::parse((string) $date)->format('d/m/Y');
+        } catch (\Throwable) {
+            return (string) $date;
+        }
+    }
+
+    protected function dmyDateInput(string $name, string $label): TextInput
+    {
+        return TextInput::make($name)
+            ->label($label)
+            ->placeholder('dd-mm-yyyy')
+            ->helperText('اكتب 8 أرقام: يوم(2) ثم شهر(2) ثم سنة(4) — مثال: 05032026')
+            ->extraInputAttributes([
+                'inputmode' => 'numeric',
+                'dir' => 'ltr',
+                'maxlength' => 10,
+                'x-on:input' => <<<'JS'
+                    const digits = ($el.value ?? '').replace(/\D/g, '').slice(0, 8);
+                    let out = '';
+
+                    if (digits.length <= 2) {
+                        out = digits;
+                    } else if (digits.length <= 4) {
+                        out = digits.slice(0, 2) + '-' + digits.slice(2);
+                    } else {
+                        out = digits.slice(0, 2) + '-' + digits.slice(2, 4) + '-' + digits.slice(4);
+                    }
+
+                    $el.value = out;
+                JS,
+            ], merge: true)
+            ->formatStateUsing(function ($state) {
+                if (! filled($state)) {
+                    return null;
+                }
+
+                try {
+                    return Carbon::parse((string) $state)->format('d-m-Y');
+                } catch (\Throwable) {
+                    return (string) $state;
+                }
+            })
+            ->dehydrateStateUsing(function ($state) {
+                $state = is_string($state) ? trim($state) : $state;
+
+                if (! filled($state)) {
+                    return null;
+                }
+
+                try {
+                    $dt = Carbon::createFromFormat('d-m-Y', (string) $state);
+
+                    if ($dt->format('d-m-Y') !== $state) {
+                        return $state;
+                    }
+
+                    return $dt->format('Y-m-d');
+                } catch (\Throwable) {
+                    return $state;
+                }
+            })
+            ->rule(function (): \Closure {
+                return function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! filled($value)) {
+                        return;
+                    }
+
+                    $value = trim((string) $value);
+
+                    try {
+                        $dt = Carbon::createFromFormat('d-m-Y', $value);
+
+                        if ($dt->format('d-m-Y') !== $value) {
+                            $fail('صيغة التاريخ يجب أن تكون dd-mm-yyyy مثل 31-12-2026.');
+                        }
+                    } catch (\Throwable) {
+                        $fail('صيغة التاريخ يجب أن تكون dd-mm-yyyy مثل 31-12-2026.');
+                    }
+                };
+            })
+            ->live(onBlur: true);
     }
 
 
@@ -245,22 +399,21 @@ protected function operationConversionTag(string $operationKey, array $row): str
                     ->visible(fn () => filled($this->currentRecordId))
                     ->schema([
                         Grid::make(12)->schema([
-                            Placeholder::make('summary_owners')
-                                ->label('الملاك')
+                            Placeholder::make('summary_operations')
+                                ->label('عدد العمليات')
                                 ->content(function (Get $get): string {
-                                    $ownerships = $get('ownerships') ?? [];
-
-                                    if (! is_array($ownerships)) {
+                                    $operations = $get('operations') ?? [];
+                                    if (! is_array($operations)) {
                                         return '0';
                                     }
 
                                     return (string) count(array_filter(
-                                        $ownerships,
-                                        fn ($ownership) => is_array($ownership)
-                                            && (! blank($ownership['owner_id'] ?? null) || ! blank($ownership['owner_name'] ?? null))
+                                        $operations,
+                                        fn ($operation) => is_array($operation) && ! blank($operation['operation_type'] ?? null)
+
                                     ));
                                 })
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_signals')
                                 ->label('الإشارات')
@@ -276,15 +429,15 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                         fn ($signal) => is_array($signal) && ! blank($signal['signal_type'] ?? null)
                                     ));
                                 })
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_files')
-                                ->label('الملفات')
+                                ->label('الملحقات')
                                 ->content(fn () => $this->currentRecordId
                                     ? (string) PropertyCardFile::where('property_card_id', $this->currentRecordId)->count()
                                     : '0'
                                 )
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_installments')
                                 ->label('الدفعات')
@@ -301,6 +454,35 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                             && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
                                     ));
                                 })
+                               ->columnSpan(['default' => 6, 'md' => 2]),
+
+                            Placeholder::make('summary_balance')
+                                ->label('ملخص الرصيد')
+                                ->content(function (Get $get): string {
+                                    $balance = (float) ($get('final_balance') ?? 0);
+
+                                    return '$ ' . number_format($balance, 2, '.', ',');
+                                })
+                                ->columnSpan(['default' => 12, 'md' => 4]),
+
+                            Placeholder::make('summary_created_by')
+                                ->label('أُدخلت بواسطة')
+                                ->content(fn (Get $get): string => (string) ($get('created_by_name') ?: '-'))
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_updated_by')
+                                ->label('آخر تعديل بواسطة')
+                                ->content(fn (Get $get): string => (string) ($get('updated_by_name') ?: '-'))
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_created_at')
+                                ->label('تاريخ الإدخال')
+                                ->content(fn (Get $get): string => (string) ($get('created_at_label') ?: '-'))
+                                ->columnSpan(['default' => 6, 'md' => 3]),
+
+                            Placeholder::make('summary_updated_at')
+                                ->label('تاريخ آخر تعديل')
+                                ->content(fn (Get $get): string => (string) ($get('updated_at_label') ?: '-'))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                         ]),
@@ -382,38 +564,12 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                 ->suffix('م²')
                                 ->placeholder('مثال: 400')
                                 ->columnSpan(['default' => 12, 'md' => 6]),
-                            Placeholder::make('ownership_total_hint')
-                                ->label('إجمالي التملك (حسب المعيار)')
-                                ->content(function (Get $get): string {
-                                    $rows = $get('ownerships') ?? [];
-                                    if (! is_array($rows) || count($rows) === 0) {
-                                        return '—';
-                                    }
-
-                                    $metrics = collect($rows)
-                                        ->pluck('ownership_metric')
-                                        ->filter()
-                                        ->unique()
-                                        ->values();
-
-                                    if ($metrics->count() !== 1) {
-                                        return '—';
-                                    }
-
-                                    $metric = $metrics->first();
-                                    $sum = collect($rows)->sum(fn ($r) => (float) ($r['ownership_percentage'] ?? 0));
-
-                                    $suffix = match ($metric) {
-                                        'أسهم' => 'سهم',
-                                        'نسبة مئوية' => '%',
-                                        'م²' => 'م²',
-                                        default => '',
-                                    };
-
-                                    $pretty = rtrim(rtrim(number_format($sum, 2, '.', ''), '0'), '.');
-
-                                    return $pretty === '' ? '—' : ($pretty . ' ' . $suffix);
-                                })
+                            TextInput::make('total_property_value_usd')
+                                ->label('قيمة العقار الكلية بالدولار الأمريكي')
+                                ->numeric()
+                                ->minValue(0)
+                                ->live(onBlur: true)
+                                ->suffix('$')
                                 ->columnSpan(['default' => 12, 'md' => 6]),
                         ]),
                     ]),
@@ -430,6 +586,39 @@ protected function operationConversionTag(string $operationKey, array $row): str
                 Section::make('عمليات العقار')
                     ->collapsible()
                     ->schema([
+                        Grid::make(12)
+                            ->schema([
+                                TextInput::make('operations_total_shares')
+                                    ->label('مجموع الأسهم للعمليات')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->dehydrated(true)
+                                    ->live(onBlur: true)
+                                    ->suffix('سهم')
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
+                                TextInput::make('abdulqader_sankari_total_shares')
+                                    ->label('الحصة الكلية للدكتور عبد القادر السنكري')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->dehydrated(true)
+                                    ->live(onBlur: true)
+                                    ->suffix('سهم')
+                                    ->extraAttributes([
+                                        'class' => 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-400/40 rounded-lg px-3 py-2',
+                                    ])
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
+                                TextInput::make('riyad_asali_total_shares')
+                                    ->label('الحصة الكاملة لرياض عسلي')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->dehydrated(true)
+                                    ->live(onBlur: true)
+                                    ->suffix('سهم')
+                                    ->extraAttributes([
+                                        'class' => 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-400/40 rounded-lg px-3 py-2',
+                                    ])
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
+                            ]),
                         $this->operationsRepeater(),
                     ]),
 
@@ -459,11 +648,8 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                         ->placeholder('مثال: سند الملكية')
                                         ->columnSpan(['default' => 12, 'md' => 5]),
 
-                                    DatePicker::make('file_issued_at')
-                                        ->label('تاريخ الإصدار')
+                                    $this->dmyDateInput('file_issued_at', 'تاريخ الإصدار')
                                         ->nullable()
-                                        ->live(onBlur: true)
-                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                         ->columnSpan(['default' => 12, 'md' => 3]),
 
                                     FileUpload::make('file_upload')
@@ -505,6 +691,7 @@ protected function operationConversionTag(string $operationKey, array $row): str
                                 ->minValue(0)
                                 ->maxValue(9999999999.99)
                                 ->live(onBlur: true)
+                                ->helperText('تُحتسب تلقائياً وفق المعادلة: قيمة العقار الكلية × (حصة عبد القادر ÷ 2400)، ويمكن تعديلها يدوياً عند الحاجة.')
                                 ->columnSpan(['default' => 12, 'md' => 4]),
 
                             TextInput::make('installments_total_paid')
@@ -611,11 +798,8 @@ protected function ownershipsRepeater(): Repeater
                     ->live()
                     ->columnSpan(['default' => 6, 'md' => 3]),
 
-                DatePicker::make('purchase_date')
-                    ->label('تاريخ الشراء')
+                $this->dmyDateInput('purchase_date', 'تاريخ الشراء')
                     ->nullable()
-                    ->live(onBlur: true)
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                     ->columnSpan(['default' => 6, 'md' => 3]),
 
                 Select::make('purchase_method')
@@ -631,10 +815,8 @@ protected function ownershipsRepeater(): Repeater
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                     ->columnSpan(['default' => 12, 'md' => 6]),
 
-                DatePicker::make('sale_date')
-                    ->label('تاريخ البيع')
+                $this->dmyDateInput('sale_date', 'تاريخ البيع')
                     ->nullable()
-                    ->live(onBlur: true)
                     ->visible(fn (Get $get) => ! (bool) $get('is_current'))
                     ->dehydrateStateUsing(fn ($state, Get $get) => (bool) $get('is_current') ? null : (filled($state) ? $state : null))
                     ->columnSpan(['default' => 12, 'md' => 3]),
@@ -671,10 +853,8 @@ protected function ownershipsRepeater(): Repeater
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 4]),
 
-                        DatePicker::make('judgment_date')
-                            ->label('تاريخ الحكم')
+                        $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
                             ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 2]),
                     ])
@@ -686,10 +866,8 @@ protected function ownershipsRepeater(): Repeater
                 // =========================
                 Grid::make(12)
                     ->schema([
-                        DatePicker::make('regular_contract_date')
-                            ->label('تاريخ العقد')
+                        $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
                             ->required(fn (Get $get) => $get('purchase_method') === 'regular_contract')
-                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'regular_contract' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 6]),
                     ])
@@ -710,10 +888,8 @@ protected function ownershipsRepeater(): Repeater
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 6]),
 
-                        DatePicker::make('commercial_contract_date')
-                            ->label('تاريخ عقد السجل')
+                        $this->dmyDateInput('commercial_contract_date', 'تاريخ عقد السجل')
                             ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
-                            ->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
                             ->columnSpan(['default' => 12, 'md' => 6]),
                     ])
@@ -784,10 +960,11 @@ protected function operationsRepeater(): Repeater
                     ->options([
                         'court_judgment' => 'حكم محكمة',
                         'regular_contract' => 'عقد عادي',
+                        'commercial_register_contract' => 'عقد سجل عقاري',
                     ])
                     ->live()
                     ->required()
-                    ->in(['court_judgment', 'regular_contract'])
+                    ->in(['court_judgment', 'regular_contract', 'commercial_register_contract'])
                     ->columnSpan(['default' => 12, 'md' => 4]),
 
                 Grid::make(12)
@@ -804,13 +981,11 @@ protected function operationsRepeater(): Repeater
                             ->label('الجهة')
                             ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->columnSpan(['default' => 12, 'md' => 3]),
-                        DatePicker::make('judgment_date')
-                            ->label('تاريخ الحكم')
+                        $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
                             ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->columnSpan(['default' => 12, 'md' => 3]),
                         Textarea::make('judgment_notes')
                             ->label('ملاحظات الحكم')
-                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
@@ -823,8 +998,7 @@ protected function operationsRepeater(): Repeater
                             ->label('رقم العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
-                        DatePicker::make('regular_contract_date')
-                            ->label('تاريخ العقد')
+                        $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
                             ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
                             ->columnSpan(['default' => 12, 'md' => 6]),
                         Textarea::make('contract_notes')
@@ -833,6 +1007,23 @@ protected function operationsRepeater(): Repeater
                             ->columnSpanFull(),
                     ])
                     ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
+                    ->columnSpanFull(),
+
+                Grid::make(12)
+                    ->schema([
+                        TextInput::make('commercial_contract_number')
+                            ->label('رقم العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                        $this->dmyDateInput('commercial_contract_date', 'تاريخ العقد')
+                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
+                            ->columnSpan(['default' => 12, 'md' => 6]),
+                        Textarea::make('commercial_contract_notes')
+                            ->label('ملاحظات العقد')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
                     ->columnSpanFull(),
 
                 Repeater::make('witnesses')
@@ -871,9 +1062,17 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
         ->prefixIcon('heroicon-o-user')
         ->native(false)
         ->searchable()
+        ->searchPrompt('ابدأ الكتابة ليظهر الاقتراح تلقائياً، ثم اضغط Tab للاختيار السريع')
+        ->noSearchResultsMessage('لا توجد نتائج مطابقة، يمكنك إنشاء مالك جديد')
         ->preload()
         ->options(fn () => $this->getAllOwnerOptions())
         ->getSearchResultsUsing(function (string $search): array {
+            $search = trim($search);
+
+            if (mb_strlen($search) < 1) {
+                return [];
+            }
+
             return Owner::query()
                 ->where(function ($q) use ($search) {
                     $q->where('full_name', 'like', "%{$search}%")
@@ -901,6 +1100,16 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->required(fn (Get $get) => $get('owner_type') === 'individual')
                 ->maxLength(200)
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'owner_type' => $get('owner_type'),
+                        'full_name' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->columnSpanFull(),
 
             TextInput::make('company_name')
@@ -910,6 +1119,16 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->visible(fn (Get $get) => $get('owner_type') === 'company')
                 ->required(fn (Get $get) => $get('owner_type') === 'company')
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'owner_type' => $get('owner_type'),
+                        'company_name' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             TextInput::make('commercial_register_number')
@@ -919,14 +1138,20 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->visible(fn (Get $get) => $get('owner_type') === 'company')
                 ->required(fn (Get $get) => $get('owner_type') === 'company')
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'commercial_register_number' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
-            DatePicker::make('birth_date')
-                ->label('تاريخ الميلاد')
+            $this->dmyDateInput('birth_date', 'تاريخ الميلاد')
                 ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                ->nullable()
-                ->live(onBlur: true)
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                ->nullable(),
 
             TextInput::make('national_id')
                 ->label('الرقم الوطني')
@@ -935,6 +1160,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->required(fn (Get $get) => $get('owner_type') === 'individual')
                 ->maxLength(50)
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'national_id' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->unique(Owner::class, 'national_id'),
 
             TextInput::make('phone')
@@ -944,6 +1178,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->maxLength(50)
                 ->nullable()
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'phone' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             TextInput::make('email')
@@ -953,6 +1196,15 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
                 ->maxLength(150)
                 ->nullable()
                 ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, callable $set): void {
+                    $owner = $this->findOwnerForAutofill([
+                        'email' => $state,
+                    ]);
+
+                    if ($owner) {
+                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                    }
+                })
                 ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
 
             Toggle::make('is_active')
@@ -967,6 +1219,62 @@ protected function ownerSelectField(string $name, string $label, bool $multiple 
     }
 
     return $field;
+}
+
+private function findOwnerForAutofill(array $lookup): ?Owner
+{
+    $ownerType = $lookup['owner_type'] ?? null;
+    $nationalId = trim((string) ($lookup['national_id'] ?? ''));
+    $commercialRegister = trim((string) ($lookup['commercial_register_number'] ?? ''));
+    $phone = trim((string) ($lookup['phone'] ?? ''));
+    $email = trim((string) ($lookup['email'] ?? ''));
+    $fullName = trim((string) ($lookup['full_name'] ?? ''));
+    $companyName = trim((string) ($lookup['company_name'] ?? ''));
+
+    if ($nationalId !== '') {
+        return Owner::query()->where('national_id', $nationalId)->first();
+    }
+
+    if ($commercialRegister !== '') {
+        return Owner::query()->where('commercial_register_number', $commercialRegister)->first();
+    }
+
+    if ($email !== '') {
+        return Owner::query()->where('email', $email)->first();
+    }
+
+    if ($phone !== '') {
+        return Owner::query()->where('phone', $phone)->first();
+    }
+
+    if ($ownerType === 'individual' && $fullName !== '' && mb_strlen($fullName) >= 3) {
+        return Owner::query()
+            ->where('owner_type', 'individual')
+            ->where('full_name', $fullName)
+            ->first();
+    }
+
+    if ($ownerType === 'company' && $companyName !== '' && mb_strlen($companyName) >= 3) {
+        return Owner::query()
+            ->where('owner_type', 'company')
+            ->where('company_name', $companyName)
+            ->first();
+    }
+
+    return null;
+}
+
+private function fillOwnerCreateFormFromExistingOwner(Owner $owner, callable $set): void
+{
+    $set('owner_type', $owner->owner_type ?: 'individual');
+    $set('full_name', $owner->full_name);
+    $set('company_name', $owner->company_name);
+    $set('commercial_register_number', $owner->commercial_register_number);
+    $set('birth_date', $owner->birth_date ? Carbon::parse($owner->birth_date)->format('Y-m-d') : null);
+    $set('national_id', $owner->national_id);
+    $set('phone', $owner->phone);
+    $set('email', $owner->email);
+    $set('is_active', (bool) $owner->is_active);
 }
 
 
@@ -1028,10 +1336,8 @@ protected function signalsRepeater(): Repeater
                     ->live(onBlur: true)
                     ->columnSpan(['default' => 12, 'md' => 3]),
 
-                DatePicker::make('signal_date')
-                    ->label('تاريخ الإشارة')
+                $this->dmyDateInput('signal_date', 'تاريخ الإشارة')
                     ->required()
-                    ->live(onBlur: true)
                     ->columnSpan(['default' => 12, 'md' => 3]),
 
                 Select::make('type')
@@ -1043,8 +1349,9 @@ protected function signalsRepeater(): Repeater
                         'حجز' => 'حجز',
                         'دعوى' => 'دعوى',
                         'استيفاء رسوم' => 'استيفاء رسوم',
-                        'أخرى' => 'أخرى',
+                        'تأمين' => 'تأمين',
                         'استملاك' => 'استملاك',
+                        'أخرى' => 'أخرى',
                     ])
                     ->required()
                     ->columnSpan(['default' => 12, 'md' => 6]),
@@ -1489,7 +1796,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->live()
             ->addActionLabel('إضافة دفعة')
             ->reorderable()
-            ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('دفعة بتاريخ ' . $state['payment_date']) : 'دفعة')
+            ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('دفعة بتاريخ ' . $this->formatDateForDisplay($state['payment_date'])) : 'دفعة')
             ->schema([
                 Hidden::make('id')
                     ->dehydrated(),
@@ -1501,8 +1808,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->minValue(0)
                     ->live(onBlur: true),
 
-                DatePicker::make('payment_date')
-                    ->label('التاريخ')
+                $this->dmyDateInput('payment_date', 'التاريخ')
                     ->required()
                     ->live(debounce: 300),
 
@@ -1566,12 +1872,20 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $this->data = [
             'card_status' => 'active',
             'owned_property_value_usd' => 0,
+            'operations_total_shares' => 0,
+            'abdulqader_sankari_total_shares' => null,
+            'riyad_asali_total_shares' => null,
             'remaining_balance' => 0,
+            'owned_value_manually_overridden' => false,
             'ownerships' => [],
             'signals' => [],
             'operations' => [],
             'installments' => [],
             'files' => [],
+            'created_by_name' => null,
+            'updated_by_name' => null,
+            'created_at_label' => null,
+            'updated_at_label' => null,
         ];
 
         $this->form->fill($this->data);
@@ -1622,6 +1936,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->icon('heroicon-o-magnifying-glass')
             ->color('gray')
             ->modalHeading('بحث عن بطاقة عقار')
+            ->modalDescription('يمكن البحث ضمن السجلات النشطة والمحذوفة، وعند العثور على سجل محذوف يمكنك استعادته بعد إدخال كلمة المرور.')
             ->modalSubmitActionLabel('تحميل')
             ->form([
                 TextInput::make('card_record_number')
@@ -1643,7 +1958,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     return;
                 }
 
-                $recordQuery = PropertyCard::query()
+                $recordQuery = PropertyCard::withTrashed()
 
                     ->orderByDesc('id')
                     ->when($recordNumber !== '', fn ($query) => $query->where('card_record_number', $recordNumber))
@@ -1659,9 +1974,83 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
                 }
 
+                if ($record->trashed()) {
+                    $this->currentRecordId = $record->id;
+
+                    Notification::make()
+                        ->title('تم العثور على بطاقة محذوفة')
+                        ->body('هذه البطاقة محذوفة منطقياً. استخدم زر "استعادة بطاقة محذوفة" وأدخل كلمة المرور للمتابعة.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+
                 $this->loadRecordIntoForm($record);
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+    public function restoreActionForTrashedCard(): Action
+    {
+        $action = Action::make('restore_trashed_card')
+            ->label('استعادة بطاقة محذوفة')
+            ->icon('heroicon-o-arrow-path')
+            ->color('warning')
+            ->disabled(function (): bool {
+                if (! $this->currentRecordId) {
+                    return true;
+                }
+
+                $record = PropertyCard::withTrashed()->find($this->currentRecordId);
+
+                return ! $record || ! $record->trashed();
+            })
+            ->modalHeading('استعادة بطاقة محذوفة')
+            ->modalDescription('أدخل كلمة المرور لاستعادة البطاقة المحذوفة.')
+            ->modalSubmitActionLabel('استعادة')
+            ->form([
+                Hidden::make('record_id')
+                    ->default(fn (): ?int => $this->currentRecordId)
+                    ->required(),
+                TextInput::make('password')
+                    ->label('كلمة المرور')
+                    ->password()
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $recordId = (int) ($data['record_id'] ?? $this->currentRecordId);
+
+                $record = PropertyCard::withTrashed()->find($recordId);
+
+                if (! $record || ! $record->trashed()) {
+                    Notification::make()
+                        ->title('لا يوجد سجل محذوف مطابق للاستعادة')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                if (! Hash::check($data['password'] ?? '', auth()->user()?->password ?? '')) {
+                    Notification::make()
+                        ->title('كلمة المرور غير صحيحة')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $record->restore();
+                $this->loadRecordIntoForm($record->refresh());
+
+                Notification::make()
+                    ->title('تمت استعادة البطاقة بنجاح')
+                    ->success()
+                    ->send();
             });
 
         return $this->uniformAction($action);
@@ -1798,6 +2187,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                             'signals',
                             'installments',
                             'files',
+                            'owned_value_manually_overridden',
                         ]);
 
                         // ✅ DB transaction (مثل باقي الأقسام)
@@ -1861,26 +2251,68 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->disabled(fn () => blank($this->currentRecordId))
             ->requiresConfirmation()
             ->modalHeading('تأكيد الحذف')
-            ->modalDescription('سيتم حذف البطاقة الحالية (حذف منطقي Soft Delete).')
-            ->action(function () {
+           ->modalDescription('افتراضيًا سيتم حذف البطاقة حذفًا منطقيًا. يمكنك اختيار الحذف النهائي غير القابل للاسترجاع من الخيارات أدناه.')
+            ->modalSubmitActionLabel('تنفيذ الحذف')
+            ->form([
+                Toggle::make('force_delete')
+                    ->label('حذف نهائي (غير قابل للاسترجاع)')
+                    ->helperText('عند التفعيل سيتم حذف البطاقة نهائيًا ولن يمكن استرجاعها.')
+                    ->default(false),
+                TextInput::make('password')
+                    ->label('كلمة المرور لتأكيد الحذف النهائي')
+                    ->password()
+                    ->visible(fn (Get $get): bool => (bool) $get('force_delete'))
+                    ->required(fn (Get $get): bool => (bool) $get('force_delete')),
+            ])
+            ->action(function (array $data): void {
+
                 if (! $this->currentRecordId) {
                     Notification::make()->title('لا يوجد سجل محمّل للحذف')->warning()->send();
                     return;
                 }
 
-                $record = PropertyCard::find($this->currentRecordId);
+
+                $forceDelete = (bool) ($data['force_delete'] ?? false);
+
+                $record = $forceDelete
+                    ? PropertyCard::withTrashed()->find($this->currentRecordId)
+                    : PropertyCard::find($this->currentRecordId);
 
                 if (! $record) {
                     $this->currentRecordId = null;
                     Notification::make()->title('السجل غير موجود')->danger()->send();
                     return;
                 }
+                                if ($forceDelete) {
+                    $user = auth()->user();
+                    $password = (string) ($data['password'] ?? '');
+
+                    if (! $user || ! Hash::check($password, (string) $user->password)) {
+                        Notification::make()
+                            ->title('فشل التحقق من كلمة المرور')
+                            ->body('كلمة المرور غير صحيحة. لا يمكن تنفيذ الحذف النهائي دون التحقق الصحيح.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    $record->forceDelete();
+                    $this->resetCardForm();
+
+                    Notification::make()
+                        ->title('تم الحذف النهائي بنجاح')
+                        ->body('تم حذف البطاقة نهائيًا بشكل غير قابل للاسترجاع.')
+                        ->success()
+                        ->send();
+
+                    return;
+                }
+
 
                 $record->delete();
                 $this->resetCardForm();
 
-                Notification::make()->title('تم الحذف بنجاح')->success()->send();
-            });
+                Notification::make()->title('تم الحذف بنجاح (حذف منطقي)')->success()->send();            });
 
         return $this->uniformAction($action);
     }
@@ -1997,6 +2429,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         'signals',
         'installments',
         'files',
+        'owned_value_manually_overridden',
     ]);
 
     // 7) DB transaction
@@ -2134,9 +2567,13 @@ protected function loadRecordIntoForm(PropertyCard $record): void
     $this->currentRecordId = $record->id;
 
 
-    $record->load('ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
+    $record->load('creator', 'updater', 'ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
 
     $payload = $record->attributesToArray();
+    $payload['created_by_name'] = $record->creator?->name ?? '-';
+    $payload['updated_by_name'] = $record->updater?->name ?? '-';
+    $payload['created_at_label'] = $this->formatDateTimeForDisplay($record->created_at);
+    $payload['updated_at_label'] = $this->formatDateTimeForDisplay($record->updated_at);
 
     // =========================
     // ownerships (UUID keyed + keep id)
@@ -2158,6 +2595,12 @@ protected function loadRecordIntoForm(PropertyCard $record): void
             if ($operation->operation_method === 'regular_contract') {
                 $row['regular_contract_number'] = $operation->contract_number;
                 $row['regular_contract_date'] = $operation->contract_date;
+            }
+
+            if ($operation->operation_method === 'commercial_register_contract') {
+                $row['commercial_contract_number'] = $operation->contract_number;
+                $row['commercial_contract_date'] = $operation->contract_date;
+                $row['commercial_contract_notes'] = $operation->contract_notes;
             }
 
             $row['witnesses'] = $operation->witnesses
@@ -2187,6 +2630,7 @@ protected function loadRecordIntoForm(PropertyCard $record): void
     $payload['remaining_balance'] = $ownedPropertyValueUsd - $totalPaid;
     // للإبقاء على التوافق مع أي استخدامات قديمة لـ final_balance.
     $payload['final_balance'] = $payload['remaining_balance'];
+    $payload['owned_value_manually_overridden'] = false;
 
 
     // =========================
@@ -2295,6 +2739,10 @@ protected function loadRecordIntoForm(PropertyCard $record): void
     // الملفات لا نملؤها من DB (واجهة فقط)
     $payload['files'] = [[]];
 
+    $this->data = $payload;
+    $this->recalculateOperationsTotalShares();
+    $payload['operations_total_shares'] = data_get($this->data, 'operations_total_shares', 0);
+
     $this->form->model($record)->fill($payload);
 }
 
@@ -2328,7 +2776,7 @@ protected function renderUploadedFiles(): HtmlString
 
         $name = e($file->file_name ?? '—');
 
-        $issuedAt = $file->issued_at?->format('Y-m-d');
+        $issuedAt = $file->issued_at?->format('d/m/Y');
         $issuedLabel = $issuedAt
             ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>"
             : '';
@@ -2757,14 +3205,22 @@ public function deleteUploadedFile(int $fileId): void
                     'authority' => $method === 'court_judgment' ? ($row['authority'] ?? null) : null,
                     'judgment_date' => $method === 'court_judgment' ? ($row['judgment_date'] ?? null) : null,
                     'judgment_notes' => $method === 'court_judgment' ? ($row['judgment_notes'] ?? null) : null,
-                    'contract_number' => $method === 'regular_contract'
-                        ? ($row['contract_number'] ?? $row['regular_contract_number'] ?? null)
+                    'contract_number' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_number']
+                            ?? $row['regular_contract_number']
+                            ?? $row['commercial_contract_number']
+                            ?? null)
                         : null,
-                    'contract_date' => $method === 'regular_contract'
-                        ? ($row['contract_date'] ?? $row['regular_contract_date'] ?? null)
+                    'contract_date' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_date']
+                            ?? $row['regular_contract_date']
+                            ?? $row['commercial_contract_date']
+                            ?? null)
 
                         : null,
-                    'contract_notes' => $method === 'regular_contract' ? ($row['contract_notes'] ?? null) : null,
+                    'contract_notes' => in_array($method, ['regular_contract', 'commercial_register_contract'], true)
+                        ? ($row['contract_notes'] ?? $row['commercial_contract_notes'] ?? null)
+                        : null,
                     'old_owners' => collect($oldOwners)
                         ->map(function ($item): int {
                             if (is_array($item)) {
@@ -3143,6 +3599,9 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         'contract_date',
         'regular_contract_number',
         'regular_contract_date',
+        'commercial_contract_number',
+        'commercial_contract_date',
+        'commercial_contract_notes',
         'old_owners',
         'new_owners',
         'witnesses',
@@ -3173,7 +3632,7 @@ protected function persistOperations(PropertyCard $record, array $rows): void
 
         $method = (string) ($data['operation_method'] ?? '');
 
-        if (! in_array($method, ['court_judgment', 'regular_contract'], true)) {
+        if (! in_array($method, ['court_judgment', 'regular_contract', 'commercial_register_contract'], true)) {
             continue;
         }
 
@@ -3181,6 +3640,18 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         if ($method === 'regular_contract') {
             $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
             $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
+            $data['contract_notes'] = $data['contract_notes'] ?? null;
+            $data['case_number'] = null;
+            $data['decision_number'] = null;
+            $data['authority'] = null;
+            $data['judgment_date'] = null;
+            $data['judgment_notes'] = null;
+        }
+
+        if ($method === 'commercial_register_contract') {
+            $data['contract_number'] = $data['commercial_contract_number'] ?? $data['contract_number'] ?? null;
+            $data['contract_date'] = $data['commercial_contract_date'] ?? $data['contract_date'] ?? null;
+            $data['contract_notes'] = $data['commercial_contract_notes'] ?? $data['contract_notes'] ?? null;
             $data['case_number'] = null;
             $data['decision_number'] = null;
             $data['authority'] = null;
@@ -3233,6 +3704,9 @@ protected function persistOperations(PropertyCard $record, array $rows): void
         unset(
             $data['regular_contract_number'],
             $data['regular_contract_date'],
+            $data['commercial_contract_number'],
+            $data['commercial_contract_date'],
+            $data['commercial_contract_notes'],
             $data['old_owners'],
             $data['new_owners'],
             $data['witnesses']

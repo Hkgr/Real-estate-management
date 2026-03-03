@@ -34,7 +34,7 @@ class SignalsTable
                     ->searchable(),
                 TextColumn::make('signal_source_date')
                     ->label('تاريخ الجهة')
-                    ->date()
+                    ->date('d/m/Y')
                     ->sortable(),
                 TextColumn::make('signal_victims_label')
                     ->label('المتضرّرون')
@@ -44,11 +44,23 @@ class SignalsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإضافة')
                     ->dateTime()
+                    ->placeholder('-')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('creator.name')
+                    ->label('أضيف بواسطة')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updater.name')
+                    ->label('آخر تعديل بواسطة')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('تاريخ آخر تعديل')
                     ->dateTime()
+                    ->placeholder('-')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

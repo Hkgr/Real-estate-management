@@ -232,38 +232,12 @@ class PropertyCardPage extends Page implements HasSchemas
                                 ->placeholder('مثال: 400')
                                 ->columnSpan(['default' => 12, 'md' => 4]),
 
-                            Placeholder::make('ownership_total_hint')
-                                ->label('إجمالي التملك (حسب المعيار)')
-                                ->content(function (Get $get): string {
-                                    $rows = $get('ownerships') ?? [];
-                                    if (! is_array($rows) || count($rows) === 0) {
-                                        return '—';
-                                    }
-
-                                    $metrics = collect($rows)
-                                        ->pluck('ownership_metric')
-                                        ->filter()
-                                        ->unique()
-                                        ->values();
-
-                                    if ($metrics->count() !== 1) {
-                                        return '—';
-                                    }
-
-                                    $metric = $metrics->first();
-                                    $sum = collect($rows)->sum(fn ($r) => (float) ($r['ownership_percentage'] ?? 0));
-
-                                    $suffix = match ($metric) {
-                                        'أسهم' => 'سهم',
-                                        'نسبة مئوية' => '%',
-                                        'م²' => 'م²',
-                                        default => '',
-                                    };
-
-                                    $pretty = rtrim(rtrim(number_format($sum, 2, '.', ''), '0'), '.');
-
-                                    return $pretty === '' ? '—' : ($pretty . ' ' . $suffix);
-                                })
+                            TextInput::make('total_property_value_usd')
+                                ->label('قيمة العقار الكلية بالدولار الأمريكي')
+                                ->numeric()
+                                ->minValue(0)
+                                ->live(onBlur: true)
+                                ->suffix('$')
                                 ->columnSpan(['default' => 12, 'md' => 8]),
                         ]),
                     ]),
@@ -1953,7 +1927,7 @@ protected function renderUploadedFiles(): HtmlString
 
         $name = e($file->file_name ?? '—');
 
-        $issuedAt = $file->issued_at?->format('Y-m-d');
+        $issuedAt = $file->issued_at?->format('d/m/Y');
         $issuedLabel = $issuedAt
             ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>"
             : '';
@@ -2786,5 +2760,4 @@ private function signalVictimsToUiKeyed(mixed $stored): array
 
 
 }
-
 
