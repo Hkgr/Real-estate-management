@@ -7,12 +7,15 @@ use App\Models\PropertyCardFile;
 use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\RecordCheckboxPosition;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PropertyCardsTablePage2 extends Page implements HasTable
 {
@@ -172,6 +175,37 @@ HTML);
                     ->placeholder('-')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->recordCheckboxPosition(RecordCheckboxPosition::BeforeCells)
+            ->selectCurrentPageOnly(false)
+            ->bulkActions([
+                BulkAction::make('export_selected')
+                    ->label('تصدير المحدد')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function ($records): StreamedResponse {
+                        $fileName = 'property-cards-selected-' . now()->format('Ymd_His') . '.csv';
+
+                        return response()->streamDownload(function () use ($records): void {
+                            $stream = fopen('php://output', 'w');
+
+                            fputcsv($stream, ['ID', 'رقم المحضر', 'المحافظة', 'المنطقة العقارية', 'المقسم']);
+
+                            foreach ($records as $record) {
+                                fputcsv($stream, [
+                                    $record->id,
+                                    $record->card_record_number,
+                                    $record->card_governorate,
+                                    $record->card_region_name,
+                                    $record->card_subdivision,
+                                ]);
+                            }
+
+                            fclose($stream);
+                        }, $fileName, [
+                            'Content-Type' => 'text/csv; charset=UTF-8',
+                        ]);
+                    }),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
