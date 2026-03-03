@@ -7,7 +7,8 @@ use App\Models\PropertyCardFile;
 use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -178,34 +179,39 @@ HTML);
             ])
             ->recordCheckboxPosition(RecordCheckboxPosition::BeforeCells)
             ->selectCurrentPageOnly(false)
-            ->bulkActions([
-                BulkAction::make('export_selected')
-                    ->label('تصدير المحدد')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->deselectRecordsAfterCompletion()
-                    ->action(function ($records): StreamedResponse {
-                        $fileName = 'property-cards-selected-' . now()->format('Ymd_His') . '.csv';
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('export_selected')
+                        ->label('تصدير المحدد')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (\Illuminate\Support\Collection $records): StreamedResponse {
+                            $fileName = 'property-cards-selected-' . now()->format('Ymd_His') . '.csv';
 
-                        return response()->streamDownload(function () use ($records): void {
-                            $stream = fopen('php://output', 'w');
+                            return response()->streamDownload(function () use ($records): void {
+                                $stream = fopen('php://output', 'w');
 
-                            fputcsv($stream, ['ID', 'رقم المحضر', 'المحافظة', 'المنطقة العقارية', 'المقسم']);
+                                // (اختياري لكن مفيد لفتح CSV بالعربية على Excel)
+                                fwrite($stream, "\xEF\xBB\xBF");
 
-                            foreach ($records as $record) {
-                                fputcsv($stream, [
-                                    $record->id,
-                                    $record->card_record_number,
-                                    $record->card_governorate,
-                                    $record->card_region_name,
-                                    $record->card_subdivision,
-                                ]);
-                            }
+                                fputcsv($stream, ['ID', 'رقم المحضر', 'المحافظة', 'المنطقة العقارية', 'المقسم']);
 
-                            fclose($stream);
-                        }, $fileName, [
-                            'Content-Type' => 'text/csv; charset=UTF-8',
-                        ]);
-                    }),
+                                foreach ($records as $record) {
+                                    fputcsv($stream, [
+                                        $record->id,
+                                        $record->card_record_number,
+                                        $record->card_governorate,
+                                        $record->card_region_name,
+                                        $record->card_subdivision,
+                                    ]);
+                                }
+
+                                fclose($stream);
+                            }, $fileName, [
+                                'Content-Type' => 'text/csv; charset=UTF-8',
+                            ]);
+                        }),
+                ]),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
