@@ -11,8 +11,6 @@ use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
 use Filament\Actions\Action;
-use Filament\Actions\BulkAction;
-use Filament\Actions\BulkActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
@@ -21,6 +19,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\RecordCheckboxPosition;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -54,6 +53,10 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                     ])
                     ->latest('id')
             )
+
+            // ✅ هذا هو المهم لإرجاع الـ Bulk Selection بدون BulkActions
+            ->selectable()
+
             ->columns([
                 TextColumn::make('row_number')
                     ->label('تسلسل')
@@ -202,39 +205,53 @@ HTML);
             ->recordCheckboxPosition(RecordCheckboxPosition::BeforeCells)
             ->selectCurrentPageOnly(false)
             ->toolbarActions([
-                Action::make('export_visible')
-                    ->label('تصدير المعروض إلى إكسل')
+                Action::make('export_excel')
+                    ->label('تصدير إلى إكسل')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-                    ->action(fn (): BinaryFileResponse => $this->exportVisibleRecords()),
 
-                BulkActionGroup::make([
-                    BulkAction::make('export_selected')
-                        ->label('تصدير المحدد')
-                        ->icon('heroicon-o-document-arrow-down')
-                        ->color('success')
-                        ->deselectRecordsAfterCompletion()
-                        ->action(fn ($records): BinaryFileResponse => $this->exportSelectedRecords($records->pluck('id')->all())),
-                ]),
+                    // ✅ هذا يجعل Action يقرأ المحددات
+                    ->accessSelectedRecords()
+
+                    // زر واحد: إذا فيه تحديد يصدر المحدد، وإذا لا فيه تحديد يصدر كل النتائج (حسب الفلاتر والترتيب)
+                    ->action(function (Collection $selectedRecords): BinaryFileResponse {
+                        return $this->exportExcel($selectedRecords);
+                    }),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
     }
 
-    protected function exportVisibleRecords(): BinaryFileResponse
+    protected function exportExcel(Collection $selectedRecords): BinaryFileResponse
     {
         try {
+            $selectedIds = $selectedRecords->pluck('id')->all();
+
+            if ($selectedIds !== []) {
+                Notification::make()
+                    ->title('تم تجهيز تصدير السجلات المحددة.')
+                    ->body('سيتم تصدير السجلات التي قمت بتحديدها فقط.')
+                    ->success()
+                    ->send();
+
+                return Excel::download(
+                    new PropertyCardsExport(selectedIds: $selectedIds),
+                    'property-cards-selected.xlsx'
+                );
+            }
+
             /** @var Builder<PropertyCard> $query */
             $query = $this->getFilteredSortedTableQuery();
 
             Notification::make()
-                ->title('تم تجهيز تصدير السجلات المعروضة.')
+                ->title('تم تجهيز تصدير السجلات.')
+                ->body('لا توجد سجلات محددة، لذلك سيتم تصدير كل السجلات حسب الفلاتر والترتيب الحالي.')
                 ->success()
                 ->send();
 
             return Excel::download(
                 new PropertyCardsExport(query: $query),
-                'property-cards-visible.xlsx'
+                'property-cards-all.xlsx'
             );
         } catch (Throwable $e) {
             report($e);
@@ -246,22 +263,6 @@ HTML);
 
             throw $e;
         }
-    }
-
-    /**
-     * @param  array<int, int|string>  $selectedIds
-     */
-    protected function exportSelectedRecords(array $selectedIds): BinaryFileResponse
-    {
-        Notification::make()
-            ->title('تم تجهيز تصدير السجلات المحددة.')
-            ->success()
-            ->send();
-
-        return Excel::download(
-            new PropertyCardsExport(selectedIds: $selectedIds),
-            'property-cards-selected.xlsx'
-        );
     }
 
     protected function formatSignalRow(Signal $signal): string
