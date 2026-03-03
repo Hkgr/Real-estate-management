@@ -28,6 +28,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -1935,6 +1936,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->icon('heroicon-o-magnifying-glass')
             ->color('gray')
             ->modalHeading('بحث عن بطاقة عقار')
+            ->modalDescription('يمكن البحث ضمن السجلات النشطة والمحذوفة، وعند العثور على سجل محذوف يمكنك استعادته بعد إدخال كلمة المرور.')
             ->modalSubmitActionLabel('تحميل')
             ->form([
                 TextInput::make('card_record_number')
@@ -1956,7 +1958,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     return;
                 }
 
-                $recordQuery = PropertyCard::query()
+                $recordQuery = PropertyCard::withTrashed()
 
                     ->orderByDesc('id')
                     ->when($recordNumber !== '', fn ($query) => $query->where('card_record_number', $recordNumber))
@@ -1972,9 +1974,83 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
                 }
 
+                if ($record->trashed()) {
+                    $this->currentRecordId = $record->id;
+
+                    Notification::make()
+                        ->title('تم العثور على بطاقة محذوفة')
+                        ->body('هذه البطاقة محذوفة منطقياً. استخدم زر "استعادة بطاقة محذوفة" وأدخل كلمة المرور للمتابعة.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+
                 $this->loadRecordIntoForm($record);
 
                 Notification::make()->title('تم تحميل البطاقة')->success()->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+    public function restoreActionForTrashedCard(): Action
+    {
+        $action = Action::make('restore_trashed_card')
+            ->label('استعادة بطاقة محذوفة')
+            ->icon('heroicon-o-arrow-path')
+            ->color('warning')
+            ->disabled(function (): bool {
+                if (! $this->currentRecordId) {
+                    return true;
+                }
+
+                $record = PropertyCard::withTrashed()->find($this->currentRecordId);
+
+                return ! $record || ! $record->trashed();
+            })
+            ->modalHeading('استعادة بطاقة محذوفة')
+            ->modalDescription('أدخل كلمة المرور لاستعادة البطاقة المحذوفة.')
+            ->modalSubmitActionLabel('استعادة')
+            ->form([
+                Hidden::make('record_id')
+                    ->default(fn (): ?int => $this->currentRecordId)
+                    ->required(),
+                TextInput::make('password')
+                    ->label('كلمة المرور')
+                    ->password()
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $recordId = (int) ($data['record_id'] ?? $this->currentRecordId);
+
+                $record = PropertyCard::withTrashed()->find($recordId);
+
+                if (! $record || ! $record->trashed()) {
+                    Notification::make()
+                        ->title('لا يوجد سجل محذوف مطابق للاستعادة')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                if (! Hash::check($data['password'] ?? '', auth()->user()?->password ?? '')) {
+                    Notification::make()
+                        ->title('كلمة المرور غير صحيحة')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $record->restore();
+                $this->loadRecordIntoForm($record->refresh());
+
+                Notification::make()
+                    ->title('تمت استعادة البطاقة بنجاح')
+                    ->success()
+                    ->send();
             });
 
         return $this->uniformAction($action);
@@ -2175,26 +2251,68 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->disabled(fn () => blank($this->currentRecordId))
             ->requiresConfirmation()
             ->modalHeading('تأكيد الحذف')
-            ->modalDescription('سيتم حذف البطاقة الحالية (حذف منطقي Soft Delete).')
-            ->action(function () {
+           ->modalDescription('افتراضيًا سيتم حذف البطاقة حذفًا منطقيًا. يمكنك اختيار الحذف النهائي غير القابل للاسترجاع من الخيارات أدناه.')
+            ->modalSubmitActionLabel('تنفيذ الحذف')
+            ->form([
+                Toggle::make('force_delete')
+                    ->label('حذف نهائي (غير قابل للاسترجاع)')
+                    ->helperText('عند التفعيل سيتم حذف البطاقة نهائيًا ولن يمكن استرجاعها.')
+                    ->default(false),
+                TextInput::make('password')
+                    ->label('كلمة المرور لتأكيد الحذف النهائي')
+                    ->password()
+                    ->visible(fn (Get $get): bool => (bool) $get('force_delete'))
+                    ->required(fn (Get $get): bool => (bool) $get('force_delete')),
+            ])
+            ->action(function (array $data): void {
+
                 if (! $this->currentRecordId) {
                     Notification::make()->title('لا يوجد سجل محمّل للحذف')->warning()->send();
                     return;
                 }
 
-                $record = PropertyCard::find($this->currentRecordId);
+
+                $forceDelete = (bool) ($data['force_delete'] ?? false);
+
+                $record = $forceDelete
+                    ? PropertyCard::withTrashed()->find($this->currentRecordId)
+                    : PropertyCard::find($this->currentRecordId);
 
                 if (! $record) {
                     $this->currentRecordId = null;
                     Notification::make()->title('السجل غير موجود')->danger()->send();
                     return;
                 }
+                                if ($forceDelete) {
+                    $user = auth()->user();
+                    $password = (string) ($data['password'] ?? '');
+
+                    if (! $user || ! Hash::check($password, (string) $user->password)) {
+                        Notification::make()
+                            ->title('فشل التحقق من كلمة المرور')
+                            ->body('كلمة المرور غير صحيحة. لا يمكن تنفيذ الحذف النهائي دون التحقق الصحيح.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    $record->forceDelete();
+                    $this->resetCardForm();
+
+                    Notification::make()
+                        ->title('تم الحذف النهائي بنجاح')
+                        ->body('تم حذف البطاقة نهائيًا بشكل غير قابل للاسترجاع.')
+                        ->success()
+                        ->send();
+
+                    return;
+                }
+
 
                 $record->delete();
                 $this->resetCardForm();
 
-                Notification::make()->title('تم الحذف بنجاح')->success()->send();
-            });
+                Notification::make()->title('تم الحذف بنجاح (حذف منطقي)')->success()->send();            });
 
         return $this->uniformAction($action);
     }
