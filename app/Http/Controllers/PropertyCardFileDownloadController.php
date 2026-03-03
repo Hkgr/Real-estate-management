@@ -6,6 +6,7 @@ use App\Models\PropertyCardFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PropertyCardFileDownloadController extends Controller
@@ -31,7 +32,7 @@ class PropertyCardFileDownloadController extends Controller
             abort(404);
         }
 
-        $fileName = $propertyCardFile->file_name ?: basename($path);
+        $fileName = $this->resolveDownloadFileName($propertyCardFile);
 
         if ($request->boolean('preview')) {
             return Storage::disk($disk)->response($path, $fileName, [
@@ -41,4 +42,22 @@ class PropertyCardFileDownloadController extends Controller
 
         return Storage::disk($disk)->download($path, $fileName);
     }
+   protected function resolveDownloadFileName(PropertyCardFile $propertyCardFile): string
+    {
+        $path = (string) $propertyCardFile->storage_path;
+        $storedBaseName = pathinfo($path, PATHINFO_BASENAME);
+        $storedExtension = (string) pathinfo($path, PATHINFO_EXTENSION);
+
+        $fileName = trim((string) ($propertyCardFile->file_name ?: ''));
+        if ($fileName === '') {
+            return $storedBaseName;
+        }
+
+        if ($storedExtension === '' || Str::contains(pathinfo($fileName, PATHINFO_BASENAME), '.')) {
+            return $fileName;
+        }
+
+        return "{$fileName}.{$storedExtension}";
+    }
+
 }

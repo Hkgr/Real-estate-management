@@ -453,8 +453,16 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                             && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
                                     ));
                                 })
-                            
-                                ->columnSpan(['default' => 6, 'md' => 3]),
+                               ->columnSpan(['default' => 6, 'md' => 2]),
+
+                            Placeholder::make('summary_balance')
+                                ->label('ملخص الرصيد')
+                                ->content(function (Get $get): string {
+                                    $balance = (float) ($get('final_balance') ?? 0);
+
+                                    return '$ ' . number_format($balance, 2, '.', ',');
+                                })
+                                ->columnSpan(['default' => 12, 'md' => 4]),
 
                             Placeholder::make('summary_created_by')
                                 ->label('أُدخلت بواسطة')
