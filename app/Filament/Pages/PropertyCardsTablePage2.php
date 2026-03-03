@@ -9,8 +9,6 @@ use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
 use Filament\Actions\Action;
-use Filament\Actions\BulkAction;
-use Filament\Actions\BulkActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
@@ -19,7 +17,6 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\RecordCheckboxPosition;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -188,24 +185,33 @@ HTML);
             ->recordCheckboxPosition(RecordCheckboxPosition::BeforeCells)
             ->selectCurrentPageOnly(false)
             ->toolbarActions([
-                Action::make('export_visible')
-                    ->label('تصدير المعروض')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->action(fn (): BinaryFileResponse => $this->exportVisibleRecords()),
-                BulkActionGroup::make([
-                    BulkAction::make('export_selected')
-                        ->label('تصدير المحدد')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->deselectRecordsAfterCompletion()
-                        ->action(fn (Collection $records): BinaryFileResponse => $this->exportSelectedRecords($records)),
-                ]),
+                Action::make('export_excel')
+                    ->label('تصدير إلى إكسل')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->action(fn (): BinaryFileResponse => $this->exportTableRecords()),
             ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
     }
-    protected function exportVisibleRecords(): BinaryFileResponse
+    protected function exportTableRecords(): BinaryFileResponse
     {
         try {
+            $selectedRecords = $this->getSelectedTableRecords();
+
+            if ($selectedRecords->isNotEmpty()) {
+                $selectedIds = $selectedRecords->pluck('id')->all();
+
+                $this->deselectAllTableRecords();
+
+                Notification::make()
+                    ->title('تم تجهيز تصدير السجلات المحددة.')
+                    ->success()
+                    ->send();
+
+                return Excel::download(new PropertyCardsExport(selectedIds: $selectedIds), 'property-cards-selected.xlsx');
+            }
+
             /** @var Builder<PropertyCard> $query */
             $query = $this->getFilteredSortedTableQuery();
 
@@ -219,30 +225,7 @@ HTML);
             report($throwable);
 
             Notification::make()
-                ->title('فشل تصدير السجلات المعروضة.')
-                ->danger()
-                ->send();
-
-            throw $throwable;
-        }
-    }
-
-    protected function exportSelectedRecords(Collection $records): BinaryFileResponse
-    {
-        try {
-            $selectedIds = $records->pluck('id')->all();
-
-            Notification::make()
-                ->title('تم تجهيز تصدير السجلات المحددة.')
-                ->success()
-                ->send();
-
-            return Excel::download(new PropertyCardsExport(selectedIds: $selectedIds), 'property-cards-selected.xlsx');
-        } catch (\Throwable $throwable) {
-            report($throwable);
-
-            Notification::make()
-                ->title('فشل تصدير السجلات المحددة.')
+                ->title('فشل تصدير البيانات.')
                 ->danger()
                 ->send();
 
