@@ -10,7 +10,9 @@ use App\Models\PropertyOperation;
 use App\Models\Signal;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PropertyCardsPdfExporter
 {
@@ -22,14 +24,26 @@ class PropertyCardsPdfExporter
         protected array $selectedIds = [],
     ) {}
 
-    public function download(string $filename): Response
+    public function download(string $filename): BinaryFileResponse
     {
         $pdf = Pdf::loadView('pdf.property-cards-table', [
             'headings' => $this->headings(),
             'rows' => $this->rows(),
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->download($filename);
+        // ✅ إنشاء ملف مؤقت وإرجاعه كـ BinaryFileResponse (أفضل توافق مع Filament/Livewire)
+        $disk = Storage::disk('local');
+        $tmpDir = 'exports/tmp';
+        $tmpName = 'property-cards-' . now()->format('Ymd-His') . '-' . Str::random(10) . '.pdf';
+        $relativePath = $tmpDir . '/' . $tmpName;
+
+        $disk->put($relativePath, $pdf->output());
+
+        return response()
+            ->download($disk->path($relativePath), $filename, [
+                'Content-Type' => 'application/pdf',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     /**
@@ -79,9 +93,19 @@ class PropertyCardsPdfExporter
 
     protected function query(): Builder
     {
+        // ✅ نفس منطق الإكسل: إذا في Query نستخدمها، وإلا نستخدم selectedIds إن وجدت
         $baseQuery = $this->query instanceof Builder
             ? (clone $this->query)
-            : PropertyCard::query()->when($this->selectedIds !== [], fn (Builder $query) => $query->whereIn('id', $this->selectedIds));
+            : PropertyCard::query();
+
+        if ($this->query === null && $this->selectedIds !== []) {
+            $ids = array_values(array_map('intval', $this->selectedIds));
+
+            $baseQuery->whereIn('id', $ids);
+
+            // ✅ اختياري: يحافظ على ترتيب التحديد (MySQL)
+            $baseQuery->orderByRaw('FIELD(id,' . implode(',', $ids) . ')');
+        }
 
         return $baseQuery
             ->with([
