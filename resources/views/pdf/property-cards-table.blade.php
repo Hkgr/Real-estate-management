@@ -26,8 +26,10 @@
             border: 1px solid #d1d5db;
             padding: 6px;
             vertical-align: top;
-            word-wrap: break-word;
             white-space: pre-line;
+            word-break: normal;
+            overflow-wrap: break-word;
+
         }
 
         thead th {

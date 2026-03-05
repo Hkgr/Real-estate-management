@@ -8,11 +8,14 @@ use App\Models\PropertyCard;
 use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
 
 class PropertyCardsPdfExporter
 {
@@ -23,28 +26,51 @@ class PropertyCardsPdfExporter
         protected ?Builder $query = null,
         protected array $selectedIds = [],
     ) {}
+public function download(string $filename): BinaryFileResponse
+{
+    $html = View::make('pdf.property-cards-table', [
+        'headings' => $this->headings(),
+        'rows' => $this->rows(),
+    ])->render();
 
-    public function download(string $filename): BinaryFileResponse
-    {
-        $pdf = Pdf::loadView('pdf.property-cards-table', [
-            'headings' => $this->headings(),
-            'rows' => $this->rows(),
-        ])->setPaper('a4', 'landscape');
-
-        // ✅ إنشاء ملف مؤقت وإرجاعه كـ BinaryFileResponse (أفضل توافق مع Filament/Livewire)
-        $disk = Storage::disk('local');
-        $tmpDir = 'exports/tmp';
-        $tmpName = 'property-cards-' . now()->format('Ymd-His') . '-' . Str::random(10) . '.pdf';
-        $relativePath = $tmpDir . '/' . $tmpName;
-
-        $disk->put($relativePath, $pdf->output());
-
-        return response()
-            ->download($disk->path($relativePath), $filename, [
-                'Content-Type' => 'application/pdf',
-            ])
-            ->deleteFileAfterSend(true);
+    // ✅ tempDir writable داخل storage
+    $mpdfTempDir = storage_path('app/mpdf');
+    if (! is_dir($mpdfTempDir)) {
+        @mkdir($mpdfTempDir, 0775, true);
     }
+
+    $pdf = new Mpdf([
+        'mode' => 'utf-8',
+        'format' => 'A4-L',
+        'tempDir' => $mpdfTempDir,           // ✅ أهم سطر
+        'default_font' => 'dejavusans',
+        'autoScriptToLang' => true,
+        'autoLangToFont' => true,
+
+        // ✅ يقلل استهلاك الذاكرة للجداول الكبيرة
+        'simpleTables' => true,
+        'packTableData' => true,
+    ]);
+
+    // ✅ RTL صريح (أفضل من الاعتماد على dir فقط)
+    $pdf->SetDirectionality('rtl');
+
+    $pdf->WriteHTML($html);
+
+    $disk = Storage::disk('local');
+    $disk->makeDirectory('exports/tmp');
+
+    $tmpName = 'property-cards-' . now()->format('Ymd-His') . '-' . Str::random(10) . '.pdf';
+    $relativePath = 'exports/tmp/' . $tmpName;
+
+    $disk->put($relativePath, $pdf->Output('', Destination::STRING_RETURN));
+
+    return response()
+        ->download($disk->path($relativePath), $filename, [
+            'Content-Type' => 'application/pdf',
+        ])
+        ->deleteFileAfterSend(true);
+}
 
     /**
      * @return array<int, string>
