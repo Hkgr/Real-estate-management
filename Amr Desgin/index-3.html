@@ -287,6 +287,38 @@ body::after {
   border-radius: 20px;
 }
 
+.topbar-datetime {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: radial-gradient(circle at top, rgba(212,175,55,.16), rgba(0,0,0,.95));
+  border-color: rgba(212,175,55,.4);
+  color: var(--ivory-warm);
+  box-shadow: 0 0 12px rgba(212,175,55,.35);
+  animation: datetime-pop .45s cubic-bezier(.22,.7,.3,1);
+}
+
+.topbar-datetime-sep {
+  color: var(--gold-mid);
+  font-size: 11px;
+}
+
+.topbar-datetime:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 0 18px rgba(212,175,55,.6);
+}
+
+@keyframes datetime-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .topbar-btn {
   padding: 7px 16px;
   border-radius: var(--r-sm);
@@ -1687,8 +1719,11 @@ body::after {
     <header class="topbar">
       <div class="topbar-title" id="topbar-title">لوحة <span>التحكم</span></div>
       <div class="topbar-actions">
-        <div class="topbar-date" id="topbar-time">--:--:--</div>
-        <div class="topbar-date" id="topbar-date">جارٍ التحميل…</div>
+        <div class="topbar-date topbar-datetime" id="topbar-datetime">
+          <span id="topbar-time">--:--:--</span>
+          <span class="topbar-datetime-sep">•</span>
+          <span id="topbar-date">جارٍ التحميل…</span>
+        </div>
         <button class="topbar-btn" onclick="switchPage('properties', document.querySelector('.nav-item:nth-child(2)'))">⊞ بطاقات العقار</button>
         <button class="topbar-btn logout" onclick="handleLogout()">⎋ تسجيل الخروج</button>
       </div>
@@ -2223,7 +2258,8 @@ body::after {
           <!-- PAGINATION -->
           <div class="pagination" id="pagination">
             <div class="export-info">
-              إجمالي الصفوف: <strong id="row-count">14</strong> عقار | المرشَّح: <strong id="filtered-count">14</strong>
+              إجمالي الصفوف: <strong id="row-count">14</strong> عقار
+              | المحدَّد: <strong id="selected-count">0</strong>
             </div>
             <div style="display:flex;align-items:center;gap:12px">
               <button class="page-btn" onclick="changePage(-1)">‹</button>
@@ -2606,6 +2642,13 @@ function fmt(n) {
   return n.toLocaleString('ar-SA');
 }
 
+function updateSelectedCount() {
+  const el = document.getElementById('selected-count');
+  if (!el) return;
+  const count = buildings.filter(b => selectedProps.has(b.propNo)).length;
+  el.textContent = count;
+}
+
 function updateSelectColumnVisibility() {
   const table = document.getElementById('main-table');
   if (!table) return;
@@ -2692,7 +2735,7 @@ function renderTable() {
     </tr>`;
   }).join('');
   updateSelectColumnVisibility();
-  document.getElementById('filtered-count').textContent = filteredData.length;
+  updateSelectedCount();
   document.getElementById('row-count').textContent = buildings.length;
   const pageInfo = document.getElementById('page-info');
   if (pageInfo) pageInfo.textContent = `صفحة ${total ? currentPage : 0} من ${total ? totalPages : 0}`;
@@ -2833,6 +2876,7 @@ function updateSelectionFromChecked() {
   } else {
     renderSelectionCard(filteredData, 'نتائج التصفية');
   }
+  updateSelectedCount();
 }
 
 /* ─── SORT ─── */
