@@ -1100,6 +1100,11 @@ body::after {
   background: var(--bg-card);
 }
 
+.big-table.hide-select th.select-col,
+.big-table.hide-select td.select-col {
+  display: none;
+}
+
 .big-table th {
   padding: 14px 18px;
   text-align: right;
@@ -2193,7 +2198,7 @@ body::after {
             <table class="big-table" id="main-table">
               <thead>
                 <tr>
-                  <th>
+                  <th class="select-col">
                     <div class="th-inner">
                       <input type="checkbox" id="select-all" onclick="toggleSelectAll()" />
                     </div>
@@ -2604,6 +2609,12 @@ function fmt(n) {
   return n.toLocaleString('ar-SA');
 }
 
+function updateSelectColumnVisibility() {
+  const table = document.getElementById('main-table');
+  if (!table) return;
+  table.classList.toggle('hide-select', !multiSelectEnabled);
+}
+
 function statusBadge(s) {
   const map = { 'نشط': 'status-active', 'جزئي': 'status-partial', 'قيد المراجعة': 'status-pending' };
   const dot = { 'نشط': '●', 'جزئي': '◑', 'قيد المراجعة': '○' };
@@ -2625,7 +2636,7 @@ function renderTable() {
     const opsRowId = `ops-row-${idx}`;
     const isSelected = selectedProps.has(b.propNo);
     return `<tr class="${isSelected ? 'selected-row' : ''}">
-      <td style="text-align:center">
+      <td class="select-col" style="text-align:center">
         ${multiSelectEnabled ? `
         <input type="checkbox"
                class="row-select"
@@ -2683,6 +2694,7 @@ function renderTable() {
       </td>
     </tr>`;
   }).join('');
+  updateSelectColumnVisibility();
   document.getElementById('filtered-count').textContent = filteredData.length;
   document.getElementById('row-count').textContent = buildings.length;
   const pageInfo = document.getElementById('page-info');
@@ -2777,6 +2789,7 @@ function toggleMultiSelect() {
     btn.textContent = multiSelectEnabled ? 'إلغاء الاختيار المتعدد' : 'اختيار متعدد';
   }
   renderTable();
+  updateSelectColumnVisibility();
   if (!multiSelectEnabled) {
     renderSelectionCard(filteredData, 'نتائج التصفية');
   }
