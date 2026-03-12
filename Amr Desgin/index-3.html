@@ -1341,6 +1341,14 @@ body::after {
   transition: background .15s;
 }
 
+.big-table tbody tr.selected-row td {
+  position: relative;
+  background: rgba(212,175,55,.06);
+  color: var(--text-primary);
+  border-top: 1px solid rgba(212,175,55,.18);
+  border-bottom: 1px solid rgba(212,175,55,.18);
+}
+
 .big-table tbody tr:hover td {
   background: rgba(212,175,55,.03);
   color: var(--text-primary);
@@ -2615,12 +2623,13 @@ function renderTable() {
     const rowId = `detail-row-${idx}`;
     const btnId = `detail-btn-${idx}`;
     const opsRowId = `ops-row-${idx}`;
-    return `<tr>
+    const isSelected = selectedProps.has(b.propNo);
+    return `<tr class="${isSelected ? 'selected-row' : ''}">
       <td style="text-align:center">
         ${multiSelectEnabled ? `
         <input type="checkbox"
                class="row-select"
-               onchange="toggleRowSelection('${b.propNo}', this.checked)"
+               onchange="toggleRowSelection('${b.propNo}', this.checked, this)"
                ${selectedProps.has(b.propNo) ? 'checked' : ''} />` : ''}
       </td>
       <td class="td-seq">${idx + 1}</td>
@@ -2729,9 +2738,16 @@ function handleRowsInput(val) {
   renderTable();
 }
 
-function toggleRowSelection(propNo, checked) {
+function toggleRowSelection(propNo, checked, inputEl) {
   if (checked) selectedProps.add(propNo);
   else selectedProps.delete(propNo);
+
+  if (inputEl && inputEl.closest) {
+    const row = inputEl.closest('tr');
+    if (row) {
+      row.classList.toggle('selected-row', checked);
+    }
+  }
 }
 
 function toggleSelectAll() {
