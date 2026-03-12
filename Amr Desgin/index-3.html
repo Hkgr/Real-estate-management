@@ -1003,13 +1003,30 @@ body::after {
 }
 
 .search-wrap::before {
-  content: '🔍';
+  content: '';
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-bright);
   pointer-events: none;
+  box-sizing: border-box;
+}
+
+.search-wrap::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  top: 55%;
+  width: 8px;
+  height: 2px;
+  background: var(--gold-bright);
+  transform: translateY(-50%) rotate(40deg);
+  transform-origin: left center;
+  border-radius: 999px;
 }
 
 .search-input {
