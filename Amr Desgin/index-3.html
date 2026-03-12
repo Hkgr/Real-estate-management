@@ -2251,13 +2251,23 @@ body::after {
                       <input type="checkbox" id="select-all" onclick="toggleSelectAll()" />
                     </div>
                   </th>
-                  <th><div class="th-inner">تسلسل</div></th>
+                  <th onclick="sortBySeq()" style="cursor:pointer">
+                    <div class="th-inner">
+                      تسلسل
+                      <span class="sort-icon" id="sort-seq">↕</span>
+                    </div>
+                  </th>
                   <th><div class="th-inner">رقم العقار</div></th>
                   <th><div class="th-inner">المحضر</div></th>
                   <th><div class="th-inner">المحافظة</div></th>
                   <th><div class="th-inner">المنطقة العقارية</div></th>
                   <th><div class="th-inner">المقسم</div></th>
-                  <th><div class="th-inner">مساحة العقار الكلية</div></th>
+                  <th onclick="sortByArea()" style="cursor:pointer">
+                    <div class="th-inner">
+                      مساحة العقار الكلية
+                      <span class="sort-icon" id="sort-area">↕</span>
+                    </div>
+                  </th>
                   <th><div class="th-inner">الموقع الجغرافي</div></th>
                   <th><div class="th-inner">الحالة</div></th>
                   <th><div class="th-inner">العمليات</div></th>
@@ -2896,25 +2906,63 @@ function updateSelectionFromChecked() {
 }
 
 /* ─── SORT ─── */
-let sortDir = 1;
-let lastSortCol = -1;
+let seqSortDir  = 0; // 0 = none, 1 = asc, -1 = desc
+let areaSortDir = 0;
 
-function sortTable(col) {
-  if (lastSortCol === col) sortDir = -sortDir;
-  else { sortDir = 1; lastSortCol = col; }
+function resetSortIcons(except) {
+  const seqIcon  = document.getElementById('sort-seq');
+  const areaIcon = document.getElementById('sort-area');
+  if (seqIcon && except !== 'seq') {
+    seqIcon.textContent = '↕';
+    seqIcon.classList.remove('active');
+  }
+  if (areaIcon && except !== 'area') {
+    areaIcon.textContent = '↕';
+    areaIcon.classList.remove('active');
+  }
+}
 
-  const keys = ['name','city','type','units','floors','year','area','share','value','status'];
-  const key = keys[col];
-  filteredData.sort((a,b) => {
-    if (typeof a[key] === 'number') return (a[key] - b[key]) * sortDir;
-    return a[key].localeCompare(b[key], 'ar') * sortDir;
+function sortBySeq() {
+  // toggle direction (افتراضي: من الأصغر للأكبر في أول ضغطة)
+  seqSortDir = seqSortDir === 1 ? -1 : 1;
+  areaSortDir = 0;
+  resetSortIcons('seq');
+
+  const icon = document.getElementById('sort-seq');
+  if (icon) {
+    icon.textContent = seqSortDir === 1 ? '↑' : '↓';
+    icon.classList.add('active');
+  }
+
+  filteredData.sort((a, b) => {
+    const av = a.propNo || '';
+    const bv = b.propNo || '';
+    return av.localeCompare(bv, 'ar') * seqSortDir;
   });
 
-  document.querySelectorAll('.sort-icon').forEach((el,i) => {
-    el.textContent = i === col ? (sortDir === 1 ? '↑' : '↓') : '↕';
-    el.classList.toggle('active', i === col);
+  currentPage = 1;
+  renderTable();
+}
+
+function sortByArea() {
+  // toggle direction (افتراضي: من الأكبر للأصغر في أول ضغطة)
+  areaSortDir = areaSortDir === -1 ? 1 : -1;
+  seqSortDir = 0;
+  resetSortIcons('area');
+
+  const icon = document.getElementById('sort-area');
+  if (icon) {
+    icon.textContent = areaSortDir === 1 ? '↑' : '↓';
+    icon.classList.add('active');
+  }
+
+  filteredData.sort((a, b) => {
+    const av = a.area || 0;
+    const bv = b.area || 0;
+    return (av - bv) * areaSortDir;
   });
 
+  currentPage = 1;
   renderTable();
 }
 
