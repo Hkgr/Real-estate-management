@@ -2167,9 +2167,6 @@ body::after {
           <button class="toolbar-btn toolbar-btn-gold" onclick="toggleMultiSelect()" id="multi-select-btn">
             اختيار متعدد
           </button>
-          <button class="toolbar-btn toolbar-btn-outline" onclick="updateSelectionFromChecked()">
-            تحديث ملخص البطاقة
-          </button>
         </div>
 
         <!-- ACTIVE FILTERS -->
@@ -2760,6 +2757,8 @@ function toggleRowSelection(propNo, checked, inputEl) {
       row.classList.toggle('selected-row', checked);
     }
   }
+
+  updateSelectionFromChecked();
 }
 
 function toggleSelectAll() {
@@ -2775,6 +2774,7 @@ function toggleSelectAll() {
     visible.forEach(b => selectedProps.add(b.propNo));
   }
   renderTable();
+  updateSelectionFromChecked();
 }
 
 function toggleMultiSelect() {
