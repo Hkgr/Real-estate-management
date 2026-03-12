@@ -2340,10 +2340,10 @@ body::after {
               ⊟ إخفاء أعمدة
             </button>
             <div class="col-menu" id="col-menu">
-              <div class="col-menu-item" onclick="toggleCol('col-floor')"><div class="col-toggle" id="tog-floor">✓</div> عدد الطوابق</div>
-              <div class="col-menu-item" onclick="toggleCol('col-year')"><div class="col-toggle" id="tog-year">✓</div> سنة البناء</div>
-              <div class="col-menu-item" onclick="toggleCol('col-area')"><div class="col-toggle" id="tog-area">✓</div> المساحة (م²)</div>
-              <div class="col-menu-item" onclick="toggleCol('col-rent')"><div class="col-toggle" id="tog-rent">✓</div> إيجار الوحدة</div>
+              <div class="col-menu-item" onclick="toggleCol('col-city')"><div class="col-toggle" id="tog-city">✓</div> المحافظة</div>
+              <div class="col-menu-item" onclick="toggleCol('col-type')"><div class="col-toggle" id="tog-type">✓</div> المنطقة العقارية</div>
+              <div class="col-menu-item" onclick="toggleCol('col-division')"><div class="col-toggle" id="tog-division">✓</div> المقسم / الوصف</div>
+              <div class="col-menu-item" onclick="toggleCol('col-payments')"><div class="col-toggle" id="tog-payments">✓</div> الدفعات</div>
             </div>
           </div>
 
@@ -2395,9 +2395,9 @@ body::after {
                   </th>
                   <th><div class="th-inner">رقم العقار</div></th>
                   <th><div class="th-inner">المحضر</div></th>
-                  <th><div class="th-inner">المحافظة</div></th>
-                  <th><div class="th-inner">المنطقة العقارية</div></th>
-                  <th><div class="th-inner">المقسم</div></th>
+                  <th class="col-city"><div class="th-inner">المحافظة</div></th>
+                  <th class="col-type"><div class="th-inner">المنطقة العقارية</div></th>
+                  <th class="col-division"><div class="th-inner">المقسم</div></th>
                   <th onclick="sortByArea()" style="cursor:pointer">
                     <div class="th-inner">
                       مساحة العقار الكلية
@@ -2407,7 +2407,7 @@ body::after {
                   <th><div class="th-inner">الموقع الجغرافي</div></th>
                   <th><div class="th-inner">الحالة</div></th>
                   <th><div class="th-inner">العمليات</div></th>
-                  <th><div class="th-inner">الدفعات</div></th>
+                  <th class="col-payments"><div class="th-inner">الدفعات</div></th>
                   <th><div class="th-inner">عرض</div></th>
                 </tr>
               </thead>
@@ -2848,9 +2848,9 @@ function renderTable() {
       <td class="td-seq">${idx + 1}</td>
       <td>${b.propNo || '-'}</td>
       <td>${b.mahder || '-'}</td>
-      <td>${b.city}</td>
-      <td>${b.type}</td>
-      <td>${b.division || '-'}</td>
+      <td class="col-city">${b.city}</td>
+      <td class="col-type">${b.type}</td>
+      <td class="col-division">${b.division || '-'}</td>
       <td>${fmt(b.area)} م²</td>
       <td style="text-align:center">
         <button type="button"
@@ -2864,7 +2864,7 @@ function renderTable() {
           ${b.opsCount || 0} عملية
         </span>
       </td>
-      <td>${b.payments || '-'}</td>
+      <td class="col-payments">${b.payments || '-'}</td>
       <td style="text-align:center">
         <button class="eye-btn" type="button" onclick="openPropertyView('${b.propNo}')">👁</button>
       </td>
@@ -3103,7 +3103,7 @@ function sortByArea() {
 }
 
 /* ─── COLUMN TOGGLE ─── */
-const colVisible = { floor: true, year: true, area: true, rent: true };
+const colVisible = { city: true, type: true, division: true, payments: true };
 
 function toggleColMenu() {
   document.getElementById('col-menu').classList.toggle('open');
