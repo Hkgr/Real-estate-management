@@ -1635,6 +1635,19 @@ body::after {
   min-width: 130px;
 }
 
+.filter-multi-btn {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 9px 32px 9px 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: right;
+}
+
 .filter-dropdown select:focus { border-color: rgba(212,175,55,.4); color: var(--text-primary); }
 
 .filter-dropdown::after {
@@ -2294,43 +2307,49 @@ body::after {
           </div>
 
           <div class="filter-dropdown">
-            <select onchange="filterTable()" id="filter-city">
-              <option value="">كل المحافظات</option>
-              <option>الرياض</option>
-              <option>جدة</option>
-              <option>الدمام</option>
-              <option>أبوظبي</option>
-              <option>دبي</option>
-            </select>
+            <button type="button" class="filter-multi-btn" onclick="toggleCityMenu()" id="filter-city-label">
+              كل المحافظات
+            </button>
+            <div class="col-menu" id="city-menu">
+              <div class="col-menu-item" onclick="toggleCityFilter('الرياض')"><div class="col-toggle" id="city-riyadh">✓</div> الرياض</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('جدة')"><div class="col-toggle" id="city-jeddah">✓</div> جدة</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('الدمام')"><div class="col-toggle" id="city-dammam">✓</div> الدمام</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('أبوظبي')"><div class="col-toggle" id="city-abu">✓</div> أبوظبي</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('دبي')"><div class="col-toggle" id="city-dubai">✓</div> دبي</div>
+            </div>
           </div>
 
           <div class="filter-dropdown">
-            <select onchange="filterTable()" id="filter-type">
-              <option value="">كل المناطق العقارية</option>
-              <option>حي العليا</option>
-              <option>حي الحمراء</option>
-              <option>حي النزهة</option>
-              <option>حي الشاطئ</option>
-              <option>منطقة الكورنيش</option>
-              <option>طريق الملك فهد</option>
-              <option>حي الرويس</option>
-              <option>حي الياسمين</option>
-              <option>منطقة الخليج التجاري</option>
-              <option>حي المنار</option>
-              <option>المنطقة المالية</option>
-              <option>حي الشاطئ الذهبي</option>
-              <option>حي الروضة</option>
-              <option>واجهة الخليج</option>
-            </select>
+            <button type="button" class="filter-multi-btn" onclick="toggleTypeMenu()" id="filter-type-label">
+              كل المناطق العقارية
+            </button>
+            <div class="col-menu" id="type-menu">
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي العليا')"><div class="col-toggle" id="type-highrise">✓</div> حي العليا</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الحمراء')"><div class="col-toggle" id="type-hamra">✓</div> حي الحمراء</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي النزهة')"><div class="col-toggle" id="type-nuzha">✓</div> حي النزهة</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الشاطئ')"><div class="col-toggle" id="type-shate">✓</div> حي الشاطئ</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('منطقة الكورنيش')"><div class="col-toggle" id="type-corniche">✓</div> منطقة الكورنيش</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('طريق الملك فهد')"><div class="col-toggle" id="type-kingroad">✓</div> طريق الملك فهد</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الرويس')"><div class="col-toggle" id="type-ruwais">✓</div> حي الرويس</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الياسمين')"><div class="col-toggle" id="type-yasmin">✓</div> حي الياسمين</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('منطقة الخليج التجاري')"><div class="col-toggle" id="type-bay">✓</div> منطقة الخليج التجاري</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي المنار')"><div class="col-toggle" id="type-manar">✓</div> حي المنار</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('المنطقة المالية')"><div class="col-toggle" id="type-financial">✓</div> المنطقة المالية</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الشاطئ الذهبي')"><div class="col-toggle" id="type-golden">✓</div> حي الشاطئ الذهبي</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الروضة')"><div class="col-toggle" id="type-rawda">✓</div> حي الروضة</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('واجهة الخليج')"><div class="col-toggle" id="type-waterfront">✓</div> واجهة الخليج</div>
+            </div>
           </div>
 
           <div class="filter-dropdown">
-            <select onchange="filterTable()" id="filter-area">
-              <option value="">كل المساحات</option>
-              <option value="small">أقل من ١٠٬٠٠٠ م²</option>
-              <option value="medium">١٠٬٠٠٠ - ٢٠٬٠٠٠ م²</option>
-              <option value="large">أكثر من ٢٠٬٠٠٠ م²</option>
-            </select>
+            <button type="button" class="filter-multi-btn" onclick="toggleAreaMenu()" id="filter-area-label">
+              كل المساحات
+            </button>
+            <div class="col-menu" id="area-menu">
+              <div class="col-menu-item" onclick="toggleAreaFilter('small')"><div class="col-toggle" id="area-small">✓</div> أقل من ١٠٬٠٠٠ م²</div>
+              <div class="col-menu-item" onclick="toggleAreaFilter('medium')"><div class="col-toggle" id="area-medium">✓</div> ١٠٬٠٠٠ - ٢٠٬٠٠٠ م²</div>
+              <div class="col-menu-item" onclick="toggleAreaFilter('large')"><div class="col-toggle" id="area-large">✓</div> أكثر من ٢٠٬٠٠٠ م²</div>
+            </div>
           </div>
 
           <div class="toolbar-separator"></div>
@@ -2799,6 +2818,9 @@ let rowsLimit = 'all'; // rows per page ('all' = no limit)
 let currentPage = 1;
 let selectedProps = new Set();
 let multiSelectEnabled = false;
+let selectedCitiesFilter = new Set();
+let selectedTypesFilter = new Set();
+let selectedAreasFilter = new Set();
 
 function fmt(n) {
   return n.toLocaleString('ar-SA');
@@ -2866,7 +2888,7 @@ function renderTable() {
       </td>
       <td class="col-payments">${b.payments || '-'}</td>
       <td style="text-align:center">
-        <button class="eye-btn" type="button" onclick="openPropertyView('${b.propNo}')">👁</button>
+        <button class="eye-btn" type="button" onclick="openPropertyDetails('${b.propNo}')">👁</button>
       </td>
       <td style="text-align:center">
         <button id="${btnId}" class="details-toggle" type="button" onclick="toggleDetails('${rowId}','${btnId}')">
@@ -2907,9 +2929,6 @@ function renderTable() {
 
 function filterTable() {
   const q     = document.getElementById('table-search').value.toLowerCase();
-  const city  = document.getElementById('filter-city').value;
-  const type  = document.getElementById('filter-type').value;
-  const areaBand = document.getElementById('filter-area').value;
 
   filteredData = buildings.filter(b => {
     const matchQ =
@@ -2920,13 +2939,16 @@ function filterTable() {
       (b.type     && b.type.includes(q))     ||
       (b.division && b.division.includes(q)) ||
       (b.details  && b.details.includes(q));
-    const matchCity = !city || b.city === city;
-    const matchType = !type || b.type === type;
+    const cities = Array.from(selectedCitiesFilter);
+    const types  = Array.from(selectedTypesFilter);
+    const areas  = Array.from(selectedAreasFilter);
+    const matchCity = cities.length === 0 || cities.includes(b.city);
+    const matchType = types.length === 0 || types.includes(b.type);
     const matchArea =
-      !areaBand ||
-      (areaBand === 'small'  && b.area < 10000) ||
-      (areaBand === 'medium' && b.area >= 10000 && b.area <= 20000) ||
-      (areaBand === 'large'  && b.area > 20000);
+      areas.length === 0 ||
+      (areas.includes('small')  && b.area < 10000) ||
+      (areas.includes('medium') && b.area >= 10000 && b.area <= 20000) ||
+      (areas.includes('large')  && b.area > 20000);
     return matchQ && matchCity && matchType && matchArea;
   });
 
@@ -3111,7 +3133,14 @@ function toggleColMenu() {
 
 document.addEventListener('click', e => {
   if (!e.target.closest('.filter-dropdown') && !e.target.closest('[onclick="toggleColMenu()"]')) {
-    document.getElementById('col-menu').classList.remove('open');
+    const colMenu = document.getElementById('col-menu');
+    if (colMenu) colMenu.classList.remove('open');
+    const cityMenu = document.getElementById('city-menu');
+    if (cityMenu) cityMenu.classList.remove('open');
+    const typeMenu = document.getElementById('type-menu');
+    if (typeMenu) typeMenu.classList.remove('open');
+    const areaMenu = document.getElementById('area-menu');
+    if (areaMenu) areaMenu.classList.remove('open');
   }
 });
 
@@ -3122,6 +3151,130 @@ function toggleCol(cls) {
     el.style.display = colVisible[key] ? '' : 'none';
   });
   document.getElementById('tog-' + key).textContent = colVisible[key] ? '✓' : '';
+}
+
+function toggleCityMenu() {
+  const menu = document.getElementById('city-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function updateCityLabel() {
+  const labelEl = document.getElementById('filter-city-label');
+  if (!labelEl) return;
+  const cities = Array.from(selectedCitiesFilter);
+  if (cities.length === 0) {
+    labelEl.textContent = 'كل المحافظات';
+  } else if (cities.length === 1) {
+    labelEl.textContent = cities[0];
+  } else {
+    labelEl.textContent = `محافظات متعددة (${cities.length})`;
+  }
+}
+
+function toggleCityFilter(city) {
+  if (selectedCitiesFilter.has(city)) {
+    selectedCitiesFilter.delete(city);
+  } else {
+    selectedCitiesFilter.add(city);
+  }
+  const idMap = {
+    'الرياض': 'city-riyadh',
+    'جدة': 'city-jeddah',
+    'الدمام': 'city-dammam',
+    'أبوظبي': 'city-abu',
+    'دبي': 'city-dubai'
+  };
+  const toggleId = idMap[city];
+  if (toggleId) {
+    const el = document.getElementById(toggleId);
+    if (el) el.textContent = selectedCitiesFilter.has(city) ? '✓' : '';
+  }
+  updateCityLabel();
+  currentPage = 1;
+  filterTable();
+}
+
+function toggleTypeMenu() {
+  const menu = document.getElementById('type-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function updateTypeLabel() {
+  const labelEl = document.getElementById('filter-type-label');
+  if (!labelEl) return;
+  const types = Array.from(selectedTypesFilter);
+  if (types.length === 0) {
+    labelEl.textContent = 'كل المناطق العقارية';
+  } else if (types.length === 1) {
+    labelEl.textContent = types[0];
+  } else {
+    labelEl.textContent = `مناطق متعددة (${types.length})`;
+  }
+}
+
+function toggleTypeFilter(type) {
+  if (selectedTypesFilter.has(type)) {
+    selectedTypesFilter.delete(type);
+  } else {
+    selectedTypesFilter.add(type);
+  }
+  const idMap = {
+    'حي العليا': 'type-highrise',
+    'حي الحمراء': 'type-hamra',
+    'حي النزهة': 'type-nuzha',
+    'حي الشاطئ': 'type-shate',
+    'منطقة الكورنيش': 'type-corniche',
+    'طريق الملك فهد': 'type-kingroad',
+    'حي الرويس': 'type-ruwais',
+    'حي الياسمين': 'type-yasmin',
+    'منطقة الخليج التجاري': 'type-bay',
+    'حي المنار': 'type-manar',
+    'المنطقة المالية': 'type-financial',
+    'حي الشاطئ الذهبي': 'type-golden',
+    'حي الروضة': 'type-rawda',
+    'واجهة الخليج': 'type-waterfront'
+  };
+  const toggleId = idMap[type];
+  if (toggleId) {
+    const el = document.getElementById(toggleId);
+    if (el) el.textContent = selectedTypesFilter.has(type) ? '✓' : '';
+  }
+  updateTypeLabel();
+  currentPage = 1;
+  filterTable();
+}
+
+function toggleAreaMenu() {
+  const menu = document.getElementById('area-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function updateAreaLabel() {
+  const labelEl = document.getElementById('filter-area-label');
+  if (!labelEl) return;
+  const areas = Array.from(selectedAreasFilter);
+  if (areas.length === 0 || areas.length === 3) {
+    labelEl.textContent = 'كل المساحات';
+  } else if (areas.length === 1) {
+    const m = { small: 'أقل من ١٠٬٠٠٠ م²', medium: '١٠٬٠٠٠ - ٢٠٬٠٠٠ م²', large: 'أكثر من ٢٠٬٠٠٠ م²' };
+    labelEl.textContent = m[areas[0]] || 'مساحة واحدة';
+  } else {
+    labelEl.textContent = `فئات مساحات متعددة (${areas.length})`;
+  }
+}
+
+function toggleAreaFilter(band) {
+  if (selectedAreasFilter.has(band)) {
+    selectedAreasFilter.delete(band);
+  } else {
+    selectedAreasFilter.add(band);
+  }
+  const toggleId = band === 'small' ? 'area-small' : band === 'medium' ? 'area-medium' : 'area-large';
+  const el = document.getElementById(toggleId);
+  if (el) el.textContent = selectedAreasFilter.has(band) ? '✓' : '';
+  updateAreaLabel();
+  currentPage = 1;
+  filterTable();
 }
 
 /* ─── EXPORT ─── */
@@ -3210,6 +3363,322 @@ function openPropertyView(propNo) {
     </body>
     </html>
   `);
+  w.document.close();
+}
+
+function openPropertyDetails(propNo) {
+  const b = buildings.find(x => x.propNo === propNo);
+  if (!b) return;
+  const csvRows = [
+    ['القسم', 'الحقل', 'القيمة'],
+    ['البيانات المفتاحية', 'رقم المحضر', (b.mahder || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات المفتاحية', 'حالة العقار', (b.status || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'المحافظة', (b.city || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'اسم المنطقة', (b.type || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'المقسم', (b.division || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'نوع الاستثمار', (b.investType || 'غير محدد').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'رابط Google Maps', (b.geo || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'تفصيل العقار', (b.details || '').replace(/[\r\n]+/g, ' ')],
+    ['المساحات والملكية', 'مساحة العقار الكلية (م²)', typeof b.area === 'number' ? String(b.area) : '-'],
+    [
+      'المساحات والملكية',
+      'قيمة العقار بالدولار (تقريبي)',
+      typeof b.value === 'number'
+        ? (b.value / 3.75).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '-'
+    ],
+    ['معلومات عامة', 'الدفعات (نص)', (b.payments || '-').replace(/[\r\n]+/g, ' ')]
+  ];
+  const csvText = '\uFEFF' + csvRows.map(r => r.join(',')).join('\n');
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.write(`
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>بيانات العقار ${b.propNo}</title>
+      <style>
+        body { font-family: 'Tajawal', sans-serif; background:#0b0b0b; color:#f5f0e8; padding:24px; direction:rtl; }
+        h1 { font-size:22px; margin-bottom:16px; color:#D4AF37; }
+        .toolbar {
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:16px;
+          gap:12px;
+          flex-wrap:wrap;
+        }
+        .toolbar-left {
+          display:flex;
+          gap:8px;
+          flex-wrap:wrap;
+        }
+        .btn {
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          padding:6px 14px;
+          border-radius:6px;
+          border:1px solid #444;
+          background:#111;
+          color:#f5f0e8;
+          font-size:12px;
+          cursor:pointer;
+        }
+        .btn:hover { background:#181818; }
+        .sections {
+          display:flex;
+          flex-direction:column;
+          gap:16px;
+        }
+        .section-card {
+          border-radius:10px;
+          border:1px solid #333;
+          background:#121212;
+          padding:14px 16px;
+        }
+        .section-header {
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:10px;
+        }
+        .section-title {
+          color:#D4AF37;
+          font-size:15px;
+          font-weight:600;
+        }
+        .section-sub {
+          font-size:11px;
+          color:#888;
+        }
+        .field-grid {
+          display:grid;
+          grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+          gap:8px 16px;
+        }
+        .field {
+          margin-bottom:4px;
+        }
+        .label { color:#a3a3a3; font-size:12px; display:block; margin-bottom:2px; }
+        .value { font-size:13px; }
+        a.map-link {
+          color:#4ea3ff;
+          text-decoration:none;
+          font-size:13px;
+        }
+        a.map-link:hover { text-decoration:underline; }
+        ul { margin:0; padding-right:18px; }
+        li { margin-bottom:4px; font-size:13px; }
+        .muted { color:#777; font-size:12px; }
+        table.simple {
+          width:100%;
+          border-collapse:collapse;
+          font-size:13px;
+        }
+        table.simple th,
+        table.simple td {
+          border:1px solid #333;
+          padding:4px 6px;
+          text-align:right;
+        }
+        table.simple th {
+          background:#181818;
+          color:#dcdcdc;
+          font-weight:500;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="btn" onclick="window.close()">↩ العودة إلى لوحة العقارات</button>
+          <button class="btn" onclick="window.print()">🖨 تصدير PDF</button>
+          <button class="btn" onclick="window.exportPropertyExcel && window.exportPropertyExcel()">📊 تصدير Excel</button>
+        </div>
+        <div>
+          <span class="label">رقم العقار:</span>
+          <span class="value">${b.propNo}</span>
+        </div>
+      </div>
+      <h1>${b.name}</h1>
+
+      <div class="sections">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ١ : البيانات المفتاحية</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <span class="label">رقم المحضر</span>
+              <span class="value">${b.mahder || '-'}</span>
+            </div>
+            <div class="field">
+              <span class="label">حالة العقار</span>
+              <span class="value">${b.status || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ٢ : البيانات الأساسية</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <span class="label">المحافظة</span>
+              <span class="value">${b.city || '-'}</span>
+            </div>
+            <div class="field">
+              <span class="label">اسم المنطقة</span>
+              <span class="value">${b.type || '-'}</span>
+            </div>
+            <div class="field">
+              <span class="label">المقسم</span>
+              <span class="value">${b.division || '-'}</span>
+            </div>
+            <div class="field">
+              <span class="label">نوع الاستثمار</span>
+              <span class="value">${b.investType || 'غير محدد'}</span>
+            </div>
+            <div class="field">
+              <span class="label">رابط موقع Google Maps</span>
+              <span class="value">
+                ${b.geo ? `<a class="map-link" href="${b.geo}" target="_blank" rel="noopener">فتح الخريطة</a>` : '<span class="muted">لا يوجد رابط</span>'}
+              </span>
+            </div>
+          </div>
+          <div class="field" style="margin-top:8px;">
+            <span class="label">تفصيل العقار</span>
+            <span class="value">${b.details || 'لا توجد بيانات تفصيلية.'}</span>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ٣ : المساحات والملكية</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <span class="label">مساحة العقار الكلية</span>
+              <span class="value">${typeof b.area === 'number' ? b.area.toLocaleString('ar-EG') + ' م²' : '-'}</span>
+            </div>
+            <div class="field">
+              <span class="label">قيمة العقار بالدولار الأمريكي (تقريبي)</span>
+              <span class="value">
+                ${
+                  (typeof b.value === 'number')
+                    ? (b.value / 3.75).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD'
+                    : '-'
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ٤ : الملاك</div>
+            <div class="section-sub">يمكن لاحقًا إضافة أكثر من مالك</div>
+          </div>
+          <table class="simple">
+            <thead>
+              <tr>
+                <th>اسم المالك</th>
+                <th>معيار التملك</th>
+                <th>قيمة التملك</th>
+                <th>مالك حالي؟</th>
+                <th>تاريخ الشراء</th>
+                <th>طريقة الشراء</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6" class="muted">لا توجد بيانات مالكين محددة في هذا الإصدار.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ٥ : الإشارات</div>
+          </div>
+          <table class="simple">
+            <thead>
+              <tr>
+                <th>رقم الإشارة</th>
+                <th>تاريخ الإشارة</th>
+                <th>نوع الإشارة</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3" class="muted">لا توجد إشارات مسجلة.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ٦ : الملفات المرفقة</div>
+          </div>
+          <div class="field">
+            <span class="label">الملفات الملحقة</span>
+            <span class="value muted">${b.files && b.files.length ? 'يوجد ملفات مرفقة (تحتاج لربط فعلي).' : 'لا توجد ملفات مرفقة.'}</span>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">القسم ٧ : الدفعات بالدولار</div>
+          </div>
+          <table class="simple">
+            <thead>
+              <tr>
+                <th>مجمل المدين (USD)</th>
+                <th>مجمل الدائن (USD)</th>
+                <th>مجموع الرصيد (USD)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="muted">غير محدد</td>
+                <td class="muted">غير محدد</td>
+                <td class="muted">غير محدد</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="field" style="margin-top:6px;">
+            <span class="label">ملاحظة</span>
+            <span class="value muted">يمكن ربط هذه الأرقام مستقبلاً بنظام الدفعات الفعلي.</span>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">سجل العمليات</div>
+          </div>
+          ${
+            (b.opsDetails && b.opsDetails.length)
+              ? `<ul>${b.opsDetails.map(item => `<li>${item}</li>`).join('')}</ul>`
+              : '<div class="muted">لا يوجد سجل عمليات.</div>'
+          }
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+  // تعريف دالة التصدير في نافذة التفاصيل نفسها
+  w.exportPropertyExcel = function () {
+    const csv = csvText;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = w.document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'بيانات_العقار_${b.propNo}.csv';
+    a.click();
+  };
   w.document.close();
 }
 
