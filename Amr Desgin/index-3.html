@@ -3518,8 +3518,14 @@ function openPropertyDetails(propNo) {
           transition: all .18s ease;
         }
         .btn span.icon {
-          font-size:14px;
-          color: var(--gold-bright);
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+        }
+        .btn span.icon svg {
+          width:14px;
+          height:14px;
+          fill: var(--gold-bright);
         }
         .btn:hover {
           transform: translateY(-1px) scale(1.02);
@@ -3648,7 +3654,13 @@ function openPropertyDetails(propNo) {
             <span>تصدير PDF</span>
           </button>
           <button class="btn" onclick="window.exportPropertyExcel && window.exportPropertyExcel()">
-            <span class="icon">📊</span>
+            <span class="icon">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <rect x="1" y="7" width="2.4" height="7" rx="0.6"></rect>
+                <rect x="6.1" y="4" width="2.4" height="10" rx="0.6"></rect>
+                <rect x="11.2" y="1" width="2.4" height="13" rx="0.6"></rect>
+              </svg>
+            </span>
             <span>تصدير Excel</span>
           </button>
         </div>
