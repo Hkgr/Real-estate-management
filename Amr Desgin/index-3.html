@@ -3432,16 +3432,73 @@ function openPropertyDetails(propNo) {
         }
         .toolbar {
           display:flex;
-          justify-content:space-between;
           align-items:center;
-          margin-bottom:20px;
-          gap:12px;
+          justify-content:space-between;
+          margin-bottom:24px;
+          gap:16px;
           flex-wrap:wrap;
         }
         .toolbar-left {
           display:flex;
-          gap:8px;
+          align-items:center;
+          gap:10px;
           flex-wrap:wrap;
+        }
+        .toolbar-center {
+          flex:1;
+          display:flex;
+          justify-content:center;
+        }
+        .property-id-pill {
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          padding:6px 18px;
+          border-radius:999px;
+          border:1px solid rgba(212,175,55,.6);
+          background: radial-gradient(circle at top, rgba(212,175,55,.24), rgba(0,0,0,.95));
+          box-shadow: 0 0 16px rgba(212,175,55,.55);
+        }
+        .property-id-label {
+          font-size:12px;
+          color: var(--text-muted);
+        }
+        .property-id-value {
+          font-size:14px;
+          color: var(--gold-bright);
+          font-weight:600;
+          letter-spacing:.04em;
+        }
+        .toolbar-right {
+          display:flex;
+          align-items:center;
+          gap:10px;
+        }
+        .search-wrapper {
+          position:relative;
+          min-width:220px;
+        }
+        .search-input {
+          width:100%;
+          padding:7px 34px 7px 10px;
+          border-radius:999px;
+          border:1px solid rgba(212,175,55,.38);
+          background: rgba(6,4,2,.9);
+          color: var(--ivory-warm);
+          font-family: inherit;
+          font-size:12px;
+          outline:none;
+        }
+        .search-input::placeholder {
+          color: var(--text-muted);
+        }
+        .search-icon {
+          position:absolute;
+          right:10px;
+          top:50%;
+          transform:translateY(-50%);
+          color: var(--gold-soft);
+          font-size:13px;
         }
         .btn {
           display:inline-flex;
@@ -3460,6 +3517,7 @@ function openPropertyDetails(propNo) {
         }
         .btn span.icon {
           font-size:14px;
+          color: var(--gold-bright);
         }
         .btn:hover {
           transform: translateY(-1px) scale(1.02);
@@ -3565,6 +3623,24 @@ function openPropertyDetails(propNo) {
             <span class="icon">↩</span>
             <span>العودة إلى لوحة العقارات</span>
           </button>
+        </div>
+        <div class="toolbar-center">
+          <div class="property-id-pill">
+            <span class="property-id-label">رقم العقار</span>
+            <span class="property-id-value">${b.propNo}</span>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="بحث برقم العقار..."
+              value="${b.propNo}"
+              oninput="this.value = this.value.replace(/[^0-9٠-٩\/\-]/g,'')"
+            />
+          </div>
           <button class="btn" onclick="window.print()">
             <span class="icon">🖨</span>
             <span>تصدير PDF</span>
@@ -3573,10 +3649,6 @@ function openPropertyDetails(propNo) {
             <span class="icon">📊</span>
             <span>تصدير Excel</span>
           </button>
-        </div>
-        <div>
-          <span class="label">رقم العقار:</span>
-          <span class="value">${b.propNo}</span>
         </div>
       </div>
       <h1>${b.name}</h1>
