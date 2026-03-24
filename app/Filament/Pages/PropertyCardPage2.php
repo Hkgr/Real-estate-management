@@ -2056,6 +2056,83 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         return $this->uniformAction($action);
     }
 
+    public function duplicateCardAction(): Action
+    {
+        $action = Action::make('duplicate_card')
+            ->label('نسخ بطاقة')
+            ->icon('heroicon-o-document-duplicate')
+            ->color('info')
+            ->modalHeading('نسخ بطاقة عقار')
+            ->modalDescription('أدخل رقم محضر البطاقة الأصلية ورقم المحضر الجديد لإنشاء نسخة والانتقال مباشرةً لتعديلها.')
+            ->modalSubmitActionLabel('نسخ وفتح')
+            ->form([
+                TextInput::make('source_card_record_number')
+                    ->label('رقم محضر العقار الأصلي')
+                    ->prefixIcon('heroicon-o-document-text')
+                    ->maxLength(50)
+                    ->required(),
+                TextInput::make('new_card_record_number')
+                    ->label('رقم المحضر الجديد')
+                    ->prefixIcon('heroicon-o-key')
+                    ->maxLength(50)
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $sourceRecordNumber = trim((string) ($data['source_card_record_number'] ?? ''));
+                $newRecordNumber = trim((string) ($data['new_card_record_number'] ?? ''));
+
+                if ($sourceRecordNumber === '' || $newRecordNumber === '') {
+                    Notification::make()->title('يرجى إدخال رقم المحضر الأصلي والجديد')->warning()->send();
+                    return;
+                }
+
+                if ($sourceRecordNumber === $newRecordNumber) {
+                    Notification::make()->title('رقم المحضر الجديد يجب أن يكون مختلفاً عن الأصلي')->warning()->send();
+                    return;
+                }
+
+                $sourceRecord = PropertyCard::query()
+                    ->where('card_record_number', $sourceRecordNumber)
+                    ->first();
+
+                if (! $sourceRecord) {
+                    Notification::make()->title('لم يتم العثور على بطاقة بالمحضر الأصلي المدخل')->danger()->send();
+                    return;
+                }
+
+                $exists = PropertyCard::withTrashed()
+                    ->where('card_record_number', $newRecordNumber)
+                    ->exists();
+
+                if ($exists) {
+                    Notification::make()->title('رقم المحضر الجديد مستخدم مسبقاً')->danger()->send();
+                    return;
+                }
+
+                $this->loadRecordIntoForm($sourceRecord);
+                data_set($this->data, 'card_record_number', $newRecordNumber);
+                data_set($this->data, 'files', []);
+                $this->currentRecordId = null;
+                $this->bindFormToRecord(null);
+                $this->form->fill($this->data);
+
+                $record = $this->persistNewRecordFromForm();
+
+                if (! $record) {
+                    return;
+                }
+
+                $this->loadRecordIntoForm($record->fresh());
+
+                Notification::make()
+                    ->title('تم نسخ البطاقة وفتح المحضر الجديد للتعديل')
+                    ->success()
+                    ->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+
     public function toggleCardStatusAction(): Action
     {
         $action = Action::make('toggle_card_status')
