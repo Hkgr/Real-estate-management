@@ -1,18 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Pages;
 
+use App\Exports\PropertyCardsExport;
 use App\Models\PropertyCard;
+use App\Services\PropertyCardsPdfExporter;
 use App\Models\PropertyCardFile;
 use App\Models\PropertyInstallment;
 use App\Models\PropertyOperation;
 use App\Models\Signal;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\RecordCheckboxPosition;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\HtmlString;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 class PropertyCardsTablePage2 extends Page implements HasTable
 {
@@ -28,50 +40,59 @@ class PropertyCardsTablePage2 extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(PropertyCard::query()->with([
-                'operations.oldOwners',
-                'operations.newOwners',
-                'operations.witnesses',
-                'signals',
-                'files',
-                'installments',
-                'creator',
-                'updater',
-            ])->latest('id'))
+            ->query(
+                PropertyCard::query()
+                    ->with([
+                        'operations.oldOwners',
+                        'operations.newOwners',
+                        'operations.witnesses',
+                        'signals',
+                        'files',
+                        'installments',
+                        'creator',
+                        'updater',
+                    ])
+                    ->latest('id')
+            )
+
+            // ✅ هذا هو المهم لإرجاع الـ Bulk Selection بدون BulkActions
+            ->selectable()
+
             ->columns([
                 TextColumn::make('row_number')
                     ->label('تسلسل')
-                    ->state(function (mixed $record, mixed $rowLoop, HasTable $livewire): int {
-                        $currentPage = (int) ($livewire->getTablePage() ?? 1);
-                        $perPage = (int) ($livewire->getTableRecordsPerPage() ?? 10);
-
-                        return (($currentPage - 1) * $perPage) + $rowLoop->iteration;
-                    })
+                    ->rowIndex()
                     ->toggleable(),
 
                 TextColumn::make('id')
                     ->label('#')
                     ->sortable()
                     ->toggleable(),
+
                 TextColumn::make('card_record_number')
                     ->label('المحضر')
                     ->searchable()
                     ->toggleable(),
+
                 TextColumn::make('card_governorate')
                     ->label('المحافظة')
                     ->searchable()
                     ->toggleable(),
+
                 TextColumn::make('card_region_name')
                     ->label('المنطقة العقارية')
                     ->searchable()
                     ->toggleable(),
+
                 TextColumn::make('card_subdivision')
                     ->label('المقسم')
                     ->toggleable(),
+
                 TextColumn::make('card_total_area')
                     ->label('مساحة العقار الكلية')
                     ->formatStateUsing(fn ($state): string => filled($state) ? number_format((float) $state, 2) : '—')
                     ->toggleable(),
+
                 TextColumn::make('card_google_maps_url')
                     ->label('رابط موقع العقار')
                     ->formatStateUsing(fn (?string $state): string => filled($state) ? $state : '—')
@@ -79,12 +100,14 @@ class PropertyCardsTablePage2 extends Page implements HasTable
                     ->limit(30)
                     ->tooltip(fn (?string $state): ?string => filled($state) ? $state : null)
                     ->toggleable(),
+
                 TextColumn::make('card_property_details')
                     ->label('بيانات تفصيلية')
                     ->wrap()
                     ->limit(60)
                     ->tooltip(fn (?string $state): ?string => filled($state) ? $state : null)
                     ->toggleable(),
+
                 TextColumn::make('operations_summary')
                     ->label('العمليات')
                     ->html()
@@ -107,6 +130,7 @@ class PropertyCardsTablePage2 extends Page implements HasTable
 HTML);
                     })
                     ->toggleable(),
+
                 TextColumn::make('signals_summary')
                     ->label('الإشارات')
                     ->html()
@@ -122,6 +146,7 @@ HTML);
                         return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
                     })
                     ->toggleable(),
+
                 TextColumn::make('files_summary')
                     ->label('ملحقات البطاقة')
                     ->html()
@@ -137,6 +162,7 @@ HTML);
                         return new HtmlString('<ul class="min-w-[18rem] list-disc space-y-1 pr-4">' . $rows . '</ul>');
                     })
                     ->toggleable(),
+
                 TextColumn::make('installments_summary')
                     ->label('الدفعات')
                     ->html()
@@ -152,20 +178,24 @@ HTML);
                         return new HtmlString('<div class="min-w-[20rem] space-y-2">' . $rows . '</div>');
                     })
                     ->toggleable(),
+
                 TextColumn::make('creator.name')
                     ->label('أضيف بواسطة')
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
                     ->label('تاريخ الإضافة')
                     ->dateTime('d/m/Y h:i A')
                     ->placeholder('-')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('updater.name')
                     ->label('آخر تعديل بواسطة')
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('updated_at')
                     ->label('تاريخ آخر تعديل')
                     ->dateTime('d/m/Y h:i A')
@@ -173,8 +203,148 @@ HTML);
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->recordCheckboxPosition(RecordCheckboxPosition::BeforeCells)
+            ->selectCurrentPageOnly(false)
+            ->toolbarActions([
+                Action::make('export_excel')
+                    ->label('تصدير إلى إكسل')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->accessSelectedRecords()
+                    ->action(function (Collection $selectedRecords): BinaryFileResponse {
+                        return $this->exportExcel($selectedRecords);
+                    }),
+
+Action::make('export_pdf')
+    ->label('تصدير إلى PDF')
+    ->icon('heroicon-o-document-text')
+    ->color('warning')
+    ->accessSelectedRecords()
+    ->action(function (Collection $selectedRecords): BinaryFileResponse {
+        return $this->exportPdf($selectedRecords);
+    }),
+            ])
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50]);
+    }
+
+    protected function exportExcel(Collection $selectedRecords): BinaryFileResponse
+    {
+        try {
+            $selectedIds = $selectedRecords->pluck('id')->all();
+
+            if ($selectedIds !== []) {
+                Notification::make()
+                    ->title('تم تجهيز تصدير السجلات المحددة.')
+                    ->body('سيتم تصدير السجلات التي قمت بتحديدها فقط.')
+                    ->success()
+                    ->send();
+
+                return Excel::download(
+                    new PropertyCardsExport(selectedIds: $selectedIds),
+                    'property-cards-selected.xlsx'
+                );
+            }
+
+            /** @var Builder<PropertyCard> $query */
+            $query = $this->getFilteredSortedTableQuery();
+
+            Notification::make()
+                ->title('تم تجهيز تصدير السجلات.')
+                ->body('لا توجد سجلات محددة، لذلك سيتم تصدير كل السجلات حسب الفلاتر والترتيب الحالي.')
+                ->success()
+                ->send();
+
+            return Excel::download(
+                new PropertyCardsExport(query: $query),
+                'property-cards-all.xlsx'
+            );
+        } catch (Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->title('فشل تصدير البيانات.')
+                ->danger()
+                ->send();
+
+            throw $e;
+        }
+    }
+protected function exportPdf(Collection $selectedRecords): BinaryFileResponse
+{
+    try {
+        $selectedIds = $selectedRecords->pluck('id')->all();
+
+        if ($selectedIds !== []) {
+            Notification::make()
+                ->title('تم تجهيز تصدير السجلات المحددة.')
+                ->body('سيتم تصدير السجلات التي قمت بتحديدها فقط.')
+                ->success()
+                ->send();
+
+            return (new PropertyCardsPdfExporter(selectedIds: $selectedIds))
+                ->download('property-cards-selected.pdf');
+        }
+
+        /** @var Builder<PropertyCard> $query */
+        $query = $this->getFilteredSortedTableQuery();
+
+        Notification::make()
+            ->title('تم تجهيز تصدير السجلات.')
+            ->body('لا توجد سجلات محددة، لذلك سيتم تصدير كل السجلات حسب الفلاتر والترتيب الحالي.')
+            ->success()
+            ->send();
+
+        return (new PropertyCardsPdfExporter(query: $query))
+            ->download('property-cards-all.pdf');
+    } catch (Throwable $e) {
+        report($e);
+
+        Notification::make()
+            ->title('فشل تصدير البيانات.')
+            ->danger()
+            ->send();
+
+        throw $e;
+    }
+}
+    protected function exportTableRecordsPdf(Collection $selectedRecords): Response
+    {
+        try {
+            $selectedIds = $selectedRecords->pluck('id')->all();
+
+            if ($selectedIds !== []) {
+                Notification::make()
+                    ->title('تم تجهيز تصدير السجلات المحددة.')
+                    ->body('سيتم تصدير السجلات التي قمت بتحديدها فقط.')
+                    ->success()
+                    ->send();
+
+                return (new PropertyCardsPdfExporter(selectedIds: $selectedIds))
+                    ->download('property-cards-selected.pdf');
+            }
+
+            /** @var Builder<PropertyCard> $query */
+            $query = $this->getFilteredSortedTableQuery();
+
+            Notification::make()
+                ->title('تم تجهيز تصدير السجلات.')
+                ->body('لا توجد سجلات محددة، لذلك سيتم تصدير كل السجلات حسب الفلاتر والترتيب الحالي.')
+                ->success()
+                ->send();
+
+            return (new PropertyCardsPdfExporter(query: $query))
+                ->download('property-cards-all.pdf');
+        } catch (Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->title('فشل تصدير البيانات.')
+                ->danger()
+                ->send();
+
+            throw $e;
+        }
     }
 
     protected function formatSignalRow(Signal $signal): string
