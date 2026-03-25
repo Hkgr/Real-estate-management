@@ -2058,14 +2058,16 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
         public function duplicateCardAction(): Action
     {
-        $action = Action::make('duplicate_card')
+        $action = Action::make('copy_card_modal')
             ->label('نسخ بطاقة')
             ->icon('heroicon-o-document-duplicate')
             ->color('info')
             ->modalHeading('نسخ بطاقة عقار')
             ->modalDescription('أدخل رقم محضر البطاقة الأصلية ورقم المحضر الجديد لإنشاء نسخة والانتقال مباشرةً لتعديلها.')
             ->modalSubmitActionLabel('نسخ وفتح')
-            ->form([
+            ->modalCancelActionLabel('إلغاء')
+            ->modalWidth('lg')
+            ->schema([
                 TextInput::make('source_card_record_number')
                     ->label('رقم محضر العقار الأصلي')
                     ->prefixIcon('heroicon-o-document-text')
