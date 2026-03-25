@@ -2067,7 +2067,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->modalSubmitActionLabel('نسخ وفتح')
             ->modalCancelActionLabel('إلغاء')
             ->modalWidth('lg')
-            ->schema([
+            ->form([
                 TextInput::make('source_card_record_number')
                     ->label('رقم محضر العقار الأصلي')
                     ->prefixIcon('heroicon-o-document-text')
