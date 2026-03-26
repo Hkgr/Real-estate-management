@@ -901,18 +901,26 @@ class PropertyCardPage2 extends Page implements HasSchemas
     }
    protected function mergeOwnersIntoTeamMembers(mixed $ownersState, mixed $teamMembersState, string $teamField, callable $set): void
     {
-        $owners = collect(is_array($ownersState) ? $ownersState : [])
-            ->filter(fn($value) => filled($value))
-            ->map(fn($value) => (string) $value)
-            ->values();
+       $normalizeOwnerIds = function (mixed $state): \Illuminate\Support\Collection {
+            return collect(is_array($state) ? $state : [])
+                ->map(function ($value): ?int {
+                    if (is_array($value)) {
+                        $value = $value['id'] ?? $value['owner_id'] ?? null;
+                    }
+
+                    return filled($value) ? (int) $value : null;
+                })
+                ->filter()
+                ->values();
+        };
+
+        $owners = $normalizeOwnerIds($ownersState);
 
         if ($owners->isEmpty()) {
             return;
         }
 
-        $mergedTeamMembers = collect(is_array($teamMembersState) ? $teamMembersState : [])
-            ->filter(fn($value) => filled($value))
-            ->map(fn($value) => (string) $value)
+        $mergedTeamMembers = $normalizeOwnerIds($teamMembersState)
             ->merge($owners)
             ->unique()
             ->values()
