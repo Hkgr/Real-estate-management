@@ -426,7 +426,10 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
                                     return (string) count(array_filter(
                                         $signals,
-                                        fn($signal) => is_array($signal) && ! blank($signal['signal_type'] ?? null)
+                                        fn($signal) => is_array($signal) && (
+                                            ! blank($signal['type'] ?? null)
+                                            || ! blank($signal['signal_type'] ?? null)
+                                        )
                                     ));
                                 })
                                 ->columnSpan(['default' => 6, 'md' => 2]),
