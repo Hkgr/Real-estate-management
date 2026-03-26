@@ -899,6 +899,28 @@ class PropertyCardPage2 extends Page implements HasSchemas
                 ]),
             ]);
     }
+   protected function mergeOwnersIntoTeamMembers(mixed $ownersState, mixed $teamMembersState, string $teamField, callable $set): void
+    {
+        $owners = collect(is_array($ownersState) ? $ownersState : [])
+            ->filter(fn($value) => filled($value))
+            ->map(fn($value) => (string) $value)
+            ->values();
+
+        if ($owners->isEmpty()) {
+            return;
+        }
+
+        $mergedTeamMembers = collect(is_array($teamMembersState) ? $teamMembersState : [])
+            ->filter(fn($value) => filled($value))
+            ->map(fn($value) => (string) $value)
+            ->merge($owners)
+            ->unique()
+            ->values()
+            ->all();
+
+        $set($teamField, $mergedTeamMembers);
+    }
+
 
     protected function operationsRepeater(): Repeater
     {
@@ -922,9 +944,17 @@ class PropertyCardPage2 extends Page implements HasSchemas
                         ->columnSpan(['default' => 12, 'md' => 4]),
 
                     $this->ownerSelectField('old_owners', 'المالكون السابقون', true)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                            $this->mergeOwnersIntoTeamMembers($state, $get('team_one_members'), 'team_one_members', $set);
+                        })
                         ->columnSpan(['default' => 12, 'md' => 4]),
 
                     $this->ownerSelectField('new_owners', 'المالكون الجدد', true)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                            $this->mergeOwnersIntoTeamMembers($state, $get('team_two_members'), 'team_two_members', $set);
+                        })
                         ->columnSpan(['default' => 12, 'md' => 4]),
 
 
