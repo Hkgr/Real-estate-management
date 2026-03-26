@@ -1,0 +1,5290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محفظة العقارات — لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold-deep:    #8B6914;
+  --gold-mid:     #C49A2A;
+  --gold-bright:  #D4AF37;
+  --gold-light:   #E8C96A;
+  --gold-pale:    #F5E9C0;
+  --black-pure:   #0A0A0A;
+  --black-rich:   #111111;
+  --black-card:   #1A1A1A;
+  --black-border: #2A2A2A;
+  --black-muted:  #3D3D3D;
+  --ivory-warm:   #F5F0E8;
+  --ivory-mid:    #EDE5D5;
+  --ivory-deep:   #D9CEBC;
+  --ivory-text:   #6B5E4A;
+  --bg-primary:   var(--black-pure);
+  --bg-secondary: var(--black-rich);
+  --bg-card:      var(--black-card);
+  --text-primary: var(--ivory-warm);
+  --text-secondary: #B0A898;
+  --text-muted:   #6B6560;
+  --accent:       var(--gold-bright);
+  --border:       var(--black-border);
+  --font-display: 'Amiri', serif;
+  --font-body:    'Tajawal', sans-serif;
+  --font-ui:      'Noto Naskh Arabic', serif;
+  --shadow-gold: 0 0 28px rgba(212,175,55,.18);
+  --shadow-card: 0 4px 32px rgba(0,0,0,.55);
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { direction: rtl; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.8;
+  min-height: 100vh;
+  direction: rtl;
+  overflow-x: hidden;
+}
+
+/* ═══ GEOMETRIC BACKGROUND ═══ */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px; right: -200px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(196,154,42,.05) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -150px; left: -150px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(139,105,20,.04) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══ LAYOUT ═══ */
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; right: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+  transition: width .26s ease, transform .26s ease;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(to left, var(--gold-deep), var(--gold-bright), var(--gold-deep));
+}
+
+.sidebar-logo {
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-badge {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: var(--gold-mid);
+  border: 1px solid rgba(196,154,42,.3);
+  padding: 4px 12px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.logo-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1.3;
+}
+
+.logo-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sidebar-toggle-top {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.3);
+  background: rgba(212,175,55,.06);
+  color: var(--gold-bright);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.sidebar-toggle-top:hover {
+  background: rgba(212,175,55,.14);
+  border-color: rgba(212,175,55,.5);
+}
+
+.sidebar-toggle-top svg {
+  width: 14px;
+  height: 14px;
+}
+
+.logo-sub {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.sidebar-nav {
+  padding: 24px 16px;
+  flex: 1;
+}
+
+.nav-section-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all .22s ease;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+  text-decoration: none;
+  background: none;
+  width: 100%;
+  text-align: right;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: rgba(212,175,55,.06);
+  color: var(--ivory-warm);
+  border-color: rgba(212,175,55,.12);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(196,154,42,.06));
+  color: var(--gold-bright);
+  border-color: rgba(212,175,55,.2);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  right: 0; top: 25%; bottom: 25%;
+  width: 3px;
+  background: var(--gold-bright);
+  border-radius: 2px;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: .7;
+}
+
+.nav-item.active .nav-icon { opacity: 1; }
+
+.sidebar-footer {
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold-mid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--black-pure);
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.user-role {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ═══ MAIN CONTENT ═══ */
+.main-content {
+  margin-right: 220px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-right .26s ease;
+}
+
+body.sidebar-collapsed .sidebar {
+  width: 86px;
+}
+
+body.sidebar-collapsed .main-content {
+  margin-right: 86px;
+}
+
+body.sidebar-collapsed .sidebar-logo,
+body.sidebar-collapsed .nav-section-label,
+body.sidebar-collapsed .sidebar-footer {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-toggle-top {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-nav {
+  padding: 18px 10px;
+}
+
+body.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding: 12px 10px;
+  gap: 0;
+}
+
+body.sidebar-collapsed .nav-item .nav-text {
+  display: none;
+}
+
+.sidebar-toggle {
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: all .22s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(212,175,55,.06);
+  color: var(--ivory-warm);
+  border-color: rgba(212,175,55,.12);
+}
+
+.sidebar-toggle svg {
+  width: 18px;
+  height: 18px;
+  opacity: .7;
+}
+
+.sidebar-toggle-inside {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 11px 14px;
+  gap: 12px;
+  text-align: right;
+  position: relative;
+}
+
+body.sidebar-collapsed .sidebar-toggle-inside {
+  justify-content: center;
+  padding: 12px 10px;
+  gap: 0;
+}
+
+body.sidebar-collapsed .sidebar-toggle-inside .nav-text {
+  display: none;
+}
+
+/* Desktop: top arrow when open, nav toggle only when collapsed */
+body:not(.sidebar-collapsed) .sidebar-toggle-inside {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-toggle-inside {
+  display: flex;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+/* ═══ TOP BAR ═══ */
+.topbar {
+  background: rgba(17,17,17,.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 32px;
+  height: auto;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ivory-warm);
+}
+
+.topbar-title span {
+  color: var(--gold-bright);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-left: 0;
+}
+
+.topbar-date {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.topbar-datetime {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: radial-gradient(circle at top, rgba(212,175,55,.16), rgba(0,0,0,.95));
+  border-color: rgba(212,175,55,.4);
+  color: var(--ivory-warm);
+  box-shadow: 0 0 12px rgba(212,175,55,.35);
+  animation: datetime-pop .45s cubic-bezier(.22,.7,.3,1);
+}
+
+/* At 1300px and below, hide extra topbar clutter to avoid overflow */
+@media (max-width: 1300px) {
+  .topbar-datetime { display: none; }
+  .topbar-btn:not(.logout) { display: none; }
+}
+
+@media (max-width: 1100px) {
+  .topbar {
+    padding: 8px 20px;
+    column-gap: 12px;
+  }
+  .topbar-title { font-size: 18px; }
+  .topbar-actions { gap: 10px; }
+}
+
+.topbar-datetime-sep {
+  color: var(--gold-mid);
+  font-size: 11px;
+}
+
+.topbar-datetime:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 0 18px rgba(212,175,55,.6);
+}
+
+@keyframes datetime-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.topbar-btn {
+  padding: 7px 16px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .2s;
+  border: 1px solid rgba(212,175,55,.3);
+  background: rgba(212,175,55,.08);
+  color: var(--gold-light);
+}
+
+.topbar-btn:hover {
+  background: rgba(212,175,55,.15);
+  border-color: rgba(212,175,55,.5);
+}
+
+.topbar-btn.logout {
+  border-color: rgba(248,113,113,.4);
+  background: rgba(127,29,29,.15);
+  color: #fecaca;
+}
+
+.topbar-btn.logout:hover {
+  background: rgba(153,27,27,.35);
+  border-color: rgba(248,113,113,.7);
+}
+
+/* ── Topbar hamburger (mobile only) ── */
+.topbar-hamburger {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: rgba(212,175,55,.08);
+  border: 1px solid rgba(212,175,55,.22);
+  border-radius: var(--r-md);
+  color: var(--gold-bright);
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+  /* RTL: sits on the left side of the topbar (which is the "start" in RTL layout) */
+  margin-left: 0;
+  margin-right: 0;
+  order: -1; /* ensure it stays at the visual start */
+}
+
+.topbar-hamburger:hover {
+  background: rgba(212,175,55,.16);
+  border-color: rgba(212,175,55,.4);
+}
+
+/* topbar-hamburger is now unused — kept for safety but hidden everywhere */
+.topbar-hamburger { display: none !important; }
+
+/* ── Mobile nav pills inside topbar ── */
+.topbar-mobile-nav {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.topbar-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.topbar-nav-pill:hover {
+  border-color: rgba(212,175,55,.3);
+  color: var(--gold-light);
+  background: rgba(212,175,55,.06);
+}
+
+.topbar-nav-pill.active {
+  background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(196,154,42,.08));
+  border-color: rgba(212,175,55,.4);
+  color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(212,175,55,.15);
+}
+
+.topbar-nav-pill svg {
+  opacity: .8;
+  flex-shrink: 0;
+}
+
+.topbar-nav-pill.active svg { opacity: 1; }
+
+/* On desktop, keep the topbar-title-desktop visible; hide mobile nav */
+.topbar-title-desktop { display: block; }
+
+/* ── Mobile breakpoint: swap sidebar for inline nav ── */
+@media (max-width: 1024px) {
+  /* Hide the entire sidebar — no overlay, no off-canvas, nothing */
+  .sidebar { display: none !important; }
+  .sidebar-overlay { display: none !important; }
+
+  /* Remove sidebar margin from main content */
+  .main-content { margin-right: 0 !important; }
+
+  /* Show mobile nav pills */
+  .topbar-mobile-nav { display: flex; }
+
+  /* Hide the desktop-only page title in topbar (it would crowd with pills) */
+  .topbar-title-desktop { display: none; }
+
+  /* The desktop "Properties" button in actions is also redundant now */
+  .topbar-btn-props { display: none; }
+
+  /* Topbar layout on mobile: pills centered, logout on left */
+  .topbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small phones: shorten pill labels to just icons */
+  .topbar-nav-pill span.pill-label { display: none; }
+  .topbar-nav-pill { padding: 8px 12px; gap: 0; }
+}
+
+/* ═══ PAGE CONTAINER ═══ */
+.page {
+  display: none;
+  padding: 36px;
+  flex: 1;
+  animation: fadeSlide .35s ease;
+}
+
+.page.active { display: block; }
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══ PAGE HEADER ═══ */
+.page-header {
+  margin-bottom: 36px;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -18px; right: 0;
+  width: 100%; height: 1px;
+  background: linear-gradient(to left, var(--gold-mid), transparent 60%);
+}
+
+.page-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--gold-mid);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-eyebrow::before {
+  content: '';
+  width: 20px; height: 1px;
+  background: var(--gold-mid);
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ivory-warm);
+  line-height: 1.2;
+}
+
+.page-title em {
+  color: var(--gold-bright);
+  font-style: normal;
+}
+
+.page-subtitle {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.page-header-dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.page-hero-icon {
+  flex: 0 0 220px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  opacity: .95;
+  perspective: 800px;
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(212,175,55,.28);
+  background: linear-gradient(135deg, rgba(212,175,55,.08), rgba(10,10,10,.35));
+  box-shadow: 0 10px 26px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.04);
+}
+
+.page-hero-icon img {
+  width: 100%;
+  height: 100%;
+  max-width: 260px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 12px;
+  filter: saturate(1.06) contrast(1.04) drop-shadow(0 0 26px rgba(212,175,55,.35));
+  transform-origin: center;
+  transition: transform .45s ease-out, filter .45s ease-out;
+}
+
+.page-hero-icon::before {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -45%;
+  width: 40%;
+  background: linear-gradient(
+    110deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.18) 48%,
+    rgba(255,245,210,.34) 54%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: translateX(-160%) rotate(10deg);
+  animation: heroLuxurySheen 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.page-hero-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  box-shadow: inset 0 0 20px rgba(212,175,55,.2), inset 0 -8px 22px rgba(0,0,0,.32);
+  pointer-events: none;
+}
+
+.page-hero-icon:hover img {
+  transform: scale(1.035);
+  filter: saturate(1.1) contrast(1.06) drop-shadow(0 0 30px rgba(245,206,95,.45));
+}
+
+@keyframes heroLuxurySheen {
+  0%, 22% {
+    transform: translateX(-170%) rotate(10deg);
+    opacity: 0;
+  }
+  33%, 56% {
+    transform: translateX(320%) rotate(10deg);
+    opacity: .88;
+  }
+  100% {
+    transform: translateX(320%) rotate(10deg);
+    opacity: 0;
+  }
+}
+
+.page-hero-layer {
+  transform-origin: center;
+  transition: transform .4s ease-out;
+}
+
+@media (max-width: 900px) {
+  .page-header-dashboard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .page-hero-icon {
+    display: none;
+  }
+}
+
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.selection-card {
+  min-width: 240px;
+  max-width: 280px;
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-card);
+  margin-left: 12px;
+}
+
+.selection-title {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: var(--gold-mid);
+  margin-bottom: 6px;
+}
+
+.selection-main-value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--gold-bright);
+  margin-bottom: 4px;
+}
+
+.selection-subvalue {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.selection-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255,255,255,.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.selection-bar-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(to left, var(--gold-bright), var(--gold-deep));
+  border-radius: inherit;
+  transition: width .25s ease;
+}
+
+.selection-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ═══ ORNAMENT ═══ */
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0;
+}
+.ornament-line { flex: 1; height: 1px; background: linear-gradient(to left, transparent, rgba(196,154,42,.25)); }
+.ornament-line.rev { background: linear-gradient(to right, transparent, rgba(196,154,42,.25)); }
+.ornament-diamond { width: 8px; height: 8px; background: var(--gold-bright); transform: rotate(45deg); flex-shrink: 0; }
+.ornament-dot { width: 4px; height: 4px; background: var(--gold-mid); transform: rotate(45deg); flex-shrink: 0; }
+
+/* ═══ STAT CARDS GRID ═══ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 22px 24px 50px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .25s, box-shadow .25s, border-color .25s;
+  cursor: default;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(to left, transparent, rgba(212,175,55,.3), transparent);
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-gold);
+  border-color: rgba(212,175,55,.2);
+}
+
+.stat-card.gold-card {
+  background: linear-gradient(145deg, #1E1608, #1A1A1A);
+  border-color: rgba(212,175,55,.25);
+}
+
+.stat-card.gold-card::before {
+  background: linear-gradient(to left, transparent, rgba(212,175,55,.6), transparent);
+}
+
+.stat-bg-icon {
+  position: absolute;
+  bottom: -10px; left: -10px;
+  font-size: 64px;
+  opacity: .04;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.stat-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-icon {
+  width: 28px; height: 28px;
+  background: rgba(212,175,55,.08);
+  border: 1px solid rgba(212,175,55,.15);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-value small {
+  font-size: 16px;
+  color: var(--gold-mid);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.stat-sub {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+
+.badge-up { background: rgba(74,222,128,.1); color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+.badge-down { background: rgba(248,113,113,.1); color: #f87171; border: 1px solid rgba(248,113,113,.2); }
+.badge-neutral { background: rgba(212,175,55,.1); color: var(--gold-light); border: 1px solid rgba(212,175,55,.2); }
+
+/* Mini graphs inside stat cards */
+.stat-mini-graph {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  width: 56%;
+  max-width: 110px;
+  opacity: .9;
+}
+
+.stat-mini-graph svg {
+  width: 100%;
+  height: 36px;
+}
+
+.stat-mini-graph polyline {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .9;
+}
+
+/* XY style axes for bar chart */
+.xy-chart {
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.xy-chart::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 12px;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to top, rgba(255,255,255,.05), rgba(212,175,55,.4));
+}
+
+.xy-chart::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 12px;
+  height: 1px;
+  background: linear-gradient(to left, rgba(212,175,55,.4), rgba(255,255,255,.04));
+}
+
+.xy-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.xy-label-y {
+  color: var(--gold-mid);
+}
+
+.xy-label-x {
+  opacity: .8;
+}
+
+/* Make icons more goldish inside dashboard */
+.sidebar .nav-icon {
+  color: var(--gold-mid);
+}
+
+#page-dashboard .stat-bg-icon,
+#page-dashboard .stat-icon {
+  color: var(--gold-bright);
+}
+
+#page-dashboard .eye-btn,
+#page-dashboard .geo-link {
+  border-color: rgba(212,175,55,.6);
+  color: var(--gold-bright);
+}
+
+/* Mini graphs inside stat cards */
+.stat-mini-graph {
+  margin-top: 10px;
+}
+
+.stat-mini-graph svg {
+  width: 100%;
+  height: 36px;
+}
+
+.stat-mini-graph polyline {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .9;
+}
+
+/* ═══ CHARTS ROW ═══ */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 380px;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; left: 0;
+  height: 1px;
+  background: linear-gradient(to left, transparent, rgba(212,175,55,.2), transparent);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.chart-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-sub {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.chart-badge {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(212,175,55,.08);
+  color: var(--gold-mid);
+  border: 1px solid rgba(212,175,55,.15);
+}
+
+/* Bar Chart */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 140px;
+}
+
+.bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: opacity .2s;
+  position: relative;
+  cursor: pointer;
+}
+
+.bar:hover { opacity: .8; }
+
+.bar-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.bar-val {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--gold-bright);
+  text-align: center;
+}
+
+/* Donut Chart */
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.donut-svg { flex-shrink: 0; }
+
+.donut-legend {
+  flex: 1;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-pct {
+  margin-right: auto;
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+/* Line sparklines */
+.sparkline-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.spark-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,.02);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+}
+
+.spark-info { flex: 1; }
+.spark-name { font-family: var(--font-ui); font-size: 12px; color: var(--text-primary); }
+.spark-val  { font-family: var(--font-display); font-size: 16px; color: var(--gold-bright); font-weight: 700; }
+.spark-chg  { font-family: var(--font-body); font-size: 11px; }
+.spark-chg.up   { color: #4ade80; }
+.spark-chg.down { color: #f87171; }
+.spark-svg { flex-shrink: 0; }
+
+/* ═══ RECENT TABLE (dashboard mini) ═══ */
+.recent-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: visible;
+  margin-bottom: 28px;
+}
+
+/* Mini table scroll wrapper gets the radius */
+.recent-card .table-overflow {
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+.recent-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.recent-title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.btn-link {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--gold-mid);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px 0;
+  transition: color .2s;
+}
+
+.btn-link:hover { color: var(--gold-bright); }
+
+.mini-table { width: 100%; border-collapse: collapse; }
+
+.mini-table th {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+  padding: 12px 20px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,.2);
+  font-weight: 500;
+}
+
+.mini-table td {
+  padding: 14px 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(42,42,42,.5);
+}
+
+.mini-table tr:last-child td { border-bottom: none; }
+
+.mini-table tr:hover td {
+  background: rgba(212,175,55,.03);
+  color: var(--text-primary);
+}
+
+.td-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+}
+
+.td-gold { color: var(--gold-bright) !important; font-family: var(--font-display) !important; font-size: 15px !important; font-weight: 700 !important; }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+
+.status-active  { background: rgba(74,222,128,.08); color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+.status-partial { background: rgba(212,175,55,.1); color: var(--gold-light); border: 1px solid rgba(212,175,55,.2); }
+.status-pending { background: rgba(148,163,184,.08); color: #94a3b8; border: 1px solid rgba(148,163,184,.15); }
+
+/* ═══════════════════════════════════════
+   PAGE 2 — BUILDING TABLE
+═══════════════════════════════════════ */
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  position: sticky;
+  top: 64px;
+  z-index: 25;
+  background: rgba(11,11,11,.96);
+  padding-top: 8px;
+  padding-bottom: 10px;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 0 1 260px;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.search-wrap::before {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-bright);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.search-wrap::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  top: 55%;
+  width: 8px;
+  height: 2px;
+  background: var(--gold-bright);
+  transform: translateY(-50%) rotate(40deg);
+  transform-origin: left center;
+  border-radius: 999px;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 9px 38px 9px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus { border-color: rgba(212,175,55,.4); }
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+
+.toolbar-btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.toolbar-btn-outline:hover {
+  border-color: rgba(212,175,55,.3);
+  color: var(--gold-light);
+  background: rgba(212,175,55,.04);
+}
+
+.toolbar-btn-gold {
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold-mid));
+  border: 1px solid var(--gold-mid);
+  color: var(--black-pure);
+  font-weight: 600;
+}
+
+.toolbar-btn-gold:hover {
+  background: linear-gradient(135deg, var(--gold-mid), var(--gold-bright));
+  box-shadow: 0 0 16px rgba(212,175,55,.3);
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Filter chips */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: .08em;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .2s;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.02);
+  color: var(--text-secondary);
+}
+
+.chip:hover, .chip.active {
+  border-color: rgba(212,175,55,.35);
+  background: rgba(212,175,55,.08);
+  color: var(--gold-light);
+}
+
+.chip-remove {
+  font-size: 14px;
+  line-height: 1;
+  opacity: .6;
+}
+
+/* Big Table */
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: visible; /* let .table-overflow handle scrolling */
+}
+
+/* Keep border-radius visually by clipping the overflow wrapper */
+.table-overflow {
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.big-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.big-table thead {
+  background: var(--bg-card);
+}
+
+.big-table.hide-select th.select-col,
+.big-table.hide-select td.select-col {
+  display: none;
+}
+
+.big-table th {
+  padding: 14px 18px;
+  text-align: right;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  transition: color .2s;
+}
+
+.big-table th:hover { color: var(--gold-mid); }
+
+.th-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-icon { opacity: .4; font-size: 10px; }
+.sort-icon.active { opacity: 1; color: var(--gold-bright); }
+
+.col-drag {
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.big-table td {
+  padding: 13px 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(42,42,42,.5);
+  white-space: nowrap;
+  transition: background .15s;
+}
+
+.td-seq {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.td-details {
+  white-space: normal;
+  line-height: 1.9;
+  max-width: 360px;
+}
+
+.details-toggle {
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,.02);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .18s;
+}
+
+.details-toggle span {
+  font-size: 12px;
+}
+
+.details-toggle.open {
+  border-color: rgba(212,175,55,.4);
+  color: var(--gold-light);
+  background: rgba(212,175,55,.08);
+}
+
+.detail-row {
+  display: none;
+  background: rgba(0,0,0,.4);
+}
+
+.detail-row.open {
+  display: table-row;
+}
+
+.detail-cell {
+  padding: 16px 24px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+
+.detail-title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--gold-light);
+  margin-bottom: 6px;
+}
+
+.detail-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.detail-text {
+  white-space: normal;
+  flex: 1;
+}
+
+.detail-map {
+  min-width: 180px;
+  max-width: 240px;
+}
+
+.detail-map-title {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .detail-layout {
+    flex-direction: column;
+  }
+  .detail-map {
+    width: 100%;
+  }
+}
+
+.ops-row {
+  display: none;
+  background: rgba(0,0,0,.35);
+}
+
+.ops-row.open {
+  display: table-row;
+}
+
+.ops-cell {
+  padding: 16px 24px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ops-title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--gold-light);
+  margin-bottom: 8px;
+}
+
+.ops-list {
+  margin: 0;
+  padding-right: 16px;
+  list-style: disc;
+}
+
+.ops-list li {
+  margin-bottom: 4px;
+}
+
+.ops-toggle {
+  cursor: pointer;
+  color: var(--gold-light);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.eye-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.35);
+  background: transparent;
+  color: var(--gold-light);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all .18s;
+}
+
+.eye-btn:hover {
+  background: rgba(212,175,55,.08);
+  border-color: rgba(212,175,55,.6);
+  box-shadow: 0 0 10px rgba(212,175,55,.25);
+}
+
+.geo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(212,175,55,.08);
+  border: 1px solid rgba(212,175,55,.25);
+  color: var(--gold-bright);
+  text-decoration: none;
+  font-size: 15px;
+  transition: background .2s, border-color .2s, transform .15s;
+}
+
+.geo-link:hover {
+  background: rgba(212,175,55,.16);
+  border-color: rgba(212,175,55,.4);
+  transform: translateY(-1px);
+}
+
+.row-select {
+  width: 16px;
+  height: 16px;
+}
+
+.rows-input {
+  width: 70px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 6px 8px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-align: center;
+  margin-right: 6px;
+}
+
+.big-table tbody tr {
+  transition: background .15s;
+}
+
+.big-table tbody tr.selected-row td {
+  position: relative;
+  background: rgba(212,175,55,.06);
+  color: var(--text-primary);
+  border-top: 1px solid rgba(212,175,55,.18);
+  border-bottom: 1px solid rgba(212,175,55,.18);
+}
+
+.big-table tbody tr:hover td {
+  background: rgba(212,175,55,.03);
+  color: var(--text-primary);
+}
+
+.big-table tbody tr:last-child td { border-bottom: none; }
+
+.td-building-name {
+  font-family: var(--font-ui) !important;
+  font-size: 13px !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.td-amount {
+  font-family: var(--font-display) !important;
+  color: var(--gold-bright) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.td-share-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-bar-track {
+  width: 80px;
+  height: 4px;
+  background: rgba(255,255,255,.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.share-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(to left, var(--gold-bright), var(--gold-deep));
+}
+
+/* Column visibility menu */
+.col-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--bg-card);
+  border: 1px solid rgba(212,175,55,.2);
+  border-radius: var(--r-md);
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 200;
+  box-shadow: var(--shadow-card);
+  display: none;
+}
+
+.col-menu.open { display: block; }
+
+.col-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: background .15s;
+}
+
+.col-menu-item:hover { background: rgba(212,175,55,.05); color: var(--text-primary); }
+
+.col-toggle {
+  width: 14px; height: 14px;
+  border: 1px solid rgba(212,175,55,.3);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--gold-bright);
+  flex-shrink: 0;
+}
+
+/* Export buttons area */
+.export-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,.2);
+  justify-content: space-between;
+}
+
+.export-info {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.export-info strong {
+  color: var(--gold-mid);
+}
+
+.export-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: var(--r-md);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .22s;
+  font-weight: 600;
+}
+
+.btn-pdf {
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold-mid));
+  border: 1px solid rgba(212,175,55,.4);
+  color: var(--black-pure);
+}
+
+.btn-pdf:hover {
+  background: linear-gradient(135deg, var(--gold-mid), var(--gold-bright));
+  box-shadow: 0 0 16px rgba(212,175,55,.35);
+}
+
+.btn-excel {
+  background: transparent;
+  border: 1px solid rgba(212,175,55,.35);
+  color: var(--gold-light);
+}
+
+.btn-excel:hover {
+  background: rgba(212,175,55,.08);
+  box-shadow: 0 0 12px rgba(212,175,55,.2);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  justify-content: center;
+}
+
+.page-btn {
+  width: 34px; height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover { border-color: rgba(212,175,55,.3); color: var(--gold-light); }
+.page-btn.active { background: rgba(212,175,55,.12); border-color: rgba(212,175,55,.3); color: var(--gold-bright); }
+
+.topbar-time {
+  margin-left: 8px;
+}
+
+.export-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr 1fr; }
+  .charts-row > *:last-child { grid-column: span 2; }
+}
+
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; }
+  .charts-row > *:last-child { grid-column: span 1; }
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--black-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-deep); }
+
+/* ═══ DROPDOWN FILTER ═══ */
+.filter-dropdown {
+  position: relative;
+}
+
+.filter-dropdown select {
+  appearance: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 9px 32px 9px 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .2s;
+  min-width: 130px;
+}
+
+.filter-multi-btn {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 9px 32px 9px 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: right;
+}
+
+.filter-dropdown select:focus { border-color: rgba(212,175,55,.4); color: var(--text-primary); }
+
+.filter-dropdown::after {
+  content: '▾';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 11px;
+}
+
+/* ═══ NOTIFICATIONS DOT ═══ */
+.notif-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(212,175,55,.6);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: .8; }
+}
+
+/* ═══ SKELETON LOADER ANIM ═══ */
+.page { animation: fadeSlide .35s cubic-bezier(.4,0,.2,1); }
+
+/* ═══ TABLE OVERFLOW WRAPPER ═══ */
+/* (base styles defined near .table-card above) */
+
+/* Mobile bottom nav hidden by default */
+.mobile-nav { display: none; }
+
+/* Tablet portrait vertical-table toggle: hidden by default */
+.mobile-table-view-toggle { display: none; }
+
+/* ═══════════════════════════════════════
+   BREAKPOINT: ≤ 1024px  (tablets + phones)
+═══════════════════════════════════════ */
+@media (max-width: 1024px) {
+
+  /* ── Sidebar: completely hidden — navigation is in the topbar pills ── */
+  /* (sidebar { display:none } is already set in the mobile nav CSS above) */
+
+  /* ── Main content: full width ── */
+  .main-content {
+    margin-right: 0 !important;
+    padding-bottom: 20px;
+  }
+
+  /* ── Page padding ── */
+  .page { padding: 18px 14px 80px; }
+
+  /* ── Topbar ── */
+  .topbar { padding: 8px 12px; gap: 8px; }
+  .topbar-datetime { display: none; }
+  .topbar-btn:not(.logout) { display: none; }
+
+  /* ── Properties page: stack header + selection card ── */
+  .page-header-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .selection-card {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+
+  /* ── Table toolbar: wrap nicely ── */
+  .table-toolbar {
+    top: 64px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .table-toolbar .toolbar-separator { display: none; }
+  .search-wrap {
+    flex: 1 1 200px;
+    min-width: 0;
+    max-width: none;
+  }
+  .filter-dropdown {
+    flex: 1 1 160px;
+    min-width: 140px;
+  }
+
+  /* RTL column menu */
+  .col-menu { left: auto; right: 0; }
+
+  /* Stats: 2 columns on tablet */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Show vertical toggle hint on portrait tablets */
+@media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px) {
+  .mobile-table-view-toggle { display: inline-flex; }
+}
+
+/* ═══════════════════════════════════════
+   BREAKPOINT: ≤ 600px  (phones)
+   Strategy: horizontal scroll table —
+   keeps all columns, user swipes to see all.
+   Expandable rows (eye/ops/details) still work.
+═══════════════════════════════════════ */
+@media (max-width: 600px) {
+
+  .page { padding: 14px 10px 80px; }
+
+  /* ── Stats: single column on small phones ── */
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 26px; }
+
+  /* ── Topbar compact ── */
+  .topbar-title { font-size: 16px; }
+
+  /* ── Table: horizontal scroll pan ── */
+  .table-overflow {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    /* Scroll shadow hints */
+    background:
+      linear-gradient(to left, var(--bg-card) 30%, transparent) right,
+      linear-gradient(to right, var(--bg-card) 30%, transparent) left;
+    background-size: 40px 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local;
+  }
+
+  /* Keep table as real table — do NOT convert to block cards on phone.
+     User scrolls horizontally with finger. All columns + expand rows stay intact. */
+  .big-table {
+    table-layout: auto;
+    min-width: 700px; /* ensures table is wide enough to need scrolling */
+  }
+
+  .big-table thead { display: table-header-group; }
+
+  .big-table th {
+    padding: 10px 8px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .big-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Expandable rows stay as table rows */
+  .big-table tbody tr.detail-row,
+  .big-table tbody tr.ops-row {
+    display: none;
+  }
+  .big-table tbody tr.detail-row.open {
+    display: table-row;
+  }
+  .big-table tbody tr.ops-row.open {
+    display: table-row;
+  }
+
+  /* Detail + ops cells span full width inside the table row */
+  .detail-cell,
+  .ops-cell {
+    padding: 14px 12px;
+    white-space: normal;
+  }
+
+  /* Larger tap targets for action buttons */
+  .eye-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+
+  .details-toggle {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  /* Dashboard mini-table */
+  .mini-table th { padding: 10px 10px; font-size: 10px; }
+  .mini-table td { padding: 11px 10px; font-size: 12px; }
+
+  /* Export bar: stack on phone */
+  .export-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .export-btns { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+
+  /* Pagination: tighter */
+  .pagination { gap: 4px; padding: 12px; }
+  .page-btn { width: 30px; height: 30px; font-size: 12px; }
+}
+
+/* ═══════════════════════════════════════
+   TABLET PORTRAIT vertical table (opt-in toggle)
+   Only applies when user taps the toggle button
+═══════════════════════════════════════ */
+@media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px) {
+
+  .property-table--vertical .big-table thead { display: none; }
+
+  .property-table--vertical .big-table tbody tr.detail-row,
+  .property-table--vertical .big-table tbody tr.ops-row { display: none !important; }
+  .property-table--vertical .big-table tbody tr.detail-row.open,
+  .property-table--vertical .big-table tbody tr.ops-row.open { display: block !important; }
+  .property-table--vertical .big-table tbody tr.detail-row td,
+  .property-table--vertical .big-table tbody tr.ops-row td { display: block !important; }
+  .property-table--vertical .detail-cell,
+  .property-table--vertical .ops-cell { padding: 14px 12px !important; }
+
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: rgba(0,0,0,.18);
+    margin-bottom: 12px;
+  }
+
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td {
+    display: block;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(42,42,42,.35);
+    white-space: normal;
+  }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:last-child {
+    border-bottom: none;
+  }
+
+  /* Hide crowded columns */
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(1),
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(2),
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(4),
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(9),
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(12) { display: none; }
+
+  /* Column labels */
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: .06em;
+    margin-bottom: 4px;
+  }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before  { content: 'رقم العقار'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5)::before  { content: 'المحافظة'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6)::before  { content: 'المنطقة العقارية'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(7)::before  { content: 'المقسم'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before  { content: 'المساحة'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'بطاقة التفاصيل'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل'; }
+
+  /* Bigger tap targets */
+  .property-table--vertical .big-table .eye-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 18px;
+  }
+  .property-table--vertical .big-table .details-toggle {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-title-row">
+        <div class="logo-title">عقارات</div>
+        <button class="sidebar-toggle-top" type="button" aria-label="تصغير الشريط الجانبي" onclick="toggleSidebar()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 4l-6 6 6 6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="logo-sub">نظام إدارة الحصص العقارية</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="sidebar-toggle sidebar-toggle-inside" type="button" aria-label="تبديل القائمة الجانبية" onclick="toggleSidebar()">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+        <span class="nav-text"></span>
+      </button>
+      <div class="nav-section-label">الرئيسية</div>
+
+      <button class="nav-item active" onclick="switchPage('dashboard', this); switchPageMobile('dashboard');">
+        <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="1" width="7" height="7" rx="1.5"/>
+          <rect x="10" y="1" width="7" height="7" rx="1.5"/>
+          <rect x="1" y="10" width="7" height="7" rx="1.5"/>
+          <rect x="10" y="10" width="7" height="7" rx="1.5"/>
+        </svg>
+        <span class="nav-text">لوحة التحكم</span>
+      </button>
+
+      <button class="nav-item" onclick="switchPage('properties', this); switchPageMobile('properties');">
+        <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 16V7l7-5 7 5v9"/>
+          <rect x="6" y="10" width="3" height="6"/>
+          <rect x="9" y="10" width="3" height="6"/>
+        </svg>
+        <span class="nav-text">بطاقات العقار</span>
+      </button>
+
+      <div class="nav-section-label">التقارير</div>
+
+      <button class="nav-item" onclick="alert('قريباً')">
+        <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 13l4-4 3 3 5-6"/>
+          <rect x="1" y="1" width="16" height="16" rx="2"/>
+        </svg>
+        <span class="nav-text">التحليلات</span>
+      </button>
+
+      <button class="nav-item" onclick="alert('قريباً')">
+        <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 1v16M1 9h16"/>
+          <circle cx="9" cy="9" r="8"/>
+        </svg>
+        <span class="nav-text">توزيع الأرباح</span>
+      </button>
+
+      <button class="nav-item" onclick="alert('قريباً')">
+        <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 4h10v10H4z" rx="1"/>
+          <path d="M7 8h4M7 11h4M7 5h4"/>
+        </svg>
+        <span class="nav-text">المستندات</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">خ</div>
+        <div>
+          <div class="user-name">عبد القادر سنكري</div>
+          <div class="user-role">مستثمر رئيسي</div>
+        </div>
+        <div class="notif-dot" style="margin-right:auto"></div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="closeSidebarForMobile()"></div>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <!-- Desktop: just title on the right -->
+      <div class="topbar-title topbar-title-desktop" id="topbar-title">لوحة <span>التحكم</span></div>
+
+      <!-- Mobile nav pills: replace sidebar on phones/tablets -->
+      <nav class="topbar-mobile-nav" aria-label="تنقل رئيسي">
+        <button class="topbar-nav-pill active" id="mnav-dashboard"
+          onclick="switchPageMobile('dashboard')">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="1" y="1" width="7" height="7" rx="1.2"/><rect x="10" y="1" width="7" height="7" rx="1.2"/>
+            <rect x="1" y="10" width="7" height="7" rx="1.2"/><rect x="10" y="10" width="7" height="7" rx="1.2"/>
+          </svg>
+          لوحة التحكم
+        </button>
+        <button class="topbar-nav-pill" id="mnav-properties"
+          onclick="switchPageMobile('properties')">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M2 16V7l7-5 7 5v9"/><rect x="6" y="10" width="3" height="6"/><rect x="9" y="10" width="3" height="6"/>
+          </svg>
+          بطاقات العقار
+        </button>
+      </nav>
+
+      <div class="topbar-actions">
+        <div class="topbar-date topbar-datetime" id="topbar-datetime">
+          <span id="topbar-time">--:--:--</span>
+          <span class="topbar-datetime-sep">•</span>
+          <span id="topbar-date">جارٍ التحميل…</span>
+        </div>
+        <button class="topbar-btn topbar-btn-props" onclick="switchPage('properties', document.querySelector('.nav-item:nth-child(2)'))">⊞ بطاقات العقار</button>
+        <button class="topbar-btn logout" onclick="handleLogout()">⎋ تسجيل الخروج</button>
+      </div>
+    </header>
+
+    <!-- Mobile navigation: only visible on small screens -->
+    <nav class="mobile-nav" id="mobile-nav" aria-label="تنقل سريع">
+      <button id="mobile-nav-dashboard" class="mobile-nav-btn nav-item active" onclick="switchPage('dashboard', this)">لوحة التحكم</button>
+      <button id="mobile-nav-properties" class="mobile-nav-btn nav-item" onclick="switchPage('properties', this)">بطاقات العقار</button>
+    </nav>
+
+    <!-- ══════════════════════
+         PAGE 1: DASHBOARD
+    ══════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div style="max-width: 1400px; margin: 0 auto;">
+
+        <div class="page-header page-header-dashboard">
+          <div>
+            <div class="page-eyebrow">نظرة عامة على المحفظة</div>
+            <div class="page-title">مرحباً، <em>عبد القادر</em></div>
+            <div class="page-subtitle">إجمالي محفظتك العقارية ومؤشرات الأداء الرئيسية</div>
+          </div>
+          <div class="page-hero-icon" aria-hidden="true" id="dashboard-hero">
+            <img
+              src="{{ asset('assets/output-onlinegiftools.gif') }}"
+              alt="صورة مباني"
+            />
+          </div>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="stats-grid">
+          <div class="stat-card gold-card">
+            <div class="stat-bg-icon">
+              <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+                <rect x="8" y="26" width="16" height="26" rx="2" fill="none" stroke="rgba(212,175,55,.4)" stroke-width="2"/>
+                <rect x="24" y="18" width="16" height="34" rx="2" fill="none" stroke="rgba(212,175,55,.25)" stroke-width="2"/>
+                <rect x="40" y="12" width="16" height="40" rx="2" fill="none" stroke="rgba(212,175,55,.2)" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="stat-label">
+              إجمالي المبلغ
+              <div class="stat-icon">
+                <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                  <path d="M3 11h14M5 5h10M7 15h6" fill="none" stroke="var(--gold-bright)" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value"><small>﷼</small>65.0<small>م</small></div>
+            <div class="stat-sub">إجمالي قيمة المحفظة العقارية</div>
+            <div class="stat-mini-graph">
+              <svg viewBox="0 0 100 40">
+                <!-- grid -->
+                <defs>
+                  <pattern id="miniGrid1" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <rect x="0" y="0" width="100" height="40" fill="url(#miniGrid1)" />
+                <!-- axis -->
+                <line x1="5" y1="5" x2="5" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <line x1="5" y1="35" x2="95" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <!-- line -->
+                <polyline
+                  fill="none"
+                  stroke="var(--gold-bright)"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="8,30 28,18 48,22 68,14 88,10"/>
+                <!-- points -->
+                <circle cx="8" cy="30" r="1.8" fill="#0A0A0A" stroke="var(--gold-bright)" stroke-width="1"/>
+                <circle cx="28" cy="18" r="1.8" fill="#0A0A0A" stroke="var(--gold-bright)" stroke-width="1"/>
+                <circle cx="48" cy="22" r="1.8" fill="#0A0A0A" stroke="var(--gold-bright)" stroke-width="1"/>
+                <circle cx="68" cy="14" r="1.8" fill="#0A0A0A" stroke="var(--gold-bright)" stroke-width="1"/>
+                <circle cx="88" cy="10" r="1.8" fill="#0A0A0A" stroke="var(--gold-bright)" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="stat-badge badge-up">↑ نمو ١٢٪ عن العام الماضي</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-bg-icon">
+              <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+                <path d="M10 26c0-8 6-14 18-14h8c12 0 18 6 18 14s-6 14-18 14h-4" fill="none" stroke="rgba(212,175,55,.35)" stroke-width="2" stroke-linecap="round"/>
+                <path d="M24 40c0 4 3 7 8 7s8-3 8-7-3-7-8-7" fill="none" stroke="rgba(212,175,55,.25)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="stat-label">
+              إجمالي المدفوعات
+              <div class="stat-icon">
+                <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                  <rect x="3" y="4" width="14" height="10" rx="2" fill="none" stroke="var(--gold-bright)" stroke-width="1.4"/>
+                  <path d="M3 9h14" fill="none" stroke="var(--gold-bright)" stroke-width="1.2"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value"><small>﷼</small>48.7<small>م</small></div>
+            <div class="stat-sub">إجمالي المدفوعات المستلمة حتى الآن</div>
+            <div class="stat-mini-graph">
+              <svg viewBox="0 0 100 40">
+                <defs>
+                  <pattern id="miniGrid2" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <rect x="0" y="0" width="100" height="40" fill="url(#miniGrid2)" />
+                <line x1="5" y1="5" x2="5" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <line x1="5" y1="35" x2="95" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <polyline
+                  fill="none"
+                  stroke="var(--gold-mid)"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="8,32 28,24 48,26 68,18 88,14"/>
+                <circle cx="8" cy="32" r="1.8" fill="#0A0A0A" stroke="var(--gold-mid)" stroke-width="1"/>
+                <circle cx="28" cy="24" r="1.8" fill="#0A0A0A" stroke="var(--gold-mid)" stroke-width="1"/>
+                <circle cx="48" cy="26" r="1.8" fill="#0A0A0A" stroke="var(--gold-mid)" stroke-width="1"/>
+                <circle cx="68" cy="18" r="1.8" fill="#0A0A0A" stroke="var(--gold-mid)" stroke-width="1"/>
+                <circle cx="88" cy="14" r="1.8" fill="#0A0A0A" stroke="var(--gold-mid)" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="stat-badge badge-up">↑ ١٤.٢٪ منذ بداية العام</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-bg-icon">
+              <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+                <path d="M12 30l20-16 20 16v18a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V30z" fill="none" stroke="rgba(212,175,55,.35)" stroke-width="2" stroke-linejoin="round"/>
+                <rect x="26" y="32" width="12" height="16" rx="2" fill="none" stroke="rgba(212,175,55,.25)" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="stat-label">
+              إجمالي الباقي
+              <div class="stat-icon">
+                <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                  <circle cx="8" cy="8" r="3" fill="none" stroke="var(--gold-bright)" stroke-width="1.4"/>
+                  <path d="M11 9l3 3m0-2.5l1.5 1.5" fill="none" stroke="var(--gold-bright)" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value"><small>﷼</small>16.3<small>م</small></div>
+            <div class="stat-sub">المبالغ المتبقية على المستثمرين</div>
+            <div class="stat-mini-graph">
+              <svg viewBox="0 0 100 40">
+                <defs>
+                  <pattern id="miniGrid3" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <rect x="0" y="0" width="100" height="40" fill="url(#miniGrid3)" />
+                <line x1="5" y1="5" x2="5" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <line x1="5" y1="35" x2="95" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <polyline
+                  fill="none"
+                  stroke="#f87171"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="8,10 28,14 48,18 68,24 88,28"/>
+                <circle cx="8" cy="10" r="1.8" fill="#0A0A0A" stroke="#f87171" stroke-width="1"/>
+                <circle cx="28" cy="14" r="1.8" fill="#0A0A0A" stroke="#f87171" stroke-width="1"/>
+                <circle cx="48" cy="18" r="1.8" fill="#0A0A0A" stroke="#f87171" stroke-width="1"/>
+                <circle cx="68" cy="24" r="1.8" fill="#0A0A0A" stroke="#f87171" stroke-width="1"/>
+                <circle cx="88" cy="28" r="1.8" fill="#0A0A0A" stroke="#f87171" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="stat-badge badge-neutral">● تحت المتابعة والتحصيل</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-bg-icon">
+              <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+                <path d="M12 44h40" fill="none" stroke="rgba(212,175,55,.3)" stroke-width="2" stroke-linecap="round"/>
+                <path d="M16 40l6-10 8 6 10-14 8 12" fill="none" stroke="rgba(212,175,55,.45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="22" cy="30" r="2" fill="rgba(212,175,55,.5)"/>
+                <circle cx="30" cy="36" r="2" fill="rgba(212,175,55,.5)"/>
+                <circle cx="40" cy="22" r="2" fill="rgba(212,175,55,.5)"/>
+                <circle cx="48" cy="34" r="2" fill="rgba(212,175,55,.5)"/>
+              </svg>
+            </div>
+            <div class="stat-label">
+              إجمالي الأسهم
+              <div class="stat-icon">
+                <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                  <path d="M6 5a3 3 0 0 1 3-3m2 3a3 3 0 0 1-3 3m5 5a3 3 0 0 1-3 3m-2-3a3 3 0 0 1 3-3M6 5l8 10" fill="none" stroke="var(--gold-bright)" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value">3,420<small>سهم</small></div>
+            <div class="stat-sub">إجمالي عدد الأسهم في جميع العقارات</div>
+            <div class="stat-mini-graph">
+              <svg viewBox="0 0 100 40">
+                <defs>
+                  <pattern id="miniGrid4" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <rect x="0" y="0" width="100" height="40" fill="url(#miniGrid4)" />
+                <line x1="5" y1="5" x2="5" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <line x1="5" y1="35" x2="95" y2="35" stroke="rgba(148,163,184,0.6)" stroke-width="0.8"/>
+                <polyline
+                  fill="none"
+                  stroke="var(--gold-light)"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="8,26 28,24 48,20 68,16 88,12"/>
+                <circle cx="8" cy="26" r="1.8" fill="#0A0A0A" stroke="var(--gold-light)" stroke-width="1"/>
+                <circle cx="28" cy="24" r="1.8" fill="#0A0A0A" stroke="var(--gold-light)" stroke-width="1"/>
+                <circle cx="48" cy="20" r="1.8" fill="#0A0A0A" stroke="var(--gold-light)" stroke-width="1"/>
+                <circle cx="68" cy="16" r="1.8" fill="#0A0A0A" stroke="var(--gold-light)" stroke-width="1"/>
+                <circle cx="88" cy="12" r="1.8" fill="#0A0A0A" stroke="var(--gold-light)" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="stat-badge badge-up">↑ إضافة أسهم جديدة هذا العام</div>
+          </div>
+        </div>
+
+        <div class="ornament">
+          <div class="ornament-line"></div>
+          <div class="ornament-dot"></div>
+          <div class="ornament-diamond"></div>
+          <div class="ornament-dot"></div>
+          <div class="ornament-line rev"></div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div class="charts-row">
+
+          <!-- Line chart: portfolio by years -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">تطور المحفظة عبر السنوات</div>
+                <div class="chart-sub">القيمة الإجمالية للمحفظة بالريال لكل سنة</div>
+              </div>
+              <div class="chart-badge">٢٠٢٠ - ٢٠٢٥</div>
+            </div>
+            <div style="margin-top:8px;">
+              <svg viewBox="0 0 140 88">
+                <!-- grid background -->
+                <defs>
+                  <pattern id="yearGrid" width="8" height="8" patternUnits="userSpaceOnUse">
+                    <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(148,163,184,0.16)" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <rect x="14" y="10" width="108" height="56" fill="url(#yearGrid)" />
+
+                <!-- axes -->
+                <line x1="18" y1="14" x2="18" y2="70" stroke="rgba(148,163,184,0.7)" stroke-width="1"/>
+                <line x1="18" y1="70" x2="122" y2="70" stroke="rgba(148,163,184,0.7)" stroke-width="1"/>
+
+                <!-- y ticks -->
+                <g font-size="6" fill="#9ca3af">
+                  <text x="14" y="68" text-anchor="end">0</text>
+                  <text x="14" y="58" text-anchor="end">5</text>
+                  <text x="14" y="48" text-anchor="end">10</text>
+                  <text x="14" y="38" text-anchor="end">15</text>
+                  <text x="14" y="28" text-anchor="end">20</text>
+                </g>
+
+                <!-- line: إجمالي المبلغ (ذهبي أساسي) -->
+                <polyline
+                  fill="none"
+                  stroke="var(--gold-bright)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="22,62 38,28 54,36 70,30 86,22 102,32"/>
+                <!-- line: إجمالي المدفوعات (ذهبي متوسط) -->
+                <polyline
+                  fill="none"
+                  stroke="var(--gold-mid)"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="22,66 38,38 54,44 70,38 86,32 102,42"/>
+                <!-- line: إجمالي الباقي (ذهبي داكن) -->
+                <polyline
+                  fill="none"
+                  stroke="var(--gold-deep)"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="22,68 38,56 54,58 70,48 86,40 102,52"/>
+
+                <!-- نقاط البيانات -->
+                <g fill="#050505">
+                  <!-- الذهبي -->
+                  <circle cx="22" cy="62" r="2" stroke="var(--gold-bright)" stroke-width="1"/>
+                  <circle cx="38" cy="28" r="2" stroke="var(--gold-bright)" stroke-width="1"/>
+                  <circle cx="54" cy="36" r="2" stroke="var(--gold-bright)" stroke-width="1"/>
+                  <circle cx="70" cy="30" r="2" stroke="var(--gold-bright)" stroke-width="1"/>
+                  <circle cx="86" cy="22" r="2" stroke="var(--gold-bright)" stroke-width="1"/>
+                  <circle cx="102" cy="32" r="2" stroke="var(--gold-bright)" stroke-width="1"/>
+                  <!-- المتوسط -->
+                  <circle cx="22" cy="66" r="1.8" stroke="var(--gold-mid)" stroke-width="1"/>
+                  <circle cx="38" cy="38" r="1.8" stroke="var(--gold-mid)" stroke-width="1"/>
+                  <circle cx="54" cy="44" r="1.8" stroke="var(--gold-mid)" stroke-width="1"/>
+                  <circle cx="70" cy="38" r="1.8" stroke="var(--gold-mid)" stroke-width="1"/>
+                  <circle cx="86" cy="32" r="1.8" stroke="var(--gold-mid)" stroke-width="1"/>
+                  <circle cx="102" cy="42" r="1.8" stroke="var(--gold-mid)" stroke-width="1"/>
+                  <!-- الداكن -->
+                  <circle cx="22" cy="68" r="1.6" stroke="var(--gold-deep)" stroke-width="1"/>
+                  <circle cx="38" cy="56" r="1.6" stroke="var(--gold-deep)" stroke-width="1"/>
+                  <circle cx="54" cy="58" r="1.6" stroke="var(--gold-deep)" stroke-width="1"/>
+                  <circle cx="70" cy="48" r="1.6" stroke="var(--gold-deep)" stroke-width="1"/>
+                  <circle cx="86" cy="40" r="1.6" stroke="var(--gold-deep)" stroke-width="1"/>
+                  <circle cx="102" cy="52" r="1.6" stroke="var(--gold-deep)" stroke-width="1"/>
+                </g>
+
+                <!-- x labels -->
+                <g font-size="7" fill="#9ca3af">
+                  <text x="22" y="80" text-anchor="middle">٢٠٢٠</text>
+                  <text x="38" y="80" text-anchor="middle">٢٠٢١</text>
+                  <text x="54" y="80" text-anchor="middle">٢٠٢٢</text>
+                  <text x="70" y="80" text-anchor="middle">٢٠٢٣</text>
+                  <text x="86" y="80" text-anchor="middle">٢٠٢٤</text>
+                  <text x="102" y="80" text-anchor="middle">٢٠٢٥</text>
+                </g>
+
+              </svg>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:#e5e7eb;">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="width:20px;height:2px;background:var(--gold-deep);border-radius:999px;display:inline-block;"></span>
+                الباقي
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="width:20px;height:2px;background:var(--gold-mid);border-radius:999px;display:inline-block;"></span>
+                المدفوعات
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="width:20px;height:2px;background:var(--gold-bright);border-radius:999px;display:inline-block;"></span>
+                المبلغ
+              </span>
+            </div>
+          </div>
+
+          <!-- Donut: share distribution -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">توزيع المناطق العقارية</div>
+                <div class="chart-sub">حسب المناطق الأكثر استثماراً في المحفظة</div>
+              </div>
+              <div class="chart-badge">٦ مناطق رئيسية</div>
+            </div>
+            <div class="donut-wrap">
+              <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#1A1A1A" stroke-width="20"/>
+                <!-- Segments: total = 251.3 -->
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#D4AF37" stroke-width="20"
+                  stroke-dasharray="110.6 140.7" stroke-dashoffset="0"
+                  transform="rotate(-90 55 55)"/>
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#C49A2A" stroke-width="20"
+                  stroke-dasharray="75.4 175.9" stroke-dashoffset="-110.6"
+                  transform="rotate(-90 55 55)"/>
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#8B6914" stroke-width="20"
+                  stroke-dasharray="50.3 201" stroke-dashoffset="-186"
+                  transform="rotate(-90 55 55)"/>
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#3D3D3D" stroke-width="20"
+                  stroke-dasharray="15 236.3" stroke-dashoffset="-236.3"
+                  transform="rotate(-90 55 55)"/>
+                <text x="55" y="52" text-anchor="middle" font-family="Amiri" font-size="16" fill="#D4AF37" font-weight="700">6</text>
+                <text x="55" y="65" text-anchor="middle" font-family="Tajawal" font-size="9" fill="#6B6560">مناطق</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#D4AF37"></div>
+                  الرياض
+                  <span class="legend-pct">٣٥٪</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#C49A2A"></div>
+                  جدة
+                  <span class="legend-pct">٢٥٪</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#8B6914"></div>
+                  الدمام
+                  <span class="legend-pct">٢٠٪</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#3D3D3D"></div>
+                  أبوظبي / دبي
+                  <span class="legend-pct">٢٠٪</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sparklines -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">أبرز العقارات من حيث التكلفة</div>
+                <div class="chart-sub">أعلى المباني من حيث قيمة الاستثمار</div>
+              </div>
+            </div>
+            <div class="sparkline-grid">
+              <div class="spark-item">
+                <div class="spark-info">
+                  <div class="spark-name">برج النخيل</div>
+                  <div class="spark-val">٨.٤م ﷼</div>
+                  <div class="spark-chg up">↑ ٨.٢٪</div>
+                </div>
+                <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
+                  <polyline points="0,28 12,22 24,18 36,14 48,10 60,6 70,4" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="spark-item">
+                <div class="spark-info">
+                  <div class="spark-name">مجمع الواحة</div>
+                  <div class="spark-val">٦.١م ﷼</div>
+                  <div class="spark-chg up">↑ ٥.١٪</div>
+                </div>
+                <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
+                  <polyline points="0,26 12,22 24,24 36,18 48,14 60,12 70,8" fill="none" stroke="#C49A2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="spark-item">
+                <div class="spark-info">
+                  <div class="spark-name">أبراج المدينة</div>
+                  <div class="spark-val">٥.٧م ﷼</div>
+                  <div class="spark-chg down">↓ ١.٣٪</div>
+                </div>
+                <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
+                  <polyline points="0,8 12,10 24,9 36,14 48,18 60,20 70,24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="spark-item">
+                <div class="spark-info">
+                  <div class="spark-name">برج الفيصلية</div>
+                  <div class="spark-val">٤.٢م ﷼</div>
+                  <div class="spark-chg up">↑ ١١.٦٪</div>
+                </div>
+                <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
+                  <polyline points="0,30 12,26 24,20 36,16 48,10 60,6 70,2" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RECENT TABLE -->
+        <div class="recent-card">
+          <div class="recent-header">
+            <div class="recent-title">آخر التحديثات العقارية</div>
+            <button class="btn-link" onclick="switchPage('properties', document.querySelectorAll('.nav-item')[1])">عرض الكل ← </button>
+          </div>
+          <div class="table-overflow">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>رقم العقار</th>
+                  <th>المحافظة</th>
+                  <th>المنطقة العقارية</th>
+                  <th>مساحة العقار الكلية</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-name">١٠٢٤/أ</td>
+                  <td>الرياض</td>
+                  <td>حي العليا</td>
+                  <td class="td-gold">١٢,٤٠٠ م²</td>
+                  <td><span class="status-badge status-active">● نشط</span></td>
+                </tr>
+                <tr>
+                  <td class="td-name">٢١١٩/ب</td>
+                  <td>جدة</td>
+                  <td>حي الحمراء</td>
+                  <td class="td-gold">٢٨,٦٠٠ م²</td>
+                  <td><span class="status-badge status-active">● نشط</span></td>
+                </tr>
+                <tr>
+                  <td class="td-name">٣٠٥٨/ج</td>
+                  <td>الرياض</td>
+                  <td>حي النزهة</td>
+                  <td class="td-gold">٩,٢٠٠ م²</td>
+                  <td><span class="status-badge status-partial">◑ جزئي</span></td>
+                </tr>
+                <tr>
+                  <td class="td-name">٤١٠٧/د</td>
+                  <td>الدمام</td>
+                  <td>حي الشاطئ</td>
+                  <td class="td-gold">٦,٨٠٠ م²</td>
+                  <td><span class="status-badge status-active">● نشط</span></td>
+                </tr>
+                <tr>
+                  <td class="td-name">٥٢٣٠/هـ</td>
+                  <td>أبوظبي</td>
+                  <td>منطقة الكورنيش</td>
+                  <td class="td-gold">١٨,٠٠٠ م²</td>
+                  <td><span class="status-badge status-pending">○ قيد المراجعة</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         PAGE 2: BUILDING TABLE
+    ══════════════════════════════ -->
+    <div class="page" id="page-properties">
+      <div style="max-width: 1400px; margin: 0 auto;">
+
+        <div class="page-header">
+          <div class="page-header-row">
+            <div>
+              <div class="page-eyebrow">سجل العقارات الكامل</div>
+              <div class="page-title"><em>بطاقات</em> العقار</div>
+              <div class="page-subtitle">جميع المباني والوحدات التي تمتلك فيها حصصاً — مع تصفية متقدمة وتصدير</div>
+            </div>
+            <div class="selection-card">
+              <div class="selection-title">ملخص الاختيار الحالي</div>
+              <div class="selection-main-value" id="selection-area">-- م²</div>
+              <div class="selection-subvalue" id="selection-count">-- عقار</div>
+              <div class="selection-bar">
+                <div class="selection-bar-fill" id="selection-bar-fill"></div>
+              </div>
+              <div class="selection-meta">
+                <span id="selection-mode">جميع العقارات</span>
+                <span id="selection-share">0٪ من المساحة الكلية</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="table-toolbar">
+          <div class="search-wrap">
+            <input class="search-input" type="text" placeholder="ابحث برقم العقار، المحضر، المحافظة أو المنطقة…" id="table-search" oninput="filterTable()">
+          </div>
+
+          <div class="filter-dropdown">
+            <button type="button" class="filter-multi-btn" onclick="toggleCityMenu()" id="filter-city-label">
+              كل المحافظات
+            </button>
+            <div class="col-menu" id="city-menu">
+              <div class="col-menu-item" onclick="toggleCityFilter('الرياض')"><div class="col-toggle" id="city-riyadh">✓</div> الرياض</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('جدة')"><div class="col-toggle" id="city-jeddah">✓</div> جدة</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('الدمام')"><div class="col-toggle" id="city-dammam">✓</div> الدمام</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('أبوظبي')"><div class="col-toggle" id="city-abu">✓</div> أبوظبي</div>
+              <div class="col-menu-item" onclick="toggleCityFilter('دبي')"><div class="col-toggle" id="city-dubai">✓</div> دبي</div>
+            </div>
+          </div>
+
+          <div class="filter-dropdown">
+            <button type="button" class="filter-multi-btn" onclick="toggleTypeMenu()" id="filter-type-label">
+              كل المناطق العقارية
+            </button>
+            <div class="col-menu" id="type-menu">
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي العليا')"><div class="col-toggle" id="type-highrise">✓</div> حي العليا</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الحمراء')"><div class="col-toggle" id="type-hamra">✓</div> حي الحمراء</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي النزهة')"><div class="col-toggle" id="type-nuzha">✓</div> حي النزهة</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الشاطئ')"><div class="col-toggle" id="type-shate">✓</div> حي الشاطئ</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('منطقة الكورنيش')"><div class="col-toggle" id="type-corniche">✓</div> منطقة الكورنيش</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('طريق الملك فهد')"><div class="col-toggle" id="type-kingroad">✓</div> طريق الملك فهد</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الرويس')"><div class="col-toggle" id="type-ruwais">✓</div> حي الرويس</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الياسمين')"><div class="col-toggle" id="type-yasmin">✓</div> حي الياسمين</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('منطقة الخليج التجاري')"><div class="col-toggle" id="type-bay">✓</div> منطقة الخليج التجاري</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي المنار')"><div class="col-toggle" id="type-manar">✓</div> حي المنار</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('المنطقة المالية')"><div class="col-toggle" id="type-financial">✓</div> المنطقة المالية</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الشاطئ الذهبي')"><div class="col-toggle" id="type-golden">✓</div> حي الشاطئ الذهبي</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('حي الروضة')"><div class="col-toggle" id="type-rawda">✓</div> حي الروضة</div>
+              <div class="col-menu-item" onclick="toggleTypeFilter('واجهة الخليج')"><div class="col-toggle" id="type-waterfront">✓</div> واجهة الخليج</div>
+            </div>
+          </div>
+
+          <div class="filter-dropdown">
+            <button type="button" class="filter-multi-btn" onclick="toggleAreaMenu()" id="filter-area-label">
+              كل المساحات
+            </button>
+            <div class="col-menu" id="area-menu">
+              <div class="col-menu-item" onclick="toggleAreaFilter('small')"><div class="col-toggle" id="area-small">✓</div> أقل من ١٠٬٠٠٠ م²</div>
+              <div class="col-menu-item" onclick="toggleAreaFilter('medium')"><div class="col-toggle" id="area-medium">✓</div> ١٠٬٠٠٠ - ٢٠٬٠٠٠ م²</div>
+              <div class="col-menu-item" onclick="toggleAreaFilter('large')"><div class="col-toggle" id="area-large">✓</div> أكثر من ٢٠٬٠٠٠ م²</div>
+            </div>
+          </div>
+
+          <div class="toolbar-separator"></div>
+
+          <div style="position:relative">
+            <button class="toolbar-btn toolbar-btn-outline" onclick="toggleColMenu()">
+              ⊟ إخفاء أعمدة
+            </button>
+            <div class="col-menu" id="col-menu">
+              <div class="col-menu-item" onclick="toggleCol('col-city')"><div class="col-toggle" id="tog-city">✓</div> المحافظة</div>
+              <div class="col-menu-item" onclick="toggleCol('col-type')"><div class="col-toggle" id="tog-type">✓</div> المنطقة العقارية</div>
+              <div class="col-menu-item" onclick="toggleCol('col-division')"><div class="col-toggle" id="tog-division">✓</div> المقسم / الوصف</div>
+              <div class="col-menu-item" onclick="toggleCol('col-payments')"><div class="col-toggle" id="tog-payments">✓</div> الدفعات</div>
+            </div>
+          </div>
+
+          <button class="toolbar-btn toolbar-btn-outline" onclick="alert('يمكنك إعادة ترتيب الأعمدة بالسحب والإفلات')">
+            ⇅ إعادة الترتيب
+          </button>
+
+          <div class="toolbar-separator"></div>
+
+          <button class="toolbar-btn toolbar-btn-gold" onclick="toggleMultiSelect()" id="multi-select-btn">
+            اختيار متعدد
+          </button>
+
+          <button
+            class="toolbar-btn toolbar-btn-outline mobile-table-view-toggle"
+            type="button"
+            id="mobile-table-view-toggle"
+            onclick="togglePropertyTableView()"
+          >
+            عرض عمودي
+          </button>
+        </div>
+
+        <!-- ACTIVE FILTERS + EXPORT -->
+        <div class="filter-chips" id="filter-chips">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="filter-label">التصفية الحالية:</span>
+            <span class="chip active">الكل <span class="chip-remove">×</span></span>
+          </div>
+          <div class="export-btns">
+            <button class="btn-export btn-excel" onclick="exportExcel()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 4l6 6M10 4L4 10" stroke="currentColor" stroke-width="1.5"/></svg>
+              تصدير Excel
+            </button>
+            <button class="btn-export btn-pdf" onclick="exportPDF()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 7h6M4 4h6M4 10h4" stroke="currentColor" stroke-width="1.5"/></svg>
+              تصدير PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-card" id="property-table-card">
+          <div class="table-overflow">
+            <table class="big-table" id="main-table">
+              <thead>
+                <tr>
+                  <th class="select-col">
+                    <div class="th-inner">
+                      <input type="checkbox" id="select-all" onclick="toggleSelectAll()" />
+                    </div>
+                  </th>
+                  <th onclick="sortBySeq()" style="cursor:pointer">
+                    <div class="th-inner">
+                      تسلسل
+                      <span class="sort-icon" id="sort-seq">↕</span>
+                    </div>
+                  </th>
+                  <th><div class="th-inner">رقم العقار</div></th>
+                  <th><div class="th-inner">المحضر</div></th>
+                  <th class="col-city"><div class="th-inner">المحافظة</div></th>
+                  <th class="col-type"><div class="th-inner">المنطقة العقارية</div></th>
+                  <th class="col-division"><div class="th-inner">المقسم</div></th>
+                  <th onclick="sortByArea()" style="cursor:pointer">
+                    <div class="th-inner">
+                      مساحة العقار الكلية
+                      <span class="sort-icon" id="sort-area">↕</span>
+                    </div>
+                  </th>
+                  <th><div class="th-inner">الموقع الجغرافي</div></th>
+                  <th><div class="th-inner">الحالة</div></th>
+                  <th><div class="th-inner">العمليات</div></th>
+                  <th class="col-payments"><div class="th-inner">الدفعات</div></th>
+                  <th><div class="th-inner">عرض</div></th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <!-- rows injected by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- PAGINATION -->
+          <div class="pagination" id="pagination">
+            <div class="export-info">
+              إجمالي الصفوف: <strong id="row-count">14</strong> عقار
+              | المحدَّد: <strong id="selected-count">0</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <button class="page-btn" onclick="changePage(-1)">‹</button>
+              <span class="filter-label" id="page-info">صفحة ١ من ١</span>
+              <button class="page-btn" onclick="changePage(1)">›</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="filter-label">عدد الصفوف المعروضة:</span>
+              <input type="number" min="1" class="rows-input" id="rows-input" value="14" onchange="handleRowsInput(this.value)" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ─── DATA ─── */
+const buildings = [
+  {
+    name: 'برج النخيل التجاري',
+    city: 'الرياض',
+    type: 'حي العليا',
+    units: 48,
+    floors: 18,
+    year: 2018,
+    area: 12400,
+    share: 45,
+    value: 8400000,
+    rent: 24000,
+    status: 'نشط',
+    propNo: '١٠٢٤/أ',
+    mahder: 'محضر رقم ٣٤٥/١٤٤٢',
+    division: 'قطع تجارية على شارع رئيسي',
+    geo: 'https://maps.google.com',
+    details: 'برج تجاري حديث في قلب حي العليا التجاري، يحتوي على مكاتب فاخرة بمواصفات عالية وتشطيبات مميزة مع مواقف سيارات مخصصة.',
+    opsCount: 3,
+    opsDetails: [
+      '01/01/2025 — توزيع أرباح ربع سنوي بقيمة ٢٥٠,٠٠٠ ﷼.',
+      '15/03/2025 — صيانة دورية للمصاعد والواجهات الزجاجية.',
+      '30/06/2025 — تجديد عقد إيجار رئيسي لمدة ثلاث سنوات.'
+    ],
+    payments: '٣ دفعات مسددة من أصل ٤',
+
+    // ── تفاصيل تجريبية لصفحة البطاقة الجديدة ──
+    totalOpShares: 1250,
+    shares: {
+      abdulqader: '٢٧٥ سهم',
+      riyad: '٣٢٠ سهم'
+    },
+    operations: [
+      {
+        type: 'شراء',
+        prevOwners: ['شركة الواجهة التجارية'],
+        newOwners: ['د. عبد القادر السنكري', 'رياض عسلي'],
+        team1: ['أحمد عبدالله', 'سارة محمد'],
+        team2: ['خالد حسن', 'ريم خالد'],
+        amount: 150,
+        unit: 'سهم',
+        method: 'عقد سجل عقاري',
+        contractNo: 'CTR-1024-01',
+        contractDate: '2024-11-12',
+        notes: 'تمت العملية وفق إجراءات السجل العقاري وبحضور الشهود.',
+        witness1: 'عبدالله سالم',
+        witness2: 'ماجد يوسف'
+      },
+      {
+        type: 'بيع',
+        prevOwners: ['رياض عسلي'],
+        newOwners: ['د. عبد القادر السنكري'],
+        team1: ['فهد علي'],
+        team2: ['نور أحمد'],
+        amount: 45,
+        unit: 'نسبة مئوية',
+        method: 'عقد عادي',
+        contractNo: 'CTR-1024-02',
+        contractDate: '2025-05-03',
+        notes: 'بيع حصة جزئية مع تحديث بيانات المالك.',
+        witness1: 'سلمان ناصر',
+        witness2: 'محمد عبدالعزيز'
+      }
+    ],
+    signals: [
+      {
+        no: 'SIG-1024-01',
+        date: '2025-01-20',
+        type: 'حجز',
+        notes: 'حجز تحفظي مؤقت لحين استكمال إجراء إداري.',
+        owners: ['د. عبد القادر السنكري'],
+        defendants: ['جهة تمويل']
+      },
+      {
+        no: 'SIG-1024-02',
+        date: '2025-06-10',
+        type: 'دعوى',
+        notes: 'دعوى مرتبطة بتسوية مستحقات صيانة.',
+        owners: ['رياض عسلي', 'د. عبد القادر السنكري'],
+        defendants: ['شركة خدمات']
+      }
+    ],
+    attachments: [
+      { name: 'صك الملكية.pdf', issuedAt: '2024-11-12' },
+      { name: 'عقد البيع.pdf', issuedAt: '2025-05-03' },
+      { name: 'محضر استلام.pdf', issuedAt: '2025-01-01' }
+    ],
+    ownedValueUsd: '420,000 USD',
+    totalPaymentsUsd: '180,000 USD',
+    remainingUsd: '240,000 USD',
+    paymentsUsd: [
+      { date: '2025-02-01', amountUsd: 60000 },
+      { date: '2025-04-01', amountUsd: 60000 },
+      { date: '2025-07-01', amountUsd: 60000 }
+    ]
+  },
+  {
+    name: 'مجمع الواحة السكني',
+    city: 'جدة',
+    type: 'حي الحمراء',
+    units: 86,
+    floors: 12,
+    year: 2015,
+    area: 28600,
+    share: 32,
+    value: 6100000,
+    rent: 8500,
+    status: 'نشط',
+    propNo: '٢١١٩/ب',
+    mahder: 'محضر رقم ٢١٧/١٤٤٠',
+    division: 'مجمع سكني مغلق بعدة مبانٍ',
+    geo: 'https://maps.google.com',
+    details: 'مجمع سكني متكامل الخدمات بالقرب من الكورنيش، يضم شققاً عائلية بمساحات مختلفة وحدائق داخلية ومناطق ألعاب.',
+    opsCount: 4,
+    opsDetails: [
+      '10/02/2025 — إضافة مواقف مظللة إضافية.',
+      '05/04/2025 — تحسين إنارة الممرات الداخلية.',
+      '20/05/2025 — توقيع عقود إيجار جديدة لـ ٦ شقق.',
+      '01/07/2025 — مراجعة عقود الصيانة السنوية.'
+    ],
+    payments: '٤ دفعات مكتملة حتى تاريخه'
+  },
+  {
+    name: 'أبراج المدينة المكتبية',
+    city: 'الرياض',
+    type: 'حي النزهة',
+    units: 36,
+    floors: 22,
+    year: 2019,
+    area: 9200,
+    share: 28,
+    value: 5700000,
+    rent: 32000,
+    status: 'جزئي',
+    propNo: '٣٠٥٨/ج',
+    mahder: 'محضر رقم ٤٥٢/١٤٤١',
+    division: 'برج مكاتب متعدد الاستخدام',
+    geo: 'https://maps.google.com',
+    details: 'برجان إداريان بمكاتب مطلة على الطرق الرئيسية، مجهزان ببنية تحتية تقنية حديثة ومواقف متعددة الأدوار.',
+    opsCount: 2,
+    opsDetails: [
+      '12/01/2025 — توقيع عقد إيجار مع شركة تقنية عالمية.',
+      '18/06/2025 — تحديث أنظمة الأمن والدخول الذكي.'
+    ],
+    payments: '٢ دفعة مسددة ودفعة واحدة متبقية'
+  },
+  {
+    name: 'برج الفيصلية الفندقي',
+    city: 'الدمام',
+    type: 'حي الشاطئ',
+    units: 22,
+    floors: 8,
+    year: 2020,
+    area: 6800,
+    share: 50,
+    value: 4200000,
+    rent: 45000,
+    status: 'نشط',
+    propNo: '٤١٠٧/د',
+    mahder: 'محضر رقم ٥٦٠/١٤٤٢',
+    division: 'برج فندقي مطل على البحر',
+    geo: 'https://maps.google.com',
+    details: 'برج فندقي يطل على الكورنيش مباشرة، يحتوي على أجنحة فندقية ومساحات استقبال فاخرة وقاعات مناسبات.',
+    opsCount: 5,
+    opsDetails: [
+      '05/01/2025 — تجديد عقود مع شركة تشغيل فندقي.',
+      '22/02/2025 — إطلاق باقة عروض منتصف الأسبوع.',
+      '10/04/2025 — ترميم جزء من الواجهة البحرية.',
+      '15/06/2025 — توقيع عقد فعاليات سنوية.',
+      '01/08/2025 — تحديث الأثاث في الأجنحة التنفيذية.'
+    ],
+    payments: '٥ دفعات مسددة بالكامل'
+  },
+  {
+    name: 'مركز الأعمال الدولي',
+    city: 'أبوظبي',
+    type: 'منطقة الكورنيش',
+    units: 60,
+    floors: 30,
+    year: 2016,
+    area: 18000,
+    share: 20,
+    value: 3900000,
+    rent: 28000,
+    status: 'قيد المراجعة',
+    propNo: '٥٢٣٠/هـ',
+    mahder: 'محضر رقم ٢٣٠/١٤٣٩',
+    division: 'مركز أعمال على شارعين',
+    geo: 'https://maps.google.com',
+    details: 'مبنى مكاتب دولية في منطقة مالية نشطة، يضم شركات متعددة الجنسيات وبمساحات مكتبية مرنة.',
+    opsCount: 1,
+    opsDetails: [
+      '25/03/2025 — مراجعة شاملة للعقود الحالية وخطط إعادة التأجير.'
+    ],
+    payments: 'دفعة واحدة مبدئية قيد التسوية'
+  },
+  {
+    name: 'بوابة الرياض التجارية',
+    city: 'الرياض',
+    type: 'طريق الملك فهد',
+    units: 40,
+    floors: 14,
+    year: 2021,
+    area: 11200,
+    share: 38,
+    value: 7200000,
+    rent: 22000,
+    status: 'نشط',
+    propNo: '٦١٨٩/و',
+    mahder: 'محضر رقم ٣١٢/١٤٤٣',
+    division: 'مركز تجاري ومكاتب',
+    geo: 'https://maps.google.com',
+    details: 'مبنى تجاري حديث على طريق الملك فهد، يضم معارض تجارية في الأدوار السفلية ومكاتب في الأدوار العليا.',
+    opsCount: 3,
+    opsDetails: [
+      '02/02/2025 — افتتاح معرض جديد للعلامات الفاخرة.',
+      '18/03/2025 — تحديث أنظمة التكييف المركزية.',
+      '29/05/2025 — إعادة تقسيم بعض المساحات المكتبية.'
+    ],
+    payments: '٣ دفعات مجدولة خلال العام'
+  },
+  {
+    name: 'أبراج جدة الإدارية',
+    city: 'جدة',
+    type: 'حي الرويس',
+    units: 55,
+    floors: 25,
+    year: 2017,
+    area: 14500,
+    share: 25,
+    value: 5100000,
+    rent: 26000,
+    status: 'نشط',
+    propNo: '٧٠٢٤/ز',
+    mahder: 'محضر رقم ١١٠/١٤٤٠',
+    division: 'أبراج مكتبية متجاورة',
+    geo: 'https://maps.google.com',
+    details: 'مجمع أبراج مكتبية بالقرب من المراكز الحيوية، مع ردهات استقبال واسعة وأنظمة أمن ومواقف تحت الأرض.',
+    opsCount: 2,
+    opsDetails: [
+      '07/01/2025 — ترقية أنظمة المراقبة الأمنية.',
+      '21/04/2025 — إعادة تصميم بهو الاستقبال الرئيسي.'
+    ],
+    payments: '٢ دفعة مسددة من أصل ٣'
+  },
+  {
+    name: 'فيلات بيوت الشمال',
+    city: 'الرياض',
+    type: 'حي الياسمين',
+    units: 18,
+    floors: 3,
+    year: 2022,
+    area: 9000,
+    share: 60,
+    value: 6800000,
+    rent: 12000,
+    status: 'نشط',
+    propNo: '٨١٥٠/ح',
+    mahder: 'محضر رقم ١٧٥/١٤٤٤',
+    division: 'مجمع فلل سكنية',
+    geo: 'https://maps.google.com',
+    details: 'مجموعة فلل سكنية حديثة التصميم بواجهات عصرية، مخصصة لسكن العائلات مع حدائق ومساحات خارجية خاصة.',
+    opsCount: 3,
+    opsDetails: [
+      '11/02/2025 — تسليم فلل جديدة للمستأجرين.',
+      '30/03/2025 — أعمال تنسيق حدائق إضافية.',
+      '19/06/2025 — إضافة كاميرات مراقبة على المداخل.'
+    ],
+    payments: '٣ دفعات شهرية منتظمة'
+  },
+  {
+    name: 'مجمع دبي للأعمال',
+    city: 'دبي',
+    type: 'منطقة الخليج التجاري',
+    units: 72,
+    floors: 35,
+    year: 2014,
+    area: 22000,
+    share: 15,
+    value: 3200000,
+    rent: 35000,
+    status: 'جزئي',
+    propNo: '٩٠٠٢/ط',
+    mahder: 'محضر رقم ٢٨٠/١٤٣٨',
+    division: 'برج أعمال متعدد الاستخدام',
+    geo: 'https://maps.google.com',
+    details: 'برج أعمال في قلب منطقة الخليج التجاري، يضم مكاتب ومعارض وقاعات اجتماعات بإطلالات مفتوحة.',
+    opsCount: 4,
+    opsDetails: [
+      '09/01/2025 — إعادة هيكلة عقود بعض المستأجرين.',
+      '14/03/2025 — توسعة قاعة الاجتماعات الرئيسية.',
+      '27/05/2025 — تحسين مساحات الخدمات المشتركة.',
+      '08/07/2025 — إضافة لوحة إرشادية رقمية في البهو.'
+    ],
+    payments: '٤ دفعات ربع سنوية'
+  },
+  {
+    name: 'برج المنارة السكني',
+    city: 'الدمام',
+    type: 'حي المنار',
+    units: 64,
+    floors: 16,
+    year: 2019,
+    area: 16800,
+    share: 40,
+    value: 4900000,
+    rent: 9000,
+    status: 'نشط',
+    propNo: '١٠١٥٥/ي',
+    mahder: 'محضر رقم ٣٢٠/١٤٤١',
+    division: 'برج شقق سكنية',
+    geo: 'https://maps.google.com',
+    details: 'برج سكني متوسط الارتفاع بالقرب من الخدمات الأساسية، يضم شققاً متوسطة المساحة بمواقف مخصصة.',
+    opsCount: 2,
+    opsDetails: [
+      '03/02/2025 — تركيب مصاعد جديدة عالية الكفاءة.',
+      '25/05/2025 — إعادة طلاء الممرات والأدوار المشتركة.'
+    ],
+    payments: '٢ دفعة سنوية مستلمة'
+  },
+  {
+    name: 'مركز أبوظبي المالي',
+    city: 'أبوظبي',
+    type: 'المنطقة المالية',
+    units: 45,
+    floors: 28,
+    year: 2013,
+    area: 13500,
+    share: 18,
+    value: 2800000,
+    rent: 30000,
+    status: 'قيد المراجعة',
+    propNo: '١١٢٠٠/ك',
+    mahder: 'محضر رقم ١٥٠/١٤٣٧',
+    division: 'مبنى مكاتب رئيسية',
+    geo: 'https://maps.google.com',
+    details: 'مبنى مكاتب لشركات مالية واستثمارية، مزود بقاعات اجتماعات تنفيذية وخدمات استقبال على مدار الساعة.',
+    opsCount: 1,
+    opsDetails: [
+      '18/04/2025 — مراجعة عقود شركات الخدمات والدعم اللوجستي.'
+    ],
+    payments: 'دفعة مراجعة قيد الاعتماد'
+  },
+  {
+    name: 'الحي الذهبي السكني',
+    city: 'جدة',
+    type: 'حي الشاطئ الذهبي',
+    units: 32,
+    floors: 8,
+    year: 2023,
+    area: 8400,
+    share: 55,
+    value: 5600000,
+    rent: 11000,
+    status: 'نشط',
+    propNo: '١٢٠٥٥/ل',
+    mahder: 'محضر رقم ٤٢٥/١٤٤٤',
+    division: 'مجمع شقق فاخرة',
+    geo: 'https://maps.google.com',
+    details: 'مجمع سكني فاخر بإطلالة بحرية، يضم شققاً ذات تشطيبات عالية المستوى ومرافق ترفيهية للسكان.',
+    opsCount: 3,
+    opsDetails: [
+      '06/01/2025 — إطلاق خدمة الاستقبال على مدار الساعة.',
+      '17/03/2025 — إضافة نادي صحي ومسبح داخلي.',
+      '12/06/2025 — حملات تسويق للوحدات الفارغة.'
+    ],
+    payments: '٣ دفعات فندقية قيد التحصيل'
+  },
+  {
+    name: 'مجمع الروضة الفندقي',
+    city: 'الرياض',
+    type: 'حي الروضة',
+    units: 120,
+    floors: 20,
+    year: 2018,
+    area: 32000,
+    share: 22,
+    value: 9100000,
+    rent: 40000,
+    status: 'نشط',
+    propNo: '١٣٥٦٠/م',
+    mahder: 'محضر رقم ٣٣٠/١٤٤٠',
+    division: 'مجمع فندقي وشقق مخدومة',
+    geo: 'https://maps.google.com',
+    details: 'مجمع فندقي يحتوي على غرف فندقية وشقق مخدومة طويلة الأمد مع خدمات استقبال ونظافة.',
+    opsCount: 4,
+    opsDetails: [
+      '04/02/2025 — تحديث نظام الحجز الإلكتروني.',
+      '22/03/2025 — عقد صيانة شامل للأدوار العليا.',
+      '09/05/2025 — إضافة خدمة نقل من وإلى المطار.',
+      '28/07/2025 — ترقية أثاث بعض الشقق المخدومة.'
+    ],
+    payments: '٤ دفعات شهرية من شركات التعاقد'
+  },
+  {
+    name: 'برج الخليج للأعمال',
+    city: 'دبي',
+    type: 'واجهة الخليج',
+    units: 90,
+    floors: 42,
+    year: 2015,
+    area: 26000,
+    share: 12,
+    value: 4500000,
+    rent: 38000,
+    status: 'جزئي',
+    propNo: '١٤٢٢٠/ن',
+    mahder: 'محضر رقم ٢٧٠/١٤٣٩',
+    division: 'برج مكاتب على الواجهة البحرية',
+    geo: 'https://maps.google.com',
+    details: 'برج أعمال على الواجهة البحرية مع إطلالات بانورامية، يضم مكاتب للشركات العالمية ومرافق مشتركة راقية.',
+    opsCount: 2,
+    opsDetails: [
+      '13/03/2025 — إعادة تأجير طابق كامل لشركة دولية.',
+      '30/06/2025 — أعمال صيانة للمرسى القريب من البرج.'
+    ],
+    payments: '٢ دفعة نصف سنوية'
+  },
+];
+
+const totalAreaAll = buildings.reduce((sum, b) => sum + (b.area || 0), 0);
+let filteredData = [...buildings];
+let rowsLimit = 'all'; // rows per page ('all' = no limit)
+let currentPage = 1;
+let selectedProps = new Set();
+let multiSelectEnabled = false;
+let selectedCitiesFilter = new Set();
+let selectedTypesFilter = new Set();
+let selectedAreasFilter = new Set();
+
+function fmt(n) {
+  return n.toLocaleString('ar-SA');
+}
+
+// Mobile/tablet layout mode:
+// - phones (<= 700px)
+// - tablets in portrait (<= 1024px + portrait)
+function isMobileNavMode() {
+  return (
+    window.matchMedia('(max-width: 700px)').matches ||
+    window.matchMedia('(max-device-width: 700px)').matches ||
+    (window.matchMedia('(max-width: 1024px) and (orientation: portrait)').matches) ||
+    (window.matchMedia('(max-device-width: 1024px) and (orientation: portrait)').matches)
+  );
+}
+
+let propertyTableView = 'horizontal'; // for tablets portrait: horizontal by default
+
+function applyPropertyTableView(view) {
+  const card = document.getElementById('property-table-card');
+  if (!card) return;
+
+  propertyTableView = view === 'vertical' ? 'vertical' : 'horizontal';
+  card.classList.toggle('property-table--vertical', propertyTableView === 'vertical');
+
+  const btn = document.getElementById('mobile-table-view-toggle');
+  if (btn) {
+    btn.textContent = propertyTableView === 'vertical' ? 'عرض أفقي' : 'عرض عمودي';
+  }
+}
+
+function togglePropertyTableView() {
+  applyPropertyTableView(propertyTableView === 'vertical' ? 'horizontal' : 'vertical');
+}
+
+function initPropertyTableView() {
+  // Cards/vertical rows already happen on phones via CSS media query, so keep default horizontal for tablets.
+  // If you want vertical as default for tablets too, change 'horizontal' to 'vertical' below.
+  applyPropertyTableView('horizontal');
+
+  // On phones, add a one-time swipe hint on the table overflow container
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    const overflow = document.querySelector('.table-overflow');
+    if (overflow && !overflow.dataset.hintAdded) {
+      overflow.dataset.hintAdded = '1';
+      const hint = document.createElement('div');
+      hint.id = 'swipe-hint';
+      hint.style.cssText = [
+        'display:flex', 'align-items:center', 'justify-content:center',
+        'gap:8px', 'padding:8px 14px',
+        'background:rgba(212,175,55,.07)', 'border-bottom:1px solid rgba(212,175,55,.15)',
+        'font-family:var(--font-ui)', 'font-size:11px', 'color:var(--gold-mid)',
+        'letter-spacing:.04em', 'animation:fadeSlide .4s ease'
+      ].join(';');
+      hint.innerHTML = '← اسحب يساراً لرؤية بقية الأعمدة →';
+      overflow.parentElement.insertBefore(hint, overflow);
+      // Dismiss after first scroll
+      overflow.addEventListener('scroll', function dismissHint() {
+        const h = document.getElementById('swipe-hint');
+        if (h) { h.style.transition = 'opacity .4s'; h.style.opacity = '0'; setTimeout(() => h.remove(), 400); }
+        overflow.removeEventListener('scroll', dismissHint);
+      });
+    }
+  }
+}
+
+function updateSelectedCount() {
+  const el = document.getElementById('selected-count');
+  if (!el) return;
+  const count = buildings.filter(b => selectedProps.has(b.propNo)).length;
+  el.textContent = count;
+}
+
+function updateSelectColumnVisibility() {
+  const table = document.getElementById('main-table');
+  if (!table) return;
+  table.classList.toggle('hide-select', !multiSelectEnabled);
+}
+
+function statusBadge(s) {
+  const map = { 'نشط': 'status-active', 'جزئي': 'status-partial', 'قيد المراجعة': 'status-pending' };
+  const dot = { 'نشط': '●', 'جزئي': '◑', 'قيد المراجعة': '○' };
+  return `<span class="status-badge ${map[s]}">${dot[s]} ${s}</span>`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const total = filteredData.length;
+  const perPage = rowsLimit === 'all' ? (total || 1) : rowsLimit;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = rowsLimit === 'all' ? 0 : (currentPage - 1) * perPage;
+  const end = rowsLimit === 'all' ? total : start + perPage;
+  const visible = filteredData.slice(start, end);
+  tbody.innerHTML = visible.map((b, idx) => {
+    const rowId = `detail-row-${idx}`;
+    const btnId = `detail-btn-${idx}`;
+    const opsRowId = `ops-row-${idx}`;
+    const isSelected = selectedProps.has(b.propNo);
+    return `<tr class="${isSelected ? 'selected-row' : ''}">
+      <td class="select-col" style="text-align:center">
+        ${multiSelectEnabled ? `
+        <input type="checkbox"
+               class="row-select"
+               onchange="toggleRowSelection('${b.propNo}', this.checked, this)"
+               ${selectedProps.has(b.propNo) ? 'checked' : ''} />` : ''}
+      </td>
+      <td class="td-seq">${idx + 1}</td>
+      <td>${b.propNo || '-'}</td>
+      <td>${b.mahder || '-'}</td>
+      <td class="col-city">${b.city}</td>
+      <td class="col-type">${b.type}</td>
+      <td class="col-division">${b.division || '-'}</td>
+      <td>${fmt(b.area)} م²</td>
+      <td style="text-align:center">
+        <button type="button"
+                class="geo-link"
+                title="عرض التفاصيل والموقع"
+                onclick="toggleDetails('${rowId}','${btnId}')">📍</button>
+      </td>
+      <td>${statusBadge(b.status)}</td>
+      <td style="text-align:center">
+        <span class="ops-toggle" onclick="toggleOperations('${opsRowId}','${rowId}')">
+          ${b.opsCount || 0} عملية
+        </span>
+      </td>
+      <td class="col-payments">${b.payments || '-'}</td>
+      <td style="text-align:center">
+        <button class="eye-btn" type="button" onclick="openPropertyDetails('${b.propNo}')">👁</button>
+      </td>
+      <td style="text-align:center">
+        <button id="${btnId}" class="details-toggle" type="button" onclick="toggleDetails('${rowId}','${btnId}')">
+          <span>تفاصيل</span>
+          <span>▾</span>
+        </button>
+      </td>
+    </tr>
+    <tr id="${rowId}" class="detail-row">
+      <td class="detail-cell" colspan="13">
+        <div class="detail-title">${b.name}</div>
+        <div class="detail-layout">
+          <div class="detail-text">${b.details || 'لا توجد بيانات تفصيلية.'}</div>
+          <div class="detail-map">
+            <div class="detail-map-title">الموقع الجغرافي</div>
+            ${b.geo ? `<a href="${b.geo}" target="_blank" class="geo-link" title="فتح في خرائط جوجل">📍</a>` : '<span style="color:var(--text-muted);font-size:12px">لا يوجد رابط خريطة</span>'}
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr id="${opsRowId}" class="ops-row">
+      <td class="ops-cell" colspan="13">
+        <div class="ops-title">سجل العمليات — ${b.name}</div>
+        <ul class="ops-list">
+          ${(b.opsDetails || []).map(item => `<li>${item}</li>`).join('')}
+        </ul>
+      </td>
+    </tr>`;
+  }).join('');
+  updateSelectColumnVisibility();
+  updateSelectedCount();
+  document.getElementById('row-count').textContent = buildings.length;
+  const pageInfo = document.getElementById('page-info');
+  if (pageInfo) pageInfo.textContent = `صفحة ${total ? currentPage : 0} من ${total ? totalPages : 0}`;
+  const rowsInput = document.getElementById('rows-input');
+  if (rowsInput) rowsInput.value = rowsLimit === 'all' ? total : rowsLimit;
+}
+
+function filterTable() {
+  const q     = document.getElementById('table-search').value.toLowerCase();
+
+  filteredData = buildings.filter(b => {
+    const matchQ =
+      !q ||
+      (b.propNo   && b.propNo.includes(q))   ||
+      (b.mahder   && b.mahder.includes(q))   ||
+      (b.city     && b.city.includes(q))     ||
+      (b.type     && b.type.includes(q))     ||
+      (b.division && b.division.includes(q)) ||
+      (b.details  && b.details.includes(q));
+    const cities = Array.from(selectedCitiesFilter);
+    const types  = Array.from(selectedTypesFilter);
+    const areas  = Array.from(selectedAreasFilter);
+    const matchCity = cities.length === 0 || cities.includes(b.city);
+    const matchType = types.length === 0 || types.includes(b.type);
+    const matchArea =
+      areas.length === 0 ||
+      (areas.includes('small')  && b.area < 10000) ||
+      (areas.includes('medium') && b.area >= 10000 && b.area <= 20000) ||
+      (areas.includes('large')  && b.area > 20000);
+    return matchQ && matchCity && matchType && matchArea;
+  });
+
+  currentPage = 1;
+  renderTable();
+  renderSelectionCard(filteredData, 'نتائج التصفية');
+}
+
+function setRowsLimit(limit) {
+  rowsLimit = limit;
+  currentPage = 1;
+  renderTable();
+}
+
+function handleRowsInput(val) {
+  const n = parseInt(val, 10);
+  if (!isNaN(n) && n > 0) {
+    rowsLimit = n;
+  } else {
+    rowsLimit = 'all';
+  }
+  currentPage = 1;
+  renderTable();
+}
+
+function toggleRowSelection(propNo, checked, inputEl) {
+  if (checked) selectedProps.add(propNo);
+  else selectedProps.delete(propNo);
+
+  if (inputEl && inputEl.closest) {
+    const row = inputEl.closest('tr');
+    if (row) {
+      row.classList.toggle('selected-row', checked);
+    }
+  }
+
+  updateSelectionFromChecked();
+}
+
+function toggleSelectAll() {
+  const total = filteredData.length;
+  const perPage = rowsLimit === 'all' ? (total || 1) : rowsLimit;
+  const start = rowsLimit === 'all' ? 0 : (currentPage - 1) * perPage;
+  const end = rowsLimit === 'all' ? total : start + perPage;
+  const visible = filteredData.slice(start, end);
+  const allSelected = visible.length > 0 && visible.every(b => selectedProps.has(b.propNo));
+  if (allSelected) {
+    visible.forEach(b => selectedProps.delete(b.propNo));
+  } else {
+    visible.forEach(b => selectedProps.add(b.propNo));
+  }
+  renderTable();
+  updateSelectionFromChecked();
+}
+
+function toggleMultiSelect() {
+  multiSelectEnabled = !multiSelectEnabled;
+  if (!multiSelectEnabled) {
+    selectedProps = new Set();
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) selectAll.checked = false;
+  }
+  const btn = document.getElementById('multi-select-btn');
+  if (btn) {
+    btn.textContent = multiSelectEnabled ? 'إلغاء الاختيار المتعدد' : 'اختيار متعدد';
+  }
+  renderTable();
+  updateSelectColumnVisibility();
+  if (!multiSelectEnabled) {
+    renderSelectionCard(filteredData, 'نتائج التصفية');
+  }
+}
+
+function changePage(delta) {
+  const total = filteredData.length;
+  const perPage = rowsLimit === 'all' ? (total || 1) : rowsLimit;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  currentPage = Math.min(totalPages, Math.max(1, currentPage + delta));
+  renderTable();
+}
+
+function renderSelectionCard(source, modeLabel) {
+  const list = (source && source.length) ? source : buildings;
+  const totalArea = list.reduce((sum, b) => sum + (b.area || 0), 0);
+  const count = list.length;
+
+  const areaEl = document.getElementById('selection-area');
+  const countEl = document.getElementById('selection-count');
+  const barEl = document.getElementById('selection-bar-fill');
+  const modeEl = document.getElementById('selection-mode');
+  const shareEl = document.getElementById('selection-share');
+
+  if (!areaEl || !countEl || !barEl || !modeEl || !shareEl) return;
+
+  areaEl.textContent = (count ? fmt(totalArea) : '--') + ' م²';
+  countEl.textContent = count ? `${count} عقار` : '-- عقار';
+
+  const pct = totalAreaAll ? Math.min(100, Math.round((totalArea / totalAreaAll) * 100)) : 0;
+  barEl.style.width = pct + '%';
+
+  modeEl.textContent = modeLabel || 'جميع العقارات';
+  shareEl.textContent = `${pct}٪ من المساحة الكلية`;
+}
+
+function updateSelectionFromChecked() {
+  const selectedList = buildings.filter(b => selectedProps.has(b.propNo));
+  if (selectedList.length) {
+    renderSelectionCard(selectedList, 'العقارات المحددة');
+  } else {
+    renderSelectionCard(filteredData, 'نتائج التصفية');
+  }
+  updateSelectedCount();
+}
+
+/* ─── SORT ─── */
+let seqSortDir  = 0; // 0 = none, 1 = asc, -1 = desc
+let areaSortDir = 0;
+
+function resetSortIcons(except) {
+  const seqIcon  = document.getElementById('sort-seq');
+  const areaIcon = document.getElementById('sort-area');
+  if (seqIcon && except !== 'seq') {
+    seqIcon.textContent = '↕';
+    seqIcon.classList.remove('active');
+  }
+  if (areaIcon && except !== 'area') {
+    areaIcon.textContent = '↕';
+    areaIcon.classList.remove('active');
+  }
+}
+
+function sortBySeq() {
+  // toggle direction (افتراضي: من الأصغر للأكبر في أول ضغطة)
+  seqSortDir = seqSortDir === 1 ? -1 : 1;
+  areaSortDir = 0;
+  resetSortIcons('seq');
+
+  const icon = document.getElementById('sort-seq');
+  if (icon) {
+    icon.textContent = seqSortDir === 1 ? '↑' : '↓';
+    icon.classList.add('active');
+  }
+
+  filteredData.sort((a, b) => {
+    const av = a.propNo || '';
+    const bv = b.propNo || '';
+    return av.localeCompare(bv, 'ar') * seqSortDir;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function sortByArea() {
+  // toggle direction (افتراضي: من الأكبر للأصغر في أول ضغطة)
+  areaSortDir = areaSortDir === -1 ? 1 : -1;
+  seqSortDir = 0;
+  resetSortIcons('area');
+
+  const icon = document.getElementById('sort-area');
+  if (icon) {
+    icon.textContent = areaSortDir === 1 ? '↑' : '↓';
+    icon.classList.add('active');
+  }
+
+  filteredData.sort((a, b) => {
+    const av = a.area || 0;
+    const bv = b.area || 0;
+    return (av - bv) * areaSortDir;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+/* ─── COLUMN TOGGLE ─── */
+const colVisible = { city: true, type: true, division: true, payments: true };
+
+function toggleColMenu() {
+  document.getElementById('col-menu').classList.toggle('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.filter-dropdown') && !e.target.closest('[onclick="toggleColMenu()"]')) {
+    const colMenu = document.getElementById('col-menu');
+    if (colMenu) colMenu.classList.remove('open');
+    const cityMenu = document.getElementById('city-menu');
+    if (cityMenu) cityMenu.classList.remove('open');
+    const typeMenu = document.getElementById('type-menu');
+    if (typeMenu) typeMenu.classList.remove('open');
+    const areaMenu = document.getElementById('area-menu');
+    if (areaMenu) areaMenu.classList.remove('open');
+  }
+});
+
+function toggleCol(cls) {
+  const key = cls.replace('col-','');
+  colVisible[key] = !colVisible[key];
+  document.querySelectorAll('.' + cls).forEach(el => {
+    el.style.display = colVisible[key] ? '' : 'none';
+  });
+  document.getElementById('tog-' + key).textContent = colVisible[key] ? '✓' : '';
+}
+
+function toggleCityMenu() {
+  const menu = document.getElementById('city-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function updateCityLabel() {
+  const labelEl = document.getElementById('filter-city-label');
+  if (!labelEl) return;
+  const cities = Array.from(selectedCitiesFilter);
+  if (cities.length === 0) {
+    labelEl.textContent = 'كل المحافظات';
+  } else if (cities.length === 1) {
+    labelEl.textContent = cities[0];
+  } else {
+    labelEl.textContent = `محافظات متعددة (${cities.length})`;
+  }
+}
+
+function toggleCityFilter(city) {
+  if (selectedCitiesFilter.has(city)) {
+    selectedCitiesFilter.delete(city);
+  } else {
+    selectedCitiesFilter.add(city);
+  }
+  const idMap = {
+    'الرياض': 'city-riyadh',
+    'جدة': 'city-jeddah',
+    'الدمام': 'city-dammam',
+    'أبوظبي': 'city-abu',
+    'دبي': 'city-dubai'
+  };
+  const toggleId = idMap[city];
+  if (toggleId) {
+    const el = document.getElementById(toggleId);
+    if (el) el.textContent = selectedCitiesFilter.has(city) ? '✓' : '';
+  }
+  updateCityLabel();
+  currentPage = 1;
+  filterTable();
+}
+
+function toggleTypeMenu() {
+  const menu = document.getElementById('type-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function updateTypeLabel() {
+  const labelEl = document.getElementById('filter-type-label');
+  if (!labelEl) return;
+  const types = Array.from(selectedTypesFilter);
+  if (types.length === 0) {
+    labelEl.textContent = 'كل المناطق العقارية';
+  } else if (types.length === 1) {
+    labelEl.textContent = types[0];
+  } else {
+    labelEl.textContent = `مناطق متعددة (${types.length})`;
+  }
+}
+
+function toggleTypeFilter(type) {
+  if (selectedTypesFilter.has(type)) {
+    selectedTypesFilter.delete(type);
+  } else {
+    selectedTypesFilter.add(type);
+  }
+  const idMap = {
+    'حي العليا': 'type-highrise',
+    'حي الحمراء': 'type-hamra',
+    'حي النزهة': 'type-nuzha',
+    'حي الشاطئ': 'type-shate',
+    'منطقة الكورنيش': 'type-corniche',
+    'طريق الملك فهد': 'type-kingroad',
+    'حي الرويس': 'type-ruwais',
+    'حي الياسمين': 'type-yasmin',
+    'منطقة الخليج التجاري': 'type-bay',
+    'حي المنار': 'type-manar',
+    'المنطقة المالية': 'type-financial',
+    'حي الشاطئ الذهبي': 'type-golden',
+    'حي الروضة': 'type-rawda',
+    'واجهة الخليج': 'type-waterfront'
+  };
+  const toggleId = idMap[type];
+  if (toggleId) {
+    const el = document.getElementById(toggleId);
+    if (el) el.textContent = selectedTypesFilter.has(type) ? '✓' : '';
+  }
+  updateTypeLabel();
+  currentPage = 1;
+  filterTable();
+}
+
+function toggleAreaMenu() {
+  const menu = document.getElementById('area-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function updateAreaLabel() {
+  const labelEl = document.getElementById('filter-area-label');
+  if (!labelEl) return;
+  const areas = Array.from(selectedAreasFilter);
+  if (areas.length === 0 || areas.length === 3) {
+    labelEl.textContent = 'كل المساحات';
+  } else if (areas.length === 1) {
+    const m = { small: 'أقل من ١٠٬٠٠٠ م²', medium: '١٠٬٠٠٠ - ٢٠٬٠٠٠ م²', large: 'أكثر من ٢٠٬٠٠٠ م²' };
+    labelEl.textContent = m[areas[0]] || 'مساحة واحدة';
+  } else {
+    labelEl.textContent = `فئات مساحات متعددة (${areas.length})`;
+  }
+}
+
+function toggleAreaFilter(band) {
+  if (selectedAreasFilter.has(band)) {
+    selectedAreasFilter.delete(band);
+  } else {
+    selectedAreasFilter.add(band);
+  }
+  const toggleId = band === 'small' ? 'area-small' : band === 'medium' ? 'area-medium' : 'area-large';
+  const el = document.getElementById(toggleId);
+  if (el) el.textContent = selectedAreasFilter.has(band) ? '✓' : '';
+  updateAreaLabel();
+  currentPage = 1;
+  filterTable();
+}
+
+/* ─── EXPORT ─── */
+function exportExcel() {
+  const header = [
+    'تسلسل',
+    'رقم العقار',
+    'المحضر',
+    'المحافظة',
+    'المنطقة العقارية',
+    'المقسم',
+    'مساحة العقار الكلية',
+    'رابط الموقع الجغرافي',
+    'بيانات تفصيلية'
+  ];
+  const rows = filteredData.map((b, idx) => [
+    idx + 1,
+    b.propNo || '-',
+    b.mahder || '-',
+    b.city,
+    b.type,
+    b.division || '-',
+    b.area,
+    b.geo || '',
+    (b.details || '').replace(/[\r\n]+/g, ' ')
+  ]);
+  let csv = '\uFEFF' + header.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'عقارات_المحفظة.csv'; a.click();
+}
+
+function exportPDF() {
+  window.print();
+}
+
+/* ─── PAGE SWITCH ─── */
+function openPropertyView(propNo) {
+  const b = buildings.find(x => x.propNo === propNo);
+  if (!b) return;
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.write(`
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+      <title>بيانات العقار ${b.propNo}</title>
+      <style>
+        body { font-family: 'Tajawal', sans-serif; background:#0b0b0b; color:#f5f0e8; padding:24px; direction:rtl; }
+        h1 { font-size:22px; margin-bottom:16px; color:#D4AF37; }
+        .field { margin-bottom:8px; }
+        .label { color:#a3a3a3; font-size:13px; }
+        .value { font-size:14px; }
+        .section-title { margin-top:18px; margin-bottom:8px; color:#D4AF37; font-size:15px; }
+        ul { margin:0; padding-right:18px; }
+        li { margin-bottom:4px; }
+        .back-btn {
+          display:inline-block;
+          margin-bottom:16px;
+          padding:6px 14px;
+          border-radius:6px;
+          border:1px solid #444;
+          background:#111;
+          color:#f5f0e8;
+          font-size:12px;
+          cursor:pointer;
+        }
+      </style>
+    </head>
+    <body>
+      <button class="back-btn" onclick="window.close()">↩ العودة إلى لوحة العقارات</button>
+      <h1>بيانات العقار ${b.propNo}</h1>
+      <div class="field"><span class="label">اسم المبنى:</span> <span class="value">${b.name}</span></div>
+      <div class="field"><span class="label">المحافظة:</span> <span class="value">${b.city}</span></div>
+      <div class="field"><span class="label">المنطقة العقارية:</span> <span class="value">${b.type}</span></div>
+      <div class="field"><span class="label">المقسم:</span> <span class="value">${b.division || '-'}</span></div>
+      <div class="field"><span class="label">المساحة الكلية:</span> <span class="value">${fmt(b.area)} م²</span></div>
+      <div class="field"><span class="label">الحالة:</span> <span class="value">${b.status}</span></div>
+      <div class="field"><span class="label">الدفعات:</span> <span class="value">${b.payments || '-'}</span></div>
+      <div class="section-title">بيانات تفصيلية</div>
+      <div class="value">${b.details || 'لا توجد بيانات تفصيلية.'}</div>
+      <div class="section-title">سجل العمليات</div>
+      <ul>
+        ${(b.opsDetails || []).map(item => `<li>${item}</li>`).join('')}
+      </ul>
+    </body>
+    </html>
+  `);
+  w.document.close();
+}
+
+function openPropertyDetails(propNo) {
+  const b = buildings.find(x => x.propNo === propNo);
+  if (!b) return;
+  const usdRate = 3.75; // SAR per 1 USD (تقريبي)
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const isPhoneUA = /iphone|ipad|ipod|android|mobile|mobi/.test(ua);
+  const isPhoneDetails =
+    isPhoneUA ||
+    isMobileNavMode() ||
+    window.matchMedia('(max-width: 700px)').matches ||
+    window.matchMedia('(max-device-width: 700px)').matches;
+  const mapTarget = isPhoneDetails ? '_self' : '_blank';
+  const valueUsd =
+    (typeof b.value === 'number' && isFinite(b.value) && b.value > 0)
+      ? (b.value / usdRate)
+      : null;
+
+  const operations = Array.isArray(b.operations) ? b.operations : [];
+  const signals = Array.isArray(b.signals) ? b.signals : [];
+  const attachments = Array.isArray(b.attachments) ? b.attachments : (Array.isArray(b.files) ? b.files : []);
+  const payments = Array.isArray(b.paymentsUsd) ? b.paymentsUsd : (Array.isArray(b.payments) ? b.payments : []);
+
+  const personIcon = `
+    <span class="icon-inline person" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="M12 12c2.76 0 5-2.35 5-5.25S14.76 1.5 12 1.5 7 3.85 7 6.75 9.24 12 12 12Zm0 2.25c-4.17 0-9 2.12-9 6.3V22.5h18v-1.95c0-4.18-4.83-6.3-9-6.3Z"/>
+      </svg>
+    </span>
+  `;
+  const icon = {
+    map: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M12 22s7-6.1 7-13a7 7 0 1 0-14 0c0 6.9 7 13 7 13Zm0-9.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4Z"/>
+        </svg>
+      </span>
+    `,
+    link: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M10.6 13.4a1 1 0 0 1 0-1.4l2.4-2.4a1 1 0 1 1 1.4 1.4l-2.4 2.4a1 1 0 0 1-1.4 0ZM8.5 15.5l-1.4 1.4a4 4 0 0 1-5.7-5.7l1.4-1.4a1 1 0 1 1 1.4 1.4L2.8 12.6a2 2 0 1 0 2.9 2.9l1.4-1.4a1 1 0 1 1 1.4 1.4Zm14.1-8.6-1.4 1.4a1 1 0 1 1-1.4-1.4l1.4-1.4a2 2 0 0 0-2.9-2.9L17 4a1 1 0 0 1-1.4-1.4l1.4-1.4a4 4 0 0 1 5.7 5.7Z"/>
+        </svg>
+      </span>
+    `,
+    doc: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V8h4.5"/>
+          <path d="M8 12h8M8 16h8M8 20h6" />
+        </svg>
+      </span>
+    `,
+    cal: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm14 8H3v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V10Z"/>
+        </svg>
+      </span>
+    `,
+    money: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M3 6h18v12H3V6Zm2 2v8h14V8H5Zm7 7a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
+        </svg>
+      </span>
+    `,
+    share: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M4 19h16v2H4v-2Zm2-2V5h3v12H6Zm5 0V9h3v8h-3Zm5 0V3h3v14h-3Z"/>
+        </svg>
+      </span>
+    `,
+    note: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M4 3h16a2 2 0 0 1 2 2v14l-4-3H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 4h10M7 11h10"/>
+        </svg>
+      </span>
+    `,
+    file: `
+      <span class="icon-inline" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7l-5-5Zm0 1.5V8h4.5"/>
+        </svg>
+      </span>
+    `
+  };
+
+  const opsHtml = operations.length
+    ? operations.map((op, idx) => `
+        <details class="subsection-item" ${(isPhoneDetails || idx === 0) ? 'open' : ''}>
+          <summary>
+            <span>عملية رقم ${idx + 1}</span>
+            <span class="pill">${op.type || 'غير محدد'}</span>
+          </summary>
+          <div class="subsection-body">
+            <div class="field-grid">
+              <div class="field"><span class="label">نوع العملية</span><span class="value">${op.type ? `${icon.share}${op.type}` : '-'}</span></div>
+              <div class="field"><span class="label">مقدار التصرف</span><span class="value">${op.amount != null ? `${icon.money}${op.amount}` : '-'}</span></div>
+              <div class="field"><span class="label">وحدة التصرف</span><span class="value">${op.unit ? `${icon.share}${op.unit}` : '-'}</span></div>
+              <div class="field"><span class="label">طريقة العملية</span><span class="value">${op.method ? `${icon.doc}${op.method}` : '-'}</span></div>
+              <div class="field"><span class="label">رقم العقد</span><span class="value">${op.contractNo ? `${icon.doc}${op.contractNo}` : '-'}</span></div>
+              <div class="field"><span class="label">تاريخ العقد</span><span class="value">${op.contractDate ? `${icon.cal}${op.contractDate}` : '-'}</span></div>
+              <div class="field"><span class="label">الشاهد الأول</span><span class="value">${op.witness1 ? `${personIcon}${op.witness1}` : '-'}</span></div>
+              <div class="field"><span class="label">الشاهد الثاني</span><span class="value">${op.witness2 ? `${personIcon}${op.witness2}` : '-'}</span></div>
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <span class="label">ملاحظات العقد</span>
+              <span class="value">${op.notes ? `${icon.note}${op.notes}` : '-'}</span>
+            </div>
+            <div class="two-cols" style="margin-top:12px;">
+              <div class="mini">
+                <div class="mini-title">المالكون السابقون</div>
+                <div class="mini-value">${Array.isArray(op.prevOwners) && op.prevOwners.length ? `${personIcon}${op.prevOwners.join('، ')}` : '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">المالكون الجدد</div>
+                <div class="mini-value">${Array.isArray(op.newOwners) && op.newOwners.length ? `${personIcon}${op.newOwners.join('، ')}` : '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">أعضاء الفريق الأول</div>
+                <div class="mini-value">${Array.isArray(op.team1) && op.team1.length ? `${personIcon}${op.team1.join('، ')}` : '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">أعضاء الفريق الثانية</div>
+                <div class="mini-value">${Array.isArray(op.team2) && op.team2.length ? `${personIcon}${op.team2.join('، ')}` : '—'}</div>
+              </div>
+            </div>
+          </div>
+        </details>
+      `).join('')
+    : `<div class="empty">لا توجد عمليات مسجلة حاليًا. (يدعم أكثر من عملية)</div>`;
+
+  const signalsHtml = signals.length
+    ? signals.map((s, idx) => `
+        <details class="subsection-item" ${(isPhoneDetails || idx === 0) ? 'open' : ''}>
+          <summary>
+            <span>إشارة رقم ${idx + 1}</span>
+            <span class="pill">${s.type || 'غير محدد'}</span>
+          </summary>
+          <div class="subsection-body">
+            <div class="field-grid">
+              <div class="field"><span class="label">رقم الإشارة</span><span class="value">${s.no ? `${icon.doc}${s.no}` : '-'}</span></div>
+              <div class="field"><span class="label">تاريخ الإشارة</span><span class="value">${s.date ? `${icon.cal}${s.date}` : '-'}</span></div>
+              <div class="field"><span class="label">نوع الإشارة</span><span class="value">${s.type ? `${icon.note}${s.type}` : '-'}</span></div>
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <span class="label">ملاحظات الإشارة</span>
+              <span class="value">${s.notes ? `${icon.note}${s.notes}` : '-'}</span>
+            </div>
+            <div class="two-cols" style="margin-top:12px;">
+              <div class="mini">
+                <div class="mini-title">أصحاب الإشارة</div>
+                <div class="mini-value">${Array.isArray(s.owners) && s.owners.length ? `${personIcon}${s.owners.join('، ')}` : '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">المدعى عليهم في الإشارة</div>
+                <div class="mini-value">${Array.isArray(s.defendants) && s.defendants.length ? `${personIcon}${s.defendants.join('، ')}` : '—'}</div>
+              </div>
+            </div>
+          </div>
+        </details>
+      `).join('')
+    : `<div class="empty">لا توجد إشارات حاليًا. (يدعم أكثر من إشارة)</div>`;
+
+  const attachmentsHtml = attachments.length
+    ? attachments.map((f, idx) => `
+        <div class="row-line">
+          <div class="row-main">
+            <div class="row-title">${f.name || f.fileName || `ملف ${idx + 1}`}</div>
+            <div class="row-sub">${f.issuedAt || f.date || 'بدون تاريخ'}</div>
+          </div>
+          <div class="row-actions">
+            <button class="topbar-btn ghost" type="button" onclick="alert('ربط التحميل لاحقًا');">رفع/عرض</button>
+          </div>
+        </div>
+      `).join('')
+    : `<div class="empty">لا توجد ملفات مرفقة. (يدعم أكثر من ملف)</div>`;
+
+  const paymentsHtml = payments.length
+    ? payments.map((p, idx) => `
+        <div class="row-line">
+          <div class="row-main">
+            <div class="row-title">دفعة ${idx + 1}</div>
+            <div class="row-sub">${p.date || p.paidAt || 'بدون تاريخ'}</div>
+          </div>
+          <div class="row-meta">
+            <span class="pill">${p.amountUsd != null ? (Number(p.amountUsd).toLocaleString('en-US') + ' USD') : (p.amount || '—')}</span>
+          </div>
+        </div>
+      `).join('')
+    : `<div class="empty">لا توجد دفعات حاليًا. (يدعم أكثر من دفعة)</div>`;
+  const csvRows = [
+    ['القسم', 'الحقل', 'القيمة'],
+    ['البيانات المفتاحية', 'رقم المحضر', (b.mahder || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات المفتاحية', 'حالة العقار', (b.status || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'المحافظة', (b.city || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'اسم المنطقة', (b.type || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'المقسم', (b.division || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'نوع الاستثمار', (b.investType || 'غير محدد').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'رابط Google Maps', (b.geo || '-').replace(/[\r\n]+/g, ' ')],
+    ['البيانات الأساسية', 'تفصيل العقار', (b.details || '').replace(/[\r\n]+/g, ' ')],
+    ['المساحات والملكية', 'مساحة العقار الكلية (م²)', typeof b.area === 'number' ? String(b.area) : '-'],
+    [
+      'المساحات والملكية',
+      'قيمة العقار بالدولار (تقريبي)',
+      typeof b.value === 'number'
+        ? (b.value / 3.75).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '-'
+    ],
+    ['معلومات عامة', 'الدفعات (نص)', (b.payments || '-').replace(/[\r\n]+/g, ' ')]
+  ];
+  const csvText = '\uFEFF' + csvRows.map(r => r.join(',')).join('\n');
+  const detailsHtml = `
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+      <title>بيانات العقار ${b.propNo}</title>
+      <style>
+        :root {
+          --gold-deep:    #8B6914;
+          --gold-mid:     #C49A2A;
+          --gold-bright:  #D4AF37;
+          --gold-light:   #E8C96A;
+          --gold-pale:    #F5E9C0;
+          --black-pure:   #0A0A0A;
+          --black-rich:   #111111;
+          --black-card:   #1A1A1A;
+          --black-border: #2A2A2A;
+          --ivory-warm:   #F5F0E8;
+          --ivory-mid:    #EDE5D5;
+          --text-primary: var(--ivory-warm);
+          --text-secondary: #B0A898;
+          --text-muted:   #6B6560;
+          --accent:       var(--gold-bright);
+          --border:       var(--black-border);
+          --font-display: 'Tajawal', sans-serif;
+          --font-body:    'Tajawal', sans-serif;
+          --font-ui:      'Tajawal', sans-serif;
+          --shadow-gold: 0 0 28px rgba(212,175,55,.18);
+          --shadow-card: 0 4px 32px rgba(0,0,0,.55);
+          --r-sm: 4px;
+          --r-md: 8px;
+          --r-lg: 16px;
+        }
+        * { box-sizing:border-box; font-family: var(--font-body) !important; }
+        html, body { font-family: var(--font-body) !important; }
+        body {
+          margin:0;
+          min-height:100vh;
+          font-family: var(--font-body);
+          background: var(--black-pure);
+          color: var(--text-primary);
+          padding:28px 36px 40px;
+          direction:rtl;
+          line-height:1.7;
+          font-size:16px;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: geometricPrecision;
+        }
+        body::before {
+          content:'';
+          position:fixed;
+          inset:-240px;
+          background:
+            radial-gradient(circle at 20% 10%, rgba(212,175,55,.08), transparent 55%),
+            radial-gradient(circle at 80% 20%, rgba(196,154,42,.06), transparent 60%),
+            radial-gradient(circle at 50% 90%, rgba(232,201,106,.05), transparent 55%);
+          pointer-events:none;
+          z-index:-1;
+        }
+        h1 {
+          font-family: var(--font-display);
+          font-size:32px;
+          margin:0 0 18px;
+          color: var(--ivory-warm);
+          letter-spacing:.02em;
+        }
+        h1 span { color: var(--gold-bright); }
+
+        /* same button feel used across the website */
+        .topbar-btn {
+          padding: 10px 22px;
+          border-radius: var(--r-sm);
+          font-family: var(--font-body);
+          font-size: 14px;
+          cursor: pointer;
+          transition: all .2s;
+          border: 1px solid rgba(212,175,55,.3);
+          background: rgba(212,175,55,.08);
+          color: var(--gold-light);
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          white-space:nowrap;
+        }
+        .topbar-btn.export {
+          padding: 12px 26px;
+          font-size: 15px;
+          border-radius: 12px;
+          border-color: rgba(212,175,55,.45);
+          background: linear-gradient(135deg, rgba(212,175,55,.16), rgba(0,0,0,.30));
+          box-shadow:
+            0 10px 28px rgba(0,0,0,.55),
+            0 0 24px rgba(212,175,55,.16);
+        }
+        .topbar-btn.export:hover {
+          background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(0,0,0,.22));
+          border-color: rgba(212,175,55,.65);
+          transform: translateY(-1px);
+        }
+        .topbar-btn:hover {
+          background: rgba(212,175,55,.15);
+          border-color: rgba(212,175,55,.5);
+          transform: translateY(-1px);
+        }
+        .topbar-btn.ghost {
+          background: transparent;
+          border-color: rgba(212,175,55,.18);
+          color: var(--text-secondary);
+        }
+        .topbar-btn.ghost:hover {
+          background: rgba(212,175,55,.07);
+          border-color: rgba(212,175,55,.35);
+          color: var(--ivory-warm);
+        }
+        .btn-icon { display:inline-flex; align-items:center; justify-content:center; font-size:15px; }
+        .btn-icon svg { width:18px; height:18px; fill: var(--gold-bright); }
+        .toolbar {
+          display:grid;
+          grid-template-columns: 1fr 1fr;
+          align-items:center;
+          gap:14px 16px;
+          margin-bottom:22px;
+          padding:12px 14px;
+          border-radius: var(--r-lg);
+          border: 1px solid rgba(212,175,55,.14);
+          background: linear-gradient(135deg, rgba(212,175,55,.07), rgba(17,17,17,.92));
+          box-shadow: var(--shadow-card);
+          backdrop-filter: blur(10px);
+        }
+        .toolbar-left {
+          display:flex;
+          align-items:center;
+          gap:12px;
+          flex-wrap:wrap;
+          justify-self:start; /* right side in RTL */
+          justify-content:flex-start;
+        }
+        .toolbar-center {
+          display:none;
+        }
+        .property-id-pill {
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          padding:10px 18px;
+          border-radius:999px;
+          border:1px solid rgba(212,175,55,.22);
+          background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(0,0,0,.72));
+          box-shadow: 0 0 18px rgba(212,175,55,.16);
+        }
+        .property-id-label {
+          font-size:13px;
+          color: var(--text-muted);
+          font-family: var(--font-ui);
+        }
+        .property-id-value {
+          font-size:15px;
+          color: var(--gold-bright);
+          font-weight:600;
+          letter-spacing:.04em;
+        }
+        .toolbar-right {
+          display:flex;
+          align-items:center;
+          gap:10px;
+          justify-self:end; /* left side in RTL */
+          justify-content:flex-end;
+          flex-wrap:wrap;
+        }
+        .search-wrapper {
+          position:relative;
+          min-width:280px;
+        }
+        .search-input {
+          width:100%;
+          padding:10px 40px 10px 14px;
+          border-radius:999px;
+          border:1px solid rgba(212,175,55,.20);
+          background: rgba(10,10,10,.65);
+          color: var(--text-primary);
+          font-family: var(--font-body);
+          font-size:13px;
+          outline:none;
+          transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .search-input:focus {
+          border-color: rgba(212,175,55,.48);
+          box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+          background: rgba(10,10,10,.82);
+        }
+        .search-input::placeholder {
+          color: var(--text-muted);
+        }
+        .search-icon {
+          position:absolute;
+          right:12px;
+          top:50%;
+          transform:translateY(-50%);
+          color: var(--gold-bright);
+          font-size:14px;
+        }
+        /* legacy btn styles removed (use .topbar-btn like the website) */
+        .sections {
+          display:flex;
+          flex-direction:column;
+          gap:20px;
+        }
+        .section-card {
+          border-radius: var(--r-lg);
+          border: 1px solid rgba(212,175,55,.12);
+          background: rgba(17,17,17,.78);
+          backdrop-filter: blur(10px);
+          padding:18px 20px 16px;
+          box-shadow: var(--shadow-card);
+        }
+        .section-header {
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:12px;
+        }
+        .section-title {
+          color: var(--gold-bright);
+          font-size:14px;
+          font-weight:600;
+          font-family: var(--font-ui);
+          letter-spacing:.04em;
+        }
+        .section-sub {
+          font-size:12px;
+          color: var(--text-muted);
+        }
+        .field-grid {
+          display:grid;
+          grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+          gap:10px 20px;
+        }
+        .field {
+          margin-bottom:6px;
+        }
+        .label {
+          color: var(--text-muted);
+          font-size:12px;
+          display:block;
+          margin-bottom:3px;
+          font-family: var(--font-ui);
+        }
+        .value {
+          font-size:14px;
+          color: var(--text-primary);
+        }
+        a.map-link {
+          color:#7fb8ff;
+          text-decoration:none;
+          font-size:13px;
+        }
+        a.map-link:hover {
+          text-decoration:underline;
+          color:#b7d6ff;
+        }
+        ul { margin:4px 0 0; padding-right:20px; }
+        li { margin-bottom:6px; font-size:13px; }
+        .muted { color: var(--text-muted); font-size:12px; }
+        table.simple {
+          width:100%;
+          border-collapse:collapse;
+          font-size:13px;
+        }
+        table.simple th,
+        table.simple td {
+          border:1px solid rgba(212,175,55,.18);
+          padding:5px 8px;
+          text-align:right;
+        }
+        table.simple th {
+          background: rgba(212,175,55,.08);
+          color: var(--gold-light);
+          font-weight:500;
+          font-family: var(--font-ui);
+        }
+        table.simple tbody tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+        .quick-grid {
+          display:grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap:10px 18px;
+          margin-top:6px;
+        }
+        .quick-item {
+          border: 1px solid rgba(212,175,55,.12);
+          background: rgba(0,0,0,.22);
+          border-radius: 12px;
+          padding:10px 12px;
+        }
+        .quick-item.important {
+          border-color: rgba(212,175,55,.38);
+          background:
+            radial-gradient(circle at top, rgba(212,175,55,.14), rgba(0,0,0,.55));
+          box-shadow:
+            0 16px 40px rgba(0,0,0,.55),
+            0 0 26px rgba(212,175,55,.16);
+          padding:14px 14px;
+          transform: translateZ(0);
+        }
+        .quick-item.important .k {
+          color: var(--gold-light);
+          font-size:12px;
+          letter-spacing:.02em;
+        }
+        .quick-item.important .v {
+          font-size:18px;
+          color: var(--ivory-warm);
+          font-weight:700;
+        }
+        .hero-row {
+          display:grid;
+          grid-template-columns: repeat(2, minmax(240px, 1fr));
+          gap:12px 18px;
+          margin-top:14px;
+        }
+        .quick-item.important.hero {
+          padding:18px 16px;
+          border-color: rgba(212,175,55,.55);
+          background:
+            radial-gradient(circle at top, rgba(212,175,55,.20), rgba(0,0,0,.45));
+          box-shadow:
+            0 20px 52px rgba(0,0,0,.62),
+            0 0 34px rgba(212,175,55,.18);
+        }
+        .quick-item.important.hero .k {
+          font-size:13px;
+          color: var(--gold-pale);
+        }
+        .quick-item.important.hero .v {
+          font-size:22px;
+          letter-spacing:.02em;
+        }
+        .mini.important {
+          border-color: rgba(212,175,55,.30);
+          background:
+            radial-gradient(circle at top, rgba(212,175,55,.10), rgba(0,0,0,.20));
+          box-shadow: 0 0 22px rgba(212,175,55,.10);
+        }
+        .mini.important .mini-title { color: var(--gold-light); }
+        .mini.important .mini-value { font-size:15px; font-weight:700; }
+        .quick-item .k {
+          font-size:12px;
+          color: var(--text-muted);
+          font-family: var(--font-ui);
+          margin-bottom:4px;
+        }
+        .quick-item .v {
+          font-size:15px;
+          color: var(--ivory-warm);
+          font-weight:600;
+        }
+        .big-section-title {
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          margin-bottom:10px;
+          padding-bottom:10px;
+          border-bottom:1px solid rgba(212,175,55,.14);
+        }
+        .big-section-title .t {
+          font-family: var(--font-ui);
+          color: var(--gold-light);
+          letter-spacing:.06em;
+          font-size:13px;
+        }
+        .big-section-title .s {
+          font-size:12px;
+          color: var(--text-muted);
+        }
+        .subsection {
+          margin-top:12px;
+          padding-top:12px;
+          border-top:1px dashed rgba(212,175,55,.12);
+        }
+        .subsection-head {
+          display:flex;
+          align-items:baseline;
+          justify-content:space-between;
+          gap:10px;
+          margin-bottom:10px;
+        }
+        .subsection-head .h {
+          font-family: var(--font-ui);
+          color: var(--gold-bright);
+          font-size:13px;
+        }
+        .subsection-head .d {
+          color: var(--text-muted);
+          font-size:12px;
+        }
+        .subsection-item {
+          border:1px solid rgba(212,175,55,.12);
+          border-radius:12px;
+          background: rgba(0,0,0,.18);
+          margin-top:10px;
+          overflow:hidden;
+        }
+        .subsection-item summary {
+          cursor:pointer;
+          list-style:none;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:10px;
+          padding:10px 12px;
+          font-family: var(--font-ui);
+          color: var(--ivory-mid);
+        }
+        .subsection-item summary::-webkit-details-marker { display:none; }
+        .subsection-body { padding:10px 12px 12px; }
+        .pill {
+          display:inline-flex;
+          align-items:center;
+          padding:3px 10px;
+          border-radius:999px;
+          border:1px solid rgba(212,175,55,.22);
+          background: rgba(212,175,55,.06);
+          color: var(--gold-light);
+          font-size:12px;
+          font-family: var(--font-ui);
+          white-space:nowrap;
+        }
+        .empty {
+          padding:12px;
+          border:1px dashed rgba(212,175,55,.16);
+          border-radius:12px;
+          background: rgba(0,0,0,.16);
+          color: var(--text-muted);
+          font-size:12px;
+        }
+        .two-cols {
+          display:grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap:10px 14px;
+        }
+        .mini {
+          border:1px solid rgba(212,175,55,.10);
+          border-radius:12px;
+          background: rgba(255,255,255,.02);
+          padding:10px 12px;
+        }
+        .mini-title {
+          font-family: var(--font-ui);
+          color: var(--text-muted);
+          font-size:12px;
+          margin-bottom:6px;
+        }
+        .mini-value {
+          color: var(--ivory-warm);
+          font-size:14px;
+          line-height:1.6;
+        }
+        .icon-inline {
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          margin-left:6px;
+          transform: translateY(1px);
+        }
+        .icon-inline svg {
+          width:14px;
+          height:14px;
+          fill: var(--gold-bright);
+          opacity:.95;
+          filter: drop-shadow(0 0 10px rgba(212,175,55,.18));
+        }
+        .value .icon-inline { margin-left:8px; }
+        .row-line {
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding:10px 12px;
+          border:1px solid rgba(212,175,55,.10);
+          border-radius:12px;
+          background: rgba(0,0,0,.14);
+          margin-top:10px;
+        }
+        .row-title { font-family: var(--font-ui); color: var(--ivory-mid); font-size:12px; }
+        .row-sub { color: var(--text-muted); font-size:12px; margin-top:4px; }
+        .row-main { display:flex; flex-direction:column; }
+        .row-actions { flex-shrink:0; }
+        .row-meta { flex-shrink:0; }
+
+        /* Mobile / iPhone popup responsiveness
+           Use both viewport width and device width because iOS popup sizing
+           can keep the CSS viewport wide even on small screens. */
+        @media (max-width: 600px), (max-device-width: 600px),
+               (max-width: 1024px) and (orientation: portrait),
+               (max-device-width: 1024px) and (orientation: portrait) {
+          body {
+            padding:14px 10px 22px;
+            font-size:15px;
+          }
+          h1 {
+            font-size:22px;
+            margin-bottom:12px;
+          }
+          .toolbar {
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 12px 12px;
+          }
+          .toolbar-right {
+            width: 100%;
+            justify-content: flex-start;
+          }
+          .search-wrapper {
+            min-width: 0;
+            width: 100%;
+          }
+          .search-input { font-size:14px; }
+          .field-grid { grid-template-columns: 1fr; }
+          .quick-grid,
+          .hero-row,
+          .two-cols {
+            grid-template-columns: 1fr !important;
+          }
+          .section-card {
+            padding:14px 14px 12px;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="topbar-btn ghost" onclick="window.close()">
+            <span class="btn-icon">↩</span>
+            <span>العودة</span>
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="بحث برقم العقار..."
+              value="${b.propNo}"
+              oninput="this.value = this.value.replace(/[^0-9٠-٩\/\-]/g,'')"
+            />
+          </div>
+          <button class="topbar-btn export" onclick="window.print()">
+            <span class="btn-icon">🖨</span>
+            <span>PDF</span>
+          </button>
+          <button class="topbar-btn export" onclick="window.exportPropertyExcel && window.exportPropertyExcel()">
+            <span class="btn-icon">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <rect x="1" y="7" width="2.4" height="7" rx="0.6"></rect>
+                <rect x="6.1" y="4" width="2.4" height="10" rx="0.6"></rect>
+                <rect x="11.2" y="1" width="2.4" height="13" rx="0.6"></rect>
+              </svg>
+            </span>
+            <span>Excel</span>
+          </button>
+        </div>
+      </div>
+      <h1>${b.name} <span>— بطاقة التفاصيل</span></h1>
+
+      <div class="sections">
+        <div class="section-card">
+          <div class="big-section-title">
+            <div class="t">أ — نبذة سريعة</div>
+            <div class="s">ملخص سريع للعقار + اسم المحضر</div>
+          </div>
+          <div class="quick-grid">
+            <div class="quick-item important">
+              <div class="k">رقم العقار</div>
+              <div class="v">${b.propNo || '-'}</div>
+            </div>
+            <div class="quick-item">
+              <div class="k">اسم المحضر</div>
+              <div class="v">${b.mahder || '-'}</div>
+            </div>
+            <div class="quick-item">
+              <div class="k">الحالة</div>
+              <div class="v">${b.status || '-'}</div>
+            </div>
+            <div class="quick-item">
+              <div class="k">المحافظة</div>
+              <div class="v">${b.city || '-'}</div>
+            </div>
+            <div class="quick-item">
+              <div class="k">المنطقة العقارية</div>
+              <div class="v">${b.type || '-'}</div>
+            </div>
+            <div class="quick-item">
+              <div class="k">المساحة الكلية (م²)</div>
+              <div class="v">${typeof b.area === 'number' ? b.area.toLocaleString('ar-SA') : '-'}</div>
+            </div>
+            <div class="quick-item">
+              <div class="k">القيمة بالدولار (تقريبي)</div>
+              <div class="v">${valueUsd != null ? valueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD' : '-'}</div>
+            </div>
+          </div>
+          <div class="hero-row">
+            <div class="quick-item important hero">
+              <div class="k">الحصة الكلية للدكتور عبد القادر السنكري</div>
+              <div class="v">${b.shares?.abdulqader ?? '—'}</div>
+            </div>
+            <div class="quick-item important hero">
+              <div class="k">الحصة الكاملة لرياض عسلي</div>
+              <div class="v">${b.shares?.riyad ?? '—'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="big-section-title">
+            <div class="t">ب — المعلومات المفصلة</div>
+            <div class="s">تنظيم كامل للبيانات (يدعم التكرار)</div>
+          </div>
+
+          <div class="subsection">
+            <div class="subsection-head">
+              <div class="h">1 — البيانات الأساسية</div>
+              <div class="d">موقع/محضر/تفاصيل/مساحة/قيمة</div>
+            </div>
+            <div class="field-grid">
+              <div class="field"><span class="label">المحافظة</span><span class="value">${b.city || '-'}</span></div>
+              <div class="field"><span class="label">المنطقة العقارية</span><span class="value">${b.type || '-'}</span></div>
+              <div class="field"><span class="label">المحضر</span><span class="value">${b.mahder ? `${icon.doc}${b.mahder}` : '-'}</span></div>
+              <div class="field"><span class="label">المقسم</span><span class="value">${b.division || '-'}</span></div>
+              <div class="field">
+                <span class="label">رابط موقع العقار</span>
+                <span class="value">
+                  ${b.geo ? `${icon.map}<a class="map-link" href="${b.geo}" target="${mapTarget}" rel="noopener">فتح الخريطة</a>` : '<span class="muted">لا يوجد رابط</span>'}
+                </span>
+              </div>
+              <div class="field"><span class="label">مساحة العقار الكلية</span><span class="value">${typeof b.area === 'number' ? `${icon.share}${b.area.toLocaleString('ar-SA')} م²` : '-'}</span></div>
+              <div class="field"><span class="label">قيمة العقار الكلية بالدولار الأمريكي</span><span class="value">${valueUsd != null ? `${icon.money}${valueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : '-'}</span></div>
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <span class="label">بيانات تفصيلية</span>
+              <span class="value">${b.details || 'لا توجد بيانات تفصيلية.'}</span>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <div class="subsection-head">
+              <div class="h">2 — الأسهم</div>
+              <div class="d">ملخص الأسهم والعمليات</div>
+            </div>
+            <div class="two-cols">
+              <div class="mini">
+                <div class="mini-title">مجموع الأسهم للعمليات</div>
+                <div class="mini-value">${typeof b.totalOpShares === 'number' ? b.totalOpShares.toLocaleString('ar-SA') : (typeof b.opsCount === 'number' ? (b.opsCount + ' عملية') : '—')}</div>
+              </div>
+              <div class="mini important">
+                <div class="mini-title">الحصة الكلية للدكتور عبد القادر السنكري</div>
+                <div class="mini-value">${b.shares?.abdulqader ?? '—'}</div>
+              </div>
+              <div class="mini important">
+                <div class="mini-title">الحصة الكاملة لرياض عسلي</div>
+                <div class="mini-value">${b.shares?.riyad ?? '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">عمليات العقار</div>
+                <div class="mini-value">${operations.length ? operations.length.toLocaleString('ar-SA') + ' عملية' : '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <div class="subsection-head">
+              <div class="h">3 — عمليات العقار</div>
+              <div class="d">يدعم أكثر من عملية</div>
+            </div>
+            ${opsHtml}
+          </div>
+
+          <div class="subsection">
+            <div class="subsection-head">
+              <div class="h">4 — الإشارات</div>
+              <div class="d">يدعم أكثر من إشارة</div>
+            </div>
+            ${signalsHtml}
+          </div>
+
+          <div class="subsection">
+            <div class="subsection-head">
+              <div class="h">5 — الدفعات</div>
+              <div class="d">يدعم أكثر من دفعة</div>
+            </div>
+            <div class="two-cols">
+              <div class="mini">
+                <div class="mini-title">قيمة العقار المملوكة بالدولار</div>
+                <div class="mini-value">${b.ownedValueUsd ?? '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">مجموع الدفعات</div>
+                <div class="mini-value">${b.totalPaymentsUsd ?? '—'}</div>
+              </div>
+              <div class="mini">
+                <div class="mini-title">المتبقي</div>
+                <div class="mini-value">${b.remainingUsd ?? '—'}</div>
+              </div>
+            </div>
+            ${paymentsHtml}
+          </div>
+
+          <div class="subsection">
+            <div class="subsection-head">
+              <div class="h">6 — ملحقات البطاقة</div>
+              <div class="d">يدعم أكثر من ملف</div>
+            </div>
+            ${attachmentsHtml}
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // On phones, avoid window.open (iOS/Chrome forces it into full-window and breaks layout).
+  // Render the same page inside an iframe modal instead.
+  if (isPhoneDetails) {
+    const modalId = 'property-details-modal';
+    const iframeId = 'property-details-iframe';
+    const phoneHtml = detailsHtml.replace(/onclick="window\.close\(\)"/g, 'onclick="parent.closePropertyDetailsModal()"');
+
+    let modal = document.getElementById(modalId);
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = modalId;
+      modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);display:none;';
+      modal.innerHTML = '<iframe id="' + iframeId + '" style="border:0;width:100%;height:100%;"></iframe>';
+      document.body.appendChild(modal);
+
+      // allow closing from the embedded template
+      window.closePropertyDetailsModal = function closePropertyDetailsModal() {
+        const m = document.getElementById(modalId);
+        if (m) m.style.display = 'none';
+        document.body.style.overflow = '';
+      };
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          window.closePropertyDetailsModal();
+        }
+      });
+    }
+
+    const iframe = modal.querySelector('#' + iframeId);
+    document.body.style.overflow = 'hidden';
+    modal.style.display = 'block';
+    iframe.srcdoc = phoneHtml;
+    return;
+  }
+
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.write(detailsHtml);
+
+  // تعريف دالة التصدير في نافذة التفاصيل نفسها
+  w.exportPropertyExcel = function () {
+    const csv = csvText;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = w.document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'بيانات_العقار_${b.propNo}.csv';
+    a.click();
+  };
+  w.document.close();
+}
+
+function toggleOperations(opsRowId, detailRowId) {
+  const opsRow = document.getElementById(opsRowId);
+  const detailRow = document.getElementById(detailRowId);
+  if (!opsRow) return;
+  const isOpen = opsRow.classList.toggle('open');
+  if (isOpen && detailRow) {
+    detailRow.classList.remove('open');
+  }
+}
+
+function toggleDetails(rowId, btnId) {
+  const row = document.getElementById(rowId);
+  const btn = document.getElementById(btnId);
+  if (!row || !btn) return;
+  const isOpen = row.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  const arrows = btn.querySelectorAll('span:last-child');
+  if (isOpen) {
+    btn.lastElementChild.textContent = '▴';
+  } else {
+    btn.lastElementChild.textContent = '▾';
+  }
+
+  // إخفاء صف العمليات في حال فتح تفاصيل العقار
+  const idx = rowId.split('-').pop();
+  const opsRow = document.getElementById('ops-row-' + idx);
+  if (isOpen && opsRow) {
+    opsRow.classList.remove('open');
+  }
+}
+
+function switchPageMobile(id) {
+  // Update mobile nav pills
+  document.querySelectorAll('.topbar-nav-pill').forEach(p => p.classList.remove('active'));
+  const pill = document.getElementById('mnav-' + id);
+  if (pill) pill.classList.add('active');
+
+  // Also sync the sidebar nav-items (for desktop) — find by position
+  const sidebarBtns = document.querySelectorAll('.sidebar .nav-item');
+  sidebarBtns.forEach(b => b.classList.remove('active'));
+  const map = { dashboard: 0, properties: 1 };
+  if (sidebarBtns[map[id]]) sidebarBtns[map[id]].classList.add('active');
+
+  // Switch the page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + id);
+  if (pageEl) pageEl.classList.add('active');
+
+  // Update topbar title text (desktop) — using the same titles map
+  const titles = { dashboard: 'لوحة <span>التحكم</span>', properties: 'بطاقات <span>العقار</span>' };
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.innerHTML = titles[id] || '';
+}
+
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  const titles = { dashboard: 'لوحة <span>التحكم</span>', properties: 'بطاقات <span>العقار</span>' };
+  document.getElementById('topbar-title').innerHTML = titles[id];
+  closeSidebarForMobile();
+}
+
+const MOBILE_SIDEBAR_QUERY = '(max-width: 1024px)';
+
+function isMobileSidebarMode() {
+  return window.matchMedia(MOBILE_SIDEBAR_QUERY).matches;
+}
+
+function closeSidebarForMobile() {
+  if (isMobileSidebarMode()) {
+    document.body.classList.remove('sidebar-open');
+  }
+}
+
+function toggleSidebar() {
+  if (isMobileSidebarMode()) {
+    document.body.classList.toggle('sidebar-open');
+    return;
+  }
+  document.body.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
+}
+
+function initSidebarState() {
+  const saved = localStorage.getItem('sidebarCollapsed');
+  const shouldCollapse = saved === '1';
+  if (shouldCollapse) document.body.classList.add('sidebar-collapsed');
+
+  const applyForViewport = () => {
+    if (isMobileSidebarMode()) {
+      document.body.classList.remove('sidebar-open');
+      // On phones, don't apply the "collapsed" desktop styling at all.
+      // Use only the off-canvas open/close behavior.
+      document.body.classList.remove('sidebar-collapsed');
+      return;
+    }
+    document.body.classList.remove('sidebar-open');
+    if (shouldCollapse) document.body.classList.add('sidebar-collapsed');
+    else document.body.classList.remove('sidebar-collapsed');
+  };
+
+  applyForViewport();
+  window.addEventListener('resize', applyForViewport);
+}
+
+function updateTopbarHeightVar() {
+  // No longer needed for floating handle positioning (hamburger is now in the topbar).
+  // Kept as a no-op to avoid removing the call sites.
+}
+
+function handleLogout() {
+  if (confirm('هل تريد تأكيد تسجيل الخروج من لوحة التحكم؟')) {
+    // هنا يمكن لاحقاً ربط زر الخروج بنظام الدخول الحقيقي
+    alert('تم تسجيل الخروج (تنفيذ تجريبي في الواجهة فقط).');
+  }
+}
+
+/* ─── DATE & TIME ─── */
+function updateTime() {
+  const d = new Date();
+  const timeStr = d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const el = document.getElementById('topbar-time');
+  if (el) el.textContent = timeStr;
+}
+
+(function() {
+  const d = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('topbar-date').textContent = d.toLocaleDateString('ar-SA', opts);
+  updateTime();
+  setInterval(updateTime, 1000);
+})();
+
+/* ─── DASHBOARD HERO PARALLAX ─── */
+(function() {
+  const hero = document.getElementById('dashboard-hero');
+  if (!hero) return;
+  const visual = hero.querySelector('img, svg');
+  const layers = Array.from(hero.querySelectorAll('.page-hero-layer'));
+
+  function handleMove(e) {
+    const rect = hero.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;  // -0.5 .. 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+    const rotateY = x * 10; // يمين / يسار
+    const rotateX = -y * 8; // أعلى / أسفل
+    if (visual) {
+      visual.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    }
+
+    layers.forEach(layer => {
+      const depth = parseFloat(layer.getAttribute('data-depth') || '1');
+      const tx = -x * depth * 6;
+      const ty = -y * depth * 4;
+      layer.style.transform = `translate(${tx}px, ${ty}px)`;
+    });
+  }
+
+  function reset() {
+    if (visual) {
+      visual.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    }
+    layers.forEach(layer => {
+      layer.style.transform = 'translate(0,0)';
+    });
+  }
+
+  hero.addEventListener('mousemove', handleMove);
+  hero.addEventListener('mouseleave', reset);
+})();
+
+/* ─── INIT ─── */
+initPropertyTableView();
+initSidebarState();
+updateTopbarHeightVar();
+window.addEventListener('resize', updateTopbarHeightVar);
+window.addEventListener('orientationchange', updateTopbarHeightVar);
+renderTable();
+renderSelectionCard(filteredData, 'جميع العقارات');
+</script>
+</body>
+</html>
