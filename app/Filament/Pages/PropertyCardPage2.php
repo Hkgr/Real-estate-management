@@ -131,42 +131,156 @@ class PropertyCardPage2 extends Page implements HasSchemas
 
         if (! is_array($operations)) {
             data_set($this->data, 'operations_total_shares', 0);
+            data_set($this->data, 'abdulqader_sankari_total_shares', 0);
+            data_set($this->data, 'riyad_asali_total_shares', 0);
             return;
         }
 
         $totalArea = (float) data_get($this->data, 'card_total_area', 0);
-        $sqmPerShare = $totalArea > 0 ? $totalArea / static::TOTAL_SHARES_REFERENCE : 0;
 
         $sum = 0.0;
+        $abdulqaderShares = 0.0;
+        $riyadShares = 0.0;
+
+        $newOwnerIds = collect($operations)
+            ->flatMap(function (mixed $row): array {
+                if (! is_array($row)) {
+                    return [];
+                }
+
+                return $this->normalizeOwnerIds($row['new_owners'] ?? []);
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        $ownersById = Owner::query()
+            ->whereIn('id', $newOwnerIds)
+            ->get()
+            ->keyBy('id');
 
         foreach ($operations as $row) {
             if (! is_array($row)) {
                 continue;
             }
 
-            $amount = (float) ($row['transaction_amount'] ?? 0);
-            $unit = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
-
-            if ($amount <= 0 || ! filled($unit)) {
+            $operationShares = $this->calculateOperationShares($row, $totalArea);
+            if ($operationShares <= 0) {
                 continue;
             }
 
-            if ($unit === 'shares') {
-                $sum += $amount;
-                continue;
-            }
+            $sum += $operationShares;
 
-            if ($unit === 'square_meter' && $sqmPerShare > 0) {
-                $sum += $amount / $sqmPerShare;
-                continue;
-            }
+            $rowNewOwnerIds = $this->normalizeOwnerIds($row['new_owners'] ?? []);
+            foreach ($rowNewOwnerIds as $ownerId) {
+                /** @var Owner|null $owner */
+                $owner = $ownersById->get($ownerId);
+                if (! $owner) {
+                    continue;
+                }
 
-            if ($unit === 'percentage') {
-                $sum += static::TOTAL_SHARES_REFERENCE * ($amount / 100);
+
+
+
+                if ($this->isAbdulqaderSankariOwner($owner)) {
+                    $abdulqaderShares += $operationShares;
+                }
+
+                if ($this->isRiyadAsaliOwner($owner)) {
+                    $riyadShares += $operationShares;
+                }
+
             }
         }
 
         data_set($this->data, 'operations_total_shares', round($sum, 2));
+        data_set($this->data, 'abdulqader_sankari_total_shares', round($abdulqaderShares, 2));
+        data_set($this->data, 'riyad_asali_total_shares', round($riyadShares, 2));
+    }
+
+    /**
+     * @return array<int>
+     */
+    protected function normalizeOwnerIds(mixed $state): array
+    {
+        if (! is_array($state)) {
+            return [];
+        }
+
+        return collect($state)
+            ->map(function (mixed $value): ?int {
+                if (is_array($value)) {
+                    $value = $value['id'] ?? $value['owner_id'] ?? null;
+                }
+
+                if (! filled($value)) {
+                    return null;
+                }
+
+                return (int) $value;
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function calculateOperationShares(array $row, float $totalArea): float
+    {
+        $amount = (float) ($row['transaction_amount'] ?? 0);
+        $unit = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+        $sqmPerShare = $totalArea > 0 ? $totalArea / static::TOTAL_SHARES_REFERENCE : 0;
+
+        if ($amount <= 0 || ! filled($unit)) {
+            return 0.0;
+        }
+
+        if ($unit === 'shares') {
+            return $amount;
+        }
+
+        if ($unit === 'square_meter' && $sqmPerShare > 0) {
+            return $amount / $sqmPerShare;
+        }
+
+        if ($unit === 'percentage') {
+            return static::TOTAL_SHARES_REFERENCE * ($amount / 100);
+        }
+
+        return 0.0;
+    }
+
+    protected function isAbdulqaderSankariOwner(Owner $owner): bool
+    {
+        return $this->nameMatches($owner->display_name, ['عبدالقادر', 'سنكري']);
+    }
+
+    protected function isRiyadAsaliOwner(Owner $owner): bool
+    {
+        return $this->nameMatches($owner->display_name, ['رياض', 'عسلي']);
+    }
+
+    protected function nameMatches(string $name, array $mustContain): bool
+    {
+        $normalizedName = $this->normalizeArabicName($name);
+
+        foreach ($mustContain as $part) {
+            if (! str_contains($normalizedName, $this->normalizeArabicName($part))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function normalizeArabicName(string $name): string
+    {
+        return str_replace(
+            [' ', 'ـ', '-', '_', '.', '،', ','],
+            '',
+            Str::lower(trim($name))
+        );
+
     }
 
     protected function removeOperationConversionDetailsLines(): void
