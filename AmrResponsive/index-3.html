@@ -463,15 +463,69 @@ body::after {
   perspective: 800px;
   transform-style: preserve-3d;
   position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(212,175,55,.28);
+  background: linear-gradient(135deg, rgba(212,175,55,.08), rgba(10,10,10,.35));
+  box-shadow: 0 10px 26px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.04);
 }
 
-.page-hero-icon svg {
+.page-hero-icon img {
   width: 100%;
   height: 100%;
   max-width: 260px;
-  filter: drop-shadow(0 0 32px rgba(212,175,55,.35));
+  object-fit: contain;
+  object-position: center;
+  border-radius: 12px;
+  filter: saturate(1.06) contrast(1.04) drop-shadow(0 0 26px rgba(212,175,55,.35));
   transform-origin: center;
-  transition: transform .4s ease-out;
+  transition: transform .45s ease-out, filter .45s ease-out;
+}
+
+.page-hero-icon::before {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -45%;
+  width: 40%;
+  background: linear-gradient(
+    110deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.18) 48%,
+    rgba(255,245,210,.34) 54%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: translateX(-160%) rotate(10deg);
+  animation: heroLuxurySheen 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.page-hero-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  box-shadow: inset 0 0 20px rgba(212,175,55,.2), inset 0 -8px 22px rgba(0,0,0,.32);
+  pointer-events: none;
+}
+
+.page-hero-icon:hover img {
+  transform: scale(1.035);
+  filter: saturate(1.1) contrast(1.06) drop-shadow(0 0 30px rgba(245,206,95,.45));
+}
+
+@keyframes heroLuxurySheen {
+  0%, 22% {
+    transform: translateX(-170%) rotate(10deg);
+    opacity: 0;
+  }
+  33%, 56% {
+    transform: translateX(320%) rotate(10deg);
+    opacity: .88;
+  }
+  100% {
+    transform: translateX(320%) rotate(10deg);
+    opacity: 0;
+  }
 }
 
 .page-hero-layer {
@@ -2229,7 +2283,7 @@ body::after {
       <div class="user-info">
         <div class="user-avatar">خ</div>
         <div>
-          <div class="user-name">خالد العمراني</div>
+          <div class="user-name">عبد القادر سنكري</div>
           <div class="user-role">مستثمر رئيسي</div>
         </div>
         <div class="notif-dot" style="margin-right:auto"></div>
@@ -2273,71 +2327,10 @@ body::after {
             <div class="page-subtitle">إجمالي محفظتك العقارية ومؤشرات الأداء الرئيسية</div>
           </div>
           <div class="page-hero-icon" aria-hidden="true" id="dashboard-hero">
-            <svg viewBox="0 0 160 90">
-              <defs>
-                <linearGradient id="heroSky" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#1a1306"/>
-                  <stop offset="60%" stop-color="#0c0904"/>
-                  <stop offset="100%" stop-color="#050403"/>
-                </linearGradient>
-                <linearGradient id="heroTowerFront" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#D4AF37"/>
-                  <stop offset="60%" stop-color="#8B6914"/>
-                  <stop offset="100%" stop-color="#111111"/>
-                </linearGradient>
-                <linearGradient id="heroTowerSide" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#C49A2A"/>
-                  <stop offset="80%" stop-color="#3D3D3D"/>
-                </linearGradient>
-                <radialGradient id="heroGlow" cx="50%" cy="10%" r="70%">
-                  <stop offset="0%" stop-color="rgba(212,175,55,0.85)"/>
-                  <stop offset="100%" stop-color="rgba(212,175,55,0)"/>
-                </radialGradient>
-              </defs>
-              <!-- السماء والخلفية -->
-              <g class="page-hero-layer" data-depth="1">
-                <rect x="8" y="8" width="144" height="72" rx="12" fill="url(#heroSky)" />
-                <ellipse cx="80" cy="82" rx="60" ry="6" fill="rgba(0,0,0,0.9)"/>
-              </g>
-              <!-- ناطحة سحاب ذهبية أمامية ثلاثية الأبعاد -->
-              <g class="page-hero-layer" data-depth="4">
-                <!-- جانب يمين للبرج -->
-                <polygon points="88,12 104,16 104,72 88,68"
-                         fill="url(#heroTowerSide)" />
-                <!-- الواجهة الأمامية الطويلة -->
-                <polygon points="64,16 88,12 88,68 64,72"
-                         fill="url(#heroTowerFront)" />
-                <!-- قاعدة عريضة -->
-                <polygon points="52,72 92,66 120,72 80,78"
-                         fill="#050403"
-                         stroke="rgba(212,175,55,0.45)"
-                         stroke-width="1.1"/>
-                <!-- صفوف نوافذ كثيرة تعطي إحساس ناطحة سحاب -->
-                <g fill="rgba(15,11,4,0.96)" stroke="#F5E9C0" stroke-width="0.6">
-                  <!-- العمود الأيسر -->
-                  <rect x="68" y="20" width="4" height="8" rx="1.2"/>
-                  <rect x="68" y="32" width="4" height="8" rx="1.2"/>
-                  <rect x="68" y="44" width="4" height="8" rx="1.2"/>
-                  <rect x="68" y="56" width="4" height="8" rx="1.2"/>
-                  <!-- العمود الأوسط -->
-                  <rect x="78" y="18" width="4" height="9" rx="1.2"/>
-                  <rect x="78" y="31" width="4" height="9" rx="1.2"/>
-                  <rect x="78" y="44" width="4" height="9" rx="1.2"/>
-                  <rect x="78" y="57" width="4" height="9" rx="1.2"/>
-                  <!-- العمود الأيمن -->
-                  <rect x="88" y="21" width="4" height="8" rx="1.2"/>
-                  <rect x="88" y="33" width="4" height="8" rx="1.2"/>
-                  <rect x="88" y="45" width="4" height="8" rx="1.2"/>
-                  <rect x="88" y="57" width="4" height="8" rx="1.2"/>
-                </g>
-                <!-- قمة ناطحة السحاب -->
-                <polygon points="72,12 88,8 100,12 88,16"
-                         fill="#FACC6B" opacity="0.96" />
-                <!-- هوائي علوي -->
-                <rect x="87" y="4" width="2" height="6" fill="#FCD34D"/>
-                <circle cx="88" cy="4" r="1.2" fill="#FDE68A"/>
-              </g>
-            </svg>
+            <img
+              src="assets/output-onlinegiftools.gif"
+              alt="صورة مباني"
+            />
           </div>
         </div>
 
@@ -5090,7 +5083,7 @@ function updateTime() {
 (function() {
   const hero = document.getElementById('dashboard-hero');
   if (!hero) return;
-  const svg = hero.querySelector('svg');
+  const visual = hero.querySelector('img, svg');
   const layers = Array.from(hero.querySelectorAll('.page-hero-layer'));
 
   function handleMove(e) {
@@ -5100,8 +5093,8 @@ function updateTime() {
 
     const rotateY = x * 10; // يمين / يسار
     const rotateX = -y * 8; // أعلى / أسفل
-    if (svg) {
-      svg.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    if (visual) {
+      visual.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     }
 
     layers.forEach(layer => {
@@ -5113,8 +5106,8 @@ function updateTime() {
   }
 
   function reset() {
-    if (svg) {
-      svg.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    if (visual) {
+      visual.style.transform = 'rotateX(0deg) rotateY(0deg)';
     }
     layers.forEach(layer => {
       layer.style.transform = 'translate(0,0)';
