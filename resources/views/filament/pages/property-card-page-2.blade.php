@@ -216,6 +216,7 @@
 
                 <div class="flex flex-wrap justify-end gap-2">
                     {{ $this->searchAction() }}
+                    {{ $this->duplicateCardAction() }}
                     {{ $this->toggleCardStatusAction() }}
                     {{ $this->createAction() }}
                     {{ $this->updateAction() }}
@@ -267,11 +268,13 @@
                 </div>
 
                 <div class="flex flex-wrap justify-end gap-2">
-                    {{ $this->createAction() }}
                     {{ $this->searchAction() }}
+                    {{ $this->duplicateCardAction() }}
+                    {{ $this->toggleCardStatusAction() }}
+                    {{ $this->createAction() }}
                     {{ $this->updateAction() }}
                     {{ $this->deleteAction() }}
-               {{--     {{ $this->uploadFileAction() }}
+               {{-- {{ $this->uploadFileAction() }}
                     {{ $this->pdfBrowserAction() }}         --}}  
                 </div>
             </div>
@@ -280,6 +283,6 @@
 
 
     </div>
-    
+        <x-filament-actions::modals />
 </x-filament-panels::page>
 

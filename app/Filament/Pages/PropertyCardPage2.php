@@ -70,199 +70,313 @@ class PropertyCardPage2 extends Page implements HasSchemas
         $this->resetCardForm();
     }
 
-public function updated(string $propertyName): void
-{
-    if ($this->isSyncingOperationDetails) {
-        return;
-    }
-
-    $this->removeOperationConversionDetailsLines();
-
-    // تغيير مساحة العقار → حدّث كل التحويلات
-    if ($propertyName === 'data.card_total_area') {
-        $this->recalculateOperationsTotalShares();
-        $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
-        $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
-    }
-
-    if ($propertyName === 'data.abdulqader_sankari_total_shares') {
-        $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
-    }
-
-    if ($propertyName === 'data.riyad_asali_total_shares') {
-        $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
-    }
-
-    // أي تعديل داخل العمليات على amount أو unit → حدّث مجموع الأسهم
-    if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName) === 1) {
-        $this->recalculateOperationsTotalShares();
-    }
-
-    // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث المجموع
-    if (str_starts_with($propertyName, 'data.operations') && ! str_contains($propertyName, '.transaction_')) {
-        $this->recalculateOperationsTotalShares();
-    }
-
-    if ($propertyName === 'data.owned_property_value_usd' && ! $this->isSyncingOwnedPropertyValue) {
-        data_set($this->data, 'owned_value_manually_overridden', true);
-    }
-
-    if (in_array($propertyName, [
-        'data.total_property_value_usd',
-        'data.abdulqader_sankari_total_shares',
-    ], true)) {
-        $this->recalculateOwnedPropertyValueFromShares();
-    }
-
-    if (! str_starts_with($propertyName, 'data.')) {
-        return;
-    }
-
-    try {
-        $this->form->validate();
-    } catch (ValidationException) {
-        // Filament/Livewire سيعرض الأخطاء
-    }
-}
-
-protected function recalculateOperationsTotalShares(): void
-{
-    $operations = data_get($this->data, 'operations', []);
-
-    if (! is_array($operations)) {
-        data_set($this->data, 'operations_total_shares', 0);
-        return;
-    }
-
-    $totalArea = (float) data_get($this->data, 'card_total_area', 0);
-    $sqmPerShare = $totalArea > 0 ? $totalArea / static::TOTAL_SHARES_REFERENCE : 0;
-
-    $sum = 0.0;
-
-    foreach ($operations as $row) {
-        if (! is_array($row)) {
-            continue;
+    public function updated(string $propertyName): void
+    {
+        if ($this->isSyncingOperationDetails) {
+            return;
         }
 
+        $this->removeOperationConversionDetailsLines();
+
+        // تغيير مساحة العقار → حدّث كل التحويلات
+        if ($propertyName === 'data.card_total_area') {
+            $this->recalculateOperationsTotalShares();
+            $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
+            $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
+        }
+
+        if ($propertyName === 'data.abdulqader_sankari_total_shares') {
+            $this->syncSpecialSharesDetailsLine('abdulqader_sankari_total_shares', 'الحصة الكلية للدكتور عبد القادر السنكري');
+        }
+
+        if ($propertyName === 'data.riyad_asali_total_shares') {
+            $this->syncSpecialSharesDetailsLine('riyad_asali_total_shares', 'الحصة الكاملة لرياض عسلي');
+        }
+
+        // أي تعديل داخل العمليات على amount أو unit → حدّث مجموع الأسهم
+        if (preg_match('/^data\.operations\.([^.]+)\.(transaction_amount|transaction_unit)$/u', $propertyName) === 1) {
+            $this->recalculateOperationsTotalShares();
+        }
+
+        // إضافة/حذف/إعادة ترتيب ضمن operations غالباً يطلق updated على مسارات مختلفة → حدّث المجموع
+        if (str_starts_with($propertyName, 'data.operations') && ! str_contains($propertyName, '.transaction_')) {
+            $this->recalculateOperationsTotalShares();
+        }
+
+        if ($propertyName === 'data.owned_property_value_usd' && ! $this->isSyncingOwnedPropertyValue) {
+            data_set($this->data, 'owned_value_manually_overridden', true);
+        }
+
+        if (in_array($propertyName, [
+            'data.total_property_value_usd',
+            'data.abdulqader_sankari_total_shares',
+        ], true)) {
+            $this->recalculateOwnedPropertyValueFromShares();
+        }
+
+        if (! str_starts_with($propertyName, 'data.')) {
+            return;
+        }
+
+        try {
+            $this->form->validate();
+        } catch (ValidationException) {
+            // Filament/Livewire سيعرض الأخطاء
+        }
+    }
+
+    protected function recalculateOperationsTotalShares(): void
+    {
+        $operations = data_get($this->data, 'operations', []);
+
+        if (! is_array($operations)) {
+            data_set($this->data, 'operations_total_shares', 0);
+            data_set($this->data, 'abdulqader_sankari_total_shares', 0);
+            data_set($this->data, 'riyad_asali_total_shares', 0);
+            return;
+        }
+
+        $totalArea = (float) data_get($this->data, 'card_total_area', 0);
+
+        $sum = 0.0;
+        $abdulqaderShares = 0.0;
+        $riyadShares = 0.0;
+
+        $newOwnerIds = collect($operations)
+            ->flatMap(function (mixed $row): array {
+                if (! is_array($row)) {
+                    return [];
+                }
+
+                return $this->normalizeOwnerIds($row['new_owners'] ?? []);
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        $ownersById = Owner::query()
+            ->whereIn('id', $newOwnerIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($operations as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $operationShares = $this->calculateOperationShares($row, $totalArea);
+            if ($operationShares <= 0) {
+                continue;
+            }
+
+            $sum += $operationShares;
+
+            $rowNewOwnerIds = $this->normalizeOwnerIds($row['new_owners'] ?? []);
+            foreach ($rowNewOwnerIds as $ownerId) {
+                /** @var Owner|null $owner */
+                $owner = $ownersById->get($ownerId);
+                if (! $owner) {
+                    continue;
+                }
+
+
+
+
+                if ($this->isAbdulqaderSankariOwner($owner)) {
+                    $abdulqaderShares += $operationShares;
+                }
+
+                if ($this->isRiyadAsaliOwner($owner)) {
+                    $riyadShares += $operationShares;
+                }
+
+            }
+        }
+
+        data_set($this->data, 'operations_total_shares', round($sum, 2));
+        data_set($this->data, 'abdulqader_sankari_total_shares', round($abdulqaderShares, 2));
+        data_set($this->data, 'riyad_asali_total_shares', round($riyadShares, 2));
+    }
+
+    /**
+     * @return array<int>
+     */
+    protected function normalizeOwnerIds(mixed $state): array
+    {
+        if (! is_array($state)) {
+            return [];
+        }
+
+        return collect($state)
+            ->map(function (mixed $value): ?int {
+                if (is_array($value)) {
+                    $value = $value['id'] ?? $value['owner_id'] ?? null;
+                }
+
+                if (! filled($value)) {
+                    return null;
+                }
+
+                return (int) $value;
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function calculateOperationShares(array $row, float $totalArea): float
+    {
         $amount = (float) ($row['transaction_amount'] ?? 0);
         $unit = $this->normalizeTransactionUnit($row['transaction_unit'] ?? null);
+        $sqmPerShare = $totalArea > 0 ? $totalArea / static::TOTAL_SHARES_REFERENCE : 0;
 
         if ($amount <= 0 || ! filled($unit)) {
-            continue;
+            return 0.0;
         }
 
         if ($unit === 'shares') {
-            $sum += $amount;
-            continue;
+            return $amount;
         }
 
         if ($unit === 'square_meter' && $sqmPerShare > 0) {
-            $sum += $amount / $sqmPerShare;
-            continue;
+            return $amount / $sqmPerShare;
         }
 
         if ($unit === 'percentage') {
-            $sum += static::TOTAL_SHARES_REFERENCE * ($amount / 100);
+            return static::TOTAL_SHARES_REFERENCE * ($amount / 100);
         }
-    }
 
-    data_set($this->data, 'operations_total_shares', round($sum, 2));
-}
-
-protected function removeOperationConversionDetailsLines(): void
-{
-    $details = (string) data_get($this->data, 'card_property_details', '');
-
-    if ($details === '') {
-        return;
-    }
-
-    $lines = preg_split('/\R/u', $details) ?: [];
-
-    $filtered = array_values(array_filter(
-        $lines,
-        fn (string $line): bool => ! str_starts_with(trim($line), 'تحويل مقدار التصرّف (')
-    ));
-
-    if (count($filtered) === count($lines)) {
-        return;
-    }
-
-    $this->isSyncingOperationDetails = true;
-    data_set($this->data, 'card_property_details', implode(PHP_EOL, $filtered));
-    $this->isSyncingOperationDetails = false;
-}
-
-protected function recalculateOwnedPropertyValueFromShares(bool $force = false): void
-{
-    $isManuallyOverridden = (bool) data_get($this->data, 'owned_value_manually_overridden', false);
-
-    if (! $force && $isManuallyOverridden) {
-        return;
-    }
-
-    $calculatedValue = $this->calculateOwnedPropertyValueUsd(
-        (float) data_get($this->data, 'total_property_value_usd', 0),
-        (float) data_get($this->data, 'abdulqader_sankari_total_shares', 0),
-    );
-
-    $this->isSyncingOwnedPropertyValue = true;
-    data_set($this->data, 'owned_property_value_usd', $calculatedValue);
-    data_set($this->data, 'owned_value_manually_overridden', false);
-    $this->isSyncingOwnedPropertyValue = false;
-}
-
-protected function calculateOwnedPropertyValueUsd(float $totalPropertyValueUsd, float $abdulqaderShares): float
-{
-    if ($totalPropertyValueUsd <= 0 || $abdulqaderShares <= 0 || static::TOTAL_SHARES_REFERENCE <= 0) {
         return 0.0;
     }
 
-    return round(
-        $totalPropertyValueUsd * ($abdulqaderShares / static::TOTAL_SHARES_REFERENCE),
-        2,
-    );
-}
-
-protected function syncSpecialSharesDetailsLine(string $field, string $label): void
-{
-    $shares = (float) data_get($this->data, $field, 0);
-    $totalArea = (float) data_get($this->data, 'card_total_area', 0);
-
-    $line = null;
-
-    if ($shares > 0 && $totalArea > 0) {
-        $sqmPerShare = $totalArea / 2400;
-        $sharesPretty = $this->normalizeNumericValue($shares);
-        $sqmPretty = $this->normalizeNumericValue($shares * $sqmPerShare);
-        $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
-
-        $line = $label . ': '
-            . $sharesPretty . ' سهم ≈ ' . $sqmPretty . ' م²'
-            . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
+    protected function isAbdulqaderSankariOwner(Owner $owner): bool
+    {
+        return $this->nameMatches($owner->display_name, ['عبدالقادر', 'سنكري']);
     }
 
-    $this->upsertSpecialSharesDetailsLine($label, $line);
-}
-
-protected function upsertSpecialSharesDetailsLine(string $label, ?string $line): void
-{
-    $prefix = $label . ':';
-    $details = (string) data_get($this->data, 'card_property_details', '');
-
-    $lines = array_values(array_filter(
-        preg_split('/\R/u', $details) ?: [],
-        fn (string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
-    ));
-
-    if (filled($line)) {
-        $lines[] = $line;
+    protected function isRiyadAsaliOwner(Owner $owner): bool
+    {
+        return $this->nameMatches($owner->display_name, ['رياض', 'عسلي']);
     }
 
-    $this->isSyncingOperationDetails = true;
-    data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
-    $this->isSyncingOperationDetails = false;
-}
+    protected function nameMatches(string $name, array $mustContain): bool
+    {
+        $normalizedName = $this->normalizeArabicName($name);
+
+        foreach ($mustContain as $part) {
+            if (! str_contains($normalizedName, $this->normalizeArabicName($part))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function normalizeArabicName(string $name): string
+    {
+        return str_replace(
+            [' ', 'ـ', '-', '_', '.', '،', ','],
+            '',
+            Str::lower(trim($name))
+        );
+
+    }
+
+    protected function removeOperationConversionDetailsLines(): void
+    {
+        $details = (string) data_get($this->data, 'card_property_details', '');
+
+        if ($details === '') {
+            return;
+        }
+
+        $lines = preg_split('/\R/u', $details) ?: [];
+
+        $filtered = array_values(array_filter(
+            $lines,
+            fn(string $line): bool => ! str_starts_with(trim($line), 'تحويل مقدار التصرّف (')
+        ));
+
+        if (count($filtered) === count($lines)) {
+            return;
+        }
+
+        $this->isSyncingOperationDetails = true;
+        data_set($this->data, 'card_property_details', implode(PHP_EOL, $filtered));
+        $this->isSyncingOperationDetails = false;
+    }
+
+    protected function recalculateOwnedPropertyValueFromShares(bool $force = false): void
+    {
+        $isManuallyOverridden = (bool) data_get($this->data, 'owned_value_manually_overridden', false);
+
+        if (! $force && $isManuallyOverridden) {
+            return;
+        }
+
+        $calculatedValue = $this->calculateOwnedPropertyValueUsd(
+            (float) data_get($this->data, 'total_property_value_usd', 0),
+            (float) data_get($this->data, 'abdulqader_sankari_total_shares', 0),
+        );
+
+        $this->isSyncingOwnedPropertyValue = true;
+        data_set($this->data, 'owned_property_value_usd', $calculatedValue);
+        data_set($this->data, 'owned_value_manually_overridden', false);
+        $this->isSyncingOwnedPropertyValue = false;
+    }
+
+    protected function calculateOwnedPropertyValueUsd(float $totalPropertyValueUsd, float $abdulqaderShares): float
+    {
+        if ($totalPropertyValueUsd <= 0 || $abdulqaderShares <= 0 || static::TOTAL_SHARES_REFERENCE <= 0) {
+            return 0.0;
+        }
+
+        return round(
+            $totalPropertyValueUsd * ($abdulqaderShares / static::TOTAL_SHARES_REFERENCE),
+            2,
+        );
+    }
+
+    protected function syncSpecialSharesDetailsLine(string $field, string $label): void
+    {
+        $shares = (float) data_get($this->data, $field, 0);
+        $totalArea = (float) data_get($this->data, 'card_total_area', 0);
+
+        $line = null;
+
+        if ($shares > 0 && $totalArea > 0) {
+            $sqmPerShare = $totalArea / 2400;
+            $sharesPretty = $this->normalizeNumericValue($shares);
+            $sqmPretty = $this->normalizeNumericValue($shares * $sqmPerShare);
+            $sqmPerSharePretty = $this->normalizeNumericValue($sqmPerShare);
+
+            $line = $label . ': '
+                . $sharesPretty . ' سهم ≈ ' . $sqmPretty . ' م²'
+                . ' (1 سهم = ' . $sqmPerSharePretty . ' م²).';
+        }
+
+        $this->upsertSpecialSharesDetailsLine($label, $line);
+    }
+
+    protected function upsertSpecialSharesDetailsLine(string $label, ?string $line): void
+    {
+        $prefix = $label . ':';
+        $details = (string) data_get($this->data, 'card_property_details', '');
+
+        $lines = array_values(array_filter(
+            preg_split('/\R/u', $details) ?: [],
+            fn(string $existingLine): bool => ! str_starts_with(trim($existingLine), $prefix)
+        ));
+
+        if (filled($line)) {
+            $lines[] = $line;
+        }
+
+        $this->isSyncingOperationDetails = true;
+        data_set($this->data, 'card_property_details', implode(PHP_EOL, $lines));
+        $this->isSyncingOperationDetails = false;
+    }
 
     protected function normalizeNumericValue(float $value): string
     {
@@ -396,7 +510,7 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
 
                 // 2) ملخص سريع (مفيد أثناء الإدخال)
                 Section::make('ملخص سريع')
-                    ->visible(fn () => filled($this->currentRecordId))
+                    ->visible(fn() => filled($this->currentRecordId))
                     ->schema([
                         Grid::make(12)->schema([
                             Placeholder::make('summary_operations')
@@ -409,7 +523,7 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
 
                                     return (string) count(array_filter(
                                         $operations,
-                                        fn ($operation) => is_array($operation) && ! blank($operation['operation_type'] ?? null)
+                                        fn($operation) => is_array($operation) && ! blank($operation['operation_type'] ?? null)
 
                                     ));
                                 })
@@ -426,16 +540,20 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
 
                                     return (string) count(array_filter(
                                         $signals,
-                                        fn ($signal) => is_array($signal) && ! blank($signal['signal_type'] ?? null)
+                                        fn($signal) => is_array($signal) && (
+                                            ! blank($signal['type'] ?? null)
+                                            || ! blank($signal['signal_type'] ?? null)
+                                        )
                                     ));
                                 })
                                 ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_files')
                                 ->label('الملحقات')
-                                ->content(fn () => $this->currentRecordId
-                                    ? (string) PropertyCardFile::where('property_card_id', $this->currentRecordId)->count()
-                                    : '0'
+                                ->content(
+                                    fn() => $this->currentRecordId
+                                        ? (string) PropertyCardFile::where('property_card_id', $this->currentRecordId)->count()
+                                        : '0'
                                 )
                                 ->columnSpan(['default' => 6, 'md' => 2]),
 
@@ -450,11 +568,11 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
 
                                     return (string) count(array_filter(
                                         $installments,
-                                        fn ($installment) => is_array($installment)
+                                        fn($installment) => is_array($installment)
                                             && (! blank($installment['payment_date'] ?? null) || (float) ($installment['amount'] ?? 0) > 0)
                                     ));
                                 })
-                               ->columnSpan(['default' => 6, 'md' => 2]),
+                                ->columnSpan(['default' => 6, 'md' => 2]),
 
                             Placeholder::make('summary_balance')
                                 ->label('ملخص الرصيد')
@@ -467,22 +585,22 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
 
                             Placeholder::make('summary_created_by')
                                 ->label('أُدخلت بواسطة')
-                                ->content(fn (Get $get): string => (string) ($get('created_by_name') ?: '-'))
+                                ->content(fn(Get $get): string => (string) ($get('created_by_name') ?: '-'))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_updated_by')
                                 ->label('آخر تعديل بواسطة')
-                                ->content(fn (Get $get): string => (string) ($get('updated_by_name') ?: '-'))
+                                ->content(fn(Get $get): string => (string) ($get('updated_by_name') ?: '-'))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_created_at')
                                 ->label('تاريخ الإدخال')
-                                ->content(fn (Get $get): string => (string) ($get('created_at_label') ?: '-'))
+                                ->content(fn(Get $get): string => (string) ($get('created_at_label') ?: '-'))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                             Placeholder::make('summary_updated_at')
                                 ->label('تاريخ آخر تعديل')
-                                ->content(fn (Get $get): string => (string) ($get('updated_at_label') ?: '-'))
+                                ->content(fn(Get $get): string => (string) ($get('updated_at_label') ?: '-'))
                                 ->columnSpan(['default' => 6, 'md' => 3]),
 
                         ]),
@@ -529,17 +647,17 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 ->maxLength(100)
                                 ->nullable()
                                 ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null)
                                 ->placeholder('مثال: المقسم 22')
                                 ->columnSpan(['default' => 12, 'md' => 6]),
                             TextInput::make('card_google_maps_url')
                                 ->label('رابط موقع العقار')
-                            ->prefixIcon('heroicon-o-globe-alt')
+                                ->prefixIcon('heroicon-o-globe-alt')
                                 ->url()
                                 ->maxLength(2048)
                                 ->nullable()
                                 ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null)
                                 ->helperText('ألصق رابط الموقع من Google Maps.')
                                 ->placeholder('https://maps.google.com/?q=...')
                                 ->columnSpan(['default' => 12, 'md' => 6]),
@@ -549,7 +667,7 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 ->rows(3)
                                 ->nullable()
                                 ->live(onBlur: true)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null)
                                 ->columnSpan(12)
                                 ->placeholder('اختياري'),
 
@@ -557,6 +675,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 ->label('مساحة العقار الكلية')
                                 ->prefixIcon('heroicon-o-arrows-pointing-out')
                                 ->numeric()
+                                ->step('0.0001')
+                                ->rule('regex:/^\d+(\.\d{1,4})?$/')
                                 ->minValue(0)
                                 ->maxValue(9999999999.99)
                                 ->required()
@@ -567,6 +687,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                             TextInput::make('total_property_value_usd')
                                 ->label('قيمة العقار الكلية بالدولار الأمريكي')
                                 ->numeric()
+                                ->step('0.0001')
+                                ->rule('regex:/^\d+(\.\d{1,4})?$/')
                                 ->minValue(0)
                                 ->live(onBlur: true)
                                 ->suffix('$')
@@ -591,6 +713,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 TextInput::make('operations_total_shares')
                                     ->label('مجموع الأسهم للعمليات')
                                     ->numeric()
+                                    ->step('0.0001')
+                                    ->rule('regex:/^\d+(\.\d{1,4})?$/')
                                     ->minValue(0)
                                     ->dehydrated(true)
                                     ->live(onBlur: true)
@@ -599,6 +723,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 TextInput::make('abdulqader_sankari_total_shares')
                                     ->label('الحصة الكلية للدكتور عبد القادر السنكري')
                                     ->numeric()
+                                    ->step('0.0001')
+                                    ->rule('regex:/^\d+(\.\d{1,4})?$/')
                                     ->minValue(0)
                                     ->dehydrated(true)
                                     ->live(onBlur: true)
@@ -610,6 +736,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 TextInput::make('riyad_asali_total_shares')
                                     ->label('الحصة الكاملة لرياض عسلي')
                                     ->numeric()
+                                    ->step('0.0001')
+                                    ->rule('regex:/^\d+(\.\d{1,4})?$/')
                                     ->minValue(0)
                                     ->dehydrated(true)
                                     ->live(onBlur: true)
@@ -644,7 +772,7 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                         ->maxLength(255)
                                         ->nullable()
                                         ->live(onBlur: true)
-                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                                        ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null)
                                         ->placeholder('مثال: سند الملكية')
                                         ->columnSpan(['default' => 12, 'md' => 5]),
 
@@ -657,7 +785,7 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                         ->multiple()
                                         ->storeFiles(false)
                                         ->live()
-                                       ->acceptedFileTypes([
+                                        ->acceptedFileTypes([
                                             'application/pdf',
                                             'image/*',
                                             'application/vnd.ms-excel',
@@ -674,8 +802,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
 
                         Placeholder::make('uploaded_files')
                             ->label('الملفات المرفوعة')
-                            ->content(fn () => $this->renderUploadedFiles())
-                            ->visible(fn () => filled($this->currentRecordId))
+                            ->content(fn() => $this->renderUploadedFiles())
+                            ->visible(fn() => filled($this->currentRecordId))
                             ->columnSpanFull(),
                     ]),
 
@@ -688,6 +816,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                             TextInput::make('owned_property_value_usd')
                                 ->label('قيمة العقار المملوكة بالدولار')
                                 ->numeric()
+                                ->step('0.0001')
+                                ->rule('regex:/^\d+(\.\d{1,4})?$/')
                                 ->minValue(0)
                                 ->maxValue(9999999999.99)
                                 ->live(onBlur: true)
@@ -699,8 +829,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 ->hint('قراءة فقط')
                                 ->disabled()
                                 ->dehydrated(false)
-                                ->formatStateUsing(fn (Get $get) => (string) collect($get('installments') ?? [])
-                                    ->sum(fn ($row) => (float) ($row['amount'] ?? 0)))
+                                ->formatStateUsing(fn(Get $get) => (string) collect($get('installments') ?? [])
+                                    ->sum(fn($row) => (float) ($row['amount'] ?? 0)))
                                 ->extraAttributes([
                                     'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
                                 ])
@@ -711,8 +841,8 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
                                 ->hint('قراءة فقط')
                                 ->disabled()
                                 ->dehydrated(false)
-                                ->formatStateUsing(fn (Get $get) => (string) ((float) ($get('owned_property_value_usd') ?? 0)
-                                    - collect($get('installments') ?? [])->sum(fn ($row) => (float) ($row['amount'] ?? 0))))
+                                ->formatStateUsing(fn(Get $get) => (string) ((float) ($get('owned_property_value_usd') ?? 0)
+                                    - collect($get('installments') ?? [])->sum(fn($row) => (float) ($row['amount'] ?? 0))))
                                 ->extraAttributes([
                                     'class' => 'bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2',
                                 ])
@@ -731,933 +861,1005 @@ protected function upsertSpecialSharesDetailsLine(string $label, ?string $line):
     // =========================
     // Repeaters (توزيع مريح)
     // =========================
-protected function ownershipsRepeater(): Repeater
-{
-    return Repeater::make('ownerships')
-        ->label('الملاك')
-        ->default([])
-        // ✅ لأن الحفظ يدوي عندك — لا تستخدم relationship هنا
-        // ->relationship('ownerships')
-        ->addActionLabel('إضافة مالك')
-        ->reorderable()
+    protected function ownershipsRepeater(): Repeater
+    {
+        return Repeater::make('ownerships')
+            ->label('الملاك')
+            ->default([])
+            // ✅ لأن الحفظ يدوي عندك — لا تستخدم relationship هنا
+            // ->relationship('ownerships')
+            ->addActionLabel('إضافة مالك')
+            ->reorderable()
 
-        // ✅ ضروري لأنك تعمل UUID keys عند التحميل، بينما الحفظ اليدوي يحتاج list
-        ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
+            // ✅ ضروري لأنك تعمل UUID keys عند التحميل، بينما الحفظ اليدوي يحتاج list
+            ->dehydrateStateUsing(fn($state) => array_values($state ?? []))
 
-        ->itemLabel(function (array $state): string {
-            $name = $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null);
-            return filled($name) ? $name : 'مالك';
-        })
+            ->itemLabel(function (array $state): string {
+                $name = $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null);
+                return filled($name) ? $name : 'مالك';
+            })
 
-        ->schema([
-            // ✅ نحتاجه للحفظ اليدوي (update/delete by id) لكن لن يذهب للـ DB لأنك لا تحفظه ضمن allowed
-            Hidden::make('id'),
+            ->schema([
+                // ✅ نحتاجه للحفظ اليدوي (update/delete by id) لكن لن يذهب للـ DB لأنك لا تحفظه ضمن allowed
+                Hidden::make('id'),
 
-            Grid::make(12)->schema([
-                // =========================
-                // المالك
-                // =========================
-                $this->ownerSelectField('owner_id', 'المالك')
-                    ->required()
-                    ->columnSpan(['default' => 12, 'md' => 6]),
+                Grid::make(12)->schema([
+                    // =========================
+                    // المالك
+                    // =========================
+                    $this->ownerSelectField('owner_id', 'المالك')
+                        ->required()
+                        ->columnSpan(['default' => 12, 'md' => 6]),
 
-                // =========================
-                // معيار + قيمة
-                // =========================
-                Select::make('ownership_metric')
-                    ->label('معيار التملك')
-                    ->prefixIcon('heroicon-o-scale')
-                    ->native(false)
-                    ->options(['أسهم' => 'أسهم', 'نسبة مئوية' => 'نسبة مئوية', 'م²' => 'م²'])
-                    ->required()
-                    ->live()
-                    ->columnSpan(['default' => 6, 'md' => 3]),
+                    // =========================
+                    // معيار + قيمة
+                    // =========================
+                    Select::make('ownership_metric')
+                        ->label('معيار التملك')
+                        ->prefixIcon('heroicon-o-scale')
+                        ->native(false)
+                        ->options(['أسهم' => 'أسهم', 'نسبة مئوية' => 'نسبة مئوية', 'م²' => 'م²'])
+                        ->required()
+                        ->live()
+                        ->columnSpan(['default' => 6, 'md' => 3]),
 
-                TextInput::make('ownership_percentage')
-                    ->label('قيمة التملك')
-                    ->prefixIcon('heroicon-o-calculator')
-                    ->numeric()
-                    ->minValue(0)
-                    ->maxValue(9999999999.99)
-                    ->required()
-                    ->live(onBlur: true)
-                    ->suffix(fn (Get $get) => match ($get('ownership_metric')) {
-                        'أسهم' => 'سهم',
-                        'نسبة مئوية' => '%',
-                        'م²' => 'م²',
-                        default => null,
+                    TextInput::make('ownership_percentage')
+                        ->label('قيمة التملك')
+                        ->prefixIcon('heroicon-o-calculator')
+                        ->numeric()
+                        ->step('0.0001')
+                        ->rule('regex:/^\d+(\.\d{1,4})?$/')
+                        ->minValue(0)
+                        ->maxValue(9999999999.99)
+                        ->required()
+                        ->live(onBlur: true)
+                        ->suffix(fn(Get $get) => match ($get('ownership_metric')) {
+                            'أسهم' => 'سهم',
+                            'نسبة مئوية' => '%',
+                            'م²' => 'م²',
+                            default => null,
+                        })
+                        ->columnSpan(['default' => 6, 'md' => 3]),
+
+                    // =========================
+                    // حالات + تواريخ
+                    // =========================
+                    Toggle::make('is_current')
+                        ->label('مالك حالي')
+                        ->default(true)
+                        ->live()
+                        ->columnSpan(['default' => 6, 'md' => 3]),
+
+                    $this->dmyDateInput('purchase_date', 'تاريخ الشراء')
+                        ->nullable()
+                        ->columnSpan(['default' => 6, 'md' => 3]),
+
+                    Select::make('purchase_method')
+                        ->label('طريقة الشراء')
+                        ->prefixIcon('heroicon-o-document-text')
+                        ->native(false)
+                        ->options([
+                            'court_judgment' => 'حكم قضائي',
+                            'regular_contract' => 'عقد عادي',
+                        ])
+                        ->nullable()
+                        ->live()
+                        ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null)
+                        ->columnSpan(['default' => 12, 'md' => 6]),
+
+                    $this->dmyDateInput('sale_date', 'تاريخ البيع')
+                        ->nullable()
+                        ->visible(fn(Get $get) => ! (bool) $get('is_current'))
+                        ->dehydrateStateUsing(fn($state, Get $get) => (bool) $get('is_current') ? null : (filled($state) ? $state : null))
+                        ->columnSpan(['default' => 12, 'md' => 3]),
+
+                    // =========================
+                    // تفاصيل حكم قضائي
+                    // =========================
+                    Grid::make(12)
+                        ->schema([
+                            TextInput::make('case_number')
+                                ->label('رقم الأساس')
+                                ->prefixIcon('heroicon-o-hashtag')
+                                ->maxLength(100)
+                                ->required(fn(Get $get) => $get('purchase_method') === 'court_judgment')
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 3]),
+
+                            TextInput::make('decision_number')
+                                ->label('رقم القرار')
+                                ->prefixIcon('heroicon-o-hashtag')
+                                ->maxLength(100)
+                                ->required(fn(Get $get) => $get('purchase_method') === 'court_judgment')
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 3]),
+
+                            TextInput::make('authority')
+                                ->label('الجهة')
+                                ->prefixIcon('heroicon-o-building-library')
+                                ->maxLength(150)
+                                ->required(fn(Get $get) => $get('purchase_method') === 'court_judgment')
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 4]),
+
+                            $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
+                                ->required(fn(Get $get) => $get('purchase_method') === 'court_judgment')
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 2]),
+                        ])
+                        ->visible(fn(Get $get) => $get('purchase_method') === 'court_judgment')
+                        ->columnSpanFull(),
+
+                    // =========================
+                    // تفاصيل عقد عادي
+                    // =========================
+                    Grid::make(12)
+                        ->schema([
+                            $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
+                                ->required(fn(Get $get) => $get('purchase_method') === 'regular_contract')
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'regular_contract' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+                        ])
+                        ->visible(fn(Get $get) => $get('purchase_method') === 'regular_contract')
+                        ->columnSpanFull(),
+
+                    // =========================
+                    // تفاصيل عقد سجل تجاري
+                    // =========================
+                    Grid::make(12)
+                        ->schema([
+                            TextInput::make('contract_number')
+                                ->label('رقم العقد')
+                                ->prefixIcon('heroicon-o-document-duplicate')
+                                ->maxLength(100)
+                                ->required(fn(Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                                ->live(onBlur: true)
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+
+                            $this->dmyDateInput('commercial_contract_date', 'تاريخ عقد السجل')
+                                ->required(fn(Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                                ->dehydrateStateUsing(fn($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+                        ])
+                        ->visible(fn(Get $get) => $get('purchase_method') === 'commercial_register_contract')
+                        ->columnSpanFull(),
+                ]),
+            ]);
+    }
+   protected function mergeOwnersIntoTeamMembers(mixed $ownersState, mixed $teamMembersState, string $teamField, callable $set): void
+    {
+       $normalizeOwnerIds = function (mixed $state): \Illuminate\Support\Collection {
+            return collect(is_array($state) ? $state : [])
+                ->map(function ($value): ?int {
+                    if (is_array($value)) {
+                        $value = $value['id'] ?? $value['owner_id'] ?? null;
+                    }
+
+                    return filled($value) ? (int) $value : null;
+                })
+                ->filter()
+                ->values();
+        };
+
+        $owners = $normalizeOwnerIds($ownersState);
+
+        if ($owners->isEmpty()) {
+            return;
+        }
+
+        $mergedTeamMembers = $normalizeOwnerIds($teamMembersState)
+            ->merge($owners)
+            ->unique()
+            ->values()
+            ->all();
+
+        $set($teamField, $mergedTeamMembers);
+    }
+
+
+    protected function operationsRepeater(): Repeater
+    {
+        return Repeater::make('operations')
+            ->label('عمليات العقار')
+            ->default([])
+            ->dehydrateStateUsing(fn($state) => array_values($state ?? []))
+            ->addActionLabel('إضافة عملية')
+            ->reorderable()
+            ->schema([
+                Hidden::make('id')->dehydrated(),
+                Grid::make(12)->schema([
+                    Select::make('operation_type')
+                        ->label('نوع العملية')
+                        ->native(false)
+                        ->options([
+                            'sale' => 'بيع',
+                            'purchase' => 'شراء',
+                        ])
+                        ->required()
+                        ->columnSpan(['default' => 12, 'md' => 4]),
+
+                    $this->ownerSelectField('old_owners', 'المالكون السابقون', true)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                            $this->mergeOwnersIntoTeamMembers($state, $get('team_one_members'), 'team_one_members', $set);
+                        })
+                        ->columnSpan(['default' => 12, 'md' => 4]),
+
+                    $this->ownerSelectField('new_owners', 'المالكون الجدد', true)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                            $this->mergeOwnersIntoTeamMembers($state, $get('team_two_members'), 'team_two_members', $set);
+                        })
+                        ->columnSpan(['default' => 12, 'md' => 4]),
+
+
+                    $this->ownerSelectField('team_one_members', 'أعضاء الفريق الأول', true)
+                        ->columnSpan(['default' => 12, 'md' => 6]),
+
+                    $this->ownerSelectField('team_two_members', 'أعضاء الفريق الثاني', true)
+                        ->columnSpan(['default' => 12, 'md' => 6]),
+
+                    TextInput::make('transaction_amount')
+                        ->label('مقدار التصرّف')
+                        ->numeric()
+                        ->step('0.0001')
+                        ->rule('regex:/^\d+(\.\d{1,4})?$/')
+                        ->minValue(0)
+                        ->maxValue(9999999999.99)
+                        ->live(onBlur: true)
+                        ->required()
+                        ->columnSpan(['default' => 12, 'md' => 4]),
+
+                    Select::make('transaction_unit')
+                        ->label('وحدة التصرّف')
+                        ->native(false)
+                        ->live()
+                        ->options([
+                            'shares' => 'سهم',
+                            'square_meter' => 'متر مربع',
+                            'percentage' => 'نسبة مئوية',
+                        ])
+                        ->required()
+                        ->columnSpan(['default' => 12, 'md' => 4]),
+
+                    Select::make('operation_method')
+                        ->label('طريقة العملية')
+                        ->native(false)
+                        ->options([
+                            'court_judgment' => 'حكم محكمة',
+                            'regular_contract' => 'عقد عادي',
+                            'commercial_register_contract' => 'عقد سجل عقاري',
+                        ])
+                        ->live()
+                        ->required()
+                        ->in(['court_judgment', 'regular_contract', 'commercial_register_contract'])
+                        ->columnSpan(['default' => 12, 'md' => 4]),
+
+                    Grid::make(12)
+                        ->schema([
+                            TextInput::make('case_number')
+                                ->label('رقم الأساس')
+                                ->required(fn(Get $get) => $get('operation_method') === 'court_judgment')
+                                ->columnSpan(['default' => 12, 'md' => 3]),
+                            TextInput::make('decision_number')
+                                ->label('رقم القرار')
+                                ->required(fn(Get $get) => $get('operation_method') === 'court_judgment')
+                                ->columnSpan(['default' => 12, 'md' => 3]),
+                            TextInput::make('authority')
+                                ->label('الجهة')
+                                ->required(fn(Get $get) => $get('operation_method') === 'court_judgment')
+                                ->columnSpan(['default' => 12, 'md' => 3]),
+                            $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
+                                ->required(fn(Get $get) => $get('operation_method') === 'court_judgment')
+                                ->columnSpan(['default' => 12, 'md' => 3]),
+                            Textarea::make('judgment_notes')
+                                ->label('ملاحظات الحكم')
+                                ->rows(3)
+                                ->columnSpanFull(),
+                        ])
+                        ->visible(fn(Get $get) => $get('operation_method') === 'court_judgment')
+                        ->columnSpanFull(),
+
+                    Grid::make(12)
+                        ->schema([
+                            TextInput::make('regular_contract_number')
+                                ->label('رقم العقد')
+                                ->required(fn(Get $get) => $get('operation_method') === 'regular_contract')
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+                            $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
+                                ->required(fn(Get $get) => $get('operation_method') === 'regular_contract')
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+                            Textarea::make('contract_notes')
+                                ->label('ملاحظات العقد')
+                                ->rows(3)
+                                ->columnSpanFull(),
+                        ])
+                        ->visible(fn(Get $get) => $get('operation_method') === 'regular_contract')
+                        ->columnSpanFull(),
+
+                    Grid::make(12)
+                        ->schema([
+                            TextInput::make('commercial_contract_number')
+                                ->label('رقم العقد')
+                                ->required(fn(Get $get) => $get('operation_method') === 'commercial_register_contract')
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+                            $this->dmyDateInput('commercial_contract_date', 'تاريخ العقد')
+                                ->required(fn(Get $get) => $get('operation_method') === 'commercial_register_contract')
+                                ->columnSpan(['default' => 12, 'md' => 6]),
+                            Textarea::make('commercial_contract_notes')
+                                ->label('ملاحظات العقد')
+                                ->rows(3)
+                                ->columnSpanFull(),
+                        ])
+                        ->visible(fn(Get $get) => $get('operation_method') === 'commercial_register_contract')
+                        ->columnSpanFull(),
+
+                    Repeater::make('witnesses')
+                        ->label('الشهود')
+                        ->default([])
+                        ->schema([
+                            TextInput::make('name')
+                                ->label('اسم الشاهد')
+                                ->required()
+                                ->maxLength(200),
+                        ])
+                        ->rules([
+                            function () {
+                                return function (string $attribute, mixed $value, \Closure $fail): void {
+                                    $items = is_array($value) ? array_values($value) : [];
+
+                                    if (count($items) === 0) {
+                                        return;
+                                    }
+
+                                    if (count($items) < 2 || count($items) > 4) {
+                                        $fail('عدد الشهود يجب أن يكون بين 2 و4 عند إدخال شهود.');
+                                    }
+                                };
+                            },
+                        ])
+                        ->columnSpanFull(),
+                ]),
+            ]);
+    }
+
+    protected function ownerSelectField(string $name, string $label, bool $multiple = false): Select
+    {
+        $field = Select::make($name)
+            ->label($label)
+            ->prefixIcon('heroicon-o-user')
+            ->native(false)
+            ->searchable()
+            ->searchPrompt('ابدأ الكتابة ليظهر الاقتراح تلقائياً، ثم اضغط Tab للاختيار السريع')
+            ->noSearchResultsMessage('لا توجد نتائج مطابقة، يمكنك إنشاء مالك جديد')
+            ->preload()
+            ->options(fn() => $this->getAllOwnerOptions())
+            ->getSearchResultsUsing(function (string $search): array {
+                $search = trim($search);
+
+                if (mb_strlen($search) < 1) {
+                    return [];
+                }
+
+                return Owner::query()
+                    ->where(function ($q) use ($search) {
+                        $q->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('company_name', 'like', "%{$search}%");
                     })
-                    ->columnSpan(['default' => 6, 'md' => 3]),
-
-                // =========================
-                // حالات + تواريخ
-                // =========================
-                Toggle::make('is_current')
-                    ->label('مالك حالي')
-                    ->default(true)
-                    ->live()
-                    ->columnSpan(['default' => 6, 'md' => 3]),
-
-                $this->dmyDateInput('purchase_date', 'تاريخ الشراء')
-                    ->nullable()
-                    ->columnSpan(['default' => 6, 'md' => 3]),
-
-                Select::make('purchase_method')
-                    ->label('طريقة الشراء')
-                    ->prefixIcon('heroicon-o-document-text')
-                    ->native(false)
-                    ->options([
-                        'court_judgment' => 'حكم قضائي',
-                        'regular_contract' => 'عقد عادي',
-                    ])
-                    ->nullable()
-                    ->live()
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                    ->columnSpan(['default' => 12, 'md' => 6]),
-
-                $this->dmyDateInput('sale_date', 'تاريخ البيع')
-                    ->nullable()
-                    ->visible(fn (Get $get) => ! (bool) $get('is_current'))
-                    ->dehydrateStateUsing(fn ($state, Get $get) => (bool) $get('is_current') ? null : (filled($state) ? $state : null))
-                    ->columnSpan(['default' => 12, 'md' => 3]),
-
-                // =========================
-                // تفاصيل حكم قضائي
-                // =========================
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('case_number')
-                            ->label('رقم الأساس')
-                            ->prefixIcon('heroicon-o-hashtag')
-                            ->maxLength(100)
-                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 3]),
-
-                        TextInput::make('decision_number')
-                            ->label('رقم القرار')
-                            ->prefixIcon('heroicon-o-hashtag')
-                            ->maxLength(100)
-                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 3]),
-
-                        TextInput::make('authority')
-                            ->label('الجهة')
-                            ->prefixIcon('heroicon-o-building-library')
-                            ->maxLength(150)
-                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 4]),
-
-                        $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
-                            ->required(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'court_judgment' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 2]),
-                    ])
-                    ->visible(fn (Get $get) => $get('purchase_method') === 'court_judgment')
-                    ->columnSpanFull(),
-
-                // =========================
-                // تفاصيل عقد عادي
-                // =========================
-                Grid::make(12)
-                    ->schema([
-                        $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
-                            ->required(fn (Get $get) => $get('purchase_method') === 'regular_contract')
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'regular_contract' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                    ])
-                    ->visible(fn (Get $get) => $get('purchase_method') === 'regular_contract')
-                    ->columnSpanFull(),
-
-                // =========================
-                // تفاصيل عقد سجل تجاري
-                // =========================
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('contract_number')
-                            ->label('رقم العقد')
-                            ->prefixIcon('heroicon-o-document-duplicate')
-                            ->maxLength(100)
-                            ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-
-                        $this->dmyDateInput('commercial_contract_date', 'تاريخ عقد السجل')
-                            ->required(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
-                            ->dehydrateStateUsing(fn ($state, Get $get) => $get('purchase_method') === 'commercial_register_contract' ? (filled($state) ? $state : null) : null)
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                    ])
-                    ->visible(fn (Get $get) => $get('purchase_method') === 'commercial_register_contract')
-                    ->columnSpanFull(),
-            ]),
-        ]);
-}
-
-protected function operationsRepeater(): Repeater
-{
-    return Repeater::make('operations')
-        ->label('عمليات العقار')
-        ->default([])
-        ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
-        ->addActionLabel('إضافة عملية')
-        ->reorderable()
-        ->schema([
-            Hidden::make('id')->dehydrated(),
-            Grid::make(12)->schema([
-                Select::make('operation_type')
-                    ->label('نوع العملية')
-                    ->native(false)
-                    ->options([
-                        'sale' => 'بيع',
-                        'purchase' => 'شراء',
-                    ])
+                    ->orderByRaw('coalesce(company_name, full_name)')
+                    ->limit(50)
+                    ->get()
+                    ->mapWithKeys(fn(Owner $o) => [$o->getKey() => $o->display_name])
+                    ->all();
+            })
+            ->getOptionLabelUsing(fn($value): ?string => Owner::find($value)?->display_name)
+            ->createOptionForm([
+                ToggleButtons::make('owner_type')
+                    ->label('نوع المالك')
+                    ->options(['individual' => 'فرد', 'company' => 'شركة'])
                     ->required()
-                    ->columnSpan(['default' => 12, 'md' => 4]),
+                    ->default('individual')
+                    ->live()
+                    ->inline(),
 
-                $this->ownerSelectField('old_owners', 'المالكون السابقون', true)
-                    ->columnSpan(['default' => 12, 'md' => 4]),
-
-                $this->ownerSelectField('new_owners', 'المالكون الجدد', true)
-                    ->columnSpan(['default' => 12, 'md' => 4]),
-
-
-                $this->ownerSelectField('team_one_members', 'أعضاء الفريق الأول', true)
-                    ->columnSpan(['default' => 12, 'md' => 6]),
-
-                $this->ownerSelectField('team_two_members', 'أعضاء الفريق الثاني', true)
-                    ->columnSpan(['default' => 12, 'md' => 6]),
-
-                TextInput::make('transaction_amount')
-                    ->label('مقدار التصرّف')
-                    ->numeric()
-                    ->minValue(0)
-                    ->maxValue(9999999999.99)
+                TextInput::make('full_name')
+                    ->label('اسم المالك (للفرد) أو اسم المفوض')
+                    ->prefixIcon('heroicon-o-identification')
+                    ->required(fn(Get $get) => $get('owner_type') === 'individual')
+                    ->maxLength(200)
                     ->live(onBlur: true)
-                    ->required()
-                    ->columnSpan(['default' => 12, 'md' => 4]),
+                    ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                        $owner = $this->findOwnerForAutofill([
+                            'owner_type' => $get('owner_type'),
+                            'full_name' => $state,
+                        ]);
 
-                Select::make('transaction_unit')
-                    ->label('وحدة التصرّف')
-                    ->native(false)
-                    ->live()
-                    ->options([
-                        'shares' => 'سهم',
-                        'square_meter' => 'متر مربع',
-                        'percentage' => 'نسبة مئوية',
-                    ])
-                    ->required()
-                    ->columnSpan(['default' => 12, 'md' => 4]),
-
-                Select::make('operation_method')
-                    ->label('طريقة العملية')
-                    ->native(false)
-                    ->options([
-                        'court_judgment' => 'حكم محكمة',
-                        'regular_contract' => 'عقد عادي',
-                        'commercial_register_contract' => 'عقد سجل عقاري',
-                    ])
-                    ->live()
-                    ->required()
-                    ->in(['court_judgment', 'regular_contract', 'commercial_register_contract'])
-                    ->columnSpan(['default' => 12, 'md' => 4]),
-
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('case_number')
-                            ->label('رقم الأساس')
-                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
-                            ->columnSpan(['default' => 12, 'md' => 3]),
-                        TextInput::make('decision_number')
-                            ->label('رقم القرار')
-                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
-                            ->columnSpan(['default' => 12, 'md' => 3]),
-                        TextInput::make('authority')
-                            ->label('الجهة')
-                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
-                            ->columnSpan(['default' => 12, 'md' => 3]),
-                        $this->dmyDateInput('judgment_date', 'تاريخ الحكم')
-                            ->required(fn (Get $get) => $get('operation_method') === 'court_judgment')
-                            ->columnSpan(['default' => 12, 'md' => 3]),
-                        Textarea::make('judgment_notes')
-                            ->label('ملاحظات الحكم')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])
-                    ->visible(fn (Get $get) => $get('operation_method') === 'court_judgment')
+                        if ($owner) {
+                            $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                        }
+                    })
                     ->columnSpanFull(),
 
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('regular_contract_number')
-                            ->label('رقم العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                        $this->dmyDateInput('regular_contract_date', 'تاريخ العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'regular_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                        Textarea::make('contract_notes')
-                            ->label('ملاحظات العقد')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])
-                    ->visible(fn (Get $get) => $get('operation_method') === 'regular_contract')
-                    ->columnSpanFull(),
+                TextInput::make('company_name')
+                    ->label('اسم الشركة')
+                    ->prefixIcon('heroicon-o-building-office')
+                    ->maxLength(200)
+                    ->visible(fn(Get $get) => $get('owner_type') === 'company')
+                    ->required(fn(Get $get) => $get('owner_type') === 'company')
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set, Get $get): void {
+                        $owner = $this->findOwnerForAutofill([
+                            'owner_type' => $get('owner_type'),
+                            'company_name' => $state,
+                        ]);
 
-                Grid::make(12)
-                    ->schema([
-                        TextInput::make('commercial_contract_number')
-                            ->label('رقم العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                        $this->dmyDateInput('commercial_contract_date', 'تاريخ العقد')
-                            ->required(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                            ->columnSpan(['default' => 12, 'md' => 6]),
-                        Textarea::make('commercial_contract_notes')
-                            ->label('ملاحظات العقد')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])
-                    ->visible(fn (Get $get) => $get('operation_method') === 'commercial_register_contract')
-                    ->columnSpanFull(),
+                        if ($owner) {
+                            $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                        }
+                    })
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null),
 
-                Repeater::make('witnesses')
-                    ->label('الشهود')
-                    ->default([])
-                    ->schema([
-                        TextInput::make('name')
-                            ->label('اسم الشاهد')
-                            ->required()
-                            ->maxLength(200),
-                    ])
-                    ->rules([
-                        function () {
-                            return function (string $attribute, mixed $value, \Closure $fail): void {
-                                $items = is_array($value) ? array_values($value) : [];
+                TextInput::make('commercial_register_number')
+                    ->label('رقم السجل التجاري')
+                    ->prefixIcon('heroicon-o-clipboard-document-list')
+                    ->maxLength(100)
+                    ->visible(fn(Get $get) => $get('owner_type') === 'company')
+                    ->required(fn(Get $get) => $get('owner_type') === 'company')
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        $owner = $this->findOwnerForAutofill([
+                            'commercial_register_number' => $state,
+                        ]);
 
-                                if (count($items) === 0) {
-                                    return;
-                                }
+                        if ($owner) {
+                            $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                        }
+                    })
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null),
 
-                                if (count($items) < 2 || count($items) > 4) {
-                                    $fail('عدد الشهود يجب أن يكون بين 2 و4 عند إدخال شهود.');
-                                }
-                            };
-                        },
-                    ])
-                    ->columnSpanFull(),
-            ]),
-        ]);
-}
+                $this->dmyDateInput('birth_date', 'تاريخ الميلاد')
+                    ->visible(fn(Get $get) => $get('owner_type') === 'individual')
+                    ->nullable(),
 
-protected function ownerSelectField(string $name, string $label, bool $multiple = false): Select
-{
-    $field = Select::make($name)
-        ->label($label)
-        ->prefixIcon('heroicon-o-user')
-        ->native(false)
-        ->searchable()
-        ->searchPrompt('ابدأ الكتابة ليظهر الاقتراح تلقائياً، ثم اضغط Tab للاختيار السريع')
-        ->noSearchResultsMessage('لا توجد نتائج مطابقة، يمكنك إنشاء مالك جديد')
-        ->preload()
-        ->options(fn () => $this->getAllOwnerOptions())
-        ->getSearchResultsUsing(function (string $search): array {
-            $search = trim($search);
+                TextInput::make('national_id')
+                    ->label('الرقم الوطني')
+                    ->prefixIcon('heroicon-o-finger-print')
+                    ->visible(fn(Get $get) => $get('owner_type') === 'individual')
+                    ->required(fn(Get $get) => $get('owner_type') === 'individual')
+                    ->maxLength(50)
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        $owner = $this->findOwnerForAutofill([
+                            'national_id' => $state,
+                        ]);
 
-            if (mb_strlen($search) < 1) {
+                        if ($owner) {
+                            $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                        }
+                    })
+                    ->unique(Owner::class, 'national_id'),
+
+                TextInput::make('phone')
+                    ->label('رقم الهاتف')
+                    ->prefixIcon('heroicon-o-phone')
+                    ->tel()
+                    ->maxLength(50)
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        $owner = $this->findOwnerForAutofill([
+                            'phone' => $state,
+                        ]);
+
+                        if ($owner) {
+                            $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                        }
+                    })
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null),
+
+                TextInput::make('email')
+                    ->label('البريد الإلكتروني')
+                    ->prefixIcon('heroicon-o-envelope')
+                    ->email()
+                    ->maxLength(150)
+                    ->nullable()
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        $owner = $this->findOwnerForAutofill([
+                            'email' => $state,
+                        ]);
+
+                        if ($owner) {
+                            $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
+                        }
+                    })
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? $state : null),
+
+                Toggle::make('is_active')
+                    ->label('فعّال')
+                    ->default(true)
+                    ->live(),
+            ])
+            ->createOptionUsing(fn(array $data): int => Owner::create($data)->id);
+
+        if ($multiple) {
+            $field->multiple();
+        }
+
+        return $field;
+    }
+
+    private function findOwnerForAutofill(array $lookup): ?Owner
+    {
+        $ownerType = $lookup['owner_type'] ?? null;
+        $nationalId = trim((string) ($lookup['national_id'] ?? ''));
+        $commercialRegister = trim((string) ($lookup['commercial_register_number'] ?? ''));
+        $phone = trim((string) ($lookup['phone'] ?? ''));
+        $email = trim((string) ($lookup['email'] ?? ''));
+        $fullName = trim((string) ($lookup['full_name'] ?? ''));
+        $companyName = trim((string) ($lookup['company_name'] ?? ''));
+
+        if ($nationalId !== '') {
+            return Owner::query()->where('national_id', $nationalId)->first();
+        }
+
+        if ($commercialRegister !== '') {
+            return Owner::query()->where('commercial_register_number', $commercialRegister)->first();
+        }
+
+        if ($email !== '') {
+            return Owner::query()->where('email', $email)->first();
+        }
+
+        if ($phone !== '') {
+            return Owner::query()->where('phone', $phone)->first();
+        }
+
+        if ($ownerType === 'individual' && $fullName !== '' && mb_strlen($fullName) >= 3) {
+            return Owner::query()
+                ->where('owner_type', 'individual')
+                ->where('full_name', $fullName)
+                ->first();
+        }
+
+        if ($ownerType === 'company' && $companyName !== '' && mb_strlen($companyName) >= 3) {
+            return Owner::query()
+                ->where('owner_type', 'company')
+                ->where('company_name', $companyName)
+                ->first();
+        }
+
+        return null;
+    }
+
+    private function fillOwnerCreateFormFromExistingOwner(Owner $owner, callable $set): void
+    {
+        $set('owner_type', $owner->owner_type ?: 'individual');
+        $set('full_name', $owner->full_name);
+        $set('company_name', $owner->company_name);
+        $set('commercial_register_number', $owner->commercial_register_number);
+        $set('birth_date', $owner->birth_date ? Carbon::parse($owner->birth_date)->format('Y-m-d') : null);
+        $set('national_id', $owner->national_id);
+        $set('phone', $owner->phone);
+        $set('email', $owner->email);
+        $set('is_active', (bool) $owner->is_active);
+    }
+
+
+    protected function signalsRepeater(): Repeater
+    {
+        // تحويل أي شكل (UUID keyed / list / JSON string) إلى list نظيف
+        $toList = function (mixed $state): array {
+            $state = $this->decodeJsonToArray($state);
+
+            if (! is_array($state)) {
                 return [];
             }
 
-            return Owner::query()
-                ->where(function ($q) use ($search) {
-                    $q->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('company_name', 'like', "%{$search}%");
-                })
-                ->orderByRaw('coalesce(company_name, full_name)')
-                ->limit(50)
-                ->get()
-                ->mapWithKeys(fn (Owner $o) => [$o->getKey() => $o->display_name])
+            return array_is_list($state) ? $state : array_values($state);
+        };
+
+        // إعادة keying للواجهة (Repeater يفضل مفاتيح ثابتة)
+        $uuidKeyed = function (array $rows): array {
+            return collect($rows)
+                ->mapWithKeys(fn(array $row) => [Str::uuid()->toString() => $row])
                 ->all();
-        })
-        ->getOptionLabelUsing(fn ($value): ?string => Owner::find($value)?->display_name)
-        ->createOptionForm([
-            ToggleButtons::make('owner_type')
-                ->label('نوع المالك')
-                ->options(['individual' => 'فرد', 'company' => 'شركة'])
-                ->required()
-                ->default('individual')
-                ->live()
-                ->inline(),
+        };
 
-            TextInput::make('full_name')
-                ->label('اسم المالك (للفرد) أو اسم المفوض')
-                ->prefixIcon('heroicon-o-identification')
-                ->required(fn (Get $get) => $get('owner_type') === 'individual')
-                ->maxLength(200)
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set, Get $get): void {
-                    $owner = $this->findOwnerForAutofill([
-                        'owner_type' => $get('owner_type'),
-                        'full_name' => $state,
-                    ]);
+        return Repeater::make('signals')
+            ->label('الإشارات')
+            ->default([])
+            ->dehydrateStateUsing(fn($state) => array_values($state ?? []))
+            ->addActionLabel('إضافة إشارة')
+            ->reorderable()
+            ->itemLabel(fn(array $state) => filled($state['signal_id'] ?? null) ? ('إشارة #' . $state['signal_id']) : 'إشارة')
 
-                    if ($owner) {
-                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
-                    }
-                })
-                ->columnSpanFull(),
+            // ✅ التطبيع قبل الحفظ (JSON owners/victims)
+            ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
+                $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
 
-            TextInput::make('company_name')
-                ->label('اسم الشركة')
-                ->prefixIcon('heroicon-o-building-office')
-                ->maxLength(200)
-                ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                ->required(fn (Get $get) => $get('owner_type') === 'company')
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set, Get $get): void {
-                    $owner = $this->findOwnerForAutofill([
-                        'owner_type' => $get('owner_type'),
-                        'company_name' => $state,
-                    ]);
+                return Arr::except($data, [
+                    // حقول قد تصل من toArray() أو علاقات
+                    'owners',
+                    'signal_victim_id',
+                    'signal_victim_from_owner',
+                    'signal_victim',
+                ]);
+            })
 
-                    if ($owner) {
-                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
-                    }
-                })
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+            ->schema([
+                // ✅ مهم جداً لتحديث/عدم تكرار السجلات
+                Hidden::make('id')->dehydrated(),
 
-            TextInput::make('commercial_register_number')
-                ->label('رقم السجل التجاري')
-                ->prefixIcon('heroicon-o-clipboard-document-list')
-                ->maxLength(100)
-                ->visible(fn (Get $get) => $get('owner_type') === 'company')
-                ->required(fn (Get $get) => $get('owner_type') === 'company')
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set): void {
-                    $owner = $this->findOwnerForAutofill([
-                        'commercial_register_number' => $state,
-                    ]);
+                // =========================
+                // معلومات الإشارة الأساسية
+                // =========================
+                Grid::make(12)->schema([
+                    TextInput::make('signal_id')
+                        ->label('رقم الإشارة')
+                        ->prefixIcon('heroicon-o-hashtag')
+                        ->maxLength(50)
+                        ->required()
+                        ->live(onBlur: true)
+                        ->columnSpan(['default' => 12, 'md' => 3]),
 
-                    if ($owner) {
-                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
-                    }
-                })
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                    $this->dmyDateInput('signal_date', 'تاريخ الإشارة')
+                        ->required()
+                        ->columnSpan(['default' => 12, 'md' => 3]),
 
-            $this->dmyDateInput('birth_date', 'تاريخ الميلاد')
-                ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                ->nullable(),
+                    Select::make('type')
+                        ->label('نوع الإشارة')
+                        ->prefixIcon('heroicon-o-tag')
+                        ->native(false)
+                        ->searchable()
+                        ->options([
+                            'حجز' => 'حجز',
+                            'دعوى' => 'دعوى',
+                            'استيفاء رسوم' => 'استيفاء رسوم',
+                            'تأمين' => 'تأمين',
+                            'استملاك' => 'استملاك',
+                            'أخرى' => 'أخرى',
+                        ])
+                        ->required()
+                        ->columnSpan(['default' => 12, 'md' => 6]),
+                ]),
 
-            TextInput::make('national_id')
-                ->label('الرقم الوطني')
-                ->prefixIcon('heroicon-o-finger-print')
-                ->visible(fn (Get $get) => $get('owner_type') === 'individual')
-                ->required(fn (Get $get) => $get('owner_type') === 'individual')
-                ->maxLength(50)
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set): void {
-                    $owner = $this->findOwnerForAutofill([
-                        'national_id' => $state,
-                    ]);
+                Section::make('ملاحظات الإشارة')
+                    ->schema([
+                        Textarea::make('signal_notes')
+                            ->label('الملاحظات')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->nullable()
+                            ->live(onBlur: true)
+                            ->dehydrateStateUsing(fn($state) => filled($state) ? trim((string) $state) : null)
+                            ->columnSpanFull(),
+                    ]),
 
-                    if ($owner) {
-                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
-                    }
-                })
-                ->unique(Owner::class, 'national_id'),
+                // =========================
+                // أصحاب الإشارة
+                // =========================
+                Repeater::make('signal_owners')
+                    ->label('أصحاب الإشارة')
+                    ->addActionLabel('إضافة صاحب إشارة')
+                    ->default([])
+                    ->defaultItems(0)
+                    // ✅ ضمان أن قيمة هذا الـ repeater تُرسل دائماً كـ list (بدون UUID keys)
+                    ->dehydrateStateUsing(fn($state) => $toList($state))
+                    ->itemLabel(function (array $state): string {
+                        $fromOwner = (bool) ($state['owner_from_owner'] ?? false);
 
-            TextInput::make('phone')
-                ->label('رقم الهاتف')
-                ->prefixIcon('heroicon-o-phone')
-                ->tel()
-                ->maxLength(50)
-                ->nullable()
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set): void {
-                    $owner = $this->findOwnerForAutofill([
-                        'phone' => $state,
-                    ]);
+                        $name = $fromOwner
+                            ? $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null)
+                            : ($state['owner_name'] ?? null);
 
-                    if ($owner) {
-                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
-                    }
-                })
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                        return filled($name) ? $name : 'صاحب إشارة';
+                    })
+                    ->schema([
+                        Grid::make(12)->schema([
+                            Toggle::make('owner_from_owner')
+                                ->label('من المالكين')
+                                ->default(true)
+                                ->live()
+                                ->columnSpan(['default' => 12, 'md' => 2]),
 
-            TextInput::make('email')
-                ->label('البريد الإلكتروني')
-                ->prefixIcon('heroicon-o-envelope')
-                ->email()
-                ->maxLength(150)
-                ->nullable()
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set): void {
-                    $owner = $this->findOwnerForAutofill([
-                        'email' => $state,
-                    ]);
+                            Select::make('owner_id')
+                                ->label('المالك')
+                                ->prefixIcon('heroicon-o-user')
+                                ->native(false)
+                                ->searchable()
+                                ->options(fn() => $this->getAllOwnerOptions())
+                                ->visible(fn(Get $get) => (bool) $get('owner_from_owner'))
+                                ->required(fn(Get $get) => (bool) $get('owner_from_owner'))      // ✅
+                                ->dehydrated(fn(Get $get) => (bool) $get('owner_from_owner'))    // ✅
+                                ->placeholder('اختر مالكًا')
+                                ->columnSpan(['default' => 12, 'md' => 5]),
 
-                    if ($owner) {
-                        $this->fillOwnerCreateFormFromExistingOwner($owner, $set);
-                    }
-                })
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                            TextInput::make('owner_name')
+                                ->label('اسم صاحب الإشارة')
+                                ->prefixIcon('heroicon-o-identification')
+                                ->maxLength(150)
+                                ->visible(fn(Get $get) => ! (bool) $get('owner_from_owner'))
+                                ->required(fn(Get $get) => ! (bool) $get('owner_from_owner'))    // ✅
+                                ->dehydrated(fn(Get $get) => ! (bool) $get('owner_from_owner'))  // ✅
+                                ->dehydrateStateUsing(fn($state) => filled($state) ? trim((string) $state) : null)
+                                ->placeholder('اكتب الاسم يدوياً')
+                                ->columnSpan(['default' => 12, 'md' => 5]),
+                        ]),
+                    ])
+                    // ✅ تحميل: stored(list/object/JSON) -> UI -> UUID keyed
+                    ->afterStateHydrated(function ($state, $set, Get $get) use ($toList, $uuidKeyed): void {
+                        $values = $toList($state);
 
-            Toggle::make('is_active')
-                ->label('فعّال')
-                ->default(true)
-                ->live(),
-        ])
-        ->createOptionUsing(fn (array $data): int => Owner::create($data)->id);
+                        $rows = [];
 
-    if ($multiple) {
-        $field->multiple();
+                        if (count($values) > 0 && is_array($values[0] ?? null)) {
+                            $first = $values[0];
+
+                            // UI already
+                            if (array_key_exists('owner_from_owner', $first)) {
+                                $rows = $values;
+                            }
+                            // stored shape
+                            elseif (array_key_exists('is_owner', $first)) {
+                                $rows = collect($values)->map(function (array $item): array {
+                                    return [
+                                        'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                        'owner_id'         => $item['owner_id'] ?? null,
+                                        'owner_name'       => $item['name'] ?? null,
+                                    ];
+                                })->all();
+                            }
+                        }
+
+                        // fallback من علاقة owners pivot إن كانت موجودة بالـ state
+                        if (count($rows) === 0) {
+                            $owners = $get('owners') ?? [];
+                            if (is_array($owners) && count($owners) > 0) {
+                                $rows = collect($owners)->map(function (array $owner): array {
+                                    return [
+                                        'owner_from_owner' => true,
+                                        'owner_id'         => $owner['id'] ?? null,
+                                        'owner_name'       => $owner['display_name'] ?? $owner['full_name'] ?? null,
+                                    ];
+                                })->all();
+                            }
+                        }
+
+                        // fallback من legacy signal_owner
+                        if (count($rows) === 0) {
+                            $legacy = $get('signal_owner');
+                            if (filled($legacy)) {
+                                $rows = [[
+                                    'owner_from_owner' => false,
+                                    'owner_id'         => null,
+                                    'owner_name'       => (string) $legacy,
+                                ]];
+                            }
+                        }
+
+                        $rows = $this->deduplicateSignalOwnerUiRows($rows);
+
+                        // نثبتها كمفاتيح UUID للواجهة
+                        $set('signal_owners', $uuidKeyed($rows));
+                    }),
+
+                // =========================
+                // المدعى عليهم في الإشارة
+                // =========================
+                Repeater::make('signal_victims')
+                    ->label('المدعى عليهم في الإشارة')
+                    ->addActionLabel('إضافة مدعى عليه')
+                    ->default([])
+                    ->defaultItems(0)
+                    // ✅ ضمان list
+                    ->dehydrateStateUsing(fn($state) => $toList($state))
+                    ->itemLabel(function (array $state): string {
+                        $fromOwner = (bool) ($state['victim_from_owner'] ?? false);
+
+                        $name = $fromOwner
+                            ? $this->resolveOwnerNameFromAllOwners($state['victim_owner_id'] ?? null)
+                            : ($state['victim_name'] ?? null);
+
+                        return filled($name) ? $name : 'مدعى عليه';
+                    })
+                    ->schema([
+                        Grid::make(12)->schema([
+                            Toggle::make('victim_from_owner')
+                                ->label('من المالكين')
+                                ->default(true)
+                                ->live()
+                                ->columnSpan(['default' => 12, 'md' => 2]),
+
+                            Select::make('victim_owner_id')
+                                ->label('المالك')
+                                ->prefixIcon('heroicon-o-user')
+                                ->native(false)
+                                ->searchable()
+                                ->options(fn() => $this->getAllOwnerOptions())
+                                ->visible(fn(Get $get) => (bool) $get('victim_from_owner'))
+                                ->required(fn(Get $get) => (bool) $get('victim_from_owner'))      // ✅
+                                ->dehydrated(fn(Get $get) => (bool) $get('victim_from_owner'))    // ✅
+                                ->placeholder('اختر من المالكين')
+                                ->columnSpan(['default' => 12, 'md' => 5]),
+
+                            TextInput::make('victim_name')
+                                ->label('اسم المدعى عليه')
+                                ->prefixIcon('heroicon-o-identification')
+                                ->maxLength(150)
+                                ->visible(fn(Get $get) => ! (bool) $get('victim_from_owner'))
+                                ->required(fn(Get $get) => ! (bool) $get('victim_from_owner'))    // ✅
+                                ->dehydrated(fn(Get $get) => ! (bool) $get('victim_from_owner'))  // ✅
+                                ->dehydrateStateUsing(fn($state) => filled($state) ? trim((string) $state) : null)
+                                ->placeholder('اكتب الاسم يدوياً')
+                                ->columnSpan(['default' => 12, 'md' => 5]),
+                        ]),
+                    ])
+                    // ✅ تحميل: stored(list/object/JSON) -> UI -> UUID keyed
+                    ->afterStateHydrated(function ($state, $set, Get $get) use ($toList, $uuidKeyed): void {
+                        $values = $toList($state);
+
+                        $rows = [];
+
+                        if (count($values) > 0 && is_array($values[0] ?? null)) {
+                            $first = $values[0];
+
+                            // UI already
+                            if (array_key_exists('victim_from_owner', $first)) {
+                                $rows = $values;
+                            }
+                            // stored shape
+                            elseif (array_key_exists('is_owner', $first)) {
+                                $rows = collect($values)->map(function (array $item): array {
+                                    return [
+                                        'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
+                                        'victim_owner_id'   => $item['owner_id'] ?? null,
+                                        'victim_name'       => $item['name'] ?? null,
+                                    ];
+                                })->all();
+                            }
+                        }
+
+                        // fallback من legacy signal_victim
+                        if (count($rows) === 0) {
+                            $legacy = $get('signal_victim');
+                            if (filled($legacy)) {
+                                $rows = [[
+                                    'victim_from_owner' => false,
+                                    'victim_owner_id'   => null,
+                                    'victim_name'       => (string) $legacy,
+                                ]];
+                            }
+                        }
+
+                        $rows = $this->deduplicateSignalVictimUiRows($rows);
+
+                        $set('signal_victims', $uuidKeyed($rows));
+                    }),
+            ])
+            ->columns(['default' => 1, 'md' => 2]);
     }
 
-    return $field;
-}
-
-private function findOwnerForAutofill(array $lookup): ?Owner
-{
-    $ownerType = $lookup['owner_type'] ?? null;
-    $nationalId = trim((string) ($lookup['national_id'] ?? ''));
-    $commercialRegister = trim((string) ($lookup['commercial_register_number'] ?? ''));
-    $phone = trim((string) ($lookup['phone'] ?? ''));
-    $email = trim((string) ($lookup['email'] ?? ''));
-    $fullName = trim((string) ($lookup['full_name'] ?? ''));
-    $companyName = trim((string) ($lookup['company_name'] ?? ''));
-
-    if ($nationalId !== '') {
-        return Owner::query()->where('national_id', $nationalId)->first();
+    private function deduplicateSignalOwnerUiRows(array $rows): array
+    {
+        return collect($rows)
+            ->filter(fn($row) => is_array($row))
+            ->map(function (array $row): array {
+                return [
+                    'owner_from_owner' => (bool) ($row['owner_from_owner'] ?? false),
+                    'owner_id' => $row['owner_id'] ?? null,
+                    'owner_name' => isset($row['owner_name']) && is_string($row['owner_name'])
+                        ? trim($row['owner_name'])
+                        : ($row['owner_name'] ?? null),
+                ];
+            })
+            ->unique(fn(array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->values()
+            ->all();
     }
 
-    if ($commercialRegister !== '') {
-        return Owner::query()->where('commercial_register_number', $commercialRegister)->first();
+    private function deduplicateSignalVictimUiRows(array $rows): array
+    {
+        return collect($rows)
+            ->filter(fn($row) => is_array($row))
+            ->map(function (array $row): array {
+                return [
+                    'victim_from_owner' => (bool) ($row['victim_from_owner'] ?? false),
+                    'victim_owner_id' => $row['victim_owner_id'] ?? null,
+                    'victim_name' => isset($row['victim_name']) && is_string($row['victim_name'])
+                        ? trim($row['victim_name'])
+                        : ($row['victim_name'] ?? null),
+                ];
+            })
+            ->unique(fn(array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->values()
+            ->all();
     }
 
-    if ($email !== '') {
-        return Owner::query()->where('email', $email)->first();
+    private function decodeJsonToArray(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '' || ($trimmed[0] !== '[' && $trimmed[0] !== '{')) {
+            return $value;
+        }
+
+        $decoded = json_decode($trimmed, true);
+        return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $value;
     }
 
-    if ($phone !== '') {
-        return Owner::query()->where('phone', $phone)->first();
-    }
+    private function normalizeSignalOwnersForStorage(mixed $rows): array
+    {
+        $rows = $this->decodeJsonToArray($rows);
 
-    if ($ownerType === 'individual' && $fullName !== '' && mb_strlen($fullName) >= 3) {
-        return Owner::query()
-            ->where('owner_type', 'individual')
-            ->where('full_name', $fullName)
-            ->first();
-    }
-
-    if ($ownerType === 'company' && $companyName !== '' && mb_strlen($companyName) >= 3) {
-        return Owner::query()
-            ->where('owner_type', 'company')
-            ->where('company_name', $companyName)
-            ->first();
-    }
-
-    return null;
-}
-
-private function fillOwnerCreateFormFromExistingOwner(Owner $owner, callable $set): void
-{
-    $set('owner_type', $owner->owner_type ?: 'individual');
-    $set('full_name', $owner->full_name);
-    $set('company_name', $owner->company_name);
-    $set('commercial_register_number', $owner->commercial_register_number);
-    $set('birth_date', $owner->birth_date ? Carbon::parse($owner->birth_date)->format('Y-m-d') : null);
-    $set('national_id', $owner->national_id);
-    $set('phone', $owner->phone);
-    $set('email', $owner->email);
-    $set('is_active', (bool) $owner->is_active);
-}
-
-
-protected function signalsRepeater(): Repeater
-{
-    // تحويل أي شكل (UUID keyed / list / JSON string) إلى list نظيف
-    $toList = function (mixed $state): array {
-        $state = $this->decodeJsonToArray($state);
-
-        if (! is_array($state)) {
+        if (! is_array($rows)) {
             return [];
         }
 
-        return array_is_list($state) ? $state : array_values($state);
-    };
+        // إزالة UUID keys إن وجدت
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
 
-    // إعادة keying للواجهة (Repeater يفضل مفاتيح ثابتة)
-    $uuidKeyed = function (array $rows): array {
-        return collect($rows)
-            ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
-            ->all();
-    };
+        $out = [];
 
-    return Repeater::make('signals')
-        ->label('الإشارات')
-        ->default([])
-        ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
-        ->addActionLabel('إضافة إشارة')
-        ->reorderable()
-        ->itemLabel(fn (array $state) => filled($state['signal_id'] ?? null) ? ('إشارة #' . $state['signal_id']) : 'إشارة')
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
 
-        // ✅ التطبيع قبل الحفظ (JSON owners/victims)
-        ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
-            $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
-            $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
+            // حالة: stored shape موجودة أصلاً
+            if (array_key_exists('is_owner', $row)) {
+                $isOwner = (bool) ($row['is_owner'] ?? false);
+                $ownerId = $row['owner_id'] ?? null;
+                $name    = is_string($row['name'] ?? null) ? trim((string) $row['name']) : null;
 
-            return Arr::except($data, [
-                // حقول قد تصل من toArray() أو علاقات
-                'owners',
-                'signal_victim_id',
-                'signal_victim_from_owner',
-                'signal_victim',
-            ]);
-        })
-
-        ->schema([
-            // ✅ مهم جداً لتحديث/عدم تكرار السجلات
-            Hidden::make('id')->dehydrated(),
-
-            // =========================
-            // معلومات الإشارة الأساسية
-            // =========================
-            Grid::make(12)->schema([
-                TextInput::make('signal_id')
-                    ->label('رقم الإشارة')
-                    ->prefixIcon('heroicon-o-hashtag')
-                    ->maxLength(50)
-                    ->required()
-                    ->live(onBlur: true)
-                    ->columnSpan(['default' => 12, 'md' => 3]),
-
-                $this->dmyDateInput('signal_date', 'تاريخ الإشارة')
-                    ->required()
-                    ->columnSpan(['default' => 12, 'md' => 3]),
-
-                Select::make('type')
-                    ->label('نوع الإشارة')
-                    ->prefixIcon('heroicon-o-tag')
-                    ->native(false)
-                    ->searchable()
-                    ->options([
-                        'حجز' => 'حجز',
-                        'دعوى' => 'دعوى',
-                        'استيفاء رسوم' => 'استيفاء رسوم',
-                        'تأمين' => 'تأمين',
-                        'استملاك' => 'استملاك',
-                        'أخرى' => 'أخرى',
-                    ])
-                    ->required()
-                    ->columnSpan(['default' => 12, 'md' => 6]),
-            ]),
-
-            Section::make('ملاحظات الإشارة')
-                ->schema([
-                    Textarea::make('signal_notes')
-                        ->label('الملاحظات')
-                        ->rows(3)
-                        ->maxLength(1000)
-                        ->nullable()
-                        ->live(onBlur: true)
-                        ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
-                        ->columnSpanFull(),
-                ]),
-
-            // =========================
-            // أصحاب الإشارة
-            // =========================
-            Repeater::make('signal_owners')
-                ->label('أصحاب الإشارة')
-                ->addActionLabel('إضافة صاحب إشارة')
-                ->default([])
-                ->defaultItems(0)
-                // ✅ ضمان أن قيمة هذا الـ repeater تُرسل دائماً كـ list (بدون UUID keys)
-                ->dehydrateStateUsing(fn ($state) => $toList($state))
-                ->itemLabel(function (array $state): string {
-                    $fromOwner = (bool) ($state['owner_from_owner'] ?? false);
-
-                    $name = $fromOwner
-                        ? $this->resolveOwnerNameFromAllOwners($state['owner_id'] ?? null)
-                        : ($state['owner_name'] ?? null);
-
-                    return filled($name) ? $name : 'صاحب إشارة';
-                })
-                ->schema([
-                    Grid::make(12)->schema([
-                        Toggle::make('owner_from_owner')
-                            ->label('من المالكين')
-                            ->default(true)
-                            ->live()
-                            ->columnSpan(['default' => 12, 'md' => 2]),
-
-                        Select::make('owner_id')
-                            ->label('المالك')
-                            ->prefixIcon('heroicon-o-user')
-                            ->native(false)
-                            ->searchable()
-                            ->options(fn () => $this->getAllOwnerOptions())
-                            ->visible(fn (Get $get) => (bool) $get('owner_from_owner'))
-                            ->required(fn (Get $get) => (bool) $get('owner_from_owner'))      // ✅
-                            ->dehydrated(fn (Get $get) => (bool) $get('owner_from_owner'))    // ✅
-                            ->placeholder('اختر مالكًا')
-                            ->columnSpan(['default' => 12, 'md' => 5]),
-
-                        TextInput::make('owner_name')
-                            ->label('اسم صاحب الإشارة')
-                            ->prefixIcon('heroicon-o-identification')
-                            ->maxLength(150)
-                            ->visible(fn (Get $get) => ! (bool) $get('owner_from_owner'))
-                            ->required(fn (Get $get) => ! (bool) $get('owner_from_owner'))    // ✅
-                            ->dehydrated(fn (Get $get) => ! (bool) $get('owner_from_owner'))  // ✅
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
-                            ->placeholder('اكتب الاسم يدوياً')
-                            ->columnSpan(['default' => 12, 'md' => 5]),
-                    ]),
-                ])
-                // ✅ تحميل: stored(list/object/JSON) -> UI -> UUID keyed
-                ->afterStateHydrated(function ($state, $set, Get $get) use ($toList, $uuidKeyed): void {
-                    $values = $toList($state);
-
-                    $rows = [];
-
-                    if (count($values) > 0 && is_array($values[0] ?? null)) {
-                        $first = $values[0];
-
-                        // UI already
-                        if (array_key_exists('owner_from_owner', $first)) {
-                            $rows = $values;
-                        }
-                        // stored shape
-                        elseif (array_key_exists('is_owner', $first)) {
-                            $rows = collect($values)->map(function (array $item): array {
-                                return [
-                                    'owner_from_owner' => (bool) ($item['is_owner'] ?? false),
-                                    'owner_id'         => $item['owner_id'] ?? null,
-                                    'owner_name'       => $item['name'] ?? null,
-                                ];
-                            })->all();
-                        }
+                if ($isOwner) {
+                    if (! filled($ownerId)) {
+                        continue;
                     }
+                    $name = filled($name) ? $name : $this->resolveOwnerNameFromAllOwners($ownerId);
 
-                    // fallback من علاقة owners pivot إن كانت موجودة بالـ state
-                    if (count($rows) === 0) {
-                        $owners = $get('owners') ?? [];
-                        if (is_array($owners) && count($owners) > 0) {
-                            $rows = collect($owners)->map(function (array $owner): array {
-                                return [
-                                    'owner_from_owner' => true,
-                                    'owner_id'         => $owner['id'] ?? null,
-                                    'owner_name'       => $owner['display_name'] ?? $owner['full_name'] ?? null,
-                                ];
-                            })->all();
-                        }
+                    $out[] = [
+                        'is_owner' => true,
+                        'owner_id' => $ownerId,
+                        'name'     => filled($name) ? $name : null,
+                    ];
+                } else {
+                    if (! filled($name)) {
+                        continue;
                     }
+                    $out[] = [
+                        'is_owner' => false,
+                        'owner_id' => null,
+                        'name'     => $name,
+                    ];
+                }
 
-                    // fallback من legacy signal_owner
-                    if (count($rows) === 0) {
-                        $legacy = $get('signal_owner');
-                        if (filled($legacy)) {
-                            $rows = [[
-                                'owner_from_owner' => false,
-                                'owner_id'         => null,
-                                'owner_name'       => (string) $legacy,
-                            ]];
-                        }
-                    }
+                continue;
+            }
 
-                    $rows = $this->deduplicateSignalOwnerUiRows($rows);
+            // حالة: UI shape (owner_from_owner / owner_id / owner_name)
+            $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
+            $ownerId   = $row['owner_id'] ?? null;
+            $name      = is_string($row['owner_name'] ?? null) ? trim((string) $row['owner_name']) : null;
 
-                    // نثبتها كمفاتيح UUID للواجهة
-                    $set('signal_owners', $uuidKeyed($rows));
-                }),
-
-            // =========================
-            // المدعى عليهم في الإشارة
-            // =========================
-            Repeater::make('signal_victims')
-                ->label('المدعى عليهم في الإشارة')
-                ->addActionLabel('إضافة مدعى عليه')
-                ->default([])
-                ->defaultItems(0)
-                // ✅ ضمان list
-                ->dehydrateStateUsing(fn ($state) => $toList($state))
-                ->itemLabel(function (array $state): string {
-                    $fromOwner = (bool) ($state['victim_from_owner'] ?? false);
-
-                    $name = $fromOwner
-                        ? $this->resolveOwnerNameFromAllOwners($state['victim_owner_id'] ?? null)
-                        : ($state['victim_name'] ?? null);
-
-                    return filled($name) ? $name : 'مدعى عليه';
-                })
-                ->schema([
-                    Grid::make(12)->schema([
-                        Toggle::make('victim_from_owner')
-                            ->label('من المالكين')
-                            ->default(true)
-                            ->live()
-                            ->columnSpan(['default' => 12, 'md' => 2]),
-
-                        Select::make('victim_owner_id')
-                            ->label('المالك')
-                            ->prefixIcon('heroicon-o-user')
-                            ->native(false)
-                            ->searchable()
-                            ->options(fn () => $this->getAllOwnerOptions())
-                            ->visible(fn (Get $get) => (bool) $get('victim_from_owner'))
-                            ->required(fn (Get $get) => (bool) $get('victim_from_owner'))      // ✅
-                            ->dehydrated(fn (Get $get) => (bool) $get('victim_from_owner'))    // ✅
-                            ->placeholder('اختر من المالكين')
-                            ->columnSpan(['default' => 12, 'md' => 5]),
-
-                        TextInput::make('victim_name')
-                            ->label('اسم المدعى عليه')
-                            ->prefixIcon('heroicon-o-identification')
-                            ->maxLength(150)
-                            ->visible(fn (Get $get) => ! (bool) $get('victim_from_owner'))
-                            ->required(fn (Get $get) => ! (bool) $get('victim_from_owner'))    // ✅
-                            ->dehydrated(fn (Get $get) => ! (bool) $get('victim_from_owner'))  // ✅
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
-                            ->placeholder('اكتب الاسم يدوياً')
-                            ->columnSpan(['default' => 12, 'md' => 5]),
-                    ]),
-                ])
-                // ✅ تحميل: stored(list/object/JSON) -> UI -> UUID keyed
-                ->afterStateHydrated(function ($state, $set, Get $get) use ($toList, $uuidKeyed): void {
-                    $values = $toList($state);
-
-                    $rows = [];
-
-                    if (count($values) > 0 && is_array($values[0] ?? null)) {
-                        $first = $values[0];
-
-                        // UI already
-                        if (array_key_exists('victim_from_owner', $first)) {
-                            $rows = $values;
-                        }
-                        // stored shape
-                        elseif (array_key_exists('is_owner', $first)) {
-                            $rows = collect($values)->map(function (array $item): array {
-                                return [
-                                    'victim_from_owner' => (bool) ($item['is_owner'] ?? false),
-                                    'victim_owner_id'   => $item['owner_id'] ?? null,
-                                    'victim_name'       => $item['name'] ?? null,
-                                ];
-                            })->all();
-                        }
-                    }
-
-                    // fallback من legacy signal_victim
-                    if (count($rows) === 0) {
-                        $legacy = $get('signal_victim');
-                        if (filled($legacy)) {
-                            $rows = [[
-                                'victim_from_owner' => false,
-                                'victim_owner_id'   => null,
-                                'victim_name'       => (string) $legacy,
-                            ]];
-                        }
-                    }
-
-                    $rows = $this->deduplicateSignalVictimUiRows($rows);
-
-                    $set('signal_victims', $uuidKeyed($rows));
-                }),
-        ])
-        ->columns(['default' => 1, 'md' => 2]);
-}
-
-private function deduplicateSignalOwnerUiRows(array $rows): array
-{
-    return collect($rows)
-        ->filter(fn ($row) => is_array($row))
-        ->map(function (array $row): array {
-            return [
-                'owner_from_owner' => (bool) ($row['owner_from_owner'] ?? false),
-                'owner_id' => $row['owner_id'] ?? null,
-                'owner_name' => isset($row['owner_name']) && is_string($row['owner_name'])
-                    ? trim($row['owner_name'])
-                    : ($row['owner_name'] ?? null),
-            ];
-        })
-        ->unique(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
-        ->values()
-        ->all();
-}
-
-private function deduplicateSignalVictimUiRows(array $rows): array
-{
-    return collect($rows)
-        ->filter(fn ($row) => is_array($row))
-        ->map(function (array $row): array {
-            return [
-                'victim_from_owner' => (bool) ($row['victim_from_owner'] ?? false),
-                'victim_owner_id' => $row['victim_owner_id'] ?? null,
-                'victim_name' => isset($row['victim_name']) && is_string($row['victim_name'])
-                    ? trim($row['victim_name'])
-                    : ($row['victim_name'] ?? null),
-            ];
-        })
-        ->unique(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
-        ->values()
-        ->all();
-}
-
-private function decodeJsonToArray(mixed $value): mixed
-{
-    if (! is_string($value)) {
-        return $value;
-    }
-
-    $trimmed = trim($value);
-    if ($trimmed === '' || ($trimmed[0] !== '[' && $trimmed[0] !== '{')) {
-        return $value;
-    }
-
-    $decoded = json_decode($trimmed, true);
-    return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $value;
-}
-
-private function normalizeSignalOwnersForStorage(mixed $rows): array
-{
-    $rows = $this->decodeJsonToArray($rows);
-
-    if (! is_array($rows)) {
-        return [];
-    }
-
-    // إزالة UUID keys إن وجدت
-    $rows = array_is_list($rows) ? $rows : array_values($rows);
-
-    $out = [];
-
-    foreach ($rows as $row) {
-        if (! is_array($row)) {
-            continue;
-        }
-
-        // حالة: stored shape موجودة أصلاً
-        if (array_key_exists('is_owner', $row)) {
-            $isOwner = (bool) ($row['is_owner'] ?? false);
-            $ownerId = $row['owner_id'] ?? null;
-            $name    = is_string($row['name'] ?? null) ? trim((string) $row['name']) : null;
-
-            if ($isOwner) {
+            if ($fromOwner) {
                 if (! filled($ownerId)) {
                     continue;
                 }
-                $name = filled($name) ? $name : $this->resolveOwnerNameFromAllOwners($ownerId);
+                $resolved = $this->resolveOwnerNameFromAllOwners($ownerId);
 
                 $out[] = [
                     'is_owner' => true,
                     'owner_id' => $ownerId,
-                    'name'     => filled($name) ? $name : null,
+                    'name'     => filled($resolved) ? $resolved : null,
                 ];
             } else {
                 if (! filled($name)) {
@@ -1669,75 +1871,75 @@ private function normalizeSignalOwnersForStorage(mixed $rows): array
                     'name'     => $name,
                 ];
             }
-
-            continue;
         }
 
-        // حالة: UI shape (owner_from_owner / owner_id / owner_name)
-        $fromOwner = (bool) ($row['owner_from_owner'] ?? false);
-        $ownerId   = $row['owner_id'] ?? null;
-        $name      = is_string($row['owner_name'] ?? null) ? trim((string) $row['owner_name']) : null;
-
-        if ($fromOwner) {
-            if (! filled($ownerId)) {
-                continue;
-            }
-            $resolved = $this->resolveOwnerNameFromAllOwners($ownerId);
-
-            $out[] = [
-                'is_owner' => true,
-                'owner_id' => $ownerId,
-                'name'     => filled($resolved) ? $resolved : null,
-            ];
-        } else {
-            if (! filled($name)) {
-                continue;
-            }
-            $out[] = [
-                'is_owner' => false,
-                'owner_id' => null,
-                'name'     => $name,
-            ];
-        }
+        return $out;
     }
 
-    return $out;
-}
+    private function normalizeSignalVictimsForStorage(mixed $rows): array
+    {
+        $rows = $this->decodeJsonToArray($rows);
 
-private function normalizeSignalVictimsForStorage(mixed $rows): array
-{
-    $rows = $this->decodeJsonToArray($rows);
-
-    if (! is_array($rows)) {
-        return [];
-    }
-
-    // إزالة UUID keys إن وجدت
-    $rows = array_is_list($rows) ? $rows : array_values($rows);
-
-    $out = [];
-
-    foreach ($rows as $row) {
-        if (! is_array($row)) {
-            continue;
+        if (! is_array($rows)) {
+            return [];
         }
 
-        // stored shape
-        if (array_key_exists('is_owner', $row)) {
-            $isOwner = (bool) ($row['is_owner'] ?? false);
-            $ownerId = $row['owner_id'] ?? null;
-            $name    = is_string($row['name'] ?? null) ? trim((string) $row['name']) : null;
+        // إزالة UUID keys إن وجدت
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
 
-            if ($isOwner) {
+        $out = [];
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            // stored shape
+            if (array_key_exists('is_owner', $row)) {
+                $isOwner = (bool) ($row['is_owner'] ?? false);
+                $ownerId = $row['owner_id'] ?? null;
+                $name    = is_string($row['name'] ?? null) ? trim((string) $row['name']) : null;
+
+                if ($isOwner) {
+                    if (! filled($ownerId)) {
+                        continue;
+                    }
+                    $name = filled($name) ? $name : $this->resolveOwnerNameFromAllOwners($ownerId);
+
+                    $out[] = [
+                        'is_owner' => true,
+                        'owner_id' => $ownerId,
+                        'name'     => filled($name) ? $name : null,
+                    ];
+                } else {
+                    if (! filled($name)) {
+                        continue;
+                    }
+                    $out[] = [
+                        'is_owner' => false,
+                        'owner_id' => null,
+                        'name'     => $name,
+                    ];
+                }
+
+                continue;
+            }
+
+            // UI shape (victim_from_owner / victim_owner_id / victim_name)
+            $fromOwner = (bool) ($row['victim_from_owner'] ?? false);
+            $ownerId   = $row['victim_owner_id'] ?? null;
+            $name      = is_string($row['victim_name'] ?? null) ? trim((string) $row['victim_name']) : null;
+
+            if ($fromOwner) {
                 if (! filled($ownerId)) {
                     continue;
                 }
-                $name = filled($name) ? $name : $this->resolveOwnerNameFromAllOwners($ownerId);
+                $resolved = $this->resolveOwnerNameFromAllOwners($ownerId);
 
                 $out[] = [
                     'is_owner' => true,
                     'owner_id' => $ownerId,
-                    'name'     => filled($name) ? $name : null,
+                    'name'     => filled($resolved) ? $resolved : null,
                 ];
             } else {
                 if (! filled($name)) {
@@ -1749,40 +1951,10 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     'name'     => $name,
                 ];
             }
-
-            continue;
         }
 
-        // UI shape (victim_from_owner / victim_owner_id / victim_name)
-        $fromOwner = (bool) ($row['victim_from_owner'] ?? false);
-        $ownerId   = $row['victim_owner_id'] ?? null;
-        $name      = is_string($row['victim_name'] ?? null) ? trim((string) $row['victim_name']) : null;
-
-        if ($fromOwner) {
-            if (! filled($ownerId)) {
-                continue;
-            }
-            $resolved = $this->resolveOwnerNameFromAllOwners($ownerId);
-
-            $out[] = [
-                'is_owner' => true,
-                'owner_id' => $ownerId,
-                'name'     => filled($resolved) ? $resolved : null,
-            ];
-        } else {
-            if (! filled($name)) {
-                continue;
-            }
-            $out[] = [
-                'is_owner' => false,
-                'owner_id' => null,
-                'name'     => $name,
-            ];
-        }
+        return $out;
     }
-
-    return $out;
-}
 
 
 
@@ -1792,11 +1964,11 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         return Repeater::make('installments')
             ->label('الدفعات')
             ->default([])
-            ->dehydrateStateUsing(fn ($state) => array_values($state ?? []))
+            ->dehydrateStateUsing(fn($state) => array_values($state ?? []))
             ->live()
             ->addActionLabel('إضافة دفعة')
             ->reorderable()
-            ->itemLabel(fn (array $state) => filled($state['payment_date'] ?? null) ? ('دفعة بتاريخ ' . $this->formatDateForDisplay($state['payment_date'])) : 'دفعة')
+            ->itemLabel(fn(array $state) => filled($state['payment_date'] ?? null) ? ('دفعة بتاريخ ' . $this->formatDateForDisplay($state['payment_date'])) : 'دفعة')
             ->schema([
                 Hidden::make('id')
                     ->dehydrated(),
@@ -1804,6 +1976,8 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                 TextInput::make('amount')
                     ->label('قيمة الدفعة')
                     ->numeric()
+                    ->step('0.0001')
+                    ->rule('regex:/^\d+(\.\d{1,4})?$/')
                     ->required()
                     ->minValue(0)
                     ->live(onBlur: true),
@@ -1834,8 +2008,10 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                             $amount = (float) ($row['amount'] ?? 0);
                             $cumulative += $amount;
 
-                            if ((float) ($row['amount'] ?? 0) === $currentAmount
-                                && ($row['payment_date'] ?? null) === ($get('payment_date') ?? null)) {
+                            if (
+                                (float) ($row['amount'] ?? 0) === $currentAmount
+                                && ($row['payment_date'] ?? null) === ($get('payment_date') ?? null)
+                            ) {
                                 break;
                             }
                         }
@@ -1919,11 +2095,10 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
                     Notification::make()
                         ->title('فشل إنشاء البطاقة')
-                        ->body($this->formatCreateCardFailureReason($exception))              
+                        ->body($this->formatCreateCardFailureReason($exception))
                         ->danger()
                         ->send();
                 }
-
             });
 
         return $this->uniformAction($action);
@@ -1961,8 +2136,8 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                 $recordQuery = PropertyCard::withTrashed()
 
                     ->orderByDesc('id')
-                    ->when($recordNumber !== '', fn ($query) => $query->where('card_record_number', $recordNumber))
-                    ->when($subdivision !== '', fn ($query) => $query->where('card_subdivision', $subdivision));
+                    ->when($recordNumber !== '', fn($query) => $query->where('card_record_number', $recordNumber))
+                    ->when($subdivision !== '', fn($query) => $query->where('card_subdivision', $subdivision));
 
                 $record = $recordQuery->first();
 
@@ -1971,7 +2146,6 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     $this->currentRecordId = null;
                     Notification::make()->title('لا يوجد سجل مطابق للبحث المدخل')->warning()->send();
                     return;
-
                 }
 
                 if ($record->trashed()) {
@@ -2014,7 +2188,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->modalSubmitActionLabel('استعادة')
             ->form([
                 Hidden::make('record_id')
-                    ->default(fn (): ?int => $this->currentRecordId)
+                    ->default(fn(): ?int => $this->currentRecordId)
                     ->required(),
                 TextInput::make('password')
                     ->label('كلمة المرور')
@@ -2056,15 +2230,94 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         return $this->uniformAction($action);
     }
 
+    public function duplicateCardAction(): Action
+    {
+        $action = Action::make('duplicateCard')
+            ->label('نسخ بطاقة')
+            ->icon('heroicon-o-document-duplicate')
+            ->color('info')
+            ->modalHeading('نسخ بطاقة عقار')
+            ->modalDescription('أدخل رقم محضر البطاقة الأصلية ورقم المحضر الجديد لإنشاء نسخة والانتقال مباشرةً لتعديلها.')
+            ->modalSubmitActionLabel('نسخ وفتح')
+            ->modalCancelActionLabel('إلغاء')
+            ->modalWidth('lg')
+            ->form([
+                TextInput::make('source_card_record_number')
+                    ->label('رقم محضر العقار الأصلي')
+                    ->prefixIcon('heroicon-o-document-text')
+                    ->maxLength(50)
+                    ->required(),
+                TextInput::make('new_card_record_number')
+                    ->label('رقم المحضر الجديد')
+                    ->prefixIcon('heroicon-o-key')
+                    ->maxLength(50)
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $sourceRecordNumber = trim((string) ($data['source_card_record_number'] ?? ''));
+                $newRecordNumber = trim((string) ($data['new_card_record_number'] ?? ''));
+
+                if ($sourceRecordNumber === '' || $newRecordNumber === '') {
+                    Notification::make()->title('يرجى إدخال رقم المحضر الأصلي والجديد')->warning()->send();
+                    return;
+                }
+
+                if ($sourceRecordNumber === $newRecordNumber) {
+                    Notification::make()->title('رقم المحضر الجديد يجب أن يكون مختلفاً عن الأصلي')->warning()->send();
+                    return;
+                }
+
+                $sourceRecord = PropertyCard::query()
+                    ->where('card_record_number', $sourceRecordNumber)
+                    ->first();
+
+                if (! $sourceRecord) {
+                    Notification::make()->title('لم يتم العثور على بطاقة بالمحضر الأصلي المدخل')->danger()->send();
+                    return;
+                }
+
+                $exists = PropertyCard::withTrashed()
+                    ->where('card_record_number', $newRecordNumber)
+                    ->exists();
+
+                if ($exists) {
+                    Notification::make()->title('رقم المحضر الجديد مستخدم مسبقاً')->danger()->send();
+                    return;
+                }
+
+                $this->loadRecordIntoForm($sourceRecord);
+                data_set($this->data, 'card_record_number', $newRecordNumber);
+                data_set($this->data, 'files', []);
+                $this->currentRecordId = null;
+                $this->bindFormToRecord(null);
+                $this->form->fill($this->data);
+
+                $record = $this->persistNewRecordFromForm();
+
+                if (! $record) {
+                    return;
+                }
+
+                $this->loadRecordIntoForm($record->fresh());
+
+                Notification::make()
+                    ->title('تم نسخ البطاقة وفتح المحضر الجديد للتعديل')
+                    ->success()
+                    ->send();
+            });
+
+        return $this->uniformAction($action);
+    }
+
     public function toggleCardStatusAction(): Action
     {
         $action = Action::make('toggle_card_status')
             ->label('تفعيل/تجميد')
-            ->icon(fn (): string => (($this->data['card_status'] ?? 'active') === 'active')
+            ->icon(fn(): string => (($this->data['card_status'] ?? 'active') === 'active')
                 ? 'heroicon-o-pause-circle'
                 : 'heroicon-o-check-circle')
-            ->color(fn (): string => (($this->data['card_status'] ?? 'active') === 'active') ? 'warning' : 'success')
-            ->disabled(fn () => blank($this->currentRecordId))
+            ->color(fn(): string => (($this->data['card_status'] ?? 'active') === 'active') ? 'warning' : 'success')
+            ->disabled(fn() => blank($this->currentRecordId))
             ->action(function (): void {
                 if (! $this->currentRecordId) {
                     Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
@@ -2128,118 +2381,118 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
         return $this->uniformAction($action);
     }
-        public function updateAction(): Action
-        {
-            return $this->uniformAction(
-                Action::make('update')
-                    ->label('تعديل')
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('primary')
-                    ->disabled(fn () => blank($this->currentRecordId))
-                    ->action(function () {
+    public function updateAction(): Action
+    {
+        return $this->uniformAction(
+            Action::make('update')
+                ->label('تعديل')
+                ->icon('heroicon-o-pencil-square')
+                ->color('primary')
+                ->disabled(fn() => blank($this->currentRecordId))
+                ->action(function () {
 
-                        // ✅ تعريفه دائماً (حل نهائي للـ Undefined variable)
-                        $validatedFiles = [];
+                    // ✅ تعريفه دائماً (حل نهائي للـ Undefined variable)
+                    $validatedFiles = [];
 
-                        if (! $this->currentRecordId) {
-                            Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
-                            return;
+                    if (! $this->currentRecordId) {
+                        Notification::make()->title('ابحث/حمّل بطاقة أولاً')->warning()->send();
+                        return;
+                    }
+
+                    $record = PropertyCard::find($this->currentRecordId);
+
+                    if (! $record) {
+                        $this->currentRecordId = null;
+                        Notification::make()->title('السجل غير موجود')->danger()->send();
+                        return;
+                    }
+
+                    // اربط الفورم بالسجل
+                    $this->bindFormToRecord($record);
+
+                    // ✅ Validate الفورم
+                    try {
+                        $this->form->validate();
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('يرجى تصحيح أخطاء الحقول')
+                            ->body($this->formatValidationErrors($exception))
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    // ✅ payload
+                    $state = $this->getFormPayload($this->form->getState());
+
+                    // ✅ Validate الملفات (اختياري)
+                    $tmp = $this->validateFileUploads($state['files'] ?? []);
+                    if ($tmp === null) {
+                        return; // الدالة نفسها سترسل Notification
+                    }
+                    $validatedFiles = $tmp; // الآن مضمون أنه array
+
+                    // ✅ attributes
+                    $attributes = Arr::except($state, [
+                        'owners',
+                        'ownerships',
+                        'operations',
+                        'signals',
+                        'installments',
+                        'files',
+                        'owned_value_manually_overridden',
+                    ]);
+
+                    // ✅ DB transaction (مثل باقي الأقسام)
+                    try {
+                        DB::transaction(function () use ($record, $attributes, $state) {
+                            $record->update($attributes);
+
+                            $this->persistOwnerships($record, $state['ownerships'] ?? []);
+                            $this->persistOperations($record, (array) ($state['operations'] ?? []));
+                            $this->persistInstallments($record, $state['installments'] ?? []);
+                            $this->persistSignals($record, $state['signals'] ?? []);
+                        });
+                    } catch (QueryException $exception) {
+                        report($exception);
+                        Notification::make()
+                            ->title('فشل التعديل')
+                            ->body($this->formatQueryExceptionMessage($exception))
+                            ->danger()
+                            ->send();
+                        return;
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                        Notification::make()
+                            ->title('فشل التعديل')
+                            ->body($exception->getMessage())
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    // ✅ حفظ الملفات (خارج transaction)
+                    try {
+                        if (! empty($validatedFiles)) {
+                            $this->storeValidatedFileUploads($record->refresh(), $validatedFiles);
                         }
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                        Notification::make()
+                            ->title('تم حفظ البيانات لكن فشل رفع الملفات')
+                            ->body($exception->getMessage())
+                            ->danger()
+                            ->send();
+                        return;
+                    }
 
-                        $record = PropertyCard::find($this->currentRecordId);
+                    // ✅ Reload UI
+                    $this->loadRecordIntoForm($record->refresh());
 
-                        if (! $record) {
-                            $this->currentRecordId = null;
-                            Notification::make()->title('السجل غير موجود')->danger()->send();
-                            return;
-                        }
-
-                        // اربط الفورم بالسجل
-                        $this->bindFormToRecord($record);
-
-                        // ✅ Validate الفورم
-                        try {
-                            $this->form->validate();
-                        } catch (ValidationException $exception) {
-                            Notification::make()
-                                ->title('يرجى تصحيح أخطاء الحقول')
-                                ->body($this->formatValidationErrors($exception))
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        // ✅ payload
-                        $state = $this->getFormPayload($this->form->getState());
-
-                        // ✅ Validate الملفات (اختياري)
-                        $tmp = $this->validateFileUploads($state['files'] ?? []);
-                        if ($tmp === null) {
-                            return; // الدالة نفسها سترسل Notification
-                        }
-                        $validatedFiles = $tmp; // الآن مضمون أنه array
-
-                        // ✅ attributes
-                        $attributes = Arr::except($state, [
-                            'owners',
-                            'ownerships',
-                            'operations',
-                            'signals',
-                            'installments',
-                            'files',
-                            'owned_value_manually_overridden',
-                        ]);
-
-                        // ✅ DB transaction (مثل باقي الأقسام)
-                        try {
-                            DB::transaction(function () use ($record, $attributes, $state) {
-                                $record->update($attributes);
-
-                                $this->persistOwnerships($record, $state['ownerships'] ?? []);
-                                $this->persistOperations($record, (array) ($state['operations'] ?? []));
-                                $this->persistInstallments($record, $state['installments'] ?? []);
-                                $this->persistSignals($record, $state['signals'] ?? []);
-                            });
-                        } catch (QueryException $exception) {
-                            report($exception);
-                            Notification::make()
-                                ->title('فشل التعديل')
-                                ->body($this->formatQueryExceptionMessage($exception))
-                                ->danger()
-                                ->send();
-                            return;
-                        } catch (\Throwable $exception) {
-                            report($exception);
-                            Notification::make()
-                                ->title('فشل التعديل')
-                                ->body($exception->getMessage())
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        // ✅ حفظ الملفات (خارج transaction)
-                        try {
-                            if (! empty($validatedFiles)) {
-                                $this->storeValidatedFileUploads($record->refresh(), $validatedFiles);
-                            }
-                        } catch (\Throwable $exception) {
-                            report($exception);
-                            Notification::make()
-                                ->title('تم حفظ البيانات لكن فشل رفع الملفات')
-                                ->body($exception->getMessage())
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        // ✅ Reload UI
-                        $this->loadRecordIntoForm($record->refresh());
-
-                        Notification::make()->title('تم التعديل بنجاح')->success()->send();
-                    })
-            );
-        }
+                    Notification::make()->title('تم التعديل بنجاح')->success()->send();
+                })
+        );
+    }
 
 
     public function deleteAction(): Action
@@ -2248,10 +2501,10 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->label('حذف')
             ->icon('heroicon-o-trash')
             ->color('danger')
-            ->disabled(fn () => blank($this->currentRecordId))
+            ->disabled(fn() => blank($this->currentRecordId))
             ->requiresConfirmation()
             ->modalHeading('تأكيد الحذف')
-           ->modalDescription('افتراضيًا سيتم حذف البطاقة حذفًا منطقيًا. يمكنك اختيار الحذف النهائي غير القابل للاسترجاع من الخيارات أدناه.')
+            ->modalDescription('افتراضيًا سيتم حذف البطاقة حذفًا منطقيًا. يمكنك اختيار الحذف النهائي غير القابل للاسترجاع من الخيارات أدناه.')
             ->modalSubmitActionLabel('تنفيذ الحذف')
             ->form([
                 Toggle::make('force_delete')
@@ -2261,8 +2514,8 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                 TextInput::make('password')
                     ->label('كلمة المرور لتأكيد الحذف النهائي')
                     ->password()
-                    ->visible(fn (Get $get): bool => (bool) $get('force_delete'))
-                    ->required(fn (Get $get): bool => (bool) $get('force_delete')),
+                    ->visible(fn(Get $get): bool => (bool) $get('force_delete'))
+                    ->required(fn(Get $get): bool => (bool) $get('force_delete')),
             ])
             ->action(function (array $data): void {
 
@@ -2283,7 +2536,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     Notification::make()->title('السجل غير موجود')->danger()->send();
                     return;
                 }
-                                if ($forceDelete) {
+                if ($forceDelete) {
                     $user = auth()->user();
                     $password = (string) ($data['password'] ?? '');
 
@@ -2312,7 +2565,8 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                 $record->delete();
                 $this->resetCardForm();
 
-                Notification::make()->title('تم الحذف بنجاح (حذف منطقي)')->success()->send();            });
+                Notification::make()->title('تم الحذف بنجاح (حذف منطقي)')->success()->send();
+            });
 
         return $this->uniformAction($action);
     }
@@ -2323,7 +2577,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
             ->label('تحميل PDF')
             ->icon('heroicon-o-document-arrow-down')
             ->color('warning')
-            ->disabled(fn () => blank($this->currentRecordId))
+            ->disabled(fn() => blank($this->currentRecordId))
             ->action(function () {
                 if (! $this->currentRecordId) {
                     Notification::make()->title('حمّل بطاقة أولاً ثم حمّل PDF')->warning()->send();
@@ -2352,7 +2606,7 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
                     ->pdf();
 
                 return response()->streamDownload(
-                    fn () => print($pdf),
+                    fn() => print($pdf),
                     $filename,
                     ['Content-Type' => 'application/pdf']
                 );
@@ -2365,126 +2619,127 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
     // Helpers (باقي كودك كما هو: حفظ، ملفات، تهيئة..)
     // =========================
 
-   protected function persistNewRecordFromForm(): ?PropertyCard
-{
-    // ✅ دائماً عرّفها لتفادي أي Undefined لاحقاً
-    $validatedFiles = [];
+    protected function persistNewRecordFromForm(): ?PropertyCard
+    {
+        // ✅ دائماً عرّفها لتفادي أي Undefined لاحقاً
+        $validatedFiles = [];
 
-    // 1) Validate form
-    try {
-        $this->form->validate();
-    } catch (ValidationException $exception) {
-        Notification::make()
-            ->title('يرجى تصحيح أخطاء الحقول')
-            ->body($this->formatValidationErrors($exception))
-            ->danger()
-            ->send();
+        // 1) Validate form
+        try {
+            $this->form->validate();
+        } catch (ValidationException $exception) {
+            Notification::make()
+                ->title('يرجى تصحيح أخطاء الحقول')
+                ->body($this->formatValidationErrors($exception))
+                ->danger()
+                ->send();
 
-        return null;
-    }
-
-    // 2) Payload
-    $state = $this->getFormPayload($this->form->getState());
-
-    // 3) Validate files (اختياري أثناء الإنشاء)
-    $tmp = $this->validateFileUploads($state['files'] ?? []);
-    if ($tmp === null) {
-        return null; // الدالة نفسها تعرض Notification
-    }
-    $validatedFiles = $tmp;
-
-    // 4) Key check
-    $recordNumber = $state['card_record_number'] ?? null;
-    if ($this->isMissingKeyValue($recordNumber)) {
-        Notification::make()
-            ->title('يرجى إدخال رقم المحضر')
-            ->danger()
-            ->send();
-
-        return null;
-    }
-
-    // 5) Uniqueness (حتى مع soft delete)
-    $existingRecord = PropertyCard::withTrashed()
-        ->where('card_record_number', $recordNumber)
-        ->first();
-
-    if ($existingRecord) {
-        Notification::make()
-            ->title($existingRecord->trashed()
-                ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
-                : 'هذا العقار موجود مسبقًا بنفس المفتاح'
-            )
-            ->danger()
-            ->send();
-
-        return null;
-    }
-
-    // 6) Attributes فقط
-    $attributes = Arr::except($state, [
-        'owners',
-        'ownerships',
-        'operations',
-        'signals',
-        'installments',
-        'files',
-        'owned_value_manually_overridden',
-    ]);
-
-    // 7) DB transaction
-    try {
-        $record = DB::transaction(function () use ($attributes, $state) {
-            $record = PropertyCard::create($attributes);
-
-            $this->persistOwnerships($record, $state['ownerships'] ?? []);
-            $this->persistOperations($record, (array) ($state['operations'] ?? []));
-            $this->persistInstallments($record, $state['installments'] ?? []);
-            $this->persistSignals($record, $state['signals'] ?? []);
-
-            return $record;
-        });
-    } catch (QueryException $exception) {
-        report($exception);
-
-        Notification::make()
-            ->title('فشل الحفظ')
-            ->body($this->formatQueryExceptionMessage($exception))
-            ->danger()
-            ->send();
-
-        return null;
-    } catch (\Throwable $exception) {
-        report($exception);
-
-        Notification::make()
-            ->title('فشل الحفظ')
-            ->body($exception->getMessage())
-            ->danger()
-            ->send();
-
-        return null;
-    }
-
-    // 8) Files خارج transaction
-    try {
-        if (! empty($validatedFiles)) {
-            $this->storeValidatedFileUploads($record, $validatedFiles);
+            return null;
         }
-    } catch (\Throwable $exception) {
-        report($exception);
 
-        Notification::make()
-            ->title('تم حفظ البطاقة لكن فشل رفع الملفات')
-            ->body($exception->getMessage())
-            ->danger()
-            ->send();
+        // 2) Payload
+        $state = $this->getFormPayload($this->form->getState());
 
-        // لا نرجّع null لأن السجل انحفظ فعلاً
+        // 3) Validate files (اختياري أثناء الإنشاء)
+        $tmp = $this->validateFileUploads($state['files'] ?? []);
+        if ($tmp === null) {
+            return null; // الدالة نفسها تعرض Notification
+        }
+        $validatedFiles = $tmp;
+
+        // 4) Key check
+        $recordNumber = $state['card_record_number'] ?? null;
+        if ($this->isMissingKeyValue($recordNumber)) {
+            Notification::make()
+                ->title('يرجى إدخال رقم المحضر')
+                ->danger()
+                ->send();
+
+            return null;
+        }
+
+        // 5) Uniqueness (حتى مع soft delete)
+        $existingRecord = PropertyCard::withTrashed()
+            ->where('card_record_number', $recordNumber)
+            ->first();
+
+        if ($existingRecord) {
+            Notification::make()
+                ->title(
+                    $existingRecord->trashed()
+                        ? 'هذا العقار موجود مسبقًا لكنه محذوف (Soft Delete). يرجى استعادته بدلًا من الإضافة.'
+                        : 'هذا العقار موجود مسبقًا بنفس المفتاح'
+                )
+                ->danger()
+                ->send();
+
+            return null;
+        }
+
+        // 6) Attributes فقط
+        $attributes = Arr::except($state, [
+            'owners',
+            'ownerships',
+            'operations',
+            'signals',
+            'installments',
+            'files',
+            'owned_value_manually_overridden',
+        ]);
+
+        // 7) DB transaction
+        try {
+            $record = DB::transaction(function () use ($attributes, $state) {
+                $record = PropertyCard::create($attributes);
+
+                $this->persistOwnerships($record, $state['ownerships'] ?? []);
+                $this->persistOperations($record, (array) ($state['operations'] ?? []));
+                $this->persistInstallments($record, $state['installments'] ?? []);
+                $this->persistSignals($record, $state['signals'] ?? []);
+
+                return $record;
+            });
+        } catch (QueryException $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('فشل الحفظ')
+                ->body($this->formatQueryExceptionMessage($exception))
+                ->danger()
+                ->send();
+
+            return null;
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('فشل الحفظ')
+                ->body($exception->getMessage())
+                ->danger()
+                ->send();
+
+            return null;
+        }
+
+        // 8) Files خارج transaction
+        try {
+            if (! empty($validatedFiles)) {
+                $this->storeValidatedFileUploads($record, $validatedFiles);
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('تم حفظ البطاقة لكن فشل رفع الملفات')
+                ->body($exception->getMessage())
+                ->danger()
+                ->send();
+
+            // لا نرجّع null لأن السجل انحفظ فعلاً
+        }
+
+        return $record;
     }
-
-    return $record;
-}
 
 
     protected function resolveRecordForFileUpload(): ?PropertyCard
@@ -2523,7 +2778,6 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
 
         if (blank($payload['card_status'] ?? null)) {
             $payload['card_status'] = 'active';
-
         }
 
         return $payload;
@@ -2562,238 +2816,239 @@ private function normalizeSignalVictimsForStorage(mixed $rows): array
         $this->form->model($record ?? new PropertyCard());
     }
 
-protected function loadRecordIntoForm(PropertyCard $record): void
-{
-    $this->currentRecordId = $record->id;
+    protected function loadRecordIntoForm(PropertyCard $record): void
+    {
+        $this->currentRecordId = $record->id;
 
 
-    $record->load('creator', 'updater', 'ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
+        $record->load('creator', 'updater', 'ownerships.owner', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'signals.owners', 'installments');
 
-    $payload = $record->attributesToArray();
-    $payload['created_by_name'] = $record->creator?->name ?? '-';
-    $payload['updated_by_name'] = $record->updater?->name ?? '-';
-    $payload['created_at_label'] = $this->formatDateTimeForDisplay($record->created_at);
-    $payload['updated_at_label'] = $this->formatDateTimeForDisplay($record->updated_at);
+        $payload = $record->attributesToArray();
+        $payload['created_by_name'] = $record->creator?->name ?? '-';
+        $payload['updated_by_name'] = $record->updater?->name ?? '-';
+        $payload['created_at_label'] = $this->formatDateTimeForDisplay($record->created_at);
+        $payload['updated_at_label'] = $this->formatDateTimeForDisplay($record->updated_at);
 
-    // =========================
-    // ownerships (UUID keyed + keep id)
-    // =========================
-    $payload['ownerships'] = $record->ownerships
-        ->mapWithKeys(function ($o) {
-            $row = Arr::except($o->toArray(), ['owner', 'created_at', 'updated_at', 'deleted_at']);
-            $row['id'] = $o->getKey();
-            return [Str::uuid()->toString() => $row];
-        })
-        ->all();
-   $payload['operations'] = $record->operations
-        ->mapWithKeys(function (PropertyOperation $operation): array {
-            $row = Arr::except($operation->toArray(), ['old_owners', 'new_owners', 'witnesses', 'created_at', 'updated_at']);
-            $row['id'] = $operation->getKey();
-            $row['old_owners'] = $operation->oldOwners->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
-            $row['new_owners'] = $operation->newOwners->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        // =========================
+        // ownerships (UUID keyed + keep id)
+        // =========================
+        $payload['ownerships'] = $record->ownerships
+            ->mapWithKeys(function ($o) {
+                $row = Arr::except($o->toArray(), ['owner', 'created_at', 'updated_at', 'deleted_at']);
+                $row['id'] = $o->getKey();
+                return [Str::uuid()->toString() => $row];
+            })
+            ->all();
+        $payload['operations'] = $record->operations
+            ->mapWithKeys(function (PropertyOperation $operation): array {
+                $row = Arr::except($operation->toArray(), ['old_owners', 'new_owners', 'witnesses', 'created_at', 'updated_at']);
+                $row['id'] = $operation->getKey();
+                $row['old_owners'] = $operation->oldOwners->pluck('id')->map(fn($id) => (int) $id)->values()->all();
+                $row['new_owners'] = $operation->newOwners->pluck('id')->map(fn($id) => (int) $id)->values()->all();
 
-            if ($operation->operation_method === 'regular_contract') {
-                $row['regular_contract_number'] = $operation->contract_number;
-                $row['regular_contract_date'] = $operation->contract_date;
-            }
-
-            if ($operation->operation_method === 'commercial_register_contract') {
-                $row['commercial_contract_number'] = $operation->contract_number;
-                $row['commercial_contract_date'] = $operation->contract_date;
-                $row['commercial_contract_notes'] = $operation->contract_notes;
-            }
-
-            $row['witnesses'] = $operation->witnesses
-                ->mapWithKeys(fn ($witness): array => [Str::uuid()->toString() => ['name' => $witness->witness_name]])
-                ->all();
-
-            return [Str::uuid()->toString() => $row];
-        })
-        ->all();
-
-
-
-    // =========================
-    // installments (UUID keyed + keep id)
-    // =========================
-    $payload['installments'] = $record->installments
-        ->mapWithKeys(function ($p) {
-            $row = Arr::except($p->toArray(), ['created_at', 'updated_at', 'deleted_at']);
-            $row['id'] = $p->getKey();
-            return [Str::uuid()->toString() => $row];
-        })
-        ->all();
-
-
-    $ownedPropertyValueUsd = (float) ($record->owned_property_value_usd ?? 0);
-    $totalPaid = (float) $record->installments->sum(fn ($installment) => (float) ($installment->amount ?? 0));
-    $payload['remaining_balance'] = $ownedPropertyValueUsd - $totalPaid;
-    // للإبقاء على التوافق مع أي استخدامات قديمة لـ final_balance.
-    $payload['final_balance'] = $payload['remaining_balance'];
-    $payload['owned_value_manually_overridden'] = false;
-
-
-    // =========================
-    // signals (UUID keyed + convert owners/victims to UI shape + UUID keyed)
-    // =========================
-    $payload['signals'] = $record->signals
-        ->mapWithKeys(function ($signal) {
-            $signalPayload = Arr::except($signal->toArray(), ['owners', 'created_at', 'updated_at', 'deleted_at']);
-            $signalPayload['id'] = $signal->getKey();
-
-            // ---------
-            // Owners: stored -> UI -> UUID keyed
-            // ---------
-            $ownersStored = $signalPayload['signal_owners'] ?? [];
-            $ownersStored = $this->decodeJsonToArray($ownersStored);
-
-            if (! is_array($ownersStored)) {
-                $ownersStored = [];
-            }
-
-            $ownersValues = array_is_list($ownersStored) ? $ownersStored : array_values($ownersStored);
-            $ownersUi = [];
-
-            if (count($ownersValues) > 0) {
-                $first = $ownersValues[0];
-
-                // UI already
-                if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
-                    $ownersUi = $ownersValues;
+                if ($operation->operation_method === 'regular_contract') {
+                    $row['regular_contract_number'] = $operation->contract_number;
+                    $row['regular_contract_date'] = $operation->contract_date;
                 }
-                // stored shape: is_owner/owner_id/name
-                elseif (is_array($first) && array_key_exists('is_owner', $first)) {
-                    $ownersUi = collect($ownersValues)->map(function (array $item): array {
-                        $isOwner = (bool) ($item['is_owner'] ?? false);
 
+                if ($operation->operation_method === 'commercial_register_contract') {
+                    $row['commercial_contract_number'] = $operation->contract_number;
+                    $row['commercial_contract_date'] = $operation->contract_date;
+                    $row['commercial_contract_notes'] = $operation->contract_notes;
+                }
+
+                $row['witnesses'] = $operation->witnesses
+                    ->mapWithKeys(fn($witness): array => [Str::uuid()->toString() => ['name' => $witness->witness_name]])
+                    ->all();
+
+                return [Str::uuid()->toString() => $row];
+            })
+            ->all();
+
+
+
+        // =========================
+        // installments (UUID keyed + keep id)
+        // =========================
+        $payload['installments'] = $record->installments
+            ->mapWithKeys(function ($p) {
+                $row = Arr::except($p->toArray(), ['created_at', 'updated_at', 'deleted_at']);
+                $row['id'] = $p->getKey();
+                return [Str::uuid()->toString() => $row];
+            })
+            ->all();
+
+
+        $ownedPropertyValueUsd = (float) ($record->owned_property_value_usd ?? 0);
+        $totalPaid = (float) $record->installments->sum(fn($installment) => (float) ($installment->amount ?? 0));
+        $payload['remaining_balance'] = $ownedPropertyValueUsd - $totalPaid;
+        // للإبقاء على التوافق مع أي استخدامات قديمة لـ final_balance.
+        $payload['final_balance'] = $payload['remaining_balance'];
+        $payload['owned_value_manually_overridden'] = false;
+
+
+        // =========================
+        // signals (UUID keyed + convert owners/victims to UI shape + UUID keyed)
+        // =========================
+        $payload['signals'] = $record->signals
+            ->mapWithKeys(function ($signal) {
+                $signalPayload = Arr::except($signal->toArray(), ['owners', 'created_at', 'updated_at', 'deleted_at']);
+                $signalPayload['id'] = $signal->getKey();
+
+                // ---------
+                // Owners: stored -> UI -> UUID keyed
+                // ---------
+                $ownersStored = $signalPayload['signal_owners'] ?? [];
+                $ownersStored = $this->decodeJsonToArray($ownersStored);
+
+                if (! is_array($ownersStored)) {
+                    $ownersStored = [];
+                }
+
+                $ownersValues = array_is_list($ownersStored) ? $ownersStored : array_values($ownersStored);
+                $ownersUi = [];
+
+                if (count($ownersValues) > 0) {
+                    $first = $ownersValues[0];
+
+                    // UI already
+                    if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+                        $ownersUi = $ownersValues;
+                    }
+                    // stored shape: is_owner/owner_id/name
+                    elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+                        $ownersUi = collect($ownersValues)->map(function (array $item): array {
+                            $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                            return [
+                                'owner_from_owner' => $isOwner,
+                                'owner_id'   => $isOwner ? ($item['owner_id'] ?? null) : null,
+                                'owner_name' => $item['name'] ?? null,
+                            ];
+                        })->all();
+                    }
+                }
+
+                // fallback من علاقة owners pivot إذا JSON فارغ
+                if (count($ownersUi) === 0 && $signal->relationLoaded('owners') && $signal->owners->count()) {
+                    $ownersUi = $signal->owners->map(function (Owner $owner): array {
                         return [
-                            'owner_from_owner' => $isOwner,
-                            'owner_id'   => $isOwner ? ($item['owner_id'] ?? null) : null,
-                            'owner_name' => $item['name'] ?? null,
+                            'owner_from_owner' => true,
+                            'owner_id'   => $owner->getKey(),
+                            'owner_name' => $owner->display_name,
                         ];
                     })->all();
                 }
-            }
 
-            // fallback من علاقة owners pivot إذا JSON فارغ
-            if (count($ownersUi) === 0 && $signal->relationLoaded('owners') && $signal->owners->count()) {
-                $ownersUi = $signal->owners->map(function (Owner $owner): array {
-                    return [
-                        'owner_from_owner' => true,
-                        'owner_id'   => $owner->getKey(),
-                        'owner_name' => $owner->display_name,
-                    ];
-                })->all();
-            }
+                $ownersUi = $this->deduplicateSignalOwnerUiRows($ownersUi);
 
-            $ownersUi = $this->deduplicateSignalOwnerUiRows($ownersUi);
+                $signalPayload['signal_owners'] = collect($ownersUi)
+                    ->mapWithKeys(fn(array $row) => [Str::uuid()->toString() => $row])
+                    ->all();
 
-            $signalPayload['signal_owners'] = collect($ownersUi)
-                ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
-                ->all();
+                // ---------
+                // Victims: stored -> UI -> UUID keyed
+                // ---------
+                $victimsStored = $signalPayload['signal_victims'] ?? [];
+                $victimsStored = $this->decodeJsonToArray($victimsStored);
 
-            // ---------
-            // Victims: stored -> UI -> UUID keyed
-            // ---------
-            $victimsStored = $signalPayload['signal_victims'] ?? [];
-            $victimsStored = $this->decodeJsonToArray($victimsStored);
-
-            if (! is_array($victimsStored)) {
-                $victimsStored = [];
-            }
-
-            $victimsValues = array_is_list($victimsStored) ? $victimsStored : array_values($victimsStored);
-            $victimsUi = [];
-
-            if (count($victimsValues) > 0) {
-                $first = $victimsValues[0];
-
-                // UI already
-                if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
-                    $victimsUi = $victimsValues;
+                if (! is_array($victimsStored)) {
+                    $victimsStored = [];
                 }
-                // stored shape: is_owner/owner_id/name
-                elseif (is_array($first) && array_key_exists('is_owner', $first)) {
-                    $victimsUi = collect($victimsValues)->map(function (array $item): array {
-                        $isOwner = (bool) ($item['is_owner'] ?? false);
 
-                        return [
-                            'victim_from_owner' => $isOwner,
-                            'victim_owner_id' => $isOwner ? ($item['owner_id'] ?? null) : null,
-                            'victim_name'     => $item['name'] ?? null,
-                        ];
-                    })->all();
+                $victimsValues = array_is_list($victimsStored) ? $victimsStored : array_values($victimsStored);
+                $victimsUi = [];
+
+                if (count($victimsValues) > 0) {
+                    $first = $victimsValues[0];
+
+                    // UI already
+                    if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+                        $victimsUi = $victimsValues;
+                    }
+                    // stored shape: is_owner/owner_id/name
+                    elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+                        $victimsUi = collect($victimsValues)->map(function (array $item): array {
+                            $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                            return [
+                                'victim_from_owner' => $isOwner,
+                                'victim_owner_id' => $isOwner ? ($item['owner_id'] ?? null) : null,
+                                'victim_name'     => $item['name'] ?? null,
+                            ];
+                        })->all();
+                    }
                 }
-            }
 
-            $victimsUi = $this->deduplicateSignalVictimUiRows($victimsUi);
+                $victimsUi = $this->deduplicateSignalVictimUiRows($victimsUi);
 
-            $signalPayload['signal_victims'] = collect($victimsUi)
-                ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
-                ->all();
+                $signalPayload['signal_victims'] = collect($victimsUi)
+                    ->mapWithKeys(fn(array $row) => [Str::uuid()->toString() => $row])
+                    ->all();
 
-            return [Str::uuid()->toString() => $signalPayload];
-        })
-        ->all();
+                return [Str::uuid()->toString() => $signalPayload];
+            })
+            ->all();
 
-    // الملفات لا نملؤها من DB (واجهة فقط)
-    $payload['files'] = [[]];
+        // الملفات لا نملؤها من DB (واجهة فقط)
+        $payload['files'] = [[]];
 
-    $this->data = $payload;
-    $this->recalculateOperationsTotalShares();
-    $payload['operations_total_shares'] = data_get($this->data, 'operations_total_shares', 0);
+        $this->data = $payload;
+        $this->recalculateOperationsTotalShares();
+        $payload['operations_total_shares'] = data_get($this->data, 'operations_total_shares', 0);
 
-    $this->form->model($record)->fill($payload);
-}
+        $this->form->model($record)->fill($payload);
+    }
 
 
     protected function resetFileInputs(): void
     {
         $state = $this->form->getState();
         $state['files'] = [[]];
-    $this->form->fill([
-        'files' => [[]],
-    ]);    }
-
-protected function renderUploadedFiles(): HtmlString
-{
-    if (! $this->currentRecordId) {
-        return new HtmlString('<span class="text-sm text-gray-500">حمّل بطاقة لعرض الملفات.</span>');
+        $this->form->fill([
+            'files' => [[]],
+        ]);
     }
 
-    $files = PropertyCardFile::query()
-        ->where('property_card_id', $this->currentRecordId)
-        ->orderByDesc('issued_at')
-        ->get();
+    protected function renderUploadedFiles(): HtmlString
+    {
+        if (! $this->currentRecordId) {
+            return new HtmlString('<span class="text-sm text-gray-500">حمّل بطاقة لعرض الملفات.</span>');
+        }
 
-    if ($files->isEmpty()) {
-        return new HtmlString('<span class="text-sm text-gray-500">لا توجد ملفات مرفوعة بعد.</span>');
-    }
+        $files = PropertyCardFile::query()
+            ->where('property_card_id', $this->currentRecordId)
+            ->orderByDesc('issued_at')
+            ->get();
 
-    $items = $files->map(function (PropertyCardFile $file): string {
-        $downloadUrl = route('property-card-files.download', $file);
-        $previewUrl  = route('property-card-files.download', ['propertyCardFile' => $file->id, 'preview' => 1]);
+        if ($files->isEmpty()) {
+            return new HtmlString('<span class="text-sm text-gray-500">لا توجد ملفات مرفوعة بعد.</span>');
+        }
 
-        $name = e($file->file_name ?? '—');
+        $items = $files->map(function (PropertyCardFile $file): string {
+            $downloadUrl = route('property-card-files.download', $file);
+            $previewUrl  = route('property-card-files.download', ['propertyCardFile' => $file->id, 'preview' => 1]);
 
-        $issuedAt = $file->issued_at?->format('d/m/Y');
-        $issuedLabel = $issuedAt
-            ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>"
-            : '';
+            $name = e($file->file_name ?? '—');
 
-        $downloadLink = "<a href=\"{$downloadUrl}\" class=\"text-primary-600 hover:underline\" download>تنزيل</a>";
+            $issuedAt = $file->issued_at?->format('d/m/Y');
+            $issuedLabel = $issuedAt
+                ? " <span class=\"text-xs text-gray-500\">({$issuedAt})</span>"
+                : '';
 
-        $previewLink = (is_string($file->mime_type) && (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf'))
-            ? " | <a href=\"{$previewUrl}\" class=\"text-primary-600 hover:underline\" target=\"_blank\" rel=\"noopener\">معاينة</a>"
-            : '';
+            $downloadLink = "<a href=\"{$downloadUrl}\" class=\"text-primary-600 hover:underline\" download>تنزيل</a>";
 
-        // ✅ حذف مع تأكيد (Alpine موجود داخل Filament)
-        $deleteButton = " | <button type=\"button\" class=\"text-danger-600 hover:underline\"
+            $previewLink = (is_string($file->mime_type) && (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf'))
+                ? " | <a href=\"{$previewUrl}\" class=\"text-primary-600 hover:underline\" target=\"_blank\" rel=\"noopener\">معاينة</a>"
+                : '';
+
+            // ✅ حذف مع تأكيد (Alpine موجود داخل Filament)
+            $deleteButton = " | <button type=\"button\" class=\"text-danger-600 hover:underline\"
             x-on:click.prevent=\"if(confirm('هل أنت متأكد من حذف هذا الملف؟')) { \$wire.deleteUploadedFile({$file->id}) }\">
             حذف
         </button>";
 
-        return "<li class=\"text-sm flex items-center justify-between gap-3\">
+            return "<li class=\"text-sm flex items-center justify-between gap-3\">
                     <div class=\"min-w-0\">
                         <span class=\"font-medium break-words\">{$name}</span>{$issuedLabel}
                     </div>
@@ -2801,53 +3056,53 @@ protected function renderUploadedFiles(): HtmlString
                         {$downloadLink}{$previewLink}{$deleteButton}
                     </div>
                 </li>";
-    });
+        });
 
-    return new HtmlString('<ul class="space-y-2">' . $items->implode('') . '</ul>');
-}
-
-
-public function deleteUploadedFile(int $fileId): void
-{
-    if (! $this->currentRecordId) {
-        Notification::make()->title('حمّل بطاقة أولاً')->warning()->send();
-        return;
+        return new HtmlString('<ul class="space-y-2">' . $items->implode('') . '</ul>');
     }
 
-    $file = PropertyCardFile::query()
-        ->where('property_card_id', $this->currentRecordId)
-        ->whereKey($fileId)
-        ->first();
 
-    if (! $file) {
-        Notification::make()->title('الملف غير موجود')->warning()->send();
-        return;
-    }
-
-    try {
-        $disk = $file->storage_disk;
-        $path = $file->storage_path;
-
-        if (filled($disk) && filled($path) && Storage::disk($disk)->exists($path)) {
-            Storage::disk($disk)->delete($path);
+    public function deleteUploadedFile(int $fileId): void
+    {
+        if (! $this->currentRecordId) {
+            Notification::make()->title('حمّل بطاقة أولاً')->warning()->send();
+            return;
         }
 
-        $file->delete();
+        $file = PropertyCardFile::query()
+            ->where('property_card_id', $this->currentRecordId)
+            ->whereKey($fileId)
+            ->first();
 
-        Notification::make()->title('تم حذف الملف')->success()->send();
+        if (! $file) {
+            Notification::make()->title('الملف غير موجود')->warning()->send();
+            return;
+        }
 
-        // يجبر Livewire يعيد رسم الـ Placeholder فوراً
-        $this->dispatch('$refresh');
-    } catch (\Throwable $e) {
-        report($e);
-        Notification::make()->title('فشل حذف الملف')->body($e->getMessage())->danger()->send();
+        try {
+            $disk = $file->storage_disk;
+            $path = $file->storage_path;
+
+            if (filled($disk) && filled($path) && Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
+
+            $file->delete();
+
+            Notification::make()->title('تم حذف الملف')->success()->send();
+
+            // يجبر Livewire يعيد رسم الـ Placeholder فوراً
+            $this->dispatch('$refresh');
+        } catch (\Throwable $e) {
+            report($e);
+            Notification::make()->title('فشل حذف الملف')->body($e->getMessage())->danger()->send();
+        }
     }
-}
 
 
     protected function validateFileUploads(array $files, bool $requireFiles = false): ?array
     {
-       $normalizedFiles = [];
+        $normalizedFiles = [];
 
         foreach (array_values($files) as $fileRow) {
             if (! is_array($fileRow)) {
@@ -2869,7 +3124,7 @@ public function deleteUploadedFile(int $fileId): void
             }
 
             $uploads = collect($rawUploads)
-                ->filter(fn (mixed $upload): bool => $upload instanceof UploadedFile)
+                ->filter(fn(mixed $upload): bool => $upload instanceof UploadedFile)
                 ->values();
 
             if ($uploads->isEmpty()) {
@@ -2918,7 +3173,6 @@ public function deleteUploadedFile(int $fileId): void
         }
 
         return $normalizedFiles;
-
     }
 
     protected function storeValidatedFileUploads(PropertyCard $record, array $files): bool
@@ -2965,7 +3219,7 @@ public function deleteUploadedFile(int $fileId): void
         return Owner::query()
             ->orderByRaw('coalesce(company_name, full_name)')
             ->get()
-            ->mapWithKeys(fn (Owner $owner) => [$owner->getKey() => $owner->display_name])
+            ->mapWithKeys(fn(Owner $owner) => [$owner->getKey() => $owner->display_name])
             ->all();
     }
 
@@ -2987,8 +3241,8 @@ public function deleteUploadedFile(int $fileId): void
         $signalsState = array_is_list($signalsState) ? $signalsState : array_values($signalsState);
 
         $signalsById = collect($signalsState)
-            ->filter(fn ($signal) => is_array($signal) && filled($signal['id'] ?? null))
-            ->keyBy(fn ($signal) => (int) $signal['id']);
+            ->filter(fn($signal) => is_array($signal) && filled($signal['id'] ?? null))
+            ->keyBy(fn($signal) => (int) $signal['id']);
 
         $record->loadMissing('signals');
 
@@ -3003,9 +3257,9 @@ public function deleteUploadedFile(int $fileId): void
             $normalizedOwners = $this->normalizeSignalOwnersForStorage($signalState['signal_owners'] ?? []);
 
             $ownerIds = collect($normalizedOwners)
-                ->filter(fn (array $owner) => (bool) ($owner['is_owner'] ?? false) && filled($owner['owner_id'] ?? null))
+                ->filter(fn(array $owner) => (bool) ($owner['is_owner'] ?? false) && filled($owner['owner_id'] ?? null))
                 ->pluck('owner_id')
-                ->map(fn ($ownerId) => (int) $ownerId)
+                ->map(fn($ownerId) => (int) $ownerId)
                 ->unique()
                 ->values()
                 ->all();
@@ -3016,31 +3270,39 @@ public function deleteUploadedFile(int $fileId): void
 
     protected function hasPendingChanges(PropertyCard $record, array $attributes, array $state): bool
     {
-       $record->loadMissing('ownerships', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'installments', 'signals.owners');
+        $record->loadMissing('ownerships', 'operations.oldOwners', 'operations.newOwners', 'operations.witnesses', 'installments', 'signals.owners');
         $currentAttributes = Arr::only($record->getAttributes(), array_keys($attributes));
 
         if ($this->normalizeForComparison($attributes) !== $this->normalizeForComparison($currentAttributes)) {
             return true;
         }
 
-        if ($this->normalizeOwnershipsForComparison($state['ownerships'] ?? [])
-            !== $this->normalizeOwnershipsForComparison($record->ownerships->toArray())) {
+        if (
+            $this->normalizeOwnershipsForComparison($state['ownerships'] ?? [])
+            !== $this->normalizeOwnershipsForComparison($record->ownerships->toArray())
+        ) {
             return true;
         }
 
-        if ($this->normalizeInstallmentsForComparison($state['installments'] ?? [])
-            !== $this->normalizeInstallmentsForComparison($record->installments->toArray())) {
+        if (
+            $this->normalizeInstallmentsForComparison($state['installments'] ?? [])
+            !== $this->normalizeInstallmentsForComparison($record->installments->toArray())
+        ) {
             return true;
         }
 
-        if ($this->normalizeOperationsForComparison($state['operations'] ?? [])
-            !== $this->normalizeOperationsForComparison($record->operations->toArray())) {
+        if (
+            $this->normalizeOperationsForComparison($state['operations'] ?? [])
+            !== $this->normalizeOperationsForComparison($record->operations->toArray())
+        ) {
             return true;
         }
 
 
-        if ($this->normalizeSignalsForComparison($state['signals'] ?? [])
-            !== $this->normalizeSignalsForComparison($record->signals->toArray(), $record->signals->pluck('owners')->all())) {
+        if (
+            $this->normalizeSignalsForComparison($state['signals'] ?? [])
+            !== $this->normalizeSignalsForComparison($record->signals->toArray(), $record->signals->pluck('owners')->all())
+        ) {
             return true;
         }
 
@@ -3058,8 +3320,8 @@ public function deleteUploadedFile(int $fileId): void
         $rows = array_is_list($rows) ? $rows : array_values($rows);
 
         $normalized = collect($rows)
-            ->filter(fn ($row) => is_array($row))
-            ->map(fn (array $row) => $this->normalizeForComparison(Arr::only($row, [
+            ->filter(fn($row) => is_array($row))
+            ->map(fn(array $row) => $this->normalizeForComparison(Arr::only($row, [
                 'owner_id',
                 'ownership_percentage',
                 'ownership_metric',
@@ -3075,11 +3337,11 @@ public function deleteUploadedFile(int $fileId): void
                 'contract_number',
                 'commercial_contract_date',
             ])))
-            ->map(fn (array $row) => array_filter($row, fn ($value) => $value !== null && $value !== ''))
+            ->map(fn(array $row) => array_filter($row, fn($value) => $value !== null && $value !== ''))
             ->values();
 
         return $normalized
-            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->sortBy(fn(array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
             ->values()
             ->all();
     }
@@ -3095,15 +3357,15 @@ public function deleteUploadedFile(int $fileId): void
         $rows = array_is_list($rows) ? $rows : array_values($rows);
 
         $normalized = collect($rows)
-            ->filter(fn ($row) => is_array($row))
-            ->map(fn (array $row) => $this->normalizeForComparison(Arr::only($row, [
+            ->filter(fn($row) => is_array($row))
+            ->map(fn(array $row) => $this->normalizeForComparison(Arr::only($row, [
                 'amount',
                 'payment_date',
             ])))
             ->values();
 
         return $normalized
-            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->sortBy(fn(array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
             ->values()
             ->all();
     }
@@ -3119,7 +3381,7 @@ public function deleteUploadedFile(int $fileId): void
         $rows = array_is_list($rows) ? $rows : array_values($rows);
 
         $normalized = collect($rows)
-            ->filter(fn ($row) => is_array($row))
+            ->filter(fn($row) => is_array($row))
             ->map(function (array $row, int $index) use ($signalOwners): array {
                 $ownersFromRelation = $signalOwners[$index] ?? [];
 
@@ -3128,10 +3390,10 @@ public function deleteUploadedFile(int $fileId): void
                 }
 
                 $ownerIds = collect($this->normalizeSignalOwnersForStorage($row['signal_owners'] ?? []))
-                    ->filter(fn (array $owner) => (bool) ($owner['is_owner'] ?? false) && filled($owner['owner_id'] ?? null))
+                    ->filter(fn(array $owner) => (bool) ($owner['is_owner'] ?? false) && filled($owner['owner_id'] ?? null))
                     ->pluck('owner_id')
-                    ->map(fn ($ownerId) => (int) $ownerId)
-                    ->merge(collect($ownersFromRelation)->map(fn ($ownerId) => (int) $ownerId))
+                    ->map(fn($ownerId) => (int) $ownerId)
+                    ->merge(collect($ownersFromRelation)->map(fn($ownerId) => (int) $ownerId))
                     ->unique()
                     ->sort()
                     ->values()
@@ -3146,25 +3408,25 @@ public function deleteUploadedFile(int $fileId): void
                     'signal_source_date' => $this->normalizeForComparison($row['signal_source_date'] ?? null),
                     'signal_notes' => $row['signal_notes'] ?? null,
                     'signal_owners' => collect($this->normalizeSignalOwnersForStorage($row['signal_owners'] ?? []))
-                        ->sortBy(fn (array $owner) => json_encode($this->normalizeForComparison($owner), JSON_UNESCAPED_UNICODE))
+                        ->sortBy(fn(array $owner) => json_encode($this->normalizeForComparison($owner), JSON_UNESCAPED_UNICODE))
                         ->values()
                         ->all(),
                     'signal_victims' => collect($this->normalizeSignalVictimsForStorage($row['signal_victims'] ?? []))
-                        ->sortBy(fn (array $victim) => json_encode($this->normalizeForComparison($victim), JSON_UNESCAPED_UNICODE))
+                        ->sortBy(fn(array $victim) => json_encode($this->normalizeForComparison($victim), JSON_UNESCAPED_UNICODE))
                         ->values()
                         ->all(),
                     'owner_ids' => $ownerIds,
                 ];
             })
-            ->map(fn (array $row) => $this->normalizeForComparison($row))
+            ->map(fn(array $row) => $this->normalizeForComparison($row))
             ->values();
 
         return $normalized
-            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->sortBy(fn(array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
             ->values()
             ->all();
     }
-  protected function normalizeOperationsForComparison(mixed $rows): array
+    protected function normalizeOperationsForComparison(mixed $rows): array
     {
         $rows = $this->decodeJsonToArray($rows);
 
@@ -3175,7 +3437,7 @@ public function deleteUploadedFile(int $fileId): void
         $rows = array_is_list($rows) ? $rows : array_values($rows);
 
         return collect($rows)
-            ->filter(fn ($row) => is_array($row))
+            ->filter(fn($row) => is_array($row))
             ->map(function (array $row): array {
                 $oldOwners = $row['old_owners'] ?? [];
                 $newOwners = $row['new_owners'] ?? [];
@@ -3266,7 +3528,7 @@ public function deleteUploadedFile(int $fileId): void
 
                 return $this->normalizeForComparison($normalized);
             })
-            ->sortBy(fn (array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
+            ->sortBy(fn(array $row) => json_encode($row, JSON_UNESCAPED_UNICODE))
             ->values()
             ->all();
     }
@@ -3298,23 +3560,23 @@ public function deleteUploadedFile(int $fileId): void
 
     protected function formatValidationErrors(ValidationException $exception): string
     {
-    $errors = $exception->errors();
+        $errors = $exception->errors();
 
-    if (! is_array($errors) || empty($errors)) {
-        return 'يرجى مراجعة الأخطاء.';
-    }
-
-    $lines = [];
-
-    foreach ($errors as $field => $messages) {
-        foreach ((array) $messages as $msg) {
-            $lines[] = "• {$msg}";
+        if (! is_array($errors) || empty($errors)) {
+            return 'يرجى مراجعة الأخطاء.';
         }
+
+        $lines = [];
+
+        foreach ($errors as $field => $messages) {
+            foreach ((array) $messages as $msg) {
+                $lines[] = "• {$msg}";
+            }
+        }
+
+        return implode("\n", $lines);
     }
 
-    return implode("\n", $lines);
-    }
-    
     protected function formatCreateCardFailureReason(\Throwable $exception): string
     {
         if ($exception instanceof ValidationException) {
@@ -3334,569 +3596,566 @@ public function deleteUploadedFile(int $fileId): void
         return "تعذر إنشاء البطاقة بسبب: {$message}";
     }
 
-protected function formatQueryExceptionMessage(QueryException $exception): string
-{
-    $sqlState  = $exception->errorInfo[0] ?? (string) $exception->getCode();
-    $errno     = $exception->errorInfo[1] ?? null;
-    $driverMsg = $exception->errorInfo[2] ?? $exception->getMessage();
+    protected function formatQueryExceptionMessage(QueryException $exception): string
+    {
+        $sqlState  = $exception->errorInfo[0] ?? (string) $exception->getCode();
+        $errno     = $exception->errorInfo[1] ?? null;
+        $driverMsg = $exception->errorInfo[2] ?? $exception->getMessage();
 
-    $sql = method_exists($exception, 'getSql') ? (string) $exception->getSql() : null;
-    $bindings = method_exists($exception, 'getBindings') ? (array) $exception->getBindings() : [];
+        $sql = method_exists($exception, 'getSql') ? (string) $exception->getSql() : null;
+        $bindings = method_exists($exception, 'getBindings') ? (array) $exception->getBindings() : [];
 
-    // قصّ النصوص الطويلة
-    $driverMsg = is_string($driverMsg) ? trim($driverMsg) : '—';
+        // قصّ النصوص الطويلة
+        $driverMsg = is_string($driverMsg) ? trim($driverMsg) : '—';
 
-    if ($sql && mb_strlen($sql) > 900) {
-        $sql = mb_substr($sql, 0, 900) . ' ...';
+        if ($sql && mb_strlen($sql) > 900) {
+            $sql = mb_substr($sql, 0, 900) . ' ...';
+        }
+
+        $bindingsJson = ! empty($bindings)
+            ? json_encode($bindings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            : null;
+
+        if ($bindingsJson && mb_strlen($bindingsJson) > 900) {
+            $bindingsJson = mb_substr($bindingsJson, 0, 900) . ' ...';
+        }
+
+        $hint = $this->mysqlHintFromException($errno, $driverMsg);
+
+        $lines = [];
+        $lines[] = "SQLSTATE: {$sqlState}";
+        if ($errno !== null) $lines[] = "Errno: {$errno}";
+        $lines[] = "Message: {$driverMsg}";
+        if ($hint) $lines[] = "Hint: {$hint}";
+        if ($sql) $lines[] = "SQL: {$sql}";
+        if ($bindingsJson) $lines[] = "Bindings: {$bindingsJson}";
+
+        return implode("\n", $lines);
     }
-
-    $bindingsJson = ! empty($bindings)
-        ? json_encode($bindings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        : null;
-
-    if ($bindingsJson && mb_strlen($bindingsJson) > 900) {
-        $bindingsJson = mb_substr($bindingsJson, 0, 900) . ' ...';
-    }
-
-    $hint = $this->mysqlHintFromException($errno, $driverMsg);
-
-    $lines = [];
-    $lines[] = "SQLSTATE: {$sqlState}";
-    if ($errno !== null) $lines[] = "Errno: {$errno}";
-    $lines[] = "Message: {$driverMsg}";
-    if ($hint) $lines[] = "Hint: {$hint}";
-    if ($sql) $lines[] = "SQL: {$sql}";
-    if ($bindingsJson) $lines[] = "Bindings: {$bindingsJson}";
-
-    return implode("\n", $lines);
-}
 
     private function mysqlHintFromException(mixed $errno, string $message): string
-{
-    $errno = is_numeric($errno) ? (int) $errno : null;
+    {
+        $errno = is_numeric($errno) ? (int) $errno : null;
 
-    // 1062 Duplicate entry
-    if ($errno === 1062) {
-        $key = null;
-        $entry = null;
+        // 1062 Duplicate entry
+        if ($errno === 1062) {
+            $key = null;
+            $entry = null;
 
-        if (preg_match("/Duplicate entry '([^']+)'/u", $message, $m)) {
-            $entry = $m[1] ?? null;
+            if (preg_match("/Duplicate entry '([^']+)'/u", $message, $m)) {
+                $entry = $m[1] ?? null;
+            }
+            if (preg_match("/for key '([^']+)'/u", $message, $m)) {
+                $key = $m[1] ?? null;
+            }
+
+            $parts = [];
+            $parts[] = "تكرار قيمة ضمن فهرس UNIQUE.";
+            if ($key)   $parts[] = "الـ Key: {$key}";
+            if ($entry) $parts[] = "القيمة: {$entry}";
+
+            // تلميح خاص بمشكلتك (pivot + NULL)
+            $parts[] = "إذا كان التكرار على جدول pivot مثل owner_property_card: انتبه أن UNIQUE مع أعمدة Nullable يسمح بتكرار NULL في MySQL، وقد تحتاج جعل الحقول غير Nullable أو تعديل الـ unique index.";
+
+            return implode(' ', $parts);
         }
-        if (preg_match("/for key '([^']+)'/u", $message, $m)) {
-            $key = $m[1] ?? null;
+
+        // 1452 Foreign key fails
+        if ($errno === 1452) {
+            return "فشل قيد Foreign Key: يوجد owner_id / property_card_id يشير لسجل غير موجود، أو ترتيب الحفظ غير صحيح.";
         }
 
-        $parts = [];
-        $parts[] = "تكرار قيمة ضمن فهرس UNIQUE.";
-        if ($key)   $parts[] = "الـ Key: {$key}";
-        if ($entry) $parts[] = "القيمة: {$entry}";
-
-        // تلميح خاص بمشكلتك (pivot + NULL)
-        $parts[] = "إذا كان التكرار على جدول pivot مثل owner_property_card: انتبه أن UNIQUE مع أعمدة Nullable يسمح بتكرار NULL في MySQL، وقد تحتاج جعل الحقول غير Nullable أو تعديل الـ unique index.";
-
-        return implode(' ', $parts);
-    }
-
-    // 1452 Foreign key fails
-    if ($errno === 1452) {
-        return "فشل قيد Foreign Key: يوجد owner_id / property_card_id يشير لسجل غير موجود، أو ترتيب الحفظ غير صحيح.";
-    }
-
-    // 1048 Column cannot be null
-    if ($errno === 1048) {
-        if (preg_match("/Column '([^']+)' cannot be null/u", $message, $m)) {
-            return "الحقل '{$m[1]}' لا يقبل NULL. تأكد أنه مُعبّأ أو غيّر المايغريشن ليكون nullable.";
+        // 1048 Column cannot be null
+        if ($errno === 1048) {
+            if (preg_match("/Column '([^']+)' cannot be null/u", $message, $m)) {
+                return "الحقل '{$m[1]}' لا يقبل NULL. تأكد أنه مُعبّأ أو غيّر المايغريشن ليكون nullable.";
+            }
+            return "حقل لا يقبل NULL تم تمريره فارغاً.";
         }
-        return "حقل لا يقبل NULL تم تمريره فارغاً.";
-    }
 
-    // 1364 Field doesn't have a default value
-    if ($errno === 1364) {
-        if (preg_match("/Field '([^']+)' doesn't have a default value/u", $message, $m)) {
-            return "الحقل '{$m[1]}' مطلوب ولا يوجد Default. إمّا تملؤه أو تجعله nullable/Default في المايغريشن.";
+        // 1364 Field doesn't have a default value
+        if ($errno === 1364) {
+            if (preg_match("/Field '([^']+)' doesn't have a default value/u", $message, $m)) {
+                return "الحقل '{$m[1]}' مطلوب ولا يوجد Default. إمّا تملؤه أو تجعله nullable/Default في المايغريشن.";
+            }
+            return "حقل مطلوب بدون Default.";
         }
-        return "حقل مطلوب بدون Default.";
-    }
 
-    // 1406 Data too long
-    if ($errno === 1406) {
-        if (preg_match("/Data too long for column '([^']+)'/u", $message, $m)) {
-            return "القيمة أطول من طول العمود '{$m[1]}'.";
+        // 1406 Data too long
+        if ($errno === 1406) {
+            if (preg_match("/Data too long for column '([^']+)'/u", $message, $m)) {
+                return "القيمة أطول من طول العمود '{$m[1]}'.";
+            }
+            return "قيمة أطول من طول العمود.";
         }
-        return "قيمة أطول من طول العمود.";
-    }
 
-    // 1265 Data truncated
-    if ($errno === 1265) {
-        return "تم اقتطاع البيانات (Data truncated) غالباً بسبب نوع enum/decimal أو تاريخ غير صالح.";
-    }
-
-    // fallback
-    return "";
-}
-private function nullifyEmptyStrings(array $data): array
-{
-    foreach ($data as $k => $v) {
-        if (is_string($v) && trim($v) === '') {
-            $data[$k] = null;
+        // 1265 Data truncated
+        if ($errno === 1265) {
+            return "تم اقتطاع البيانات (Data truncated) غالباً بسبب نوع enum/decimal أو تاريخ غير صالح.";
         }
+
+        // fallback
+        return "";
     }
-    return $data;
-}
-protected function persistOwnerships(PropertyCard $record, mixed $rows): void
-{
-    $rows = $this->decodeJsonToArray($rows);
-
-    if (! is_array($rows)) {
-        $rows = [];
-    }
-
-    // يدعم UUID keyed أو list
-    $rows = array_is_list($rows) ? $rows : array_values($rows);
-
-    $allowed = [
-        'owner_id',
-        'ownership_metric',
-        'ownership_percentage',
-        'is_current',
-        'purchase_date',
-        'sale_date',
-        'purchase_method',
-        'case_number',
-        'decision_number',
-        'authority',
-        'judgment_date',
-        'regular_contract_date',
-        'contract_number',
-        'commercial_contract_date',
-    ];
-
-    $incomingIds = collect($rows)
-        ->pluck('id')
-        ->filter()
-        ->map(fn ($id) => (int) $id)
-        ->unique()
-        ->values()
-        ->all();
-
-    // احذف ما تم إزالته من الواجهة
-    $record->ownerships()
-        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
-        ->when(count($incomingIds) === 0, fn ($q) => $q) // لو ما في أي id incoming احذف الكل
-        ->delete();
-
-    foreach ($rows as $row) {
-        if (! is_array($row)) continue;
-
-        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-        $data = Arr::only($row, $allowed);
-        $data = $this->nullifyEmptyStrings($data);
-
-        // تجاهل صف ناقص
-        if (! filled($data['owner_id'] ?? null)) continue;
-        if (! filled($data['ownership_metric'] ?? null)) continue;
-        if (! isset($data['ownership_percentage'])) continue;
-
-        if ($id) {
-            $existing = $record->ownerships()->whereKey($id)->first();
-            if ($existing) {
-                $existing->update($data);
-                continue;
+    private function nullifyEmptyStrings(array $data): array
+    {
+        foreach ($data as $k => $v) {
+            if (is_string($v) && trim($v) === '') {
+                $data[$k] = null;
             }
         }
-
-        // create جديد (بدون id)
-        $record->ownerships()->create($data);
+        return $data;
     }
-}
-protected function persistInstallments(PropertyCard $record, mixed $rows): void
-{
-    $rows = $this->decodeJsonToArray($rows);
+    protected function persistOwnerships(PropertyCard $record, mixed $rows): void
+    {
+        $rows = $this->decodeJsonToArray($rows);
 
-    if (! is_array($rows)) {
-        $rows = [];
-    }
-
-    $rows = array_is_list($rows) ? $rows : array_values($rows);
-    $totalPaid = 0.0;
-    $ownedValue = (float) ($record->owned_property_value_usd ?? 0);
-
-    $allowed = [
-        'amount',
-        'payment_date',
-        'remaining_after_payment',
-    ];
-
-    $incomingIds = collect($rows)
-        ->pluck('id')
-        ->filter()
-        ->map(fn ($id) => (int) $id)
-        ->unique()
-        ->values()
-        ->all();
-
-    $record->installments()
-        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
-        ->when(count($incomingIds) === 0, fn ($q) => $q)
-        ->delete();
-
-    foreach ($rows as $row) {
-        if (! is_array($row)) continue;
-
-        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-        $data = Arr::only($row, $allowed);
-        $data = $this->nullifyEmptyStrings($data);
-
-        if (! filled($data['payment_date'] ?? null)) continue;
-        if (! isset($data['amount'])) continue;
-
-        $totalPaid += (float) ($data['amount'] ?? 0);
-        $data['remaining_after_payment'] = $ownedValue - $totalPaid;
-
-        if ($id) {
-            $existing = $record->installments()->whereKey($id)->first();
-            if ($existing) {
-                $existing->update($data);
-                continue;
-            }
+        if (! is_array($rows)) {
+            $rows = [];
         }
 
-        $record->installments()->create($data);
-    }
-    $remainingBalance = $ownedValue - $totalPaid;
+        // يدعم UUID keyed أو list
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
 
-    $record->update([
-        // إعادة تعريف final_balance ليعبّر عن المتبقي.
-        'final_balance' => $remainingBalance,
-    ]);
+        $allowed = [
+            'owner_id',
+            'ownership_metric',
+            'ownership_percentage',
+            'is_current',
+            'purchase_date',
+            'sale_date',
+            'purchase_method',
+            'case_number',
+            'decision_number',
+            'authority',
+            'judgment_date',
+            'regular_contract_date',
+            'contract_number',
+            'commercial_contract_date',
+        ];
 
-}
-protected function persistOperations(PropertyCard $record, array $rows): void
-{
-    $rows = $this->decodeJsonToArray($rows);
-
-    if (! is_array($rows)) {
-        $rows = [];
-    }
-
-    $rows = array_is_list($rows) ? $rows : array_values($rows);
-
-    $allowed = [
-        'operation_type',
-        'transaction_amount',
-        'transaction_unit',
-        'operation_method',
-        'case_number',
-        'decision_number',
-        'authority',
-        'judgment_date',
-        'judgment_notes',
-        'contract_notes',
-        'contract_number',
-        'contract_date',
-        'regular_contract_number',
-        'regular_contract_date',
-        'commercial_contract_number',
-        'commercial_contract_date',
-        'commercial_contract_notes',
-        'old_owners',
-        'new_owners',
-        'witnesses',
-    ];
-
-    $incomingIds = collect($rows)
-        ->pluck('id')
-        ->filter()
-        ->map(fn ($id) => (int) $id)
-        ->unique()
-        ->values()
-        ->all();
-
-    $record->operations()
-        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
-        ->when(count($incomingIds) === 0, fn ($q) => $q)
-        ->delete();
-
-    foreach ($rows as $row) {
-        if (! is_array($row)) {
-            continue;
-        }
-
-        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-        $data = Arr::only($row, $allowed);
-        $data = $this->nullifyEmptyStrings($data);
-
-        $method = (string) ($data['operation_method'] ?? '');
-
-        if (! in_array($method, ['court_judgment', 'regular_contract', 'commercial_register_contract'], true)) {
-            continue;
-        }
-
-
-        if ($method === 'regular_contract') {
-            $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
-            $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
-            $data['contract_notes'] = $data['contract_notes'] ?? null;
-            $data['case_number'] = null;
-            $data['decision_number'] = null;
-            $data['authority'] = null;
-            $data['judgment_date'] = null;
-            $data['judgment_notes'] = null;
-        }
-
-        if ($method === 'commercial_register_contract') {
-            $data['contract_number'] = $data['commercial_contract_number'] ?? $data['contract_number'] ?? null;
-            $data['contract_date'] = $data['commercial_contract_date'] ?? $data['contract_date'] ?? null;
-            $data['contract_notes'] = $data['commercial_contract_notes'] ?? $data['contract_notes'] ?? null;
-            $data['case_number'] = null;
-            $data['decision_number'] = null;
-            $data['authority'] = null;
-            $data['judgment_date'] = null;
-            $data['judgment_notes'] = null;
-        }
-
-        if ($method === 'court_judgment') {
-            $data['contract_number'] = null;
-            $data['contract_date'] = null;
-            $data['contract_notes'] = null;
-        }
-
-        $oldOwners = collect($data['old_owners'] ?? [])
-            ->map(function ($ownerId): int {
-                if (is_array($ownerId)) {
-                    return (int) ($ownerId['id'] ?? $ownerId['owner_id'] ?? 0);
-                }
-
-                return (int) $ownerId;
-            })
+        $incomingIds = collect($rows)
+            ->pluck('id')
             ->filter()
+            ->map(fn($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
-        $newOwners = collect($data['new_owners'] ?? [])
-            ->map(function ($ownerId): int {
-                if (is_array($ownerId)) {
-                    return (int) ($ownerId['id'] ?? $ownerId['owner_id'] ?? 0);
-                }
 
-                return (int) $ownerId;
-            })
+        // احذف ما تم إزالته من الواجهة
+        $record->ownerships()
+            ->when(count($incomingIds) > 0, fn($q) => $q->whereNotIn('id', $incomingIds))
+            ->when(count($incomingIds) === 0, fn($q) => $q) // لو ما في أي id incoming احذف الكل
+            ->delete();
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) continue;
+
+            $id = isset($row['id']) ? (int) $row['id'] : null;
+
+            $data = Arr::only($row, $allowed);
+            $data = $this->nullifyEmptyStrings($data);
+
+            // تجاهل صف ناقص
+            if (! filled($data['owner_id'] ?? null)) continue;
+            if (! filled($data['ownership_metric'] ?? null)) continue;
+            if (! isset($data['ownership_percentage'])) continue;
+
+            if ($id) {
+                $existing = $record->ownerships()->whereKey($id)->first();
+                if ($existing) {
+                    $existing->update($data);
+                    continue;
+                }
+            }
+
+            // create جديد (بدون id)
+            $record->ownerships()->create($data);
+        }
+    }
+    protected function persistInstallments(PropertyCard $record, mixed $rows): void
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            $rows = [];
+        }
+
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
+        $totalPaid = 0.0;
+        $ownedValue = (float) ($record->owned_property_value_usd ?? 0);
+
+        $allowed = [
+            'amount',
+            'payment_date',
+            'remaining_after_payment',
+        ];
+
+        $incomingIds = collect($rows)
+            ->pluck('id')
             ->filter()
+            ->map(fn($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
-        $witnesses = collect($data['witnesses'] ?? [])
-            ->map(function ($witness): ?string {
-                if (is_array($witness)) {
-                    $witness = $witness['name'] ?? null;
-                }
 
-                return is_string($witness) ? trim($witness) : null;
-            })
+        $record->installments()
+            ->when(count($incomingIds) > 0, fn($q) => $q->whereNotIn('id', $incomingIds))
+            ->when(count($incomingIds) === 0, fn($q) => $q)
+            ->delete();
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) continue;
+
+            $id = isset($row['id']) ? (int) $row['id'] : null;
+
+            $data = Arr::only($row, $allowed);
+            $data = $this->nullifyEmptyStrings($data);
+
+            if (! filled($data['payment_date'] ?? null)) continue;
+            if (! isset($data['amount'])) continue;
+
+            $totalPaid += (float) ($data['amount'] ?? 0);
+            $data['remaining_after_payment'] = $ownedValue - $totalPaid;
+
+            if ($id) {
+                $existing = $record->installments()->whereKey($id)->first();
+                if ($existing) {
+                    $existing->update($data);
+                    continue;
+                }
+            }
+
+            $record->installments()->create($data);
+        }
+        $remainingBalance = $ownedValue - $totalPaid;
+
+        $record->update([
+            // إعادة تعريف final_balance ليعبّر عن المتبقي.
+            'final_balance' => $remainingBalance,
+        ]);
+    }
+    protected function persistOperations(PropertyCard $record, array $rows): void
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            $rows = [];
+        }
+
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
+
+        $allowed = [
+            'operation_type',
+            'transaction_amount',
+            'transaction_unit',
+            'operation_method',
+            'case_number',
+            'decision_number',
+            'authority',
+            'judgment_date',
+            'judgment_notes',
+            'contract_notes',
+            'contract_number',
+            'contract_date',
+            'regular_contract_number',
+            'regular_contract_date',
+            'commercial_contract_number',
+            'commercial_contract_date',
+            'commercial_contract_notes',
+            'old_owners',
+            'new_owners',
+            'witnesses',
+        ];
+
+        $incomingIds = collect($rows)
+            ->pluck('id')
             ->filter()
+            ->map(fn($id) => (int) $id)
+            ->unique()
             ->values()
             ->all();
 
-        unset(
-            $data['regular_contract_number'],
-            $data['regular_contract_date'],
-            $data['commercial_contract_number'],
-            $data['commercial_contract_date'],
-            $data['commercial_contract_notes'],
-            $data['old_owners'],
-            $data['new_owners'],
-            $data['witnesses']
-        );
+        $record->operations()
+            ->when(count($incomingIds) > 0, fn($q) => $q->whereNotIn('id', $incomingIds))
+            ->when(count($incomingIds) === 0, fn($q) => $q)
+            ->delete();
 
-        $data['transaction_unit'] = $this->normalizeTransactionUnit($data['transaction_unit'] ?? null);
-
-        if (! filled($data['operation_type'] ?? null) || ! filled($data['operation_method'] ?? null) || ! filled($data['transaction_amount'] ?? null) || ! filled($data['transaction_unit'] ?? null)) {
-            continue;
-        }
-
-        $operation = null;
-
-        if ($id) {
-            $operation = $record->operations()->whereKey($id)->first();
-            if ($operation) {
-                $operation->update($data);
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
             }
+
+            $id = isset($row['id']) ? (int) $row['id'] : null;
+
+            $data = Arr::only($row, $allowed);
+            $data = $this->nullifyEmptyStrings($data);
+
+            $method = (string) ($data['operation_method'] ?? '');
+
+            if (! in_array($method, ['court_judgment', 'regular_contract', 'commercial_register_contract'], true)) {
+                continue;
+            }
+
+
+            if ($method === 'regular_contract') {
+                $data['contract_number'] = $data['regular_contract_number'] ?? $data['contract_number'] ?? null;
+                $data['contract_date'] = $data['regular_contract_date'] ?? $data['contract_date'] ?? null;
+                $data['contract_notes'] = $data['contract_notes'] ?? null;
+                $data['case_number'] = null;
+                $data['decision_number'] = null;
+                $data['authority'] = null;
+                $data['judgment_date'] = null;
+                $data['judgment_notes'] = null;
+            }
+
+            if ($method === 'commercial_register_contract') {
+                $data['contract_number'] = $data['commercial_contract_number'] ?? $data['contract_number'] ?? null;
+                $data['contract_date'] = $data['commercial_contract_date'] ?? $data['contract_date'] ?? null;
+                $data['contract_notes'] = $data['commercial_contract_notes'] ?? $data['contract_notes'] ?? null;
+                $data['case_number'] = null;
+                $data['decision_number'] = null;
+                $data['authority'] = null;
+                $data['judgment_date'] = null;
+                $data['judgment_notes'] = null;
+            }
+
+            if ($method === 'court_judgment') {
+                $data['contract_number'] = null;
+                $data['contract_date'] = null;
+                $data['contract_notes'] = null;
+            }
+
+            $oldOwners = collect($data['old_owners'] ?? [])
+                ->map(function ($ownerId): int {
+                    if (is_array($ownerId)) {
+                        return (int) ($ownerId['id'] ?? $ownerId['owner_id'] ?? 0);
+                    }
+
+                    return (int) $ownerId;
+                })
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $newOwners = collect($data['new_owners'] ?? [])
+                ->map(function ($ownerId): int {
+                    if (is_array($ownerId)) {
+                        return (int) ($ownerId['id'] ?? $ownerId['owner_id'] ?? 0);
+                    }
+
+                    return (int) $ownerId;
+                })
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $witnesses = collect($data['witnesses'] ?? [])
+                ->map(function ($witness): ?string {
+                    if (is_array($witness)) {
+                        $witness = $witness['name'] ?? null;
+                    }
+
+                    return is_string($witness) ? trim($witness) : null;
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            unset(
+                $data['regular_contract_number'],
+                $data['regular_contract_date'],
+                $data['commercial_contract_number'],
+                $data['commercial_contract_date'],
+                $data['commercial_contract_notes'],
+                $data['old_owners'],
+                $data['new_owners'],
+                $data['witnesses']
+            );
+
+            $data['transaction_unit'] = $this->normalizeTransactionUnit($data['transaction_unit'] ?? null);
+
+            if (! filled($data['operation_type'] ?? null) || ! filled($data['operation_method'] ?? null) || ! filled($data['transaction_amount'] ?? null) || ! filled($data['transaction_unit'] ?? null)) {
+                continue;
+            }
+
+            $operation = null;
+
+            if ($id) {
+                $operation = $record->operations()->whereKey($id)->first();
+                if ($operation) {
+                    $operation->update($data);
+                }
+            }
+
+            if (! $operation) {
+                $operation = $record->operations()->create($data);
+            }
+
+            $operation->oldOwners()->sync($oldOwners);
+            $operation->newOwners()->sync($newOwners);
+            $operation->syncWitnesses($witnesses);
+        }
+    }
+
+
+    protected function persistSignals(PropertyCard $record, mixed $rows): void
+    {
+        $rows = $this->decodeJsonToArray($rows);
+
+        if (! is_array($rows)) {
+            $rows = [];
         }
 
-        if (! $operation) {
-            $operation = $record->operations()->create($data);
-        }
+        $rows = array_is_list($rows) ? $rows : array_values($rows);
 
-        $operation->oldOwners()->sync($oldOwners);
-        $operation->newOwners()->sync($newOwners);
-        $operation->syncWitnesses($witnesses);
-    }
-}
+        $allowed = [
+            'signal_id',
+            'signal_date',
+            'type',
+            'signal_source',
+            'signal_source_number',
+            'signal_source_date',
+            'signal_notes',
+            'signal_owners',
+            'signal_victims',
+            'signal_owner',   // legacy إن وجد
+            'signal_victim',  // legacy إن وجد
+        ];
 
+        $incomingIds = collect($rows)
+            ->pluck('id')
+            ->filter()
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
-protected function persistSignals(PropertyCard $record, mixed $rows): void
-{
-    $rows = $this->decodeJsonToArray($rows);
+        // soft delete لمن تم حذفه من الواجهة
+        $record->signals()
+            ->when(count($incomingIds) > 0, fn($q) => $q->whereNotIn('id', $incomingIds))
+            ->when(count($incomingIds) === 0, fn($q) => $q)
+            ->delete();
 
-    if (! is_array($rows)) {
-        $rows = [];
-    }
+        foreach ($rows as $row) {
+            if (! is_array($row)) continue;
 
-    $rows = array_is_list($rows) ? $rows : array_values($rows);
+            $id = isset($row['id']) ? (int) $row['id'] : null;
 
-    $allowed = [
-        'signal_id',
-        'signal_date',
-        'type',
-        'signal_source',
-        'signal_source_number',
-        'signal_source_date',
-        'signal_notes',
-        'signal_owners',
-        'signal_victims',
-        'signal_owner',   // legacy إن وجد
-        'signal_victim',  // legacy إن وجد
-    ];
+            $data = Arr::only($row, $allowed);
+            $data = $this->nullifyEmptyStrings($data);
 
-    $incomingIds = collect($rows)
-        ->pluck('id')
-        ->filter()
-        ->map(fn ($id) => (int) $id)
-        ->unique()
-        ->values()
-        ->all();
+            // تطبيع JSON owners/victims قبل التخزين
+            $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
+            $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
 
-    // soft delete لمن تم حذفه من الواجهة
-    $record->signals()
-        ->when(count($incomingIds) > 0, fn ($q) => $q->whereNotIn('id', $incomingIds))
-        ->when(count($incomingIds) === 0, fn ($q) => $q)
-        ->delete();
+            if (! filled($data['signal_id'] ?? null)) continue;
+            if (! filled($data['type'] ?? null)) continue;
 
-    foreach ($rows as $row) {
-        if (! is_array($row)) continue;
-
-        $id = isset($row['id']) ? (int) $row['id'] : null;
-
-        $data = Arr::only($row, $allowed);
-        $data = $this->nullifyEmptyStrings($data);
-
-        // تطبيع JSON owners/victims قبل التخزين
-        $data['signal_owners']  = $this->normalizeSignalOwnersForStorage($data['signal_owners'] ?? []);
-        $data['signal_victims'] = $this->normalizeSignalVictimsForStorage($data['signal_victims'] ?? []);
-
-        if (! filled($data['signal_id'] ?? null)) continue;
-        if (! filled($data['type'] ?? null)) continue;
-
-        if ($id) {
-            $signal = $record->signals()->whereKey($id)->first();
-            if ($signal) {
-                $signal->update($data);
+            if ($id) {
+                $signal = $record->signals()->whereKey($id)->first();
+                if ($signal) {
+                    $signal->update($data);
+                } else {
+                    $signal = $record->signals()->create($data);
+                }
             } else {
                 $signal = $record->signals()->create($data);
             }
-        } else {
-            $signal = $record->signals()->create($data);
+
+            // sync pivot owners
+            $ownerIds = collect($data['signal_owners'])
+                ->filter(fn(array $o) => (bool) ($o['is_owner'] ?? false) && filled($o['owner_id'] ?? null))
+                ->pluck('owner_id')
+                ->map(fn($x) => (int) $x)
+                ->unique()
+                ->values()
+                ->all();
+
+            $signal->owners()->sync($ownerIds);
+        }
+    }
+
+    private function signalOwnersToUiKeyed(mixed $stored, $ownersRelation = null): array
+    {
+        $stored = $this->decodeJsonToArray($stored);
+
+        $rows = [];
+
+        if (is_array($stored) && count($stored) > 0) {
+            $values = array_is_list($stored) ? $stored : array_values($stored);
+            $first  = $values[0] ?? null;
+
+            // إذا كانت UI already (owner_from_owner)
+            if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
+                $rows = $values;
+            }
+            // إذا كانت stored shape (is_owner)
+            elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+                foreach ($values as $item) {
+                    if (! is_array($item)) continue;
+
+                    $isOwner = (bool) ($item['is_owner'] ?? false);
+
+                    $rows[] = [
+                        'owner_from_owner' => $isOwner,
+                        'owner_id'   => $isOwner ? ($item['owner_id'] ?? null) : null,
+                        'owner_name' => $isOwner ? ($item['name'] ?? null) : ($item['name'] ?? null),
+                    ];
+                }
+            }
         }
 
-        // sync pivot owners
-        $ownerIds = collect($data['signal_owners'])
-            ->filter(fn (array $o) => (bool) ($o['is_owner'] ?? false) && filled($o['owner_id'] ?? null))
-            ->pluck('owner_id')
-            ->map(fn ($x) => (int) $x)
-            ->unique()
-            ->values()
+        // fallback من علاقة owners pivot إن كان JSON فارغ
+        if (count($rows) === 0 && $ownersRelation && $ownersRelation instanceof \Illuminate\Support\Collection && $ownersRelation->count()) {
+            $rows = $ownersRelation->map(fn($o) => [
+                'owner_from_owner' => true,
+                'owner_id'   => $o->getKey(),
+                'owner_name' => $o->display_name ?? $o->full_name ?? null,
+            ])->all();
+        }
+
+        $rows = $this->deduplicateSignalOwnerUiRows($rows);
+
+        return collect($rows)
+            ->mapWithKeys(fn(array $row) => [Str::uuid()->toString() => $row])
             ->all();
-
-        $signal->owners()->sync($ownerIds);
     }
-}
 
-private function signalOwnersToUiKeyed(mixed $stored, $ownersRelation = null): array
-{
-    $stored = $this->decodeJsonToArray($stored);
+    private function signalVictimsToUiKeyed(mixed $stored): array
+    {
+        $stored = $this->decodeJsonToArray($stored);
 
-    $rows = [];
+        $rows = [];
 
-    if (is_array($stored) && count($stored) > 0) {
-        $values = array_is_list($stored) ? $stored : array_values($stored);
-        $first  = $values[0] ?? null;
+        if (is_array($stored) && count($stored) > 0) {
+            $values = array_is_list($stored) ? $stored : array_values($stored);
+            $first  = $values[0] ?? null;
 
-        // إذا كانت UI already (owner_from_owner)
-        if (is_array($first) && array_key_exists('owner_from_owner', $first)) {
-            $rows = $values;
-        }
-        // إذا كانت stored shape (is_owner)
-        elseif (is_array($first) && array_key_exists('is_owner', $first)) {
-            foreach ($values as $item) {
-                if (! is_array($item)) continue;
+            // UI already (victim_from_owner)
+            if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
+                $rows = $values;
+            }
+            // stored shape (is_owner)
+            elseif (is_array($first) && array_key_exists('is_owner', $first)) {
+                foreach ($values as $item) {
+                    if (! is_array($item)) continue;
 
-                $isOwner = (bool) ($item['is_owner'] ?? false);
+                    $isOwner = (bool) ($item['is_owner'] ?? false);
 
-                $rows[] = [
-                    'owner_from_owner' => $isOwner,
-                    'owner_id'   => $isOwner ? ($item['owner_id'] ?? null) : null,
-                    'owner_name' => $isOwner ? ($item['name'] ?? null) : ($item['name'] ?? null),
-                ];
+                    $rows[] = [
+                        'victim_from_owner' => $isOwner,
+                        'victim_owner_id' => $isOwner ? ($item['owner_id'] ?? null) : null,
+                        'victim_name'     => $isOwner ? ($item['name'] ?? null) : ($item['name'] ?? null),
+                    ];
+                }
             }
         }
+
+        $rows = $this->deduplicateSignalVictimUiRows($rows);
+
+        return collect($rows)
+            ->mapWithKeys(fn(array $row) => [Str::uuid()->toString() => $row])
+            ->all();
     }
-
-    // fallback من علاقة owners pivot إن كان JSON فارغ
-    if (count($rows) === 0 && $ownersRelation && $ownersRelation instanceof \Illuminate\Support\Collection && $ownersRelation->count()) {
-        $rows = $ownersRelation->map(fn ($o) => [
-            'owner_from_owner' => true,
-            'owner_id'   => $o->getKey(),
-            'owner_name' => $o->display_name ?? $o->full_name ?? null,
-        ])->all();
-    }
-
-    $rows = $this->deduplicateSignalOwnerUiRows($rows);
-
-    return collect($rows)
-        ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
-        ->all();
-}
-
-private function signalVictimsToUiKeyed(mixed $stored): array
-{
-    $stored = $this->decodeJsonToArray($stored);
-
-    $rows = [];
-
-    if (is_array($stored) && count($stored) > 0) {
-        $values = array_is_list($stored) ? $stored : array_values($stored);
-        $first  = $values[0] ?? null;
-
-        // UI already (victim_from_owner)
-        if (is_array($first) && array_key_exists('victim_from_owner', $first)) {
-            $rows = $values;
-        }
-        // stored shape (is_owner)
-        elseif (is_array($first) && array_key_exists('is_owner', $first)) {
-            foreach ($values as $item) {
-                if (! is_array($item)) continue;
-
-                $isOwner = (bool) ($item['is_owner'] ?? false);
-
-                $rows[] = [
-                    'victim_from_owner' => $isOwner,
-                    'victim_owner_id' => $isOwner ? ($item['owner_id'] ?? null) : null,
-                    'victim_name'     => $isOwner ? ($item['name'] ?? null) : ($item['name'] ?? null),
-                ];
-            }
-        }
-    }
-
-    $rows = $this->deduplicateSignalVictimUiRows($rows);
-
-    return collect($rows)
-        ->mapWithKeys(fn (array $row) => [Str::uuid()->toString() => $row])
-        ->all();
-}
-
-
 }
