@@ -39,6 +39,18 @@
   --r-lg: 16px;
 }
 
+[data-theme="light"] {
+  --bg-primary:   #f7f4ee;
+  --bg-secondary: #fdfaf3;
+  --bg-card:      #ffffff;
+  --text-primary: #2d2418;
+  --text-secondary: #5e5243;
+  --text-muted:   #7b6f60;
+  --border:       #dfd5c6;
+  --shadow-gold: 0 0 18px rgba(212,175,55,.14);
+  --shadow-card: 0 6px 24px rgba(72,57,32,.08);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { direction: rtl; scroll-behavior: smooth; }
 
@@ -73,6 +85,14 @@ body::after {
   z-index: 0;
 }
 
+[data-theme="light"] body::before {
+  background: radial-gradient(circle, rgba(196,154,42,.12) 0%, transparent 70%);
+}
+
+[data-theme="light"] body::after {
+  background: radial-gradient(circle, rgba(139,105,20,.08) 0%, transparent 70%);
+}
+
 /* ═══ LAYOUT ═══ */
 .app-wrapper {
   display: flex;
@@ -94,6 +114,7 @@ body::after {
   height: 100vh;
   z-index: 100;
   overflow: hidden;
+  transition: width .26s ease, transform .26s ease;
 }
 
 .sidebar::before {
@@ -127,6 +148,37 @@ body::after {
   font-weight: 700;
   color: var(--gold-bright);
   line-height: 1.3;
+}
+
+.logo-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sidebar-toggle-top {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.3);
+  background: rgba(212,175,55,.06);
+  color: var(--gold-bright);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.sidebar-toggle-top:hover {
+  background: rgba(212,175,55,.14);
+  border-color: rgba(212,175,55,.5);
+}
+
+.sidebar-toggle-top svg {
+  width: 14px;
+  height: 14px;
 }
 
 .logo-sub {
@@ -173,7 +225,7 @@ body::after {
 
 .nav-item:hover {
   background: rgba(212,175,55,.06);
-  color: var(--ivory-warm);
+  color: var(--text-primary);
   border-color: rgba(212,175,55,.12);
 }
 
@@ -245,6 +297,95 @@ body::after {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  transition: margin-right .26s ease;
+}
+
+body.sidebar-collapsed .sidebar {
+  width: 86px;
+}
+
+body.sidebar-collapsed .main-content {
+  margin-right: 86px;
+}
+
+body.sidebar-collapsed .sidebar-logo,
+body.sidebar-collapsed .nav-section-label,
+body.sidebar-collapsed .sidebar-footer {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-toggle-top {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-nav {
+  padding: 18px 10px;
+}
+
+body.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding: 12px 10px;
+  gap: 0;
+}
+
+body.sidebar-collapsed .nav-item .nav-text {
+  display: none;
+}
+
+.sidebar-toggle {
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: all .22s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(212,175,55,.06);
+  color: var(--text-primary);
+  border-color: rgba(212,175,55,.12);
+}
+
+.sidebar-toggle svg {
+  width: 18px;
+  height: 18px;
+  opacity: .7;
+}
+
+.sidebar-toggle-inside {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 11px 14px;
+  gap: 12px;
+  text-align: right;
+  position: relative;
+}
+
+body.sidebar-collapsed .sidebar-toggle-inside {
+  justify-content: center;
+  padding: 12px 10px;
+  gap: 0;
+}
+
+body.sidebar-collapsed .sidebar-toggle-inside .nav-text {
+  display: none;
+}
+
+/* Desktop: top arrow when open, nav toggle only when collapsed */
+body:not(.sidebar-collapsed) .sidebar-toggle-inside {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-toggle-inside {
+  display: flex;
+}
+
+.sidebar-overlay {
+  display: none;
 }
 
 /* ═══ TOP BAR ═══ */
@@ -252,21 +393,26 @@ body::after {
   background: rgba(17,17,17,.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 8px 177px;
+  padding: 8px 32px;
   height: auto;
   min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 50;
 }
 
+[data-theme="light"] .topbar {
+  background: rgba(253,250,243,.94);
+}
+
 .topbar-title {
   font-family: var(--font-display);
   font-size: 20px;
-  color: var(--ivory-warm);
+  color: var(--text-primary);
 }
 
 .topbar-title span {
@@ -296,39 +442,125 @@ body::after {
   gap: 8px;
   background: radial-gradient(circle at top, rgba(212,175,55,.16), rgba(0,0,0,.95));
   border-color: rgba(212,175,55,.4);
-  color: var(--ivory-warm);
+  color: var(--text-primary);
   box-shadow: 0 0 12px rgba(212,175,55,.35);
   animation: datetime-pop .45s cubic-bezier(.22,.7,.3,1);
 }
 
-@media (max-width: 1100px) {
-  .topbar {
-    padding: 0 20px;
-    column-gap: 12px;
-  }
-
-  .topbar-title {
-    font-size: 18px;
-  }
-
-  .topbar-datetime {
-    display: none;
-  }
-
-  .topbar-actions {
-    gap: 10px;
-  }
+[data-theme="light"] .topbar-datetime {
+  background: radial-gradient(circle at top, rgba(212,175,55,.18), rgba(253,250,243,.95));
+  color: #3f3427;
+  box-shadow: 0 0 10px rgba(212,175,55,.22);
 }
 
-/* On medium/small screens, always keep logout visible by hiding less important actions */
-@media (max-width: 1300px) {
-  .topbar-datetime {
-    display: none;
-  }
+/* ═══ Theme widget (floating — one click toggles dark / light) ═══ */
+.theme-widget {
+  position: fixed;
+  z-index: 240;
+  inset-inline-end: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  .topbar-btn:not(.logout) {
-    display: none;
+.theme-widget:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+.theme-widget-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 68px;
+  height: 34px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(22,22,22,.94);
+  border: 1px solid rgba(212,175,55,.38);
+  box-shadow: 0 4px 20px rgba(0,0,0,.35);
+  position: relative;
+}
+
+[data-theme="light"] .theme-widget-track {
+  background: rgba(255,253,248,.97);
+  border-color: rgba(196,154,42,.45);
+  box-shadow: 0 6px 22px rgba(72,57,32,.14);
+}
+
+.theme-widget-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  z-index: 1;
+  color: var(--text-muted);
+  opacity: .4;
+  transition: opacity .22s ease, color .22s ease;
+}
+
+.theme-widget-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Default (dark) before/without JS: moon active */
+.theme-widget-icon--moon {
+  opacity: 1;
+  color: var(--gold-bright);
+}
+
+.theme-widget-icon--sun {
+  opacity: .4;
+}
+
+[data-theme="light"] .theme-widget-icon--moon {
+  opacity: .4;
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .theme-widget-icon--sun {
+  opacity: 1;
+  color: var(--gold-bright);
+}
+
+.theme-widget-knob {
+  position: absolute;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--gold-light), var(--gold-mid));
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+  transition: inset-inline-start .3s cubic-bezier(.22,.7,.3,1);
+  inset-inline-start: 5px;
+  pointer-events: none;
+}
+
+[data-theme="light"] .theme-widget-knob {
+  inset-inline-start: calc(100% - 5px - 24px);
+  background: linear-gradient(145deg, #fff6d8, var(--gold-bright));
+  box-shadow: 0 2px 12px rgba(196,154,42,.35);
+}
+
+/* At 1300px and below, hide extra topbar clutter to avoid overflow */
+@media (max-width: 1300px) {
+  .topbar-datetime { display: none; }
+  .topbar-btn:not(.logout) { display: none; }
+}
+
+@media (max-width: 1100px) {
+  .topbar {
+    padding: 8px 20px;
+    column-gap: 12px;
   }
+  .topbar-title { font-size: 18px; }
+  .topbar-actions { gap: 10px; }
 }
 
 .topbar-datetime-sep {
@@ -369,6 +601,62 @@ body::after {
   border-color: rgba(212,175,55,.5);
 }
 
+[data-theme="light"] .topbar-btn {
+  background: rgba(212,175,55,.12);
+  color: #6b541f;
+}
+
+[data-theme="light"] .page-hero-icon {
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(255,255,255,.9));
+  box-shadow: 0 8px 20px rgba(145,121,66,.18), inset 0 0 0 1px rgba(255,255,255,.65);
+}
+
+[data-theme="light"] .page-hero-icon::after {
+  box-shadow: inset 0 0 16px rgba(212,175,55,.18), inset 0 -6px 14px rgba(107,85,37,.12);
+}
+
+[data-theme="light"] .stat-card.gold-card {
+  background: linear-gradient(145deg, #f8edd5, #efe0bf);
+}
+
+[data-theme="light"] .selection-bar {
+  background: rgba(93,75,39,.12);
+}
+
+[data-theme="light"] .mini-table th {
+  background: rgba(196,154,42,.12);
+}
+
+[data-theme="light"] .mini-table td,
+[data-theme="light"] .big-table td {
+  border-bottom: 1px solid rgba(167,144,103,.35);
+}
+
+[data-theme="light"] .table-toolbar {
+  background: rgba(247,244,238,.96);
+  border-bottom: 1px solid rgba(167,144,103,.25);
+}
+
+[data-theme="light"] .chip {
+  background: rgba(196,154,42,.08);
+}
+
+[data-theme="light"] .details-toggle {
+  background: rgba(196,154,42,.08);
+}
+
+[data-theme="light"] .detail-row {
+  background: rgba(196,154,42,.10);
+}
+
+[data-theme="light"] .ops-row {
+  background: rgba(139,105,20,.10);
+}
+
+[data-theme="light"] .stat-mini-graph circle {
+  fill: #fffaf1 !important;
+}
+
 .topbar-btn.logout {
   border-color: rgba(248,113,113,.4);
   background: rgba(127,29,29,.15);
@@ -378,6 +666,126 @@ body::after {
 .topbar-btn.logout:hover {
   background: rgba(153,27,27,.35);
   border-color: rgba(248,113,113,.7);
+}
+
+[data-theme="light"] .topbar-btn.logout {
+  border-color: rgba(185, 28, 28, .42);
+  background: rgba(254, 226, 226, .92);
+  color: #991b1b;
+}
+
+[data-theme="light"] .topbar-btn.logout:hover {
+  background: rgba(252, 165, 165, .55);
+  border-color: rgba(185, 28, 28, .6);
+  color: #7f1d1d;
+}
+
+/* ── Topbar hamburger (mobile only) ── */
+.topbar-hamburger {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: rgba(212,175,55,.08);
+  border: 1px solid rgba(212,175,55,.22);
+  border-radius: var(--r-md);
+  color: var(--gold-bright);
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+  /* RTL: sits on the left side of the topbar (which is the "start" in RTL layout) */
+  margin-left: 0;
+  margin-right: 0;
+  order: -1; /* ensure it stays at the visual start */
+}
+
+.topbar-hamburger:hover {
+  background: rgba(212,175,55,.16);
+  border-color: rgba(212,175,55,.4);
+}
+
+/* topbar-hamburger is now unused — kept for safety but hidden everywhere */
+.topbar-hamburger { display: none !important; }
+
+/* ── Mobile nav pills inside topbar ── */
+.topbar-mobile-nav {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.topbar-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.topbar-nav-pill:hover {
+  border-color: rgba(212,175,55,.3);
+  color: var(--gold-light);
+  background: rgba(212,175,55,.06);
+}
+
+.topbar-nav-pill.active {
+  background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(196,154,42,.08));
+  border-color: rgba(212,175,55,.4);
+  color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(212,175,55,.15);
+}
+
+.topbar-nav-pill svg {
+  opacity: .8;
+  flex-shrink: 0;
+}
+
+.topbar-nav-pill.active svg { opacity: 1; }
+
+/* On desktop, keep the topbar-title-desktop visible; hide mobile nav */
+.topbar-title-desktop { display: block; }
+
+/* ── Mobile breakpoint: swap sidebar for inline nav ── */
+@media (max-width: 1024px) {
+  /* Hide the entire sidebar — no overlay, no off-canvas, nothing */
+  .sidebar { display: none !important; }
+  .sidebar-overlay { display: none !important; }
+
+  /* Remove sidebar margin from main content */
+  .main-content { margin-right: 0 !important; }
+
+  /* Show mobile nav pills */
+  .topbar-mobile-nav { display: flex; }
+
+  /* Hide the desktop-only page title in topbar (it would crowd with pills) */
+  .topbar-title-desktop { display: none; }
+
+  /* The desktop "Properties" button in actions is also redundant now */
+  .topbar-btn-props { display: none; }
+
+  /* Topbar layout on mobile: pills centered, logout on left */
+  .topbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small phones: shorten pill labels to just icons */
+  .topbar-nav-pill span.pill-label { display: none; }
+  .topbar-nav-pill { padding: 8px 12px; gap: 0; }
 }
 
 /* ═══ PAGE CONTAINER ═══ */
@@ -430,7 +838,7 @@ body::after {
   font-family: var(--font-display);
   font-size: 36px;
   font-weight: 700;
-  color: var(--ivory-warm);
+  color: var(--text-primary);
   line-height: 1.2;
 }
 
@@ -545,10 +953,10 @@ body::after {
 
 .page-header-row {
   display: flex;
-  justify-content: space-start;
+  justify-content: space-between;
   align-items: flex-start;
-  gap: 524px;
-
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 .selection-card {
@@ -994,8 +1402,13 @@ body::after {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 28px;
+}
+
+/* Mini table scroll wrapper gets the radius */
+.recent-card .table-overflow {
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
 }
 
 .recent-header {
@@ -1090,7 +1503,7 @@ body::after {
   flex-wrap: wrap;
   align-items: center;
   position: sticky;
-  top: 80px;
+  top: 64px;
   z-index: 25;
   background: rgba(11,11,11,.96);
   padding-top: 8px;
@@ -1240,7 +1653,14 @@ body::after {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow: visible; /* let .table-overflow handle scrolling */
+}
+
+/* Keep border-radius visually by clipping the overflow wrapper */
+.table-overflow {
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .big-table {
@@ -1696,6 +2116,11 @@ body::after {
   .charts-row > *:last-child { grid-column: span 2; }
 }
 
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; }
+  .charts-row > *:last-child { grid-column: span 1; }
+}
+
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
@@ -1766,30 +2191,38 @@ body::after {
 /* ═══ SKELETON LOADER ANIM ═══ */
 .page { animation: fadeSlide .35s cubic-bezier(.4,0,.2,1); }
 
-/* table overflow wrapper */
-.table-overflow {
-  overflow-x: auto;
-}
+/* ═══ TABLE OVERFLOW WRAPPER ═══ */
+/* (base styles defined near .table-card above) */
 
-/* ═══ MOBILE FIX (layout + table readability) ═══ */
-/* Mobile-only bottom nav (so you don't rely on the hidden sidebar) */
+/* Mobile bottom nav hidden by default */
 .mobile-nav { display: none; }
 
-/* Tablet portrait vertical-table toggle (hidden by default) */
+/* Tablet portrait vertical-table toggle: hidden by default */
 .mobile-table-view-toggle { display: none; }
 
-@media (max-width: 700px), (max-width: 1024px) and (orientation: portrait) {
-  /* Sidebar is fixed and eats most of the viewport on mobile */
-  .sidebar { display: none; }
-  .main-content { margin-right: 0; padding-bottom: 84px; }
+/* ═══════════════════════════════════════
+   BREAKPOINT: ≤ 1024px  (tablets + phones)
+═══════════════════════════════════════ */
+@media (max-width: 1024px) {
 
-  /* Reduce horizontal padding so tables can fit */
-  .page { padding: 18px 12px 120px; }
+  /* ── Sidebar: completely hidden — navigation is in the topbar pills ── */
+  /* (sidebar { display:none } is already set in the mobile nav CSS above) */
 
-  /* Keep the topbar comfortable on narrow screens */
-  .topbar { padding: 8px 14px; }
+  /* ── Main content: full width ── */
+  .main-content {
+    margin-right: 0 !important;
+    padding-bottom: 20px;
+  }
 
-  /* Properties header: stack title + selection card */
+  /* ── Page padding ── */
+  .page { padding: 18px 14px 80px; }
+
+  /* ── Topbar ── */
+  .topbar { padding: 8px 12px; gap: 8px; }
+  .topbar-datetime { display: none; }
+  .topbar-btn:not(.logout) { display: none; }
+
+  /* ── Properties page: stack header + selection card ── */
   .page-header-row {
     flex-direction: column;
     gap: 14px;
@@ -1800,360 +2233,154 @@ body::after {
     margin-left: 0;
   }
 
-  /* Properties toolbar: make controls full-width */
+  /* ── Table toolbar: wrap nicely ── */
   .table-toolbar {
     top: 64px;
-    flex-direction: row;
     flex-wrap: wrap;
-    align-items: flex-start;
     gap: 10px;
-    /* Keep filters fixed; avoid internal scrolling that feels "broken" */
-    max-height: none;
-    overflow-y: visible;
   }
-  .table-toolbar .toolbar-separator {
-    display: none;
-  }
+  .table-toolbar .toolbar-separator { display: none; }
   .search-wrap {
-    max-width: none;
+    flex: 1 1 200px;
     min-width: 0;
-    width: auto;
-    flex: 1 1 220px;
+    max-width: none;
   }
   .filter-dropdown {
-    width: auto;
-    flex: 1 1 180px;
-    min-width: 160px;
+    flex: 1 1 160px;
+    min-width: 140px;
   }
 
-  /* RTL dropdown alignment on mobile */
-  .col-menu {
-    left: auto;
-    right: 0;
-    min-width: 0;
-  }
+  /* RTL column menu */
+  .col-menu { left: auto; right: 0; }
 
-  /* Show mobile nav */
-  .mobile-nav {
-    display: flex;
-    position: fixed;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 80;
-    background: rgba(17,17,17,.96);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border);
-    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-    gap: 10px;
-  }
-
-  .mobile-nav-btn.nav-item {
-    width: auto;
-    flex: 1;
-    margin-bottom: 0 !important;
-    justify-content: center;
-    text-align: center;
-    gap: 0;
-    padding: 10px 10px !important;
-    font-size: 13px !important;
-  }
+  /* Stats: 2 columns on tablet */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* Table-specific improvements for phones */
+/* Show vertical toggle hint on portrait tablets */
+@media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px) {
+  .mobile-table-view-toggle { display: inline-flex; }
+}
+
+/* ═══════════════════════════════════════
+   BREAKPOINT: ≤ 600px  (phones)
+   Strategy: horizontal scroll table —
+   keeps all columns, user swipes to see all.
+   Expandable rows (eye/ops/details) still work.
+═══════════════════════════════════════ */
 @media (max-width: 600px) {
+
+  .page { padding: 14px 10px 80px; }
+
+  /* ── Stats: single column on small phones ── */
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 26px; }
+
+  /* ── Topbar compact ── */
+  .topbar-title { font-size: 16px; }
+
+  /* ── Table: horizontal scroll pan ── */
   .table-overflow {
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y; /* allow vertical scroll while still allowing horizontal swipe */
+    touch-action: pan-x pan-y;
+    /* Scroll shadow hints */
+    background:
+      linear-gradient(to left, var(--bg-card) 30%, transparent) right,
+      linear-gradient(to right, var(--bg-card) 30%, transparent) left;
+    background-size: 40px 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local;
   }
 
-  /* Make the tables more compact */
-  .big-table th,
-  .big-table td {
-    padding: 10px 10px;
-    font-size: 12px;
-    white-space: normal;
+  /* Keep table as real table — do NOT convert to block cards on phone.
+     User scrolls horizontally with finger. All columns + expand rows stay intact. */
+  .big-table {
+    table-layout: auto;
+    min-width: 700px; /* ensures table is wide enough to need scrolling */
   }
+
+  .big-table thead { display: table-header-group; }
+
   .big-table th {
-    font-size: 10px;
     padding: 10px 8px;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
-  /* Card-like rows on mobile */
-  .big-table thead { display: none; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) {
-    display: block;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,.08);
-  }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td {
-    display: block;
-    border-bottom: 0;
-    padding: 10px 10px;
-  }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
-    content: '';
-    font-family: var(--font-ui);
-    font-size: 11px;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 6px;
-  }
-  .big-table tbody tr.selected-row td {
-    background: rgba(212,175,55,.06);
-    border-top: 1px solid rgba(212,175,55,.18);
-    border-bottom: 1px solid rgba(212,175,55,.18);
+  .big-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
-  /* Labels for key cells (based on original column positions) */
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before { content: 'رقم العقار'; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before { content: 'المساحة'; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة'; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات'; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'عرض'; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل'; }
-
-  /* Center action buttons in card layout */
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14) {
-    text-align: center;
-  }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14) .details-toggle {
-    width: auto; /* override the earlier width:100% rule for cards */
-  }
-
-  /* Hide less important columns to prevent tiny/unreadable columns.
-     Visible columns (by original markup order): 1(select), 3(propNo), 8(area), 10(status), 13(details). */
-  .big-table th:nth-child(2),
-  .big-table td:nth-child(2) { display: none; }  /* تسلسل */
-
-  .big-table th:nth-child(4),
-  .big-table td:nth-child(4) { display: none; }  /* المحضر */
-
-  .big-table th:nth-child(5),
-  .big-table td:nth-child(5) { display: none; }  /* المحافظة */
-  .big-table th:nth-child(6),
-  .big-table td:nth-child(6) { display: none; }  /* المنطقة العقارية */
-  .big-table th:nth-child(7),
-  .big-table td:nth-child(7) { display: none; }  /* المقسم */
-
-  .big-table th:nth-child(9),
-  .big-table td:nth-child(9) { display: none; }  /* الموقع الجغرافي (📍) */
-
-  .big-table th:nth-child(12),
-  .big-table td:nth-child(12) { display: none; } /* الدفعات */
-
-  .big-table th:nth-child(13),
-  .big-table td:nth-child(13) { display: table-cell; } /* عرض (iPhone) */
-
-  /* Details button: give it more tappable space */
-  .big-table .details-toggle {
-    width: auto;
-    justify-content: center;
-    padding: 8px 10px;
-  }
-
-  /* Override stacked-card layout on mobile:
-     keep table rows/cells so it doesn't look "broken". */
-  .big-table thead { display: table-header-group !important; }
-
-  .big-table tbody tr:not(.detail-row):not(.ops-row):not(.selected-row) {
-    display: table-row !important;
-    background: transparent !important;
-    border-bottom: 1px solid rgba(42,42,42,.5) !important;
-  }
-
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td {
-    display: table-cell !important;
-    border-bottom: 1px solid rgba(42,42,42,.5) !important;
-    padding: 10px 8px !important;
-    white-space: nowrap !important;
-  }
-
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
-    content: none !important;
-    display: none !important;
-  }
-
-  .big-table { table-layout: fixed; }
-  .big-table td { overflow: hidden; text-overflow: ellipsis; }
-
-  /* Keep expanded rows working as table rows */
+  /* Expandable rows stay as table rows */
   .big-table tbody tr.detail-row,
   .big-table tbody tr.ops-row {
+    display: none;
+  }
+  .big-table tbody tr.detail-row.open {
+    display: table-row;
+  }
+  .big-table tbody tr.ops-row.open {
     display: table-row;
   }
 
-  /* iPhone-friendly redesign override (card-like rows, readable labels) */
-  .big-table thead { display: none !important; }
-
-  .big-table tbody tr:not(.detail-row):not(.ops-row) {
-    display: block !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--r-lg) !important;
-    overflow: hidden !important;
-    background: rgba(0,0,0,.18) !important;
-    margin-bottom: 12px !important;
+  /* Detail + ops cells span full width inside the table row */
+  .detail-cell,
+  .ops-cell {
+    padding: 14px 12px;
+    white-space: normal;
   }
 
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td {
-    display: block !important;
-    padding: 12px 12px !important;
-    border-bottom: 1px solid rgba(42,42,42,.35) !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: initial !important;
+  /* Larger tap targets for action buttons */
+  .eye-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
   }
 
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:last-child {
-    border-bottom: none !important;
+  .details-toggle {
+    padding: 7px 10px;
+    font-size: 11px;
   }
 
-  /* Hide/show columns for the phone card layout */
-  .big-table th:nth-child(1),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(1) { display: none !important; } /* select */
-  .big-table th:nth-child(2),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(2) { display: none !important; } /* تسلسل */
-  .big-table th:nth-child(4),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(4) { display: none !important; } /* المحضر */
-  .big-table th:nth-child(7),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(7) { display: none !important; } /* المقسم */
-  .big-table th:nth-child(9),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(9) { display: none !important; } /* الموقع الجغرافي */
-  .big-table th:nth-child(12),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(12) { display: none !important; } /* الدفعات */
-  .big-table th:nth-child(13),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13) { display: block !important; } /* عرض */
+  /* Dashboard mini-table */
+  .mini-table th { padding: 10px 10px; font-size: 10px; }
+  .mini-table td { padding: 11px 10px; font-size: 12px; }
 
-  /* Unhide city/type cells (they were hidden earlier in this same media query) */
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6) { display: block !important; }
-
-  /* Labels */
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
-    display: block !important;
-    content: '' !important;
-    font-family: var(--font-ui) !important;
-    font-size: 11px !important;
-    color: var(--text-muted) !important;
-    margin-bottom: 6px !important;
+  /* Export bar: stack on phone */
+  .export-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before { content: 'رقم العقار' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5)::before { content: 'المدينة' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6)::before { content: 'المنطقة' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before { content: 'المساحة' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'بطاقة التفاصيل' !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل' !important; }
+  .export-btns { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
 
-  /* Buttons */
-  .big-table .details-toggle {
-    width: 100% !important;
-    justify-content: center !important;
-    padding: 10px 10px !important;
-    white-space: nowrap !important;
-  }
-
-  .big-table .ops-toggle {
-    white-space: nowrap !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-  }
-
-  /* Make the eye button easier to tap on iPhone */
-  .big-table .eye-btn {
-    width: 44px !important;
-    height: 44px !important;
-    border-radius: 14px !important;
-    font-size: 18px !important;
-    border: 1px solid rgba(212,175,55,.35) !important;
-  }
-
-  /* Expanded blocks */
-  .big-table tbody tr.detail-row { display: none !important; }
-  .big-table tbody tr.detail-row.open { display: block !important; }
-  .big-table tbody tr.ops-row { display: none !important; }
-  .big-table tbody tr.ops-row.open { display: block !important; }
-
-  /* Ensure expanded row content isn't stuck as table-cell */
-  .big-table tbody tr.detail-row td,
-  .big-table tbody tr.ops-row td { display: block !important; }
-
-  .detail-cell { padding: 14px 12px !important; }
-  .ops-cell { padding: 14px 12px !important; }
-
-  /* Dashboard mini-table compactness */
-  .mini-table th { padding: 10px 12px; font-size: 10px; }
-  .mini-table td { padding: 12px 12px; font-size: 12px; }
-
-  /* Phone: render table as columns (not stacked cards) */
-  .big-table { table-layout: auto !important; }
-  .big-table thead { display: table-header-group !important; }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) {
-    display: table-row !important;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    overflow: visible !important;
-  }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td {
-    display: table-cell !important;
-    border-bottom: 1px solid rgba(42,42,42,.5) !important;
-    padding: 10px 6px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
-    content: none !important;
-    display: none !important;
-    margin-bottom: 0 !important;
-  }
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:last-child {
-    border-bottom: none !important;
-  }
-
-  /* Action buttons sizing */
-  .big-table .details-toggle {
-    width: auto !important;
-    padding: 8px 10px !important;
-    justify-content: center !important;
-    white-space: nowrap !important;
-  }
-  .big-table .eye-btn {
-    width: 44px !important;
-    height: 44px !important;
-  }
-
-  /* Center last columns (ops/details) */
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13),
-  .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14) {
-    text-align: center !important;
-  }
+  /* Pagination: tighter */
+  .pagination { gap: 4px; padding: 12px; }
+  .page-btn { width: 30px; height: 30px; font-size: 12px; }
 }
 
-/* Tablet portrait vertical table view (opt-in via toggle) */
+/* ═══════════════════════════════════════
+   TABLET PORTRAIT vertical table (opt-in toggle)
+   Only applies when user taps the toggle button
+═══════════════════════════════════════ */
 @media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px) {
-  .mobile-table-view-toggle { display: inline-flex; }
 
-  /* Toggle class enables card/vertical rows */
   .property-table--vertical .big-table thead { display: none; }
 
   .property-table--vertical .big-table tbody tr.detail-row,
   .property-table--vertical .big-table tbody tr.ops-row { display: none !important; }
   .property-table--vertical .big-table tbody tr.detail-row.open,
   .property-table--vertical .big-table tbody tr.ops-row.open { display: block !important; }
-
   .property-table--vertical .big-table tbody tr.detail-row td,
   .property-table--vertical .big-table tbody tr.ops-row td { display: block !important; }
   .property-table--vertical .detail-cell,
   .property-table--vertical .ops-cell { padding: 14px 12px !important; }
 
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) {
-    display: block !important;
+    display: block;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     overflow: hidden;
@@ -2162,94 +2389,118 @@ body::after {
   }
 
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td {
-    display: block !important;
-    padding: 12px 12px !important;
-    border-bottom: 1px solid rgba(42,42,42,.35) !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: initial !important;
+    display: block;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(42,42,42,.35);
+    white-space: normal;
   }
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:last-child {
-    border-bottom: none !important;
+    border-bottom: none;
   }
 
-  /* Hide crowded columns in vertical view (apply to main rows only) */
+  /* Hide crowded columns */
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(1),
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(2),
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(4),
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(9),
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(12) { display: none !important; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(12) { display: none; }
 
-  /* Ensure labels appear (td::before) */
+  /* Column labels */
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
-    display: block !important;
-    content: '' !important;
-    font-family: var(--font-ui) !important;
-    font-size: 11px !important;
-    color: var(--text-muted) !important;
-    margin-bottom: 6px !important;
+    display: block;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: .06em;
+    margin-bottom: 4px;
   }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before  { content: 'رقم العقار'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5)::before  { content: 'المحافظة'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6)::before  { content: 'المنطقة العقارية'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(7)::before  { content: 'المقسم'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before  { content: 'المساحة'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'بطاقة التفاصيل'; }
+  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل'; }
 
-  /* Labels for the remaining visible columns */
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before { content: 'رقم العقار' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5)::before { content: 'المحافظة' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6)::before { content: 'المنطقة العقارية' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(7)::before { content: 'المقسم' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before { content: 'المساحة' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'بطاقة التفاصيل' !important; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل' !important; }
-
-  /* Tap targets */
+  /* Bigger tap targets */
   .property-table--vertical .big-table .eye-btn {
-    width: 44px !important;
-    height: 44px !important;
-    border-radius: 14px !important;
-    font-size: 18px !important;
-    border: 1px solid rgba(212,175,55,.35) !important;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 18px;
   }
-
   .property-table--vertical .big-table .details-toggle {
-    width: 100% !important;
-    justify-content: center !important;
-    padding: 10px 10px !important;
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
   }
 }
 </style>
 </head>
 <body>
 
+<button type="button" class="theme-widget" id="theme-widget" role="switch" aria-checked="false"
+  aria-label="تبديل المظهر: الوضع الأبيض" onclick="toggleTheme()">
+  <span class="theme-widget-track">
+    <span class="theme-widget-icon theme-widget-icon--moon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </span>
+    <span class="theme-widget-knob" aria-hidden="true"></span>
+    <span class="theme-widget-icon theme-widget-icon--sun" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+      </svg>
+    </span>
+  </span>
+</button>
+
 <div class="app-wrapper">
 
   <!-- ═══ SIDEBAR ═══ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-badge">محفظة الاستثمار</div>
-      <div class="logo-title">عقارات الفخامة</div>
+      <div class="logo-title-row">
+        <div class="logo-title">عقارات</div>
+        <button class="sidebar-toggle-top" type="button" aria-label="تصغير الشريط الجانبي" onclick="toggleSidebar()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 4l-6 6 6 6"/>
+          </svg>
+        </button>
+      </div>
       <div class="logo-sub">نظام إدارة الحصص العقارية</div>
     </div>
 
     <nav class="sidebar-nav">
+      <button class="sidebar-toggle sidebar-toggle-inside" type="button" aria-label="تبديل القائمة الجانبية" onclick="toggleSidebar()">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+        <span class="nav-text"></span>
+      </button>
       <div class="nav-section-label">الرئيسية</div>
 
-      <button class="nav-item active" onclick="switchPage('dashboard', this)">
+      <button class="nav-item active" onclick="switchPage('dashboard', this); switchPageMobile('dashboard');">
         <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="1" y="1" width="7" height="7" rx="1.5"/>
           <rect x="10" y="1" width="7" height="7" rx="1.5"/>
           <rect x="1" y="10" width="7" height="7" rx="1.5"/>
           <rect x="10" y="10" width="7" height="7" rx="1.5"/>
         </svg>
-        لوحة التحكم
+        <span class="nav-text">لوحة التحكم</span>
       </button>
 
-      <button class="nav-item" onclick="switchPage('properties', this)">
+      <button class="nav-item" onclick="switchPage('properties', this); switchPageMobile('properties');">
         <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 16V7l7-5 7 5v9"/>
           <rect x="6" y="10" width="3" height="6"/>
           <rect x="9" y="10" width="3" height="6"/>
         </svg>
-        بطاقات العقار
+        <span class="nav-text">بطاقات العقار</span>
       </button>
 
       <div class="nav-section-label">التقارير</div>
@@ -2259,7 +2510,7 @@ body::after {
           <path d="M3 13l4-4 3 3 5-6"/>
           <rect x="1" y="1" width="16" height="16" rx="2"/>
         </svg>
-        التحليلات
+        <span class="nav-text">التحليلات</span>
       </button>
 
       <button class="nav-item" onclick="alert('قريباً')">
@@ -2267,7 +2518,7 @@ body::after {
           <path d="M9 1v16M1 9h16"/>
           <circle cx="9" cy="9" r="8"/>
         </svg>
-        توزيع الأرباح
+        <span class="nav-text">توزيع الأرباح</span>
       </button>
 
       <button class="nav-item" onclick="alert('قريباً')">
@@ -2275,7 +2526,7 @@ body::after {
           <path d="M4 4h10v10H4z" rx="1"/>
           <path d="M7 8h4M7 11h4M7 5h4"/>
         </svg>
-        المستندات
+        <span class="nav-text">المستندات</span>
       </button>
     </nav>
 
@@ -2290,20 +2541,42 @@ body::after {
       </div>
     </div>
   </aside>
+  <div class="sidebar-overlay" onclick="closeSidebarForMobile()"></div>
 
   <!-- ═══ MAIN ═══ -->
   <div class="main-content">
 
     <!-- TOP BAR -->
     <header class="topbar">
-      <div class="topbar-title" id="topbar-title">لوحة <span>التحكم</span></div>
+      <!-- Desktop: just title on the right -->
+      <div class="topbar-title topbar-title-desktop" id="topbar-title">لوحة <span>التحكم</span></div>
+
+      <!-- Mobile nav pills: replace sidebar on phones/tablets -->
+      <nav class="topbar-mobile-nav" aria-label="تنقل رئيسي">
+        <button class="topbar-nav-pill active" id="mnav-dashboard"
+          onclick="switchPageMobile('dashboard')">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="1" y="1" width="7" height="7" rx="1.2"/><rect x="10" y="1" width="7" height="7" rx="1.2"/>
+            <rect x="1" y="10" width="7" height="7" rx="1.2"/><rect x="10" y="10" width="7" height="7" rx="1.2"/>
+          </svg>
+          لوحة التحكم
+        </button>
+        <button class="topbar-nav-pill" id="mnav-properties"
+          onclick="switchPageMobile('properties')">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M2 16V7l7-5 7 5v9"/><rect x="6" y="10" width="3" height="6"/><rect x="9" y="10" width="3" height="6"/>
+          </svg>
+          بطاقات العقار
+        </button>
+      </nav>
+
       <div class="topbar-actions">
         <div class="topbar-date topbar-datetime" id="topbar-datetime">
           <span id="topbar-time">--:--:--</span>
           <span class="topbar-datetime-sep">•</span>
           <span id="topbar-date">جارٍ التحميل…</span>
         </div>
-        <button class="topbar-btn" onclick="switchPage('properties', isMobileNavMode() ? document.getElementById('mobile-nav-properties') : document.querySelector('.nav-item:nth-child(2)'))">⊞ بطاقات العقار</button>
+        <button class="topbar-btn topbar-btn-props" onclick="switchPage('properties', document.querySelector('.nav-item:nth-child(2)'))">⊞ بطاقات العقار</button>
         <button class="topbar-btn logout" onclick="handleLogout()">⎋ تسجيل الخروج</button>
       </div>
     </header>
@@ -2323,7 +2596,7 @@ body::after {
         <div class="page-header page-header-dashboard">
           <div>
             <div class="page-eyebrow">نظرة عامة على المحفظة</div>
-            <div class="page-title">مرحباً، <em>خالد</em></div>
+            <div class="page-title">مرحباً، <em>عبد القادر</em></div>
             <div class="page-subtitle">إجمالي محفظتك العقارية ومؤشرات الأداء الرئيسية</div>
           </div>
           <div class="page-hero-icon" aria-hidden="true" id="dashboard-hero">
@@ -2352,7 +2625,7 @@ body::after {
                 </svg>
               </div>
             </div>
-            <div class="stat-value"><small>﷼</small>65.0<small>م</small></div>
+            <div class="stat-value"><small>دولار</small>65.0<small>م</small></div>
             <div class="stat-sub">إجمالي قيمة المحفظة العقارية</div>
             <div class="stat-mini-graph">
               <svg viewBox="0 0 100 40">
@@ -2401,7 +2674,7 @@ body::after {
                 </svg>
               </div>
             </div>
-            <div class="stat-value"><small>﷼</small>48.7<small>م</small></div>
+            <div class="stat-value"><small>دولار</small>48.7<small>م</small></div>
             <div class="stat-sub">إجمالي المدفوعات المستلمة حتى الآن</div>
             <div class="stat-mini-graph">
               <svg viewBox="0 0 100 40">
@@ -2446,7 +2719,7 @@ body::after {
                 </svg>
               </div>
             </div>
-            <div class="stat-value"><small>﷼</small>16.3<small>م</small></div>
+            <div class="stat-value"><small>دولار</small>16.3<small>م</small></div>
             <div class="stat-sub">المبالغ المتبقية على المستثمرين</div>
             <div class="stat-mini-graph">
               <svg viewBox="0 0 100 40">
@@ -2540,7 +2813,7 @@ body::after {
             <div class="chart-header">
               <div>
                 <div class="chart-title">تطور المحفظة عبر السنوات</div>
-                <div class="chart-sub">القيمة الإجمالية للمحفظة بالريال لكل سنة</div>
+                <div class="chart-sub">القيمة الإجمالية للمحفظة بالدولار لكل سنة</div>
               </div>
               <div class="chart-badge">٢٠٢٠ - ٢٠٢٥</div>
             </div>
@@ -2629,7 +2902,7 @@ body::after {
 
               </svg>
             </div>
-            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:#e5e7eb;">
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--text-secondary);">
               <span style="display:inline-flex;align-items:center;gap:6px;">
                 <span style="width:20px;height:2px;background:var(--gold-deep);border-radius:999px;display:inline-block;"></span>
                 الباقي
@@ -2710,7 +2983,7 @@ body::after {
               <div class="spark-item">
                 <div class="spark-info">
                   <div class="spark-name">برج النخيل</div>
-                  <div class="spark-val">٨.٤م ﷼</div>
+                  <div class="spark-val">٨.٤م دولار</div>
                   <div class="spark-chg up">↑ ٨.٢٪</div>
                 </div>
                 <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
@@ -2720,7 +2993,7 @@ body::after {
               <div class="spark-item">
                 <div class="spark-info">
                   <div class="spark-name">مجمع الواحة</div>
-                  <div class="spark-val">٦.١م ﷼</div>
+                  <div class="spark-val">٦.١م دولار</div>
                   <div class="spark-chg up">↑ ٥.١٪</div>
                 </div>
                 <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
@@ -2730,7 +3003,7 @@ body::after {
               <div class="spark-item">
                 <div class="spark-info">
                   <div class="spark-name">أبراج المدينة</div>
-                  <div class="spark-val">٥.٧م ﷼</div>
+                  <div class="spark-val">٥.٧م دولار</div>
                   <div class="spark-chg down">↓ ١.٣٪</div>
                 </div>
                 <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
@@ -2740,7 +3013,7 @@ body::after {
               <div class="spark-item">
                 <div class="spark-info">
                   <div class="spark-name">برج الفيصلية</div>
-                  <div class="spark-val">٤.٢م ﷼</div>
+                  <div class="spark-val">٤.٢م دولار</div>
                   <div class="spark-chg up">↑ ١١.٦٪</div>
                 </div>
                 <svg class="spark-svg" width="70" height="32" viewBox="0 0 70 32">
@@ -3032,7 +3305,7 @@ const buildings = [
     details: 'برج تجاري حديث في قلب حي العليا التجاري، يحتوي على مكاتب فاخرة بمواصفات عالية وتشطيبات مميزة مع مواقف سيارات مخصصة.',
     opsCount: 3,
     opsDetails: [
-      '01/01/2025 — توزيع أرباح ربع سنوي بقيمة ٢٥٠,٠٠٠ ﷼.',
+      '01/01/2025 — توزيع أرباح ربع سنوي بقيمة ٢٥٠,٠٠٠ دولار.',
       '15/03/2025 — صيانة دورية للمصاعد والواجهات الزجاجية.',
       '30/06/2025 — تجديد عقد إيجار رئيسي لمدة ثلاث سنوات.'
     ],
@@ -3481,6 +3754,31 @@ function initPropertyTableView() {
   // Cards/vertical rows already happen on phones via CSS media query, so keep default horizontal for tablets.
   // If you want vertical as default for tablets too, change 'horizontal' to 'vertical' below.
   applyPropertyTableView('horizontal');
+
+  // On phones, add a one-time swipe hint on the table overflow container
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    const overflow = document.querySelector('.table-overflow');
+    if (overflow && !overflow.dataset.hintAdded) {
+      overflow.dataset.hintAdded = '1';
+      const hint = document.createElement('div');
+      hint.id = 'swipe-hint';
+      hint.style.cssText = [
+        'display:flex', 'align-items:center', 'justify-content:center',
+        'gap:8px', 'padding:8px 14px',
+        'background:rgba(212,175,55,.07)', 'border-bottom:1px solid rgba(212,175,55,.15)',
+        'font-family:var(--font-ui)', 'font-size:11px', 'color:var(--gold-mid)',
+        'letter-spacing:.04em', 'animation:fadeSlide .4s ease'
+      ].join(';');
+      hint.innerHTML = '← اسحب يساراً لرؤية بقية الأعمدة →';
+      overflow.parentElement.insertBefore(hint, overflow);
+      // Dismiss after first scroll
+      overflow.addEventListener('scroll', function dismissHint() {
+        const h = document.getElementById('swipe-hint');
+        if (h) { h.style.transition = 'opacity .4s'; h.style.opacity = '0'; setTimeout(() => h.remove(), 400); }
+        overflow.removeEventListener('scroll', dismissHint);
+      });
+    }
+  }
 }
 
 function updateSelectedCount() {
@@ -5046,6 +5344,29 @@ function toggleDetails(rowId, btnId) {
   }
 }
 
+function switchPageMobile(id) {
+  // Update mobile nav pills
+  document.querySelectorAll('.topbar-nav-pill').forEach(p => p.classList.remove('active'));
+  const pill = document.getElementById('mnav-' + id);
+  if (pill) pill.classList.add('active');
+
+  // Also sync the sidebar nav-items (for desktop) — find by position
+  const sidebarBtns = document.querySelectorAll('.sidebar .nav-item');
+  sidebarBtns.forEach(b => b.classList.remove('active'));
+  const map = { dashboard: 0, properties: 1 };
+  if (sidebarBtns[map[id]]) sidebarBtns[map[id]].classList.add('active');
+
+  // Switch the page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + id);
+  if (pageEl) pageEl.classList.add('active');
+
+  // Update topbar title text (desktop) — using the same titles map
+  const titles = { dashboard: 'لوحة <span>التحكم</span>', properties: 'بطاقات <span>العقار</span>' };
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.innerHTML = titles[id] || '';
+}
+
 function switchPage(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -5054,6 +5375,55 @@ function switchPage(id, btn) {
 
   const titles = { dashboard: 'لوحة <span>التحكم</span>', properties: 'بطاقات <span>العقار</span>' };
   document.getElementById('topbar-title').innerHTML = titles[id];
+  closeSidebarForMobile();
+}
+
+const MOBILE_SIDEBAR_QUERY = '(max-width: 1024px)';
+
+function isMobileSidebarMode() {
+  return window.matchMedia(MOBILE_SIDEBAR_QUERY).matches;
+}
+
+function closeSidebarForMobile() {
+  if (isMobileSidebarMode()) {
+    document.body.classList.remove('sidebar-open');
+  }
+}
+
+function toggleSidebar() {
+  if (isMobileSidebarMode()) {
+    document.body.classList.toggle('sidebar-open');
+    return;
+  }
+  document.body.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
+}
+
+function initSidebarState() {
+  const saved = localStorage.getItem('sidebarCollapsed');
+  const shouldCollapse = saved === '1';
+  if (shouldCollapse) document.body.classList.add('sidebar-collapsed');
+
+  const applyForViewport = () => {
+    if (isMobileSidebarMode()) {
+      document.body.classList.remove('sidebar-open');
+      // On phones, don't apply the "collapsed" desktop styling at all.
+      // Use only the off-canvas open/close behavior.
+      document.body.classList.remove('sidebar-collapsed');
+      return;
+    }
+    document.body.classList.remove('sidebar-open');
+    if (shouldCollapse) document.body.classList.add('sidebar-collapsed');
+    else document.body.classList.remove('sidebar-collapsed');
+  };
+
+  applyForViewport();
+  window.addEventListener('resize', applyForViewport);
+}
+
+function updateTopbarHeightVar() {
+  // No longer needed for floating handle positioning (hamburger is now in the topbar).
+  // Kept as a no-op to avoid removing the call sites.
 }
 
 function handleLogout() {
@@ -5069,6 +5439,31 @@ function updateTime() {
   const timeStr = d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const el = document.getElementById('topbar-time');
   if (el) el.textContent = timeStr;
+}
+
+function setTheme(theme) {
+  const nextTheme = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', nextTheme);
+  localStorage.setItem('themeMode', nextTheme);
+
+  const widget = document.getElementById('theme-widget');
+  if (widget) {
+    widget.setAttribute('aria-checked', nextTheme === 'light' ? 'true' : 'false');
+    widget.setAttribute(
+      'aria-label',
+      nextTheme === 'light' ? 'تبديل المظهر: الوضع الداكن' : 'تبديل المظهر: الوضع الأبيض'
+    );
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+}
+
+function initThemeState() {
+  const savedTheme = localStorage.getItem('themeMode');
+  setTheme(savedTheme === 'light' ? 'light' : 'dark');
 }
 
 (function() {
@@ -5119,7 +5514,12 @@ function updateTime() {
 })();
 
 /* ─── INIT ─── */
+initThemeState();
 initPropertyTableView();
+initSidebarState();
+updateTopbarHeightVar();
+window.addEventListener('resize', updateTopbarHeightVar);
+window.addEventListener('orientationchange', updateTopbarHeightVar);
 renderTable();
 renderSelectionCard(filteredData, 'جميع العقارات');
 </script>
