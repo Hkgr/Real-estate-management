@@ -15,6 +15,8 @@ export default defineConfig({
                 'resources/js/viewer/app.js',
                 'resources/css/viewer/hub.css',
                 'resources/js/viewer/hub.js',
+                'resources/css/viewer/reports.css',
+                'resources/js/viewer/reports.js',
             ],
             refresh: true,
         }),
