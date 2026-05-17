@@ -3,7 +3,7 @@ use App\Http\Controllers\PropertyCardFileDownloadController;
 use App\Http\Controllers\Viewer\StandaloneViewerHubController;
 use App\Http\Controllers\Viewer\StandaloneViewerReportsController;
 use Illuminate\Support\Facades\Route;
-
+Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
 Route::get('/__probe_cookie', function () {
     return response('ok')->cookie('probe_cookie', '1', 5);
 });
@@ -14,6 +14,14 @@ Route::get('/__probe_session', function () {
 
     
 });
+Route::post('/logout', function (Request $request) {
+    Auth::guard('web')->logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect('/viewer/login');
+})->name('logout');
 Route::get('/__headers_sent', function () {
     $sent = headers_sent($file, $line);
 
