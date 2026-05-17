@@ -2,11 +2,8 @@
     color-scheme: light;
 }
 
-body {
+.viewer-shell {
     margin: 0;
     font-family: "Cairo", "Tahoma", sans-serif;
-}
-
-main {
-    padding: 2rem;
+    overflow-x: hidden;
 }

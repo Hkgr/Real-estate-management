@@ -1,6 +1,6 @@
 <nav class="topbar">
     <div class="topbar-left">
-        <a class="topbar-brand" href="/viewer-new">
+        <a class="topbar-brand" href="{{ route('viewer-new.hub') }}">
             <div class="topbar-brand-name">محفظة العقارات</div>
         </a>
     </div>
