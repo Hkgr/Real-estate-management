@@ -66,8 +66,7 @@
             </x-filament::badge>
         </x-slot>
 
-        <x-filament::grid default="1" md="2" xl="3" class="gap-4">
-            @foreach ($fields as $field)
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">             @foreach ($fields as $field)
                 @php
                     $value = $field['value'] ?? null;
                     $display = $value;
