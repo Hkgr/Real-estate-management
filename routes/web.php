@@ -32,6 +32,15 @@ Route::get('/__headers_sent', function () {
 });
 
 Route::middleware(['auth', 'viewer.access'])->group(function (): void {
+    Route::prefix('viewer-new')->name('viewer-new.')->group(function (): void {
+        Route::get('/', StandaloneViewerHubController::class)->name('index');
+        Route::get('/properties', fn () => view('viewer-new.properties', ['active' => 'properties']))->name('properties.index');
+        Route::get('/owners', fn () => view('viewer-new.owners', ['active' => 'owners']))->name('owners.index');
+        Route::get('/signals', fn () => view('viewer-new.signals', ['active' => 'signals']))->name('signals.index');
+        Route::get('/reports', fn () => view('viewer-new.reports', ['active' => 'reports']))->name('reports.index');
+    });
+
+    // Backward-compatible route aliases
     Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
 });

@@ -1,7 +1,6 @@
-@if (($activeNavbarKey ?? 'hub') === 'hub')
 <nav class="topbar">
   <div class="topbar-left">
-    <a class="topbar-brand" href="{{ route('viewer-new.hub') }}">
+    <a class="topbar-brand" href="{{ route('viewer-new.index') }}">
       <div class="topbar-brand-icon">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.75L12 3l9 6.75V20.25a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75V9.75z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 20.25V12h6v8.25"/></svg>
       </div>
@@ -9,9 +8,11 @@
     </a>
   </div>
   <div class="topbar-center">
-    <span class="topbar-status">لوحة التحكم الرئيسية • v0.2.1</span>
-    <span class="topbar-center-divider"></span>
-    <div class="topbar-clock" id="topbar-clock">--:--:--</div>
+    <a href="{{ route('viewer-new.index') }}" class="topbar-nav-pill {{ ($active ?? 'index') === 'index' ? 'active' : '' }}">الرئيسية</a>
+    <a href="{{ route('viewer-new.properties.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'properties' ? 'active' : '' }}">العقارات</a>
+    <a href="{{ route('viewer-new.owners.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'owners' ? 'active' : '' }}">الملاك</a>
+    <a href="{{ route('viewer-new.signals.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'signals' ? 'active' : '' }}">الإشارات</a>
+    <a href="{{ route('viewer-new.reports.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'reports' ? 'active' : '' }}">التقارير</a>
   </div>
   <div class="topbar-right">
     <div class="topbar-user-chip">
@@ -27,4 +28,3 @@
     </button>
   </div>
 </nav>
-@endif
