@@ -11,6 +11,8 @@ export default defineConfig({
                 'resources/css/filament/rashad/theme.css',
                 'resources/css/filament/viewer/dashboard.css',
                 'resources/js/filament/viewer/dashboard.js',
+                'resources/css/viewer/app.css',
+                'resources/js/viewer/app.js',
             ],
             refresh: true,
         }),
