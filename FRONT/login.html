@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محفظة العقارات — تسجيل الدخول</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fs-base: 15px;
+  --fs-scale: calc(var(--fs-base) / 15px);
+  --gold-deep:    #8B6914;
+  --gold-mid:     #C49A2A;
+  --gold-bright:  #D4AF37;
+  --gold-light:   #E8C96A;
+  --gold-pale:    #F5E9C0;
+  --black-pure:   #0A0A0A;
+  --black-rich:   #111111;
+  --black-card:   #1A1A1A;
+  --black-border: #2A2A2A;
+  --black-muted:  #3D3D3D;
+  --ivory-warm:   #F5F0E8;
+  --bg-primary:   var(--black-pure);
+  --bg-secondary: var(--black-rich);
+  --bg-card:      var(--black-card);
+  --text-primary: var(--ivory-warm);
+  --text-secondary: #B0A898;
+  --text-muted:   #6B6560;
+  --accent:       var(--gold-bright);
+  --border:       var(--black-border);
+  --font-display: 'Amiri', serif;
+  --font-body:    'Tajawal', sans-serif;
+  --font-ui:      'Noto Naskh Arabic', serif;
+  --shadow-gold: 0 0 40px rgba(212,175,55,.22);
+  --shadow-card: 0 8px 48px rgba(0,0,0,.65);
+  --nav-surface: var(--bg-card);
+  --nav-border: var(--border);
+  --nav-hover-bg: rgba(212,175,55,.05);
+  --nav-hover-border: rgba(212,175,55,.3);
+  --nav-active-bg: linear-gradient(135deg, rgba(212,175,55,.12), rgba(196,154,42,.06));
+  --nav-active-border: rgba(212,175,55,.35);
+  --nav-active-text: var(--gold-bright);
+  --header-surface: var(--bg-secondary);
+  --header-border: var(--border);
+  --header-title-accent: var(--gold-bright);
+  --header-eyebrow: var(--gold-mid);
+  --table-surface: var(--bg-card);
+  --table-border: var(--border);
+  --table-head-bg: rgba(0,0,0,.2);
+  --table-head-text: var(--text-muted);
+  --table-head-hover: var(--gold-mid);
+  --table-row-border: rgba(42,42,42,.5);
+  --table-row-hover-bg: rgba(212,175,55,.03);
+  --table-row-selected-bg: rgba(212,175,55,.06);
+  --table-row-selected-border: rgba(212,175,55,.18);
+}
+
+[data-theme="light"] {
+  --bg-primary:   #f0ece3;
+  --bg-secondary: #fdfaf3;
+  --bg-card:      #ffffff;
+  --text-primary: #2d2418;
+  --text-secondary: #5e5243;
+  --text-muted:   #7b6f60;
+  --border:       #dfd5c6;
+  --shadow-card: 0 8px 40px rgba(72,57,32,.12);
+  --header-surface: #fdfaf3;
+  --header-border: #dfd5c6;
+  --header-title-accent: #a67b1f;
+  --header-eyebrow: #8b6914;
+  --table-surface: #ffffff;
+  --table-border: #dfd5c6;
+  --table-head-bg: rgba(196,154,42,.12);
+  --table-head-text: #75644e;
+  --table-head-hover: #a67b1f;
+  --table-row-border: rgba(167,144,103,.35);
+  --table-row-hover-bg: rgba(196,154,42,.08);
+  --table-row-selected-bg: rgba(196,154,42,.13);
+  --table-row-selected-border: rgba(166,123,31,.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { direction: rtl; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ── ANIMATED BACKGROUND ── */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .12;
+  animation: orbFloat 12s ease-in-out infinite alternate;
+}
+.bg-orb:nth-child(1) {
+  width: 600px; height: 600px;
+  top: -200px; right: -150px;
+  background: radial-gradient(circle, var(--gold-mid), transparent 65%);
+  animation-duration: 14s;
+}
+.bg-orb:nth-child(2) {
+  width: 450px; height: 450px;
+  bottom: -100px; left: -100px;
+  background: radial-gradient(circle, var(--gold-deep), transparent 65%);
+  animation-duration: 18s;
+  animation-delay: -4s;
+}
+.bg-orb:nth-child(3) {
+  width: 300px; height: 300px;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: radial-gradient(circle, var(--gold-bright), transparent 65%);
+  opacity: .06;
+  animation-duration: 10s;
+  animation-delay: -7s;
+}
+
+[data-theme="light"] .bg-orb { opacity: .18; }
+
+@keyframes orbFloat {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(20px, -30px) scale(1.08); }
+}
+
+/* ── GEOMETRIC PATTERN ── */
+.bg-pattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .025;
+  background-image:
+    repeating-linear-gradient(45deg, var(--gold-bright) 0px, var(--gold-bright) 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(-45deg, var(--gold-bright) 0px, var(--gold-bright) 1px, transparent 1px, transparent 40px);
+}
+[data-theme="light"] .bg-pattern { opacity: .04; }
+
+/* ── MAIN LAYOUT ── */
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── LEFT PANEL (Branding) ── */
+.brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #0d0d0d 0%, #0a0806 60%, #111008 100%);
+}
+
+[data-theme="light"] .brand-panel {
+  background: linear-gradient(160deg, #1a1408 0%, #231b0a 60%, #1c1508 100%);
+}
+
+/* Separator line */
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 100%;
+  background: linear-gradient(to bottom, transparent 5%, rgba(212,175,55,.35) 35%, rgba(212,175,55,.35) 65%, transparent 95%);
+  z-index: 10;
+}
+
+/* ── ARCHITECTURAL SVG SCENE ── */
+.brand-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.brand-scene svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Subtle motion for architectural blocks */
+.building-main,
+.building-side-left,
+.building-side-right {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.building-main {
+  animation: buildingFloatMain 10s ease-in-out infinite alternate;
+}
+.building-side-left {
+  animation: buildingFloatSide 12s ease-in-out infinite alternate;
+}
+.building-side-right {
+  animation: buildingFloatSide 11s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes buildingFloatMain {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+@keyframes buildingFloatSide {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+/* Night city feel: lights flicker on/off */
+.windows-left-dim {
+  animation: windowBlinkA 3.8s steps(2, end) infinite;
+}
+.windows-right-dim {
+  animation: windowBlinkB 4.6s steps(2, end) infinite;
+}
+.windows-tower-dim {
+  animation: windowBlinkC 5.4s steps(2, end) infinite;
+}
+
+@keyframes windowBlinkA {
+  0%, 20%, 46%, 70%, 100% { opacity: .18; }
+  10%, 32%, 58%, 84% { opacity: .28; }
+}
+@keyframes windowBlinkB {
+  0%, 24%, 50%, 73%, 100% { opacity: .18; }
+  12%, 38%, 63%, 88% { opacity: .3; }
+}
+@keyframes windowBlinkC {
+  0%, 28%, 56%, 80%, 100% { opacity: .15; }
+  14%, 42%, 68%, 92% { opacity: .25; }
+}
+
+/* Subtle global motion in the illustration */
+.brand-scene svg {
+  animation: cityBreath 14s ease-in-out infinite alternate;
+  transform-origin: center bottom;
+}
+@keyframes cityBreath {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+/* Improve light-mode look of the right-side SVG “picture” */
+[data-theme="light"] .brand-scene svg {
+  filter: brightness(1.45) saturate(1.18) contrast(.92);
+  opacity: .95;
+}
+
+/* ── FLOATING STAT CARDS ── */
+.brand-stats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  display: none; /* remove floating random cards/numbers */
+}
+
+.bstat {
+  position: absolute;
+  background: rgba(14,12,8,.82);
+  border: 1px solid rgba(212,175,55,.28);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5), inset 0 1px 0 rgba(212,175,55,.12);
+  animation: floatCard 6s ease-in-out infinite alternate;
+  min-width: 130px;
+}
+
+[data-theme="light"] .bstat {
+  background: rgba(255,252,242,.88);
+  border-color: rgba(196,154,42,.35);
+  box-shadow: 0 8px 32px rgba(80,60,10,.18), inset 0 1px 0 rgba(255,255,255,.6);
+}
+
+.bstat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(to right, transparent, var(--gold-bright), transparent);
+}
+
+.bstat-label {
+  font-family: var(--font-ui);
+  font-size: calc(9px * var(--fs-scale));
+  letter-spacing: .14em;
+  color: var(--gold-mid);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 5px;
+}
+.bstat-label svg { width: 10px; height: 10px; }
+
+.bstat-value {
+  font-family: var(--font-display);
+  font-size: calc(22px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(212,175,55,.4);
+}
+
+[data-theme="light"] .bstat-value { color: var(--gold-deep); text-shadow: none; }
+
+.bstat-sub {
+  font-family: var(--font-body);
+  font-size: calc(10px * var(--fs-scale));
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+[data-theme="light"] .bstat-sub { color: #7b6030; }
+
+.bstat-trend {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--font-ui); font-size: calc(10px * var(--fs-scale));
+  color: #4ade80; margin-top: 5px;
+}
+.bstat-trend.down { color: #f87171; }
+
+/* Positioning */
+.bstat-1 { top: 14%; right: 8%;  animation-delay: 0s;    animation-duration: 7s; }
+.bstat-2 { top: 36%; left: 6%;   animation-delay: -2.5s; animation-duration: 8s; }
+.bstat-3 { bottom: 28%; right: 5%; animation-delay: -4s; animation-duration: 6.5s; }
+.bstat-4 { bottom: 10%; left: 8%; animation-delay: -1s;  animation-duration: 9s; }
+
+@keyframes floatCard {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  33%  { transform: translateY(-8px) rotate(.4deg); }
+  66%  { transform: translateY(-4px) rotate(-.3deg); }
+  100% { transform: translateY(-12px) rotate(.2deg); }
+}
+
+/* ── BOTTOM BRAND TEXT ── */
+.brand-bottom {
+  position: relative;
+  z-index: 6;
+  padding: 32px 40px 40px;
+  background: linear-gradient(to top, rgba(5,4,2,.98) 0%, rgba(5,4,2,.85) 60%, transparent 100%);
+}
+
+[data-theme="light"] .brand-bottom {
+  background: linear-gradient(to top, rgba(24,18,5,.97) 0%, rgba(24,18,5,.8) 60%, transparent 100%);
+}
+
+.brand-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-ui); font-size: calc(9px * var(--fs-scale)); letter-spacing: .24em;
+  color: var(--header-eyebrow);
+  border: 1px solid rgba(196,154,42,.25);
+  padding: 4px 12px 4px 10px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+.brand-badge::before {
+  content: '';
+  width: 5px; height: 5px;
+  background: var(--gold-bright);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.brand-headline {
+  font-family: var(--font-display);
+  font-size: calc(44px * var(--fs-scale));
+  font-weight: 700;
+  line-height: 1.15;
+  color: #f5f0e8;
+  margin-bottom: 10px;
+}
+.brand-headline em {
+  color: var(--header-title-accent);
+  font-style: normal;
+  display: block;
+  text-shadow: 0 0 40px rgba(212,175,55,.3);
+}
+
+[data-theme="light"] .brand-headline { color: #f5f0e8; }
+[data-theme="light"] .brand-headline em { text-shadow: 0 0 30px rgba(212,175,55,.5); }
+
+.brand-desc {
+  font-family: var(--font-body);
+  font-size: calc(13px * var(--fs-scale));
+  line-height: 1.85;
+  color: rgba(176,168,152,.75);
+  max-width: 340px;
+  margin-bottom: 24px;
+}
+
+.brand-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.brand-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(212,175,55,.07);
+  border: 1px solid rgba(212,175,55,.16);
+  font-family: var(--font-ui); font-size: calc(11px * var(--fs-scale));
+  color: rgba(212,175,55,.8);
+}
+.brand-pill svg { width: 11px; height: 11px; }
+
+/* ── RIGHT PANEL (Login Form) ── */
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 56px 70px;
+  position: relative;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--nav-surface);
+  border: 1px solid var(--nav-border);
+  border-radius: 20px;
+  padding: 40px 42px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(to left, var(--gold-deep), var(--gold-bright), var(--gold-light), var(--gold-bright), var(--gold-deep));
+  background-size: 200%;
+  animation: shimmerBar 4s linear infinite;
+}
+
+@keyframes shimmerBar {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.login-card::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: -80px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(212,175,55,.05), transparent 65%);
+  pointer-events: none;
+}
+
+.login-card-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-badge {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: calc(10px * var(--fs-scale));
+  letter-spacing: .2em;
+  color: var(--gold-mid);
+  border: 1px solid rgba(196,154,42,.3);
+  padding: 4px 14px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: calc(28px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-family: var(--font-body);
+  font-size: calc(13px * var(--fs-scale));
+  color: var(--text-muted);
+}
+
+/* ── FORM ── */
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: calc(12px * var(--fs-scale));
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.form-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  width: 100%;
+  padding: 13px 44px 13px 14px;
+  background: var(--table-head-bg);
+  border: 1px solid var(--table-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: calc(14px * var(--fs-scale));
+  transition: all .22s ease;
+  outline: none;
+  direction: rtl;
+}
+
+[data-theme="light"] .form-input {
+  background: rgba(0,0,0,.02);
+  border-color: #ccc5b6;
+}
+
+.form-input:focus {
+  border-color: rgba(212,175,55,.5);
+  background: rgba(212,175,55,.04);
+  box-shadow: 0 0 0 3px rgba(212,175,55,.08);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+  font-size: calc(13px * var(--fs-scale));
+}
+
+.form-input-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%; transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.form-input-icon svg { width: 16px; height: 16px; }
+
+.form-input-action {
+  position: absolute;
+  left: 14px;
+  top: 50%; transform: translateY(-50%);
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none; border: none; padding: 0;
+  transition: color .2s;
+}
+.form-input-action:hover { color: var(--gold-mid); }
+.form-input-action svg { width: 16px; height: 16px; }
+
+/* ── USER TYPE SELECTOR ── */
+.user-type-group {
+  margin-bottom: 24px;
+}
+
+.user-type-label {
+  font-family: var(--font-ui);
+  font-size: calc(12px * var(--fs-scale));
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.user-type-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.user-type-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.user-type-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.user-type-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all .22s ease;
+  background: rgba(255,255,255,.02);
+  cursor: pointer;
+}
+[data-theme="light"] .user-type-card { background: rgba(0,0,0,.02); }
+
+.user-type-option input:checked + .user-type-card {
+  border-color: rgba(212,175,55,.5);
+  background: rgba(212,175,55,.06);
+  box-shadow: 0 0 0 3px rgba(212,175,55,.08);
+}
+
+.user-type-icon {
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  background: rgba(212,175,55,.07);
+  border: 1px solid rgba(212,175,55,.15);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.user-type-icon svg { width: 14px; height: 14px; color: var(--gold-mid); }
+.user-type-option input:checked + .user-type-card .user-type-icon {
+  background: rgba(212,175,55,.14);
+  border-color: rgba(212,175,55,.35);
+}
+.user-type-name {
+  font-family: var(--font-ui);
+  font-size: calc(12px * var(--fs-scale));
+  color: var(--text-secondary);
+  transition: color .2s;
+  line-height: 1.4;
+}
+.user-type-option input:checked + .user-type-card .user-type-name {
+  color: var(--gold-light);
+}
+[data-theme="light"] .user-type-option input:checked + .user-type-card .user-type-name {
+  color: var(--gold-deep);
+}
+
+/* ── SUBMIT BUTTON ── */
+.btn-login {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--gold-deep) 0%, var(--gold-bright) 50%, var(--gold-mid) 100%);
+  background-size: 200%;
+  background-position: right center;
+  border: none;
+  border-radius: 8px;
+  color: var(--black-pure);
+  font-family: var(--font-ui);
+  font-size: calc(15px * var(--fs-scale));
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .35s ease;
+  letter-spacing: .05em;
+  position: relative;
+  overflow: hidden;
+  margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(212,175,55,.25);
+}
+
+.btn-login:hover {
+  background-position: left center;
+  box-shadow: 0 8px 32px rgba(212,175,55,.45);
+  transform: translateY(-1px);
+}
+
+.btn-login:active { transform: translateY(0); }
+
+.btn-login::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,.2), transparent);
+  transform: skewX(-20deg);
+  transition: left .5s ease;
+}
+.btn-login:hover::before { left: 140%; }
+
+.btn-login-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn-login-text svg { width: 18px; height: 18px; }
+
+/* ── DIVIDER ── */
+.form-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0;
+}
+.form-divider-line { flex: 1; height: 1px; background: var(--border); }
+.form-divider-text {
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--fs-scale));
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── DEMO ACCOUNTS ── */
+.demo-accounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.demo-btn {
+  padding: 10px 12px;
+  border: 1px solid var(--nav-border);
+  border-radius: 8px;
+  background: var(--nav-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--fs-scale));
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+[data-theme="light"] .demo-btn { background: rgba(0,0,0,.02); }
+
+.demo-btn:hover {
+  border-color: var(--nav-hover-border);
+  color: var(--nav-active-text);
+  background: var(--nav-hover-bg);
+}
+[data-theme="light"] .demo-btn:hover { color: var(--gold-deep); }
+
+.demo-btn-role {
+  font-size: calc(10px * var(--fs-scale));
+  color: var(--gold-mid);
+  letter-spacing: .08em;
+}
+
+/* ── QUICK SETTINGS (FAB) ── */
+.qs-fab {
+  position: fixed;
+  z-index: 200;
+  inset-inline-end: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.qs-fab-trigger {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(212,175,55,.38);
+  background: linear-gradient(145deg, rgba(22,22,22,.94), rgba(12,12,12,.88));
+  color: var(--gold-bright);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 22px rgba(0,0,0,.4);
+  transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+[data-theme="light"] .qs-fab-trigger {
+  background: linear-gradient(145deg, rgba(255,253,248,.97), rgba(248,239,226,.92));
+  color: var(--gold-deep);
+  border-color: rgba(196,154,42,.45);
+  box-shadow: 0 6px 20px rgba(72,57,32,.14);
+}
+.qs-fab-trigger:hover {
+  transform: scale(1.06);
+  border-color: rgba(212,175,55,.55);
+}
+.qs-fab-trigger svg { width: 22px; height: 22px; }
+.qs-fab.open .qs-fab-trigger {
+  border-color: rgba(212,175,55,.55);
+  box-shadow: 0 0 0 2px rgba(212,175,55,.2);
+}
+.qs-panel {
+  display: none;
+  width: min(320px, calc(100vw - 32px));
+  max-height: min(72vh, 520px);
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid var(--qs-panel-border, var(--border));
+  background: var(--qs-panel-bg, var(--bg-card));
+  box-shadow: var(--shadow-card);
+  padding: 0;
+  animation: qsPop .24s ease;
+}
+.qs-fab.open .qs-panel { display: block; }
+@keyframes qsPop {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.qs-panel-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--qs-panel-border, var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  background: var(--qs-panel-head-bg, var(--bg-card));
+  z-index: 1;
+}
+.qs-panel-title {
+  font-family: var(--font-ui);
+  font-size: calc(13px * var(--fs-scale));
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.qs-panel-sub {
+  font-size: calc(10px * var(--fs-scale));
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.qs-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(212,175,55,.2);
+  background: rgba(212,175,55,.06);
+  color: var(--gold-mid);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.qs-close:hover { border-color: rgba(212,175,55,.4); color: var(--gold-bright); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--black-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-deep); }
+.qs-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(212,175,55,.22);
+  background: rgba(212,175,55,.06);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: calc(9px * var(--fs-scale));
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.qs-reset-btn:hover {
+  background: rgba(212,175,55,.14);
+  border-color: rgba(212,175,55,.4);
+  color: var(--gold-bright);
+}
+[data-theme="light"] .qs-reset-btn {
+  background: rgba(180,83,9,.06);
+  border-color: rgba(180,83,9,.2);
+  color: #7a6040;
+}
+[data-theme="light"] .qs-reset-btn:hover {
+  background: rgba(180,83,9,.12);
+  border-color: rgba(180,83,9,.38);
+  color: #5a3e1a;
+}
+.qs-panel-body { padding: 10px 12px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 380px) {
+  .qs-panel-body { grid-template-columns: 1fr; }
+}
+.qs-row {
+  background: rgba(212,175,55,.04);
+  border: 1px solid rgba(212,175,55,.12);
+  border-radius: 11px;
+  padding: 10px 11px;
+}
+[data-theme="light"] .qs-row { background: rgba(212,175,55,.06); }
+.qs-row-title {
+  font-family: var(--font-ui);
+  font-size: calc(10px * var(--fs-scale));
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.qs-row-title svg { width: 12px; height: 12px; color: var(--gold-mid); flex-shrink: 0; }
+.qs-tpill {
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.12);
+}
+[data-theme="light"] .qs-tpill { background: rgba(0,0,0,.04); }
+.qs-tpill-btn {
+  flex: 1;
+  padding: 5px 7px;
+  font-family: var(--font-ui);
+  font-size: calc(10px * var(--fs-scale));
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  transition: all .18s;
+  white-space: nowrap;
+}
+.qs-tpill-btn.active {
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold-mid));
+  color: var(--black-pure);
+  font-weight: 700;
+}
+[data-theme="light"] .qs-tpill-btn.active {
+  background: linear-gradient(135deg, #c79a2d, #e2bf63);
+  color: #3b2b10;
+}
+.qs-rate {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(212,175,55,.06);
+  border: 1px solid rgba(212,175,55,.1);
+  font-family: var(--font-ui);
+  font-size: calc(9px * var(--fs-scale));
+  color: var(--text-muted);
+}
+.qs-rate strong { color: var(--gold-bright); font-size: calc(10px * var(--fs-scale)); }
+.qs-font-opts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-top: 2px;
+}
+.qs-color-opts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 2px;
+}
+.qs-color-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255,255,255,.02);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: calc(10px * var(--fs-scale));
+  padding: 7px 8px;
+  cursor: pointer;
+  transition: all .18s;
+}
+.qs-color-btn:hover { border-color: rgba(212,175,55,.35); color: var(--text-primary); }
+.qs-color-btn.active {
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold-mid));
+  color: var(--black-pure);
+  font-weight: 700;
+}
+.qs-font-opt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .18s;
+}
+.qs-font-opt input { display: none; }
+.qs-font-radio {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qs-font-opt input:checked ~ .qs-font-radio {
+  border-color: var(--gold-bright);
+  background: var(--gold-bright);
+}
+.qs-font-opt input:checked ~ .qs-font-radio::after {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--black-pure);
+}
+.qs-font-opt:has(input:checked) {
+  background: rgba(212,175,55,.08);
+  border-color: rgba(212,175,55,.2);
+}
+.qs-font-lbl { font-size: calc(10px * var(--fs-scale)); color: var(--text-secondary); line-height: 1.15; }
+.qs-font-sub { font-size: calc(8px * var(--fs-scale)); color: var(--text-muted); }
+.qs-note {
+  margin-top: 6px;
+  font-family: var(--font-ui);
+  font-size: calc(9px * var(--fs-scale));
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.qs-span2 { grid-column: 1 / -1; }
+
+/* ── FOOTER ── */
+.login-footer {
+  position: static;
+  width: 100%;
+  margin-top: 14px;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--fs-scale));
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* ── ERROR ── */
+.form-error {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: calc(12px * var(--fs-scale));
+  color: #fca5a5;
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(127,29,29,.25);
+  border: 1px solid rgba(248,113,113,.2);
+  border-radius: 6px;
+  text-align: center;
+}
+[data-theme="light"] .form-error { background: rgba(254,226,226,.7); color: #991b1b; }
+.form-error.show { display: block; animation: fadeSlide .3s ease; }
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── LOADING STATE ── */
+.btn-login.loading .btn-login-text { opacity: 0; }
+.btn-login.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px; height: 20px;
+  border: 2px solid rgba(0,0,0,.3);
+  border-top-color: var(--black-pure);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .login-wrapper { grid-template-columns: 1fr; }
+  .brand-panel { display: none; }
+  .form-panel {
+    min-height: 100vh;
+    height: auto;
+    overflow-y: visible;
+    padding: 44px 24px 70px;
+  }
+  body { overflow-y: auto; }
+}
+
+@media (max-width: 480px) {
+  .form-panel { padding: 32px 16px 60px; }
+  .login-card { padding: 32px 24px; }
+  .brand-headline { font-size: calc(36px * var(--fs-scale)); }
+  .user-type-options { grid-template-columns: 1fr; }
+  .demo-accounts { grid-template-columns: 1fr; }
+}
+
+/* Keep full card visible on short laptop screens */
+@media (max-height: 860px) {
+  .form-panel { padding: 22px 28px 30px; height: auto; overflow-y: auto; }
+  .login-card { padding: 26px 30px; }
+  .login-card-header { margin-bottom: 14px; }
+  .login-badge { margin-bottom: 10px; }
+  .login-title { font-size: calc(24px * var(--fs-scale)); margin-bottom: 4px; }
+  .login-subtitle { font-size: calc(12px * var(--fs-scale)); }
+  .user-type-group { margin-bottom: 14px; }
+  .form-group { margin-bottom: 12px; }
+  .form-divider { margin: 14px 0; }
+  .btn-login { padding: 12px; margin-top: 4px; }
+  .demo-btn { padding: 8px 10px; font-size: calc(10px * var(--fs-scale)); }
+  .login-footer { margin-top: 8px; font-size: calc(10px * var(--fs-scale)); }
+}
+
+/* ── ANIMATION ENTRANCE ── */
+.login-card {
+  animation: cardEntrance .6s cubic-bezier(.22,.7,.3,1);
+}
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(24px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.brand-bottom {
+  animation: brandEntrance .9s cubic-bezier(.22,.7,.3,1) .2s both;
+}
+.bstat {
+  animation: floatCard 6s ease-in-out infinite alternate, bstatIn .8s cubic-bezier(.22,.7,.3,1) both;
+}
+.bstat-1 { animation-delay: 0s, .3s; }
+.bstat-2 { animation-delay: -2.5s, .45s; }
+.bstat-3 { animation-delay: -4s, .6s; }
+.bstat-4 { animation-delay: -1s, .75s; }
+
+@keyframes brandEntrance {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes bstatIn {
+  from { opacity: 0; transform: translateY(20px) scale(.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-canvas">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+<div class="bg-pattern"></div>
+
+<!-- الإعدادات السريعة -->
+<div class="qs-fab" id="qs-fab">
+  <div class="qs-panel" id="qs-panel" onclick="event.stopPropagation()">
+    <div class="qs-panel-head">
+      <div>
+        <div class="qs-panel-title">الإعدادات السريعة</div>
+        <div class="qs-panel-sub">مظهر، خط، ألوان، عملة، مساحة، لغة</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button type="button" class="qs-reset-btn" onclick="resetAllSettings()" aria-label="إعادة تعيين الإعدادات" title="إعادة تعيين كل الإعدادات">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+          افتراضي
+        </button>
+        <button type="button" class="qs-close" onclick="closeQuickSettings()" aria-label="إغلاق">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="qs-panel-body">
+      <div class="qs-row"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>المظهر</div><div class="qs-tpill"><button type="button" class="qs-tpill-btn active" id="theme-dark-btn" onclick="setThemePref('dark')">🌙 داكن</button><button type="button" class="qs-tpill-btn" id="theme-light-btn" onclick="setThemePref('light')">☀️ فاتح</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12"/></svg>حجم الخط</div><div class="qs-tpill"><button type="button" class="qs-tpill-btn active" id="fs-normal-btn" onclick="setFontSize('normal')">١٥</button><button type="button" class="qs-tpill-btn" id="fs-large-btn" onclick="setFontSize('large')">١٧</button><button type="button" class="qs-tpill-btn" id="fs-xl-btn" onclick="setFontSize('xl')">٢٠</button><button type="button" class="qs-tpill-btn" id="fs-xxl-btn" onclick="setFontSize('xxl')">٢٢</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>لون اللوحة</div><div class="qs-color-opts"><button type="button" class="qs-color-btn" id="panel-color-default-btn" onclick="setPanelColor('default')">افتراضي</button><button type="button" class="qs-color-btn" id="panel-color-plum-btn" onclick="setPanelColor('plum')">برقوقي</button><button type="button" class="qs-color-btn" id="panel-color-slate-btn" onclick="setPanelColor('slate')">أردوازي</button><button type="button" class="qs-color-btn" id="panel-color-navy-btn" onclick="setPanelColor('navy')">نيلي</button><button type="button" class="qs-color-btn" id="panel-color-forest-btn" onclick="setPanelColor('forest')">غابي</button><button type="button" class="qs-color-btn" id="panel-color-stone-btn" onclick="setPanelColor('stone')">حجري</button><button type="button" class="qs-color-btn" id="panel-color-rose-btn" onclick="setPanelColor('rose')">وردي</button><button type="button" class="qs-color-btn" id="panel-color-teal-btn" onclick="setPanelColor('teal')">فيروزي</button><button type="button" class="qs-color-btn" id="panel-color-gold-btn" onclick="setPanelColor('gold')">ذهبي</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0"/></svg>العملة</div><div class="qs-tpill"><button type="button" class="qs-tpill-btn active" id="cur-usd-btn" onclick="setCurrency('USD')">$ دولار</button><button type="button" class="qs-tpill-btn" id="cur-lbp-btn" onclick="setCurrency('LBP')" hidden>ليرة سورية</button><button type="button" class="qs-tpill-btn" id="cur-aed-btn" onclick="setCurrency('AED')" hidden>درهم إماراتي</button></div></div>
+      <div class="qs-row"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>المساحة</div><div class="qs-tpill"><button type="button" class="qs-tpill-btn active" id="area-m2-btn" onclick="setArea('m2')">م² متر</button><button type="button" class="qs-tpill-btn" id="area-ft2-btn" onclick="setArea('ft2')">قدم²</button></div></div>
+      <div class="qs-row"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375"/></svg>معيار التملك</div><div class="qs-tpill"><button type="button" class="qs-tpill-btn active" id="own-sahm-btn" onclick="setOwnership('sahm')">سهم / 2400</button><button type="button" class="qs-tpill-btn" id="own-pct-btn" onclick="setOwnership('pct')">نسبة %</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12"/></svg>نوع الخط</div>
+        <div class="qs-font-opts">
+          <label class="qs-font-opt"><input type="radio" name="fontFamily" value="Tajawal" checked><div class="qs-font-radio"></div><div><div class="qs-font-lbl" style="font-family:'Tajawal',sans-serif">تجوّل</div><div class="qs-font-sub">Tajawal</div></div></label>
+          <label class="qs-font-opt"><input type="radio" name="fontFamily" value="Cairo"><div class="qs-font-radio"></div><div><div class="qs-font-lbl" style="font-family:'Cairo',sans-serif">القاهرة</div><div class="qs-font-sub">Cairo</div></div></label>
+          <label class="qs-font-opt"><input type="radio" name="fontFamily" value="Amiri"><div class="qs-font-radio"></div><div><div class="qs-font-lbl" style="font-family:'Amiri',serif">أميري</div><div class="qs-font-sub">Amiri</div></div></label>
+        </div>
+      </div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3"/></svg>لون الخط</div><div class="qs-color-opts"><button type="button" class="qs-color-btn active" id="font-color-default-btn" onclick="setFontColor('default')">افتراضي</button><button type="button" class="qs-color-btn" id="font-color-ivory-btn" onclick="setFontColor('ivory')">عاجي</button><button type="button" class="qs-color-btn" id="font-color-gold-btn" onclick="setFontColor('gold')">ذهبي</button><button type="button" class="qs-color-btn" id="font-color-silver-btn" onclick="setFontColor('silver')">فضي</button><button type="button" class="qs-color-btn" id="font-color-mint-btn" onclick="setFontColor('mint')">نعناعي</button><button type="button" class="qs-color-btn" id="font-color-rose-btn" onclick="setFontColor('rose')">وردي</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18M3 12h18M3 16.5h18"/></svg>لون شريط التنقل</div><div class="qs-color-opts"><button type="button" class="qs-color-btn active" id="nav-color-default-btn" onclick="setNavbarColor('default')">افتراضي</button><button type="button" class="qs-color-btn" id="nav-color-obsidian-btn" onclick="setNavbarColor('obsidian')">أوبسيديان</button><button type="button" class="qs-color-btn" id="nav-color-sand-btn" onclick="setNavbarColor('sand')">رملي</button><button type="button" class="qs-color-btn" id="nav-color-emerald-btn" onclick="setNavbarColor('emerald')">زمردي</button><button type="button" class="qs-color-btn" id="nav-color-royal-btn" onclick="setNavbarColor('royal')">ملكي</button><button type="button" class="qs-color-btn" id="nav-color-burgundy-btn" onclick="setNavbarColor('burgundy')">خمري</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5.25h18M3 12h18M3 18.75h18"/></svg>لون رأس الصفحة</div><div class="qs-color-opts"><button type="button" class="qs-color-btn active" id="header-color-default-btn" onclick="setHeaderColor('default')">افتراضي</button><button type="button" class="qs-color-btn" id="header-color-obsidian-btn" onclick="setHeaderColor('obsidian')">أوبسيديان</button><button type="button" class="qs-color-btn" id="header-color-sand-btn" onclick="setHeaderColor('sand')">رملي</button><button type="button" class="qs-color-btn" id="header-color-emerald-btn" onclick="setHeaderColor('emerald')">زمردي</button><button type="button" class="qs-color-btn" id="header-color-royal-btn" onclick="setHeaderColor('royal')">ملكي</button><button type="button" class="qs-color-btn" id="header-color-burgundy-btn" onclick="setHeaderColor('burgundy')">خمري</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15m-15 5.25h15m-15 5.25h15"/></svg>لون الجداول</div><div class="qs-color-opts"><button type="button" class="qs-color-btn active" id="table-color-default-btn" onclick="setTableColor('default')">افتراضي</button><button type="button" class="qs-color-btn" id="table-color-obsidian-btn" onclick="setTableColor('obsidian')">أوبسيديان</button><button type="button" class="qs-color-btn" id="table-color-sand-btn" onclick="setTableColor('sand')">رملي</button><button type="button" class="qs-color-btn" id="table-color-emerald-btn" onclick="setTableColor('emerald')">زمردي</button><button type="button" class="qs-color-btn" id="table-color-royal-btn" onclick="setTableColor('royal')">ملكي</button><button type="button" class="qs-color-btn" id="table-color-burgundy-btn" onclick="setTableColor('burgundy')">خمري</button></div></div>
+      <div class="qs-row qs-span2"><div class="qs-row-title"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3"/></svg>اللغة</div>
+        <div class="qs-tpill" style="max-width:260px"><button type="button" class="qs-tpill-btn active" id="lang-ar-btn" onclick="setLang('ar')">🇸🇦 العربية</button><button type="button" class="qs-tpill-btn" id="lang-en-btn" onclick="setLang('en')">🇬🇧 English</button></div>
+        <div class="qs-note">* تغيير اللغة يطبق اتجاه الصفحة فوراً؛ ترجمة النصوص تُكمّل لاحقاً.</div>
+      </div>
+    </div>
+  </div>
+  <button type="button" class="qs-fab-trigger" id="qs-fab-trigger" aria-expanded="false" aria-label="الإعدادات السريعة" onclick="event.stopPropagation(); toggleQuickSettings();">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.65"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+  </button>
+</div>
+
+<!-- Main Layout -->
+<div class="login-wrapper">
+
+  <!-- Brand Panel -->
+  <div class="brand-panel">
+
+    <!-- Architectural SVG Scene -->
+    <div class="brand-scene">
+      <svg viewBox="0 0 520 700" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+        <defs>
+          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0d0a04" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#1a1406" stop-opacity="1"/>
+          </linearGradient>
+          <linearGradient id="bldg1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#1c1810"/>
+            <stop offset="50%" stop-color="#2a2416"/>
+            <stop offset="100%" stop-color="#161208"/>
+          </linearGradient>
+          <linearGradient id="bldg2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#151107"/>
+            <stop offset="50%" stop-color="#221d0e"/>
+            <stop offset="100%" stop-color="#181407"/>
+          </linearGradient>
+          <linearGradient id="bldgTall" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#23200f"/>
+            <stop offset="40%" stop-color="#302c18"/>
+            <stop offset="100%" stop-color="#1a1709"/>
+          </linearGradient>
+          <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e1a09"/>
+            <stop offset="100%" stop-color="#0d0a02"/>
+          </linearGradient>
+          <linearGradient id="glowGold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#D4AF37" stop-opacity=".9"/>
+            <stop offset="100%" stop-color="#8B6914" stop-opacity=".3"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="softGlow">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#D4AF37" stop-opacity=".18"/>
+            <stop offset="100%" stop-color="#D4AF37" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="groundLight" cx="50%" cy="0%" r="60%">
+            <stop offset="0%" stop-color="#C49A2A" stop-opacity=".12"/>
+            <stop offset="100%" stop-color="#C49A2A" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Sky/Background -->
+        <rect width="520" height="700" fill="url(#skyGrad)"/>
+
+        <!-- Moon glow -->
+        <ellipse cx="420" cy="80" rx="90" ry="90" fill="url(#moonGlow)">
+          <animate attributeName="cx" values="420;426;420" dur="11s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="80;77;80" dur="11s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".9;1;.9" dur="6s" repeatCount="indefinite"/>
+        </ellipse>
+        <!-- Moon -->
+        <circle cx="420" cy="80" r="22" fill="#1c1810" stroke="#D4AF37" stroke-width=".8" opacity=".7"/>
+        <circle cx="412" cy="74" r="18" fill="#0f0d06"/>
+
+        <!-- Stars -->
+        <g fill="#D4AF37" opacity=".5" filter="url(#glow)">
+          <circle cx="60"  cy="45"  r="1"/>
+          <circle cx="140" cy="28"  r="1.2"/>
+          <circle cx="200" cy="55"  r=".8"/>
+          <circle cx="280" cy="20"  r="1"/>
+          <circle cx="350" cy="40"  r=".9"/>
+          <circle cx="470" cy="30"  r="1.1"/>
+          <circle cx="90"  cy="110" r=".7"/>
+          <circle cx="180" cy="90"  r="1"/>
+          <circle cx="310" cy="75"  r=".8"/>
+          <circle cx="490" cy="110" r=".9"/>
+          <circle cx="30"  cy="130" r="1"/>
+          <circle cx="240" cy="100" r=".6"/>
+        </g>
+
+        <!-- Animated stars -->
+        <g fill="#E8C96A">
+          <circle cx="110" cy="65" r="1" opacity=".4">
+            <animate attributeName="opacity" values=".4;1;.4" dur="3s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="320" cy="50" r=".9" opacity=".3">
+            <animate attributeName="opacity" values=".3;.9;.3" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="460" cy="95" r="1.1" opacity=".5">
+            <animate attributeName="opacity" values=".5;1;.5" dur="2.8s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- ── BUILDINGS ── -->
+
+        <!-- Far background buildings (very dark) -->
+        <rect x="0"   y="380" width="60"  height="320" fill="#100e06" opacity=".6"/>
+        <rect x="10"  y="340" width="40"  height="360" fill="#131007" opacity=".6"/>
+        <rect x="460" y="350" width="60"  height="350" fill="#100e06" opacity=".6"/>
+        <rect x="470" y="310" width="40"  height="390" fill="#131007" opacity=".6"/>
+
+        <!-- Mid buildings -->
+        <rect class="building-side-left" x="30"  y="430" width="80"  height="270" fill="url(#bldg2)"/>
+        <!-- windows -->
+        <g class="windows-left-dim" fill="#C49A2A" opacity=".18">
+          <rect x="40"  y="445" width="8" height="6" rx="1"/>
+          <rect x="55"  y="445" width="8" height="6" rx="1"/>
+          <rect x="70"  y="445" width="8" height="6" rx="1"/>
+          <rect x="85"  y="445" width="8" height="6" rx="1"/>
+          <rect x="40"  y="460" width="8" height="6" rx="1"/>
+          <rect x="55"  y="460" width="8" height="6" rx="1"/>
+          <rect x="70"  y="460" width="8" height="6" rx="1"/>
+          <rect x="85"  y="460" width="8" height="6" rx="1"/>
+          <rect x="40"  y="475" width="8" height="6" rx="1"/>
+          <rect x="70"  y="475" width="8" height="6" rx="1"/>
+          <rect x="40"  y="490" width="8" height="6" rx="1"/>
+          <rect x="55"  y="490" width="8" height="6" rx="1"/>
+          <rect x="85"  y="490" width="8" height="6" rx="1"/>
+        </g>
+        <!-- lit windows -->
+        <g fill="#E8C96A" opacity=".55" filter="url(#glow)">
+          <rect x="55"  y="475" width="8" height="6" rx="1">
+            <animate attributeName="opacity" values=".55;.2;.55" dur="4s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="85"  y="475" width="8" height="6" rx="1">
+            <animate attributeName="opacity" values=".3;.7;.3" dur="6s" repeatCount="indefinite"/>
+          </rect>
+        </g>
+
+        <!-- Right side building -->
+        <rect class="building-side-right" x="410" y="420" width="90"  height="280" fill="url(#bldg2)"/>
+        <g class="windows-right-dim" fill="#C49A2A" opacity=".18">
+          <rect x="420" y="435" width="9" height="7" rx="1"/>
+          <rect x="436" y="435" width="9" height="7" rx="1"/>
+          <rect x="452" y="435" width="9" height="7" rx="1"/>
+          <rect x="468" y="435" width="9" height="7" rx="1"/>
+          <rect x="484" y="435" width="9" height="7" rx="1"/>
+          <rect x="420" y="452" width="9" height="7" rx="1"/>
+          <rect x="436" y="452" width="9" height="7" rx="1"/>
+          <rect x="452" y="452" width="9" height="7" rx="1"/>
+          <rect x="484" y="452" width="9" height="7" rx="1"/>
+          <rect x="420" y="469" width="9" height="7" rx="1"/>
+          <rect x="452" y="469" width="9" height="7" rx="1"/>
+          <rect x="468" y="469" width="9" height="7" rx="1"/>
+          <rect x="484" y="469" width="9" height="7" rx="1"/>
+        </g>
+        <g fill="#E8C96A" opacity=".6" filter="url(#glow)">
+          <rect x="436" y="469" width="9" height="7" rx="1">
+            <animate attributeName="opacity" values=".6;.2;.6" dur="5s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="468" y="452" width="9" height="7" rx="1">
+            <animate attributeName="opacity" values=".3;.7;.3" dur="3.5s" repeatCount="indefinite"/>
+          </rect>
+        </g>
+
+        <!-- ── MAIN TALL TOWER (center) ── -->
+        <!-- Tower base body -->
+        <rect class="building-main" x="165" y="200" width="190" height="500" fill="url(#bldgTall)"/>
+        <!-- Tower facade detail lines -->
+        <line x1="220" y1="200" x2="220" y2="700" stroke="#D4AF37" stroke-width=".4" opacity=".12"/>
+        <line x1="260" y1="200" x2="260" y2="700" stroke="#D4AF37" stroke-width=".4" opacity=".08"/>
+        <line x1="300" y1="200" x2="300" y2="700" stroke="#D4AF37" stroke-width=".4" opacity=".12"/>
+        <!-- Top decorative crown -->
+        <polygon points="230,175 260,130 290,175" fill="#1e1a0a" stroke="#D4AF37" stroke-width=".8" opacity=".7"/>
+        <line x1="260" y1="130" x2="260" y2="100" stroke="#D4AF37" stroke-width="1" opacity=".6" filter="url(#glow)"/>
+        <circle cx="260" cy="98" r="3" fill="#D4AF37" opacity=".7" filter="url(#glow)">
+          <animate attributeName="opacity" values=".7;1;.7" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Top cornice line -->
+        <rect x="158" y="198" width="204" height="4" fill="#D4AF37" opacity=".35" rx="1"/>
+        <!-- Side top ornament lines -->
+        <line x1="165" y1="198" x2="165" y2="230" stroke="#D4AF37" stroke-width="1.5" opacity=".3"/>
+        <line x1="355" y1="198" x2="355" y2="230" stroke="#D4AF37" stroke-width="1.5" opacity=".3"/>
+
+        <!-- Tower windows — floor grid -->
+        <!-- Floor bands -->
+        <g fill="none" stroke="#D4AF37" stroke-width=".3" opacity=".12">
+          <line x1="165" y1="250" x2="355" y2="250"/>
+          <line x1="165" y1="290" x2="355" y2="290"/>
+          <line x1="165" y1="330" x2="355" y2="330"/>
+          <line x1="165" y1="370" x2="355" y2="370"/>
+          <line x1="165" y1="410" x2="355" y2="410"/>
+          <line x1="165" y1="450" x2="355" y2="450"/>
+          <line x1="165" y1="490" x2="355" y2="490"/>
+          <line x1="165" y1="530" x2="355" y2="530"/>
+          <line x1="165" y1="570" x2="355" y2="570"/>
+          <line x1="165" y1="610" x2="355" y2="610"/>
+          <line x1="165" y1="650" x2="355" y2="650"/>
+        </g>
+
+        <!-- Window groups per floor (dim base) -->
+        <g class="windows-tower-dim" fill="#C49A2A" opacity=".15">
+          <!-- Floor 1 -->
+          <rect x="178" y="213" width="12" height="20" rx="2"/>
+          <rect x="198" y="213" width="12" height="20" rx="2"/>
+          <rect x="218" y="213" width="12" height="20" rx="2"/>
+          <rect x="238" y="213" width="12" height="20" rx="2"/>
+          <rect x="258" y="213" width="12" height="20" rx="2"/>
+          <rect x="278" y="213" width="12" height="20" rx="2"/>
+          <rect x="298" y="213" width="12" height="20" rx="2"/>
+          <rect x="318" y="213" width="12" height="20" rx="2"/>
+          <rect x="338" y="213" width="12" height="20" rx="2"/>
+          <!-- Floor 2 -->
+          <rect x="178" y="254" width="12" height="20" rx="2"/>
+          <rect x="198" y="254" width="12" height="20" rx="2"/>
+          <rect x="238" y="254" width="12" height="20" rx="2"/>
+          <rect x="258" y="254" width="12" height="20" rx="2"/>
+          <rect x="298" y="254" width="12" height="20" rx="2"/>
+          <rect x="318" y="254" width="12" height="20" rx="2"/>
+          <rect x="338" y="254" width="12" height="20" rx="2"/>
+          <!-- Floor 3 -->
+          <rect x="178" y="294" width="12" height="20" rx="2"/>
+          <rect x="218" y="294" width="12" height="20" rx="2"/>
+          <rect x="238" y="294" width="12" height="20" rx="2"/>
+          <rect x="258" y="294" width="12" height="20" rx="2"/>
+          <rect x="278" y="294" width="12" height="20" rx="2"/>
+          <rect x="318" y="294" width="12" height="20" rx="2"/>
+          <rect x="338" y="294" width="12" height="20" rx="2"/>
+          <!-- Floors 4-8 repeat pattern -->
+          <rect x="178" y="334" width="12" height="20" rx="2"/>
+          <rect x="198" y="334" width="12" height="20" rx="2"/>
+          <rect x="258" y="334" width="12" height="20" rx="2"/>
+          <rect x="278" y="334" width="12" height="20" rx="2"/>
+          <rect x="298" y="334" width="12" height="20" rx="2"/>
+          <rect x="338" y="334" width="12" height="20" rx="2"/>
+          <rect x="198" y="374" width="12" height="20" rx="2"/>
+          <rect x="218" y="374" width="12" height="20" rx="2"/>
+          <rect x="258" y="374" width="12" height="20" rx="2"/>
+          <rect x="298" y="374" width="12" height="20" rx="2"/>
+          <rect x="318" y="374" width="12" height="20" rx="2"/>
+          <rect x="178" y="414" width="12" height="20" rx="2"/>
+          <rect x="238" y="414" width="12" height="20" rx="2"/>
+          <rect x="278" y="414" width="12" height="20" rx="2"/>
+          <rect x="298" y="414" width="12" height="20" rx="2"/>
+          <rect x="338" y="414" width="12" height="20" rx="2"/>
+          <rect x="178" y="454" width="12" height="20" rx="2"/>
+          <rect x="198" y="454" width="12" height="20" rx="2"/>
+          <rect x="218" y="454" width="12" height="20" rx="2"/>
+          <rect x="258" y="454" width="12" height="20" rx="2"/>
+          <rect x="318" y="454" width="12" height="20" rx="2"/>
+          <rect x="338" y="454" width="12" height="20" rx="2"/>
+        </g>
+
+        <!-- LIT windows — animated -->
+        <g filter="url(#glow)">
+          <rect x="218" y="213" width="12" height="20" rx="2" fill="#E8C96A" opacity=".75">
+            <animate attributeName="opacity" values=".75;.3;.75" dur="5.2s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="278" y="213" width="12" height="20" rx="2" fill="#E8C96A" opacity=".6">
+            <animate attributeName="opacity" values=".6;.9;.6" dur="3.8s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="218" y="254" width="12" height="20" rx="2" fill="#E8C96A" opacity=".8">
+            <animate attributeName="opacity" values=".8;.35;.8" dur="6s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="278" y="254" width="12" height="20" rx="2" fill="#E8C96A" opacity=".5">
+            <animate attributeName="opacity" values=".5;.85;.5" dur="4.4s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="198" y="294" width="12" height="20" rx="2" fill="#E8C96A" opacity=".7">
+            <animate attributeName="opacity" values=".7;.25;.7" dur="7s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="298" y="294" width="12" height="20" rx="2" fill="#E8C96A" opacity=".55">
+            <animate attributeName="opacity" values=".55;.9;.55" dur="5s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="218" y="334" width="12" height="20" rx="2" fill="#D4AF37" opacity=".65">
+            <animate attributeName="opacity" values=".65;.2;.65" dur="4.2s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="238" y="374" width="12" height="20" rx="2" fill="#E8C96A" opacity=".7">
+            <animate attributeName="opacity" values=".7;.3;.7" dur="3.5s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="338" y="374" width="12" height="20" rx="2" fill="#D4AF37" opacity=".5">
+            <animate attributeName="opacity" values=".5;.85;.5" dur="6.8s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="218" y="414" width="12" height="20" rx="2" fill="#E8C96A" opacity=".6">
+            <animate attributeName="opacity" values=".6;.95;.6" dur="4.8s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="278" y="454" width="12" height="20" rx="2" fill="#D4AF37" opacity=".75">
+            <animate attributeName="opacity" values=".75;.2;.75" dur="5.5s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="298" y="454" width="12" height="20" rx="2" fill="#E8C96A" opacity=".5">
+            <animate attributeName="opacity" values=".5;.8;.5" dur="3.2s" repeatCount="indefinite"/>
+          </rect>
+        </g>
+
+        <!-- Lobby windows (bottom) glow -->
+        <rect x="220" y="640" width="80" height="60" fill="#C49A2A" opacity=".08" rx="3"/>
+        <rect x="222" y="642" width="76" height="56" fill="#E8C96A" opacity=".04" rx="2"/>
+        <rect x="230" y="645" width="18" height="50" fill="#E8C96A" opacity=".12" rx="2"/>
+        <rect x="256" y="645" width="18" height="50" fill="#E8C96A" opacity=".08" rx="2"/>
+        <rect x="282" y="645" width="18" height="50" fill="#D4AF37" opacity=".14" rx="2"/>
+
+        <!-- Tower ground glow -->
+        <ellipse cx="260" cy="700" rx="120" ry="20" fill="url(#groundLight)"/>
+
+        <!-- ── SECONDARY BUILDING LEFT ── -->
+        <rect x="100" y="320" width="110" height="380" fill="url(#bldg1)"/>
+        <!-- roof line -->
+        <rect x="94" y="318" width="122" height="3" fill="#D4AF37" opacity=".3" rx="1"/>
+        <g fill="#C49A2A" opacity=".15">
+          <rect x="110" y="332" width="10" height="16" rx="1"/>
+          <rect x="128" y="332" width="10" height="16" rx="1"/>
+          <rect x="146" y="332" width="10" height="16" rx="1"/>
+          <rect x="164" y="332" width="10" height="16" rx="1"/>
+          <rect x="182" y="332" width="10" height="16" rx="1"/>
+          <rect x="110" y="358" width="10" height="16" rx="1"/>
+          <rect x="146" y="358" width="10" height="16" rx="1"/>
+          <rect x="164" y="358" width="10" height="16" rx="1"/>
+          <rect x="110" y="384" width="10" height="16" rx="1"/>
+          <rect x="128" y="384" width="10" height="16" rx="1"/>
+          <rect x="182" y="384" width="10" height="16" rx="1"/>
+          <rect x="128" y="410" width="10" height="16" rx="1"/>
+          <rect x="146" y="410" width="10" height="16" rx="1"/>
+          <rect x="164" y="410" width="10" height="16" rx="1"/>
+        </g>
+        <g filter="url(#glow)">
+          <rect x="128" y="358" width="10" height="16" rx="1" fill="#E8C96A" opacity=".6">
+            <animate attributeName="opacity" values=".6;.2;.6" dur="4.7s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="182" y="358" width="10" height="16" rx="1" fill="#D4AF37" opacity=".5">
+            <animate attributeName="opacity" values=".5;.85;.5" dur="6.2s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="164" y="384" width="10" height="16" rx="1" fill="#E8C96A" opacity=".7">
+            <animate attributeName="opacity" values=".7;.3;.7" dur="3.9s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="110" y="410" width="10" height="16" rx="1" fill="#E8C96A" opacity=".55">
+            <animate attributeName="opacity" values=".55;.9;.55" dur="5.3s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="182" y="410" width="10" height="16" rx="1" fill="#D4AF37" opacity=".65">
+            <animate attributeName="opacity" values=".65;.25;.65" dur="4s" repeatCount="indefinite"/>
+          </rect>
+        </g>
+
+        <!-- ── SECONDARY BUILDING RIGHT ── -->
+        <rect x="310" y="300" width="120" height="400" fill="url(#bldg1)"/>
+        <rect x="304" y="298" width="132" height="3" fill="#D4AF37" opacity=".3" rx="1"/>
+        <g fill="#C49A2A" opacity=".15">
+          <rect x="320" y="314" width="11" height="17" rx="1"/>
+          <rect x="340" y="314" width="11" height="17" rx="1"/>
+          <rect x="360" y="314" width="11" height="17" rx="1"/>
+          <rect x="380" y="314" width="11" height="17" rx="1"/>
+          <rect x="400" y="314" width="11" height="17" rx="1"/>
+          <rect x="320" y="342" width="11" height="17" rx="1"/>
+          <rect x="340" y="342" width="11" height="17" rx="1"/>
+          <rect x="380" y="342" width="11" height="17" rx="1"/>
+          <rect x="400" y="342" width="11" height="17" rx="1"/>
+          <rect x="360" y="370" width="11" height="17" rx="1"/>
+          <rect x="380" y="370" width="11" height="17" rx="1"/>
+          <rect x="320" y="398" width="11" height="17" rx="1"/>
+          <rect x="340" y="398" width="11" height="17" rx="1"/>
+          <rect x="400" y="398" width="11" height="17" rx="1"/>
+          <rect x="320" y="426" width="11" height="17" rx="1"/>
+          <rect x="360" y="426" width="11" height="17" rx="1"/>
+          <rect x="400" y="426" width="11" height="17" rx="1"/>
+        </g>
+        <g filter="url(#glow)">
+          <rect x="360" y="342" width="11" height="17" rx="1" fill="#E8C96A" opacity=".65">
+            <animate attributeName="opacity" values=".65;.2;.65" dur="5.6s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="320" y="370" width="11" height="17" rx="1" fill="#D4AF37" opacity=".5">
+            <animate attributeName="opacity" values=".5;.88;.5" dur="4.1s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="400" y="370" width="11" height="17" rx="1" fill="#E8C96A" opacity=".7">
+            <animate attributeName="opacity" values=".7;.3;.7" dur="6.5s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="360" y="398" width="11" height="17" rx="1" fill="#D4AF37" opacity=".55">
+            <animate attributeName="opacity" values=".55;.9;.55" dur="3.7s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="380" y="426" width="11" height="17" rx="1" fill="#E8C96A" opacity=".6">
+            <animate attributeName="opacity" values=".6;.22;.6" dur="4.9s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="340" y="426" width="11" height="17" rx="1" fill="#D4AF37" opacity=".45">
+            <animate attributeName="opacity" values=".45;.8;.45" dur="7.2s" repeatCount="indefinite"/>
+          </rect>
+        </g>
+
+        <!-- Ground plane -->
+        <rect x="0" y="695" width="520" height="5" fill="url(#groundGrad)"/>
+        <!-- Ground gold line -->
+        <line x1="0" y1="694" x2="520" y2="694" stroke="#D4AF37" stroke-width=".5" opacity=".2"/>
+        <!-- Street lights -->
+        <g stroke="#D4AF37" stroke-width=".8" opacity=".35">
+          <line x1="140" y1="694" x2="140" y2="670"/>
+          <circle cx="140" cy="668" r="3" fill="#E8C96A" opacity=".5" filter="url(#glow)"/>
+          <line x1="380" y1="694" x2="380" y2="670"/>
+          <circle cx="380" cy="668" r="3" fill="#E8C96A" opacity=".5" filter="url(#glow)"/>
+        </g>
+
+        <!-- Gold frame border top -->
+        <rect x="0" y="0" width="520" height="2" fill="url(#glowGold)" opacity=".4"/>
+      </svg>
+    </div>
+
+    <!-- Floating stat cards -->
+    <div class="brand-stats">
+      <div class="bstat bstat-1">
+        <div class="bstat-label">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18"/></svg>
+          إجمالي العقارات
+        </div>
+        <div class="bstat-value" id="bstat-props">—</div>
+        <div class="bstat-sub">عقار مسجل</div>
+        <div class="bstat-trend">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="10" height="10"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd"/></svg>
+          +٣ هذا الشهر
+        </div>
+      </div>
+
+      <div class="bstat bstat-2">
+        <div class="bstat-label">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182"/></svg>
+          القيمة الإجمالية
+        </div>
+        <div class="bstat-value">٢.٤م</div>
+        <div class="bstat-sub">دولار أمريكي</div>
+        <div class="bstat-trend">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="10" height="10"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd"/></svg>
+          ١٢٪ نمو سنوي
+        </div>
+      </div>
+
+      <div class="bstat bstat-3">
+        <div class="bstat-label">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9"/></svg>
+          إجمالي المساحة
+        </div>
+        <div class="bstat-value">٨٤٠٠</div>
+        <div class="bstat-sub">متر مربع</div>
+        <div class="bstat-trend down">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="10" height="10"><path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clip-rule="evenodd"/></svg>
+          قدم مربع ×١٠.٧
+        </div>
+      </div>
+
+      <div class="bstat bstat-4">
+        <div class="bstat-label">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375"/></svg>
+          نسبة الإشغال
+        </div>
+        <div class="bstat-value">٨٧٪</div>
+        <div class="bstat-sub">من إجمالي الوحدات</div>
+        <div class="bstat-trend">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="10" height="10"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd"/></svg>
+          مستقر هذا الربع
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom text overlay -->
+    <div class="brand-bottom">
+  
+      <div class="brand-headline">
+   
+      </div>
+      <p class="brand-desc">منصة متكاملة لإدارة وتتبع عقاراتك بدقة واحترافية — من التحليل المالي إلى بطاقات التملك.</p>
+      <div class="brand-pills">
+        <span class="brand-pill">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+          إحصاءات تفاعلية
+        </span>
+        <span class="brand-pill">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182"/></svg>
+          تحليل مالي
+        </span>
+        <span class="brand-pill">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75"/></svg>
+          صلاحيات آمنة
+        </span>
+        <span class="brand-pill">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3"/></svg>
+          متعدد العملات
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Panel -->
+  <div class="form-panel">
+    <div class="login-card">
+      <div class="login-card-header">
+
+
+        <p class="login-subtitle">أدخل بياناتك للوصول إلى محفظتك العقارية</p>
+      </div>
+
+      <!-- User Type -->
+      <div class="user-type-group">
+        <span class="user-type-label">نوع الحساب</span>
+        <div class="user-type-options">
+          <label class="user-type-option">
+            <input type="radio" name="userType" value="viewer" checked>
+            <div class="user-type-card">
+              <div class="user-type-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="user-type-name">مستغرض البيانات</div>
+                <div class="demo-btn-role">مشاهدة فقط</div>
+              </div>
+            </div>
+          </label>
+          <label class="user-type-option">
+            <input type="radio" name="userType" value="admin">
+            <div class="user-type-card">
+              <div class="user-type-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                </svg>
+              </div>
+              <div>
+                <div class="user-type-name">مدخل بيانات</div>
+                <div class="demo-btn-role">تعئبة البيانات</div>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label class="form-label" for="username">اسم المستخدم</label>
+        <div class="form-input-wrap">
+          <input type="text" id="username" class="form-input" placeholder="أدخل اسم المستخدم" autocomplete="username">
+          <span class="form-input-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="password">كلمة المرور</label>
+        <div class="form-input-wrap">
+          <input type="password" id="password" class="form-input" placeholder="أدخل كلمة المرور" autocomplete="current-password">
+          <span class="form-input-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+            </svg>
+          </span>
+          <button class="form-input-action" type="button" id="toggle-pass" title="إظهار/إخفاء كلمة المرور">
+            <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="display:none">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="form-error" id="login-error">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+
+      <!-- Submit -->
+      <button class="btn-login" id="btn-login" onclick="handleLogin()">
+        <span class="btn-login-text">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
+          </svg>
+          تسجيل الدخول
+        </span>
+      </button>
+
+      <!-- Demo Accounts -->
+      <div class="form-divider">
+        <div class="form-divider-line"></div>
+        <span class="form-divider-text">حسابات تجريبية</span>
+        <div class="form-divider-line"></div>
+      </div>
+
+      <div class="demo-accounts">
+        <button class="demo-btn" onclick="fillDemo('viewer','viewer123')">
+          <span class="demo-btn-role">عارض</span>
+          <span>viewer / viewer123</span>
+        </button>
+        <button class="demo-btn" onclick="fillDemo('admin','admin123')">
+          <span class="demo-btn-role">مدخل بيانات</span>
+          <span>admin / admin123</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="login-footer">محفظة العقارات — نظام إدارة متكامل © ٢٠٢٥ — v0.2.1</div>
+  </div>
+
+</div>
+
+<script>
+const ACCOUNTS = {
+  viewer: { pass: 'viewer123', role: 'viewer' },
+  admin:  { pass: 'admin123',  role: 'admin'  }
+};
+
+const PREF_KEY = 'realestate_prefs';
+const RATE = 124;
+
+function getPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch { return {}; } }
+function savePrefs(p) { localStorage.setItem(PREF_KEY, JSON.stringify(p)); }
+
+function toggleQuickSettings() {
+  const fab = document.getElementById('qs-fab');
+  const trig = document.getElementById('qs-fab-trigger');
+  if (!fab) return;
+  fab.classList.toggle('open');
+  if (trig) trig.setAttribute('aria-expanded', fab.classList.contains('open') ? 'true' : 'false');
+}
+
+function closeQuickSettings() {
+  const fab = document.getElementById('qs-fab');
+  const trig = document.getElementById('qs-fab-trigger');
+  if (fab) fab.classList.remove('open');
+  if (trig) trig.setAttribute('aria-expanded', 'false');
+}
+
+document.addEventListener('click', function() {
+  closeQuickSettings();
+});
+
+function setThemePref(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('themeMode', t);
+  const p = getPrefs();
+  p.theme = t;
+  savePrefs(p);
+  const d = document.getElementById('theme-dark-btn');
+  const l = document.getElementById('theme-light-btn');
+  if (d) d.classList.toggle('active', t === 'dark');
+  if (l) l.classList.toggle('active', t === 'light');
+  setFontColor(p.fontColor || 'default');
+  setNavbarColor(p.navbarColor || 'default');
+  setHeaderColor(p.headerColor || 'default');
+  setTableColor(p.tableColor || 'default');
+  setPanelColor(p.panelColor || 'plum');
+}
+
+function setFontSize(s) {
+  const sizeMap = { normal: '15px', large: '17px', xl: '20px', xxl: '22px' };
+  const sz = sizeMap[s] || '15px';
+  document.documentElement.style.setProperty('--fs-base', sz);
+  const p = getPrefs();
+  p.fontSize = s;
+  savePrefs(p);
+  ['normal','large','xl','xxl'].forEach(k => {
+    const btn = document.getElementById(`fs-${k}-btn`);
+    if (btn) btn.classList.toggle('active', s === k);
+  });
+}
+
+function setCurrency(c) {
+  const p = getPrefs();
+  p.currency = c;
+  savePrefs(p);
+  const u = document.getElementById('cur-usd-btn');
+  const lb = document.getElementById('cur-lbp-btn');
+  const rd = document.getElementById('rate-display');
+  if (u) u.classList.toggle('active', c === 'USD');
+  if (lb) lb.classList.toggle('active', c === 'LBP');
+  if (rd) rd.textContent = RATE.toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function setArea(a) {
+  const p = getPrefs();
+  p.area = a;
+  savePrefs(p);
+  const m = document.getElementById('area-m2-btn');
+  const f = document.getElementById('area-ft2-btn');
+  if (m) m.classList.toggle('active', a === 'm2');
+  if (f) f.classList.toggle('active', a === 'ft2');
+}
+
+function setOwnership(o) {
+  const p = getPrefs();
+  p.ownership = o;
+  savePrefs(p);
+  const s = document.getElementById('own-sahm-btn');
+  const pc = document.getElementById('own-pct-btn');
+  if (s) s.classList.toggle('active', o === 'sahm');
+  if (pc) pc.classList.toggle('active', o === 'pct');
+}
+
+function applyFont(f) {
+  const fm = {
+    Tajawal: "'Tajawal', sans-serif",
+    Cairo: "'Cairo', sans-serif",
+    Amiri: "'Amiri', serif"
+  };
+  const stack = fm[f] || fm.Tajawal;
+  document.documentElement.style.setProperty('--font-body', stack);
+  document.documentElement.style.setProperty('--font-ui', stack);
+  document.documentElement.style.setProperty('--font-display', stack);
+}
+
+function setLang(l) {
+  const p = getPrefs();
+  p.lang = l;
+  savePrefs(p);
+  if (l === 'en') { window.location.href = 'login-en.html'; return; }
+  const ar = document.getElementById('lang-ar-btn');
+  const en = document.getElementById('lang-en-btn');
+  if (ar) ar.classList.toggle('active', l === 'ar');
+  if (en) en.classList.toggle('active', l === 'en');
+  document.documentElement.setAttribute('lang', 'ar');
+  document.documentElement.setAttribute('dir', 'rtl');
+  document.body.setAttribute('dir', 'rtl');
+}
+
+function setFontColor(colorMode) {
+  const p = getPrefs();
+  p.fontColor = colorMode;
+  savePrefs(p);
+  const theme = document.documentElement.getAttribute('data-theme') || p.theme || 'dark';
+  const palettes = {
+    ivory: { dark: { primary: '#F5F0E8', secondary: '#DCCFB7', muted: '#B6A98E' }, light: { primary: '#2D2418', secondary: '#645845', muted: '#867864' } },
+    gold: { dark: { primary: '#E8C96A', secondary: '#D8B44F', muted: '#A48A46' }, light: { primary: '#7A5B16', secondary: '#9B7522', muted: '#B08A3B' } },
+    silver: { dark: { primary: '#E6EBF2', secondary: '#C6CEDB', muted: '#95A0B2' }, light: { primary: '#2C3748', secondary: '#4C5A6F', muted: '#6B788B' } },
+    mint: { dark: { primary: '#DDF8EE', secondary: '#AEE7D1', muted: '#79B79D' }, light: { primary: '#1E5E4B', secondary: '#2F7861', muted: '#4A9078' } },
+    rose: { dark: { primary: '#F8E5EC', secondary: '#E7BBCB', muted: '#B98297' }, light: { primary: '#6A3245', secondary: '#8A4760', muted: '#A26179' } }
+  };
+  if (colorMode === 'default') {
+    document.documentElement.style.removeProperty('--text-primary');
+    document.documentElement.style.removeProperty('--text-secondary');
+    document.documentElement.style.removeProperty('--text-muted');
+  } else if (palettes[colorMode]) {
+    const active = palettes[colorMode][theme === 'light' ? 'light' : 'dark'];
+    document.documentElement.style.setProperty('--text-primary', active.primary);
+    document.documentElement.style.setProperty('--text-secondary', active.secondary);
+    document.documentElement.style.setProperty('--text-muted', active.muted);
+  }
+  ['default', 'ivory', 'gold', 'silver', 'mint', 'rose'].forEach(mode => {
+    const btn = document.getElementById(`font-color-${mode}-btn`);
+    if (btn) btn.classList.toggle('active', colorMode === mode);
+  });
+}
+
+function setNavbarColor(colorMode) {
+  const p = getPrefs();
+  p.navbarColor = colorMode;
+  savePrefs(p);
+  const theme = document.documentElement.getAttribute('data-theme') || p.theme || 'dark';
+  const palettes = {
+    obsidian: { dark: { surface: '#111827', border: '#334155', hoverBg: 'rgba(96,165,250,.1)', hoverBorder: 'rgba(96,165,250,.28)', activeBg: 'linear-gradient(135deg, rgba(96,165,250,.22), rgba(59,130,246,.10))', activeBorder: 'rgba(96,165,250,.42)', activeText: '#BFDBFE' }, light: { surface: '#F8FBFF', border: '#CBDDF6', hoverBg: 'rgba(59,130,246,.09)', hoverBorder: 'rgba(59,130,246,.25)', activeBg: 'linear-gradient(135deg, rgba(59,130,246,.16), rgba(96,165,250,.08))', activeBorder: 'rgba(59,130,246,.35)', activeText: '#1D4ED8' } },
+    sand: { dark: { surface: '#20170F', border: '#5B452E', hoverBg: 'rgba(245,158,11,.1)', hoverBorder: 'rgba(245,158,11,.28)', activeBg: 'linear-gradient(135deg, rgba(245,158,11,.22), rgba(180,83,9,.10))', activeBorder: 'rgba(245,158,11,.42)', activeText: '#FCD34D' }, light: { surface: '#FFF9EE', border: '#E8D7BC', hoverBg: 'rgba(180,83,9,.09)', hoverBorder: 'rgba(180,83,9,.25)', activeBg: 'linear-gradient(135deg, rgba(180,83,9,.16), rgba(245,158,11,.08))', activeBorder: 'rgba(180,83,9,.35)', activeText: '#9A580A' } },
+    emerald: { dark: { surface: '#10211B', border: '#2C5848', hoverBg: 'rgba(16,185,129,.1)', hoverBorder: 'rgba(16,185,129,.28)', activeBg: 'linear-gradient(135deg, rgba(16,185,129,.22), rgba(4,120,87,.10))', activeBorder: 'rgba(16,185,129,.4)', activeText: '#86EFAC' }, light: { surface: '#F1FBF6', border: '#C8E6D9', hoverBg: 'rgba(5,150,105,.09)', hoverBorder: 'rgba(5,150,105,.25)', activeBg: 'linear-gradient(135deg, rgba(5,150,105,.16), rgba(16,185,129,.08))', activeBorder: 'rgba(5,150,105,.35)', activeText: '#065F46' } },
+    royal: { dark: { surface: '#19152C', border: '#4A3C7C', hoverBg: 'rgba(139,92,246,.1)', hoverBorder: 'rgba(167,139,250,.28)', activeBg: 'linear-gradient(135deg, rgba(139,92,246,.22), rgba(79,70,229,.10))', activeBorder: 'rgba(167,139,250,.42)', activeText: '#DDD6FE' }, light: { surface: '#F7F2FF', border: '#DDCEF9', hoverBg: 'rgba(109,40,217,.09)', hoverBorder: 'rgba(109,40,217,.25)', activeBg: 'linear-gradient(135deg, rgba(109,40,217,.16), rgba(139,92,246,.08))', activeBorder: 'rgba(109,40,217,.35)', activeText: '#5B21B6' } },
+    burgundy: { dark: { surface: '#25141B', border: '#673548', hoverBg: 'rgba(244,114,182,.1)', hoverBorder: 'rgba(244,114,182,.28)', activeBg: 'linear-gradient(135deg, rgba(244,114,182,.22), rgba(190,24,93,.10))', activeBorder: 'rgba(244,114,182,.42)', activeText: '#FBCFE8' }, light: { surface: '#FFF4F8', border: '#EDCFDB', hoverBg: 'rgba(190,24,93,.09)', hoverBorder: 'rgba(190,24,93,.25)', activeBg: 'linear-gradient(135deg, rgba(190,24,93,.16), rgba(244,114,182,.08))', activeBorder: 'rgba(190,24,93,.35)', activeText: '#9D174D' } }
+  };
+  if (colorMode === 'default') {
+    document.documentElement.style.removeProperty('--nav-surface');
+    document.documentElement.style.removeProperty('--nav-border');
+    document.documentElement.style.removeProperty('--nav-hover-bg');
+    document.documentElement.style.removeProperty('--nav-hover-border');
+    document.documentElement.style.removeProperty('--nav-active-bg');
+    document.documentElement.style.removeProperty('--nav-active-border');
+    document.documentElement.style.removeProperty('--nav-active-text');
+  } else if (palettes[colorMode]) {
+    const nav = palettes[colorMode][theme === 'light' ? 'light' : 'dark'];
+    document.documentElement.style.setProperty('--nav-surface', nav.surface);
+    document.documentElement.style.setProperty('--nav-border', nav.border);
+    document.documentElement.style.setProperty('--nav-hover-bg', nav.hoverBg);
+    document.documentElement.style.setProperty('--nav-hover-border', nav.hoverBorder);
+    document.documentElement.style.setProperty('--nav-active-bg', nav.activeBg);
+    document.documentElement.style.setProperty('--nav-active-border', nav.activeBorder);
+    document.documentElement.style.setProperty('--nav-active-text', nav.activeText);
+  }
+  ['default', 'obsidian', 'sand', 'emerald', 'royal', 'burgundy'].forEach(mode => {
+    const btn = document.getElementById(`nav-color-${mode}-btn`);
+    if (btn) btn.classList.toggle('active', colorMode === mode);
+  });
+}
+
+function setHeaderColor(colorMode) {
+  const p = getPrefs();
+  p.headerColor = colorMode;
+  savePrefs(p);
+  const theme = document.documentElement.getAttribute('data-theme') || p.theme || 'dark';
+  const palettes = {
+    obsidian: { dark: { accent: '#93C5FD', eyebrow: '#7FB3F4' }, light: { accent: '#2563EB', eyebrow: '#346FC9' } },
+    sand: { dark: { accent: '#FCD34D', eyebrow: '#E7BC58' }, light: { accent: '#B45309', eyebrow: '#9B640F' } },
+    emerald: { dark: { accent: '#6EE7B7', eyebrow: '#64D5A7' }, light: { accent: '#047857', eyebrow: '#0B8A66' } },
+    royal: { dark: { accent: '#C4B5FD', eyebrow: '#AE99F4' }, light: { accent: '#6D28D9', eyebrow: '#7B36E0' } },
+    burgundy: { dark: { accent: '#F9A8D4', eyebrow: '#F28DBF' }, light: { accent: '#BE185D', eyebrow: '#C02D68' } }
+  };
+  if (colorMode === 'default') {
+    document.documentElement.style.removeProperty('--header-title-accent');
+    document.documentElement.style.removeProperty('--header-eyebrow');
+  } else if (palettes[colorMode]) {
+    const h = palettes[colorMode][theme === 'light' ? 'light' : 'dark'];
+    document.documentElement.style.setProperty('--header-title-accent', h.accent);
+    document.documentElement.style.setProperty('--header-eyebrow', h.eyebrow);
+  }
+  ['default', 'obsidian', 'sand', 'emerald', 'royal', 'burgundy'].forEach(mode => {
+    const btn = document.getElementById(`header-color-${mode}-btn`);
+    if (btn) btn.classList.toggle('active', colorMode === mode);
+  });
+}
+
+function setTableColor(colorMode) {
+  const p = getPrefs();
+  p.tableColor = colorMode;
+  savePrefs(p);
+  const theme = document.documentElement.getAttribute('data-theme') || p.theme || 'dark';
+  const palettes = {
+    obsidian: { dark: { surface: '#111827', border: '#334155', headBg: '#172033', headText: '#94A3B8', headHover: '#93C5FD', rowBorder: 'rgba(71,85,105,.65)', rowHoverBg: 'rgba(96,165,250,.08)', rowSelectedBg: 'rgba(96,165,250,.14)', rowSelectedBorder: 'rgba(96,165,250,.32)' }, light: { surface: '#F8FBFF', border: '#CBDDF6', headBg: '#EAF2FF', headText: '#4F6688', headHover: '#2563EB', rowBorder: 'rgba(151,174,209,.62)', rowHoverBg: 'rgba(59,130,246,.08)', rowSelectedBg: 'rgba(59,130,246,.14)', rowSelectedBorder: 'rgba(59,130,246,.28)' } },
+    sand: { dark: { surface: '#1F1810', border: '#5B452E', headBg: '#2A2016', headText: '#BEA789', headHover: '#F3C56C', rowBorder: 'rgba(121,94,61,.62)', rowHoverBg: 'rgba(245,158,11,.08)', rowSelectedBg: 'rgba(245,158,11,.14)', rowSelectedBorder: 'rgba(245,158,11,.3)' }, light: { surface: '#FFF9EE', border: '#E8D7BC', headBg: '#FBF1DD', headText: '#876B42', headHover: '#B45309', rowBorder: 'rgba(205,180,141,.62)', rowHoverBg: 'rgba(180,83,9,.08)', rowSelectedBg: 'rgba(180,83,9,.14)', rowSelectedBorder: 'rgba(180,83,9,.28)' } },
+    emerald: { dark: { surface: '#10211B', border: '#2C5848', headBg: '#162E25', headText: '#8DB9A8', headHover: '#6EE7B7', rowBorder: 'rgba(63,109,94,.62)', rowHoverBg: 'rgba(16,185,129,.08)', rowSelectedBg: 'rgba(16,185,129,.14)', rowSelectedBorder: 'rgba(16,185,129,.31)' }, light: { surface: '#F1FBF6', border: '#C8E6D9', headBg: '#E2F5EC', headText: '#4F7D6D', headHover: '#047857', rowBorder: 'rgba(137,186,167,.62)', rowHoverBg: 'rgba(5,150,105,.08)', rowSelectedBg: 'rgba(5,150,105,.14)', rowSelectedBorder: 'rgba(5,150,105,.28)' } },
+    royal: { dark: { surface: '#19152C', border: '#4A3C7C', headBg: '#211A38', headText: '#AFA0D9', headHover: '#C4B5FD', rowBorder: 'rgba(93,81,145,.62)', rowHoverBg: 'rgba(139,92,246,.08)', rowSelectedBg: 'rgba(139,92,246,.14)', rowSelectedBorder: 'rgba(167,139,250,.31)' }, light: { surface: '#F7F2FF', border: '#DDCEF9', headBg: '#EFE6FF', headText: '#74639F', headHover: '#6D28D9', rowBorder: 'rgba(177,157,218,.62)', rowHoverBg: 'rgba(109,40,217,.08)', rowSelectedBg: 'rgba(109,40,217,.14)', rowSelectedBorder: 'rgba(109,40,217,.28)' } },
+    burgundy: { dark: { surface: '#25141B', border: '#673548', headBg: '#301924', headText: '#C39AAF', headHover: '#F9A8D4', rowBorder: 'rgba(110,67,84,.62)', rowHoverBg: 'rgba(244,114,182,.08)', rowSelectedBg: 'rgba(244,114,182,.14)', rowSelectedBorder: 'rgba(244,114,182,.31)' }, light: { surface: '#FFF4F8', border: '#EDCFDB', headBg: '#FDEAF1', headText: '#8C5D70', headHover: '#BE185D', rowBorder: 'rgba(205,154,177,.62)', rowHoverBg: 'rgba(190,24,93,.08)', rowSelectedBg: 'rgba(190,24,93,.14)', rowSelectedBorder: 'rgba(190,24,93,.28)' } }
+  };
+  if (colorMode === 'default') {
+    document.documentElement.style.removeProperty('--table-surface');
+    document.documentElement.style.removeProperty('--table-border');
+    document.documentElement.style.removeProperty('--table-head-bg');
+    document.documentElement.style.removeProperty('--table-head-text');
+    document.documentElement.style.removeProperty('--table-head-hover');
+    document.documentElement.style.removeProperty('--table-row-border');
+    document.documentElement.style.removeProperty('--table-row-hover-bg');
+    document.documentElement.style.removeProperty('--table-row-selected-bg');
+    document.documentElement.style.removeProperty('--table-row-selected-border');
+  } else if (palettes[colorMode]) {
+    const tb = palettes[colorMode][theme === 'light' ? 'light' : 'dark'];
+    document.documentElement.style.setProperty('--table-surface', tb.surface);
+    document.documentElement.style.setProperty('--table-border', tb.border);
+    document.documentElement.style.setProperty('--table-head-bg', tb.headBg);
+    document.documentElement.style.setProperty('--table-head-text', tb.headText);
+    document.documentElement.style.setProperty('--table-head-hover', tb.headHover);
+    document.documentElement.style.setProperty('--table-row-border', tb.rowBorder);
+    document.documentElement.style.setProperty('--table-row-hover-bg', tb.rowHoverBg);
+    document.documentElement.style.setProperty('--table-row-selected-bg', tb.rowSelectedBg);
+    document.documentElement.style.setProperty('--table-row-selected-border', tb.rowSelectedBorder);
+  }
+  ['default', 'obsidian', 'sand', 'emerald', 'royal', 'burgundy'].forEach(mode => {
+    const btn = document.getElementById(`table-color-${mode}-btn`);
+    if (btn) btn.classList.toggle('active', colorMode === mode);
+  });
+}
+
+function setPanelColor(colorMode) {
+  const p = getPrefs();
+  p.panelColor = colorMode;
+  savePrefs(p);
+  const theme = document.documentElement.getAttribute('data-theme') || p.theme || 'dark';
+  const palettes = {
+    slate:  { dark: { bg:'#1E2530', border:'#3A4558', head:'#1A2030' }, light: { bg:'#EEF2F8', border:'#BCC8DC', head:'#E4EAF4' } },
+    navy:   { dark: { bg:'#111A2E', border:'#2A3F6A', head:'#0D1526' }, light: { bg:'#DDE8F8', border:'#96B8E8', head:'#C8D9F4' } },
+    forest: { dark: { bg:'#111E18', border:'#26432E', head:'#0D1A13' }, light: { bg:'#D8F0E0', border:'#88C49A', head:'#C2E6CE' } },
+    plum:   { dark: { bg:'#1E1428', border:'#3E2860', head:'#180F22' }, light: { bg:'#EDE0F8', border:'#C4A0E0', head:'#E0CDF4' } },
+    stone:  { dark: { bg:'#1E1C18', border:'#3D3830', head:'#191712' }, light: { bg:'#EDE8DE', border:'#C0AE90', head:'#E2D9C8' } },
+    rose:   { dark: { bg:'#241420', border:'#5C2845', head:'#1C0D19' }, light: { bg:'#F8E4EE', border:'#DDA0BF', head:'#F2D0E4' } },
+    teal:   { dark: { bg:'#0F1E20', border:'#1E4A50', head:'#0A1618' }, light: { bg:'#D8F0EE', border:'#80C8C4', head:'#C0E6E4' } },
+    gold:   { dark: { bg:'#201A0A', border:'#5A4510', head:'#181200' }, light: { bg:'#FDF3D8', border:'#D4AF5A', head:'#F8E8B8' } }
+  };
+  if (colorMode === 'default') {
+    document.documentElement.style.removeProperty('--qs-panel-bg');
+    document.documentElement.style.removeProperty('--qs-panel-border');
+    document.documentElement.style.removeProperty('--qs-panel-head-bg');
+  } else if (palettes[colorMode]) {
+    const c = palettes[colorMode][theme === 'light' ? 'light' : 'dark'];
+    document.documentElement.style.setProperty('--qs-panel-bg', c.bg);
+    document.documentElement.style.setProperty('--qs-panel-border', c.border);
+    document.documentElement.style.setProperty('--qs-panel-head-bg', c.head);
+  }
+  ['default','slate','navy','forest','plum','stone','rose','teal','gold'].forEach(mode => {
+    const btn = document.getElementById(`panel-color-${mode}-btn`);
+    if (btn) btn.classList.toggle('active', colorMode === mode);
+  });
+}
+
+function resetAllSettings() {
+  const defaults = {
+    theme: 'dark', fontSize: 'normal', currency: 'USD', area: 'm2',
+    ownership: 'sahm', fontFamily: 'Tajawal', lang: 'ar',
+    fontColor: 'default', navbarColor: 'default', headerColor: 'default',
+    tableColor: 'default', panelColor: 'plum'
+  };
+  savePrefs(defaults);
+  setThemePref(defaults.theme);
+  setFontSize(defaults.fontSize);
+  setCurrency(defaults.currency);
+  setArea(defaults.area);
+  setOwnership(defaults.ownership);
+  applyFont(defaults.fontFamily);
+  document.querySelectorAll('[name="fontFamily"]').forEach(r => { r.checked = r.value === defaults.fontFamily; });
+  setFontColor(defaults.fontColor);
+  setNavbarColor(defaults.navbarColor);
+  setHeaderColor(defaults.headerColor);
+  setTableColor(defaults.tableColor);
+  setPanelColor(defaults.panelColor);
+  if (typeof setLang === 'function') setLang(defaults.lang);
+}
+
+function loadPrefs() {
+  const p = getPrefs();
+  const t = localStorage.getItem('themeMode') || p.theme || 'dark';
+  setThemePref(t);
+  if (p.fontSize) setFontSize(p.fontSize);
+  if (p.currency) setCurrency(p.currency);
+  else setCurrency('USD');
+  if (p.area) setArea(p.area);
+  else setArea('m2');
+  if (p.ownership) setOwnership(p.ownership);
+  else setOwnership('sahm');
+  if (p.fontFamily) {
+    applyFont(p.fontFamily);
+    document.querySelectorAll('[name="fontFamily"]').forEach(r => { r.checked = r.value === p.fontFamily; });
+  }
+  if (p.lang) setLang(p.lang);
+  if (p.fontColor) setFontColor(p.fontColor); else setFontColor('default');
+  if (p.navbarColor) setNavbarColor(p.navbarColor); else setNavbarColor('default');
+  if (p.headerColor) setHeaderColor(p.headerColor); else setHeaderColor('default');
+  if (p.tableColor) setTableColor(p.tableColor); else setTableColor('default');
+  if (p.panelColor) setPanelColor(p.panelColor); else setPanelColor('plum');
+}
+
+document.querySelectorAll('[name="fontFamily"]').forEach(r => {
+  r.addEventListener('change', function() {
+    applyFont(this.value);
+    const p = getPrefs();
+    p.fontFamily = this.value;
+    savePrefs(p);
+  });
+});
+
+document.getElementById('toggle-pass').addEventListener('click', function() {
+  const inp = document.getElementById('password');
+  const open = document.getElementById('eye-open');
+  const closed = document.getElementById('eye-closed');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    open.style.display = 'none';
+    closed.style.display = '';
+  } else {
+    inp.type = 'password';
+    open.style.display = '';
+    closed.style.display = 'none';
+  }
+});
+
+function fillDemo(user, pass) {
+  document.getElementById('username').value = user;
+  document.getElementById('password').value = pass;
+  // Select the right radio
+  document.querySelectorAll('[name="userType"]').forEach(r => r.value === (user === 'admin' ? 'admin' : 'viewer') ? r.checked = true : null);
+  document.getElementById('login-error').classList.remove('show');
+}
+
+function handleLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+
+  errEl.classList.remove('show');
+  btn.classList.add('loading');
+
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    const acct = ACCOUNTS[username];
+    if (acct && acct.pass === password) {
+      localStorage.setItem('loggedInUser', username);
+      localStorage.setItem('userRole', acct.role);
+      window.location.href = 'hub3.html';
+    } else {
+      errEl.classList.add('show');
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    }
+  }, 800);
+}
+
+// Allow Enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+loadPrefs();
+</script>
+</body>
+</html>
