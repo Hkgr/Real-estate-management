@@ -1,10 +1,22 @@
-<header class="reports-topbar">
-    <div>
-        <p class="reports-eyebrow">لوحة التحليلات</p>
-        <h1>تقارير المحفظة العقارية</h1>
-    </div>
-    <div class="reports-topbar-actions">
-        <a href="{{ route('viewer-new.hub') }}" class="reports-btn reports-btn-secondary">الرجوع إلى Hub</a>
-        <button type="button" class="reports-btn" data-open-quick-settings>إعدادات سريعة</button>
+<header class="topbar">
+    <div class="topbar-title topbar-title-desktop" id="topbar-title">بوابة <span>الإحصاءات</span></div>
+
+    <nav class="topbar-mobile-nav" aria-label="تنقل رئيسي">
+        <a href="{{ route('viewer-new.reports') }}" class="topbar-nav-pill active" id="mnav-properties">
+            <span class="pill-label">التقارير</span>
+        </a>
+        <a href="{{ route('viewer-new.hub') }}" class="topbar-nav-pill" id="mnav-dashboard">
+            <span class="pill-label">الإحصاءات</span>
+        </a>
+    </nav>
+
+    <div class="topbar-actions">
+        <div class="topbar-date topbar-datetime" id="topbar-datetime">
+            <span id="topbar-time">--:--:--</span>
+            <span class="topbar-datetime-sep">•</span>
+            <span id="topbar-date">جارٍ التحميل…</span>
+        </div>
+        <a href="{{ route('viewer-new.reports') }}" class="topbar-btn topbar-btn-props" id="topbar-hub-shortcut" title="الانتقال إلى قسم التقارير">⊞ إلى التقارير</a>
+        <a href="{{ route('viewer-new.hub') }}" class="topbar-btn logout">⎋ الرجوع للبوابة</a>
     </div>
 </header>
