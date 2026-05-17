@@ -8,6 +8,6 @@ class StandaloneViewerHubController
 {
     public function __invoke(): View
     {
-        return view('viewer.pages.hub');
+        return view('viewer-new.index');
     }
 }
