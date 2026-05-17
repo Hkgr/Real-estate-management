@@ -16,7 +16,7 @@
     ])
 
 </head>
-<body dir="rtl">
+<body dir="rtl" class="viewer-shell">
     @yield('content')
 </body>
 </html>
