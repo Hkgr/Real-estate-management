@@ -30,12 +30,12 @@ if (root) {
   tbody.innerHTML = mockData.rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('');
 
   const quick = document.getElementById('reportsQuickSettings');
-  document.querySelector('[data-open-quick-settings]')?.addEventListener('click', () => quick.hidden = false);
-  document.querySelector('[data-close-quick-settings]')?.addEventListener('click', () => quick.hidden = true);
+  document.querySelector('[data-open-quick-settings]')?.addEventListener('click', () => { quick.hidden = false; });
+  document.querySelector('[data-close-quick-settings]')?.addEventListener('click', () => { quick.hidden = true; });
 
   const modal = document.getElementById('reportsInfoModal');
   setTimeout(() => { modal.hidden = false; }, 300);
-  document.querySelector('[data-close-modal]')?.addEventListener('click', () => modal.hidden = true);
+  document.querySelector('[data-close-modal]')?.addEventListener('click', () => { modal.hidden = true; });
 
   document.getElementById('compactMode')?.addEventListener('change', (e) => {
     root.classList.toggle('compact', e.target.checked);

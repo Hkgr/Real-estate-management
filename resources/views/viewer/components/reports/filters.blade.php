@@ -11,4 +11,11 @@
             <option value="all">كل المدن</option>
         </select>
     </label>
+    <label>نوع التقرير
+        <select id="reportType">
+            <option value="all">الكل</option>
+            <option value="occupancy">الإشغال</option>
+            <option value="income">الإيرادات</option>
+        </select>
+    </label>
 </section>
