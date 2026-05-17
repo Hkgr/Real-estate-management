@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // يطبق على كل مسارات الويب (ومنها Filament panel)
       //  $middleware->appendToGroup('web', \App\Http\Middleware\NormalizeDigits::class);
 
+        $middleware->alias([
+            'viewer.access' => \App\Http\Middleware\EnsureViewerAccess::class,
+        ]);
+
         // إذا بدك كمان على الـ API:
         // $middleware->appendToGroup('api', \App\Http\Middleware\ForceLatinDigits::class);
     })
