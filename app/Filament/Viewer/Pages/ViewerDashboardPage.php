@@ -14,6 +14,8 @@ class ViewerDashboardPage extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
+    protected static ?int $navigationSort = 10;
+
     protected static ?string $slug = 'viewer-dashboard';
 
     protected string $view = 'filament.viewer.pages.dashboard';
