@@ -1,7 +1,6 @@
 <?php
 use App\Http\Controllers\PropertyCardFileDownloadController;
 use App\Http\Controllers\Viewer\StandaloneViewerHubController;
-use App\Http\Controllers\Viewer\StandaloneViewerReportsController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
 Route::get('/__probe_cookie', function () {
@@ -40,9 +39,6 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
         Route::get('/reports', fn () => view('viewer-new.reports', ['active' => 'reports']))->name('reports.index');
     });
 
-    // Backward-compatible route aliases
-    Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
-    Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
 });
 Route::middleware('auth')->group(function (): void {
     Route::get('/property-card-files/{propertyCardFile}/download', [PropertyCardFileDownloadController::class, 'download'])

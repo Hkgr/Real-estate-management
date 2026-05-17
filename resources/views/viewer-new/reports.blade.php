@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="viewer-reports" id="viewerReportsPage" data-hub-url="{{ route('viewer-new.index') }}" data-reports-url="{{ route('viewer-new.reports.index') }}">
-        <div class="app-shell">
+        <div class="app-wrapper">
             @include('viewer.components.reports.sidebar')
             @include('viewer.components.reports.sidebar-overlay')
 

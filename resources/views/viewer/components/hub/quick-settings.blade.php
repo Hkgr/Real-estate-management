@@ -18,8 +18,8 @@
             <div class="s-lang-hint">* خيار الإنجليزية مؤجل حالياً.</div>
         </div>
         <div class="s-row">
-            <a class="nav-card" href="{{ route('viewer-new.hub') }}">العودة للرئيسية</a>
-            <a class="nav-card" href="{{ route('viewer-new.reports') }}">الانتقال إلى التقارير</a>
+            <a class="nav-card" href="{{ route('viewer-new.index') }}">العودة للرئيسية</a>
+            <a class="nav-card" href="{{ route('viewer-new.reports.index') }}">الانتقال إلى التقارير</a>
         </div>
     </div>
 </div>

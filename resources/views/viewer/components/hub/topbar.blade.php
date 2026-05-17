@@ -1,6 +1,6 @@
 <nav class="topbar">
   <div class="topbar-left">
-    <a class="topbar-brand" href="{{ route('viewer-new.hub') }}">
+    <a class="topbar-brand" href="{{ route('viewer-new.index') }}">
       <div class="topbar-brand-icon">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.75L12 3l9 6.75V20.25a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75V9.75z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 20.25V12h6v8.25"/></svg>
       </div>
