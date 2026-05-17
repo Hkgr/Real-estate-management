@@ -2,10 +2,6 @@
 
 @section('title', 'Viewer New Reports')
 
-@push('viewer-vite')
-    @vite(['resources/css/viewer/reports.css', 'resources/js/viewer/reports.js'])
-@endpush
-
 @section('content')
     <div class="viewer-reports" id="viewerReportsPage">
         <div class="reports-layout">
