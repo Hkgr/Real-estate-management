@@ -13,6 +13,8 @@ export default defineConfig({
                 'resources/js/filament/viewer/dashboard.js',
                 'resources/css/viewer/app.css',
                 'resources/js/viewer/app.js',
+                'resources/css/viewer/hub.css',
+                'resources/js/viewer/hub.js',
             ],
             refresh: true,
         }),

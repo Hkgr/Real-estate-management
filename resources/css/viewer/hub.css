@@ -1,0 +1,13 @@
+:root{--gold:#d4af37;--bg:#0f0f0f;--card:#1a1a1a;--text:#f5f0e8;--border:#2a2a2a}
+body{background:var(--bg);color:var(--text);font-family:Tajawal,sans-serif}
+.bg-canvas{position:fixed;inset:0;z-index:-2}.bg-orb{position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(80px);opacity:.07;background:radial-gradient(circle,var(--gold),transparent 65%)}
+.bg-orb:nth-child(1){top:-120px;right:-100px}.bg-orb:nth-child(2){bottom:-120px;left:-90px}.bg-pattern{position:fixed;inset:0;z-index:-1;opacity:.03;background-image:repeating-linear-gradient(45deg,var(--gold) 0,var(--gold) 1px,transparent 1px,transparent 42px)}
+.topbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#15120c;border-bottom:1px solid rgba(212,175,55,.3)}
+.topbar-brand{color:var(--gold);text-decoration:none;font-weight:700}.topbar-center,.topbar-right{display:flex;gap:10px;align-items:center}
+.topbar-btn{background:#251f12;color:var(--text);border:1px solid rgba(212,175,55,.3);padding:8px 12px;border-radius:10px;cursor:pointer}.topbar-btn.logout{border-color:#7f1d1d;background:#3a1212}
+.main{max-width:1100px;margin:auto;padding:20px;display:grid;grid-template-columns:2fr 1fr;gap:12px}.main-left,.main-right{display:flex;flex-direction:column;gap:12px}
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px}.section-toggle{width:100%;text-align:right;background:#201a0f;color:var(--gold);border:1px solid rgba(212,175,55,.2);padding:10px;border-radius:10px;cursor:pointer}.section-content{display:none;padding-top:10px}.section-card.open .section-content{display:block}
+.nav-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nav-card{display:block;background:#141414;border:1px solid var(--border);border-radius:12px;padding:14px;text-decoration:none;color:var(--text)}
+.nc-title{color:var(--gold);font-size:20px}.nc-desc{margin-top:8px;font-size:13px}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.q-card{background:#131313;border:1px solid var(--border);border-radius:10px;padding:10px}.q-num{color:var(--gold);font-size:22px}.qs-note{color:#c7b99b;margin-bottom:10px}
+@media (max-width:900px){.main{grid-template-columns:1fr}.nav-cards,.quick-grid{grid-template-columns:1fr}}

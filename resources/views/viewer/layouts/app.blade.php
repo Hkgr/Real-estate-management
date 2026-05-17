@@ -7,6 +7,7 @@
     <title>@yield('title', 'Viewer New')</title>
 
     @vite(['resources/css/viewer/app.css', 'resources/js/viewer/app.js'])
+    @stack('viewer-vite')
 </head>
 <body dir="rtl">
     @yield('content')
