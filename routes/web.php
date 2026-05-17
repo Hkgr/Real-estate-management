@@ -23,8 +23,10 @@ Route::get('/__headers_sent', function () {
         . PHP_EOL;
 });
 
-Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
-Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
+Route::middleware(['auth', 'viewer.access'])->group(function (): void {
+    Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
+    Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
+});
 Route::middleware('auth')->group(function (): void {
     Route::get('/property-card-files/{propertyCardFile}/download', [PropertyCardFileDownloadController::class, 'download'])
         ->name('property-card-files.download');
