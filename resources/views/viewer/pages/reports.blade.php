@@ -3,7 +3,7 @@
 @section('title', 'Viewer New Reports')
 
 @section('content')
-    <div class="viewer-reports" id="viewerReportsPage">
+    <div class="viewer-reports" id="viewerReportsPage" dir="rtl">
         <div class="reports-layout">
             @include('viewer.components.reports.sidebar')
 
