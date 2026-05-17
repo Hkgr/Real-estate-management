@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\PropertyCardsTablePage2;
+use App\Filament\Viewer\Pages\ViewerDashboardPage;
 use App\Filament\Widgets\AppStatsOverview;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -35,6 +36,7 @@ class ViewerPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 PropertyCardsTablePage2::class,
+                ViewerDashboardPage::class,
             ])
             ->widgets([
                 AppStatsOverview::class,
