@@ -40,4 +40,31 @@ if (root) {
   document.getElementById('compactMode')?.addEventListener('change', (e) => {
     root.classList.toggle('compact', e.target.checked);
   });
+
+
+  const toggleSidebar = () => {
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      root.classList.toggle('sidebar-open');
+    } else {
+      root.classList.toggle('sidebar-collapsed');
+    }
+  };
+
+  document.querySelectorAll('[data-sidebar-toggle]').forEach((el) => {
+    el.addEventListener('click', toggleSidebar);
+  });
+
+  document.querySelector('[data-sidebar-overlay]')?.addEventListener('click', () => {
+    root.classList.remove('sidebar-open');
+  });
+
+  const timeEl = document.getElementById('topbar-time');
+  const dateEl = document.getElementById('topbar-date');
+  const updateClock = () => {
+    const now = new Date();
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString('ar-SA');
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+  updateClock();
+  setInterval(updateClock, 1000);
 }
