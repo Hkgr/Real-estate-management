@@ -3,7 +3,7 @@
 @section('title', 'Viewer New Reports')
 
 @section('content')
-    <div class="viewer-reports" id="viewerReportsPage" data-hub-url="{{ route('viewer-new.hub') }}" data-reports-url="{{ route('viewer-new.reports') }}">
+    <div class="viewer-reports" id="viewerReportsPage" dir="rtl" data-hub-url="{{ route('viewer-new.hub') }}" data-reports-url="{{ route('viewer-new.reports') }}">
         <div class="app-wrapper">
             @include('viewer.components.reports.sidebar')
             @include('viewer.components.reports.sidebar-overlay')
@@ -13,6 +13,7 @@
                 @include('viewer.components.reports.mobile-nav')
 
                 <main class="reports-main" aria-label="صفحة التقارير">
+                    @include('viewer.components.reports.page-header')
                     @include('viewer.components.reports.filters')
                     @include('viewer.components.reports.stats-cards')
                     @include('viewer.components.reports.charts')

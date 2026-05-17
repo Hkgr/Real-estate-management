@@ -101,3 +101,12 @@
   .viewer-reports .topbar-btn-props, .viewer-reports .topbar-datetime { display:none; }
   .viewer-reports .mobile-nav { display:flex; }
 }
+.viewer-reports .reports-page-header { display:grid; gap:8px; }
+.viewer-reports .reports-main-title { font-size:28px; line-height:1.4; color:var(--text-primary); }
+.viewer-reports .reports-subtitle { color:var(--text-secondary); }
+.viewer-reports .reports-table-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.viewer-reports .reports-table-meta { display:grid; gap:2px; color:var(--text-secondary); }
+.viewer-reports .reports-table-meta strong { color:var(--text-primary); }
+.viewer-reports .reports-table-actions { display:flex; gap:10px; align-items:center; }
+.viewer-reports .reports-main-wrap, .viewer-reports .reports-main { overflow-x:hidden; }
+.viewer-reports .reports-table-wrap { max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }

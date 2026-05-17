@@ -1,5 +1,5 @@
 <section class="reports-panel">
-    <h2>تفاصيل العقارات</h2>
+    @include('viewer.components.reports.table-toolbar')
     <div class="reports-table-wrap">
         <table class="reports-table" id="reportsTable">
             <thead>
