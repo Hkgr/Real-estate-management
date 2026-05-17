@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // إذا بدك كمان على الـ API:
         // $middleware->appendToGroup('api', \App\Http\Middleware\ForceLatinDigits::class);
+
+        $middleware->alias([
+            'viewer.access' => \App\Http\Middleware\EnsureViewerAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
