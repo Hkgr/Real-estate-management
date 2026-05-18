@@ -79,3 +79,9 @@
 .viewer-new .vn-mini-table th,.viewer-new .vn-mini-table td{font-size:.92rem}
 .viewer-new .vn-recent-table table{min-width:760px}
 .viewer-new .vn-empty-block{margin:0}
+
+.viewer-new .vn-financial-distribution-grid{margin-top:.75rem}
+.viewer-new .vn-financial-distribution-card{border-color:rgba(212,175,55,.22)}
+.viewer-new .vn-financial-mini-table table{min-width:100%}
+.viewer-new .vn-financial-top-table table{min-width:980px}
+.viewer-new .vn-financial-empty-block{background:rgba(212,175,55,.03)}
