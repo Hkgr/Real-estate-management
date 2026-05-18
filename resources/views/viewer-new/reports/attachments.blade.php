@@ -40,7 +40,7 @@
             <a href="{{ route('viewer-new.reports.attachments') }}" class="vn-filter-reset">إعادة ضبط</a>
         </form>
 
-        @if($attachments->count() > 0)
+        @if(($attachments ?? collect())->count() > 0)
             <div class="vn-table-responsive">
                 <table>
                     <thead>
@@ -77,13 +77,10 @@
             </div>
 
             <div class="vn-pagination-wrap">
-                {{ $attachments->links() }}
+                @include('viewer-new.partials.pagination', ['paginator' => $attachments ?? null])
             </div>
         @else
-            <div class="vn-empty-state">
-                <h4>لا توجد ملحقات مطابقة</h4>
-                <p>جرّب تعديل معايير البحث أو إزالة الفلاتر لعرض نتائج إضافية.</p>
-            </div>
+            @include('viewer-new.partials.empty-state', ['title' => 'لا توجد ملحقات مطابقة', 'message' => 'جرّب تعديل معايير البحث أو إزالة الفلاتر لعرض نتائج إضافية.'])
         @endif
     </section>
 @endsection

@@ -45,7 +45,7 @@
             <a class="vn-filter-reset" href="{{ route('viewer-new.reports.signals') }}">إعادة ضبط</a>
         </form>
 
-        @if($signals->count() > 0)
+        @if(($signals ?? collect())->count() > 0)
             <div class="vn-table-responsive">
                 <table>
                     <thead>
@@ -76,13 +76,10 @@
             </div>
 
             <div class="vn-pagination-wrap">
-                {{ $signals->links() }}
+                @include('viewer-new.partials.pagination', ['paginator' => $signals ?? null])
             </div>
         @else
-            <div class="vn-empty-state">
-                <h4>لا توجد إشارات مطابقة</h4>
-                <p>جرّب تغيير معايير البحث أو إزالة الفلاتر الحالية.</p>
-            </div>
+            @include('viewer-new.partials.empty-state', ['title' => 'لا توجد إشارات مطابقة', 'message' => 'جرّب تغيير معايير البحث أو إزالة الفلاتر الحالية.'])
         @endif
     </section>
 @endsection
