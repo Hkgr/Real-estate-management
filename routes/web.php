@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\PropertyCardFileDownloadController;
 use App\Http\Controllers\Viewer\StandaloneViewerHubController;
+use App\Http\Controllers\Viewer\StandaloneViewerReportsController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
 Route::get('/__probe_cookie', function () {
@@ -31,14 +32,8 @@ Route::get('/__headers_sent', function () {
 });
 
 Route::middleware(['auth', 'viewer.access'])->group(function (): void {
-    Route::prefix('viewer-new')->name('viewer-new.')->group(function (): void {
-        Route::get('/', StandaloneViewerHubController::class)->name('index');
-        Route::get('/properties', fn () => view('viewer-new.properties', ['active' => 'properties']))->name('properties.index');
-        Route::get('/owners', fn () => view('viewer-new.owners', ['active' => 'owners']))->name('owners.index');
-        Route::get('/signals', fn () => view('viewer-new.signals', ['active' => 'signals']))->name('signals.index');
-        Route::get('/reports', fn () => view('viewer-new.reports', ['active' => 'reports']))->name('reports.index');
-    });
-
+    Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
+    Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
 });
 Route::middleware('auth')->group(function (): void {
     Route::get('/property-card-files/{propertyCardFile}/download', [PropertyCardFileDownloadController::class, 'download'])

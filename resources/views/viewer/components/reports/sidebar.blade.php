@@ -12,10 +12,10 @@
     </div>
 
     <nav class="sidebar-nav">
-        <a href="{{ route('viewer-new.reports.index') }}" class="nav-item active" aria-current="page">
+        <a href="{{ route('viewer-new.reports') }}" class="nav-item active" aria-current="page">
             <span class="nav-text">التقارير</span>
         </a>
-        <a href="{{ route('viewer-new.index') }}" class="nav-item">
+        <a href="{{ route('viewer-new.hub') }}" class="nav-item">
             <span class="nav-text">البوابة</span>
         </a>
     </nav>

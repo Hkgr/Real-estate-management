@@ -43,34 +43,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-2;background:radial-gradi
 [data-theme="light"] .bg-photo svg{opacity:.4;filter:sepia(.35) saturate(.75) brightness(1.15);}
 
 /* TOPBAR */
-
-.topbar-nav-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 10px;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    text-decoration: none;
-    color: var(--text-secondary);
-    font-family: var(--font-ui);
-    font-size: calc(12px * var(--fs-scale));
-    transition: all .2s ease;
-    white-space: nowrap;
-}
-
-.topbar-nav-pill:hover {
-    color: var(--text-primary);
-    border-color: rgba(212,175,55,.18);
-    background: rgba(212,175,55,.06);
-}
-
-.topbar-nav-pill.active {
-    color: var(--gold-bright);
-    border-color: rgba(212,175,55,.25);
-    background: rgba(212,175,55,.08);
-}
-
 .topbar{position:sticky;top:0;z-index:220;height:78px;background:var(--header-surface);backdrop-filter:blur(20px);border-bottom:1px solid var(--header-border);padding:0 20px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;box-shadow:0 10px 28px rgba(0,0,0,.25);}
 .topbar::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to left,var(--gold-deep),var(--gold-bright),var(--gold-light),var(--gold-bright),var(--gold-deep));background-size:200%;animation:shimBar 4s linear infinite;}
 @keyframes shimBar{0%{background-position:200% center}100%{background-position:-200% center}}

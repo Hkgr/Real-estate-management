@@ -16,7 +16,7 @@
     ])
 </head>
 <body dir="rtl" class="viewer-shell">
-    @include('viewer-new.partials.navbar', ['active' => $active ?? 'index'])
+    @include('viewer-new.partials.navbar', ['activeNavbarKey' => trim($__env->yieldContent('active_navbar_key')) ?: 'hub'])
 
     @yield('content')
 </body>

@@ -3,7 +3,7 @@
 @section('title', 'Viewer New Reports')
 
 @section('content')
-    <div class="viewer-reports" id="viewerReportsPage" data-hub-url="{{ route('viewer-new.index') }}" data-reports-url="{{ route('viewer-new.reports.index') }}">
+    <div class="viewer-reports" id="viewerReportsPage" data-hub-url="{{ route('viewer-new.hub') }}" data-reports-url="{{ route('viewer-new.reports') }}">
         <div class="app-wrapper">
             @include('viewer.components.reports.sidebar')
             @include('viewer.components.reports.sidebar-overlay')
