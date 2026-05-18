@@ -16,6 +16,10 @@
     ])
 </head>
 <body class="viewer-shell" data-theme="dark">
+    @php
+        $active = trim($__env->yieldContent('active')) ?: ($active ?? 'index');
+    @endphp
+
     <div class="app-wrapper">
         @include('viewer-new.partials.sidebar')
         <div class="sidebar-overlay"></div>
