@@ -60,3 +60,26 @@ function gotoProperties(e){e.preventDefault();localStorage.setItem('startPage','
 function updateTime(){const el=document.getElementById('info-time');if(el){const d=new Date();el.textContent=d.toLocaleString('ar-SA',{hour:'2-digit',minute:'2-digit',weekday:'short',day:'numeric',month:'short'});}}
 function updateHeaderClock(){const el=document.getElementById('topbar-clock');if(!el)return;const d=new Date();el.textContent=d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 initUser();loadPrefs();updateTime();updateHeaderClock();setInterval(updateTime,30000);setInterval(updateHeaderClock,1000);
+
+function updateTopbarDateTime(){
+  const timeEl=document.getElementById('topbar-time');
+  const dateEl=document.getElementById('topbar-date');
+  if(!timeEl || !dateEl)return;
+  const d=new Date();
+  timeEl.textContent=d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  dateEl.textContent=d.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function toggleQuickSettings(){
+  const fab=document.getElementById('qs-fab');
+  if(!fab)return;
+  fab.classList.toggle('open');
+}
+window.handleLogout=handleLogout;
+window.toggleQuickSettings=toggleQuickSettings;
+document.addEventListener('click',function(e){
+  const fab=document.getElementById('qs-fab');
+  if(!fab || !fab.classList.contains('open'))return;
+  if(!fab.contains(e.target)){fab.classList.remove('open');}
+});
+updateTopbarDateTime();
+setInterval(updateTopbarDateTime,1000);
