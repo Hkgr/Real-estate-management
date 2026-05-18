@@ -9,27 +9,94 @@
 @section('content')
     @include('viewer-new.partials.page-header', [
         'title' => 'مولد الإحصاءات',
-        'subtitle' => 'تهيئة مستقبلية لإنتاج تقارير إحصائية مخصصة.',
+        'subtitle' => 'توليد ملخصات إحصائية للقراءة فقط حسب النوع والنطاق والفترة.',
     ])
 
     <section class="vn-table-card vn-stat-summary">
-        <h3 class="vn-section-title">إعداد التقرير</h3>
-        <p>واجهة تجريبية لتهيئة معايير توليد الإحصاءات دون أي معالجة فعلية في هذه المرحلة.</p>
-        <div class="vn-generator-grid">
-            <article class="vn-placeholder-block">
-                <h4>نوع التقرير</h4>
-                <div class="vn-generator-control" aria-disabled="true">اختيار نوع التقرير (تجريبي)</div>
-            </article>
-            <article class="vn-placeholder-block">
-                <h4>المجال</h4>
-                <div class="vn-generator-control" aria-disabled="true">اختيار نطاق البيانات (تجريبي)</div>
-            </article>
-            <article class="vn-placeholder-block">
-                <h4>الفترة</h4>
-                <div class="vn-generator-control" aria-disabled="true">تحديد الفترة الزمنية (تجريبي)</div>
-            </article>
-        </div>
-        <button class="vn-generator-button" type="button" disabled>تجهيز لاحقاً</button>
-        <p class="vn-static-note">سيتم تفعيل مولد الإحصاءات في مرحلة لاحقة.</p>
+        <h3 class="vn-section-title">إعداد الملخص</h3>
+        <form method="GET" action="{{ route('viewer-new.statistics.generator') }}" class="vn-generator-form">
+            <label>
+                <span>نوع التقرير</span>
+                <select name="report_type">
+                    @foreach ($reportTypeOptions as $value => $label)
+                        <option value="{{ $value }}" @selected(($filters['report_type'] ?? 'general') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>
+                <span>النطاق</span>
+                <select name="scope">
+                    @foreach ($scopeOptions as $value => $label)
+                        <option value="{{ $value }}" @selected(($filters['scope'] ?? 'all') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>
+                <span>الفترة</span>
+                <select name="period">
+                    @foreach ($periodOptions as $value => $label)
+                        <option value="{{ $value }}" @selected(($filters['period'] ?? 'all') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <div class="vn-generator-actions">
+                <button type="submit">عرض الملخص</button>
+                <a href="{{ route('viewer-new.statistics.generator') }}" class="vn-filter-reset">إعادة الضبط</a>
+            </div>
+        </form>
+
+        @if (! $hasGenerated)
+            <div class="vn-empty-state vn-generator-empty">
+                <h4>ابدأ بتوليد ملخص جديد</h4>
+                <p>اختر نوع التقرير والنطاق والفترة، ثم اضغط على «عرض الملخص» للحصول على قراءة إحصائية آمنة دون تعديل أي بيانات.</p>
+            </div>
+        @else
+            @if (! empty($summaryMetrics))
+                @include('viewer-new.partials.report-metrics', ['items' => $summaryMetrics])
+            @endif
+
+            @if (! empty($summarySections))
+                <div class="vn-generator-sections">
+                    @foreach ($summarySections as $section)
+                        <article class="vn-table-card vn-generator-section">
+                            <h4>{{ $section['title'] ?? 'ملخص' }}</h4>
+                            @if (! empty($section['message']))
+                                <p class="vn-static-note">{{ $section['message'] }}</p>
+                            @elseif (! empty($section['rows']))
+                                <div class="vn-table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                @foreach (array_keys($section['rows'][0]) as $head)
+                                                    <th>{{ $head }}</th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($section['rows'] as $row)
+                                                <tr>
+                                                    @foreach ($row as $value)
+                                                        <td>{{ $value }}</td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p class="vn-static-note">لا توجد بيانات لعرضها حالياً.</p>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            @else
+                <div class="vn-empty-state vn-generator-empty">
+                    <h4>تم توليد الملخص</h4>
+                    <p>لا توجد أقسام تفصيلية لهذا الاختيار، ويمكنك تغيير الفلاتر للحصول على عرض مختلف.</p>
+                </div>
+            @endif
+
+            <p class="vn-static-note">تاريخ التوليد: {{ $generatedAt }}</p>
+        @endif
     </section>
 @endsection
