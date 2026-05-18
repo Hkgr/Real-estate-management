@@ -19,24 +19,20 @@
         @include('viewer-new.partials.report-card', ['title' => 'مولد الإحصاءات', 'description' => 'إعداد تقارير ومخططات مخصصة لاحقاً.', 'href' => '#statistics-generator'])
     </section>
 
-    <section class="vn-report-metrics" aria-label="نظرة سريعة على المؤشرات">
-        <article class="vn-metric-card">
-            <span>إجمالي العقارات</span>
-            <strong>1,250</strong>
-        </article>
-        <article class="vn-metric-card">
-            <span>إجمالي المالكين</span>
-            <strong>420</strong>
-        </article>
-        <article class="vn-metric-card">
-            <span>إجمالي الإشارات</span>
-            <strong>87</strong>
-        </article>
-        <article class="vn-metric-card">
-            <span>إجمالي الملفات</span>
-            <strong>3,980</strong>
-        </article>
+    <section id="general-statistics" class="vn-report-detail">
+        <h3 class="vn-section-title">المؤشرات الرئيسية</h3>
+        @include('viewer-new.partials.report-metrics', ['items' => $primaryMetrics ?? []])
     </section>
 
-    <p class="vn-static-note">هذه البوابة تمهيدية، وسيتم ربط المؤشرات بالبيانات الحقيقية في مراحل لاحقة.</p>
+    <section id="financial-statistics" class="vn-report-detail">
+        <h3 class="vn-section-title">مؤشرات إضافية</h3>
+        @include('viewer-new.partials.report-metrics', ['items' => $secondaryMetrics ?? []])
+    </section>
+
+    <section id="administrative-statistics" class="vn-report-detail">
+        <h3 class="vn-section-title">مؤشرات صحة البيانات</h3>
+        @include('viewer-new.partials.report-metrics', ['items' => $dataHealthMetrics ?? []])
+    </section>
+
+    <p class="vn-static-note">تم توليد هذه البيانات في: {{ $generatedAt ?? '—' }}. هذه البوابة تمهيدية، وسيتم ربط صفحات الإحصاءات التفصيلية في مراحل لاحقة.</p>
 @endsection
