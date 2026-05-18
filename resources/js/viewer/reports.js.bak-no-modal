@@ -33,6 +33,8 @@ if (root) {
   document.querySelector('[data-open-quick-settings]')?.addEventListener('click', () => quick.hidden = false);
   document.querySelector('[data-close-quick-settings]')?.addEventListener('click', () => quick.hidden = true);
 
+  const modal = document.getElementById('reportsInfoModal');
+  document.querySelector('[data-close-modal]')?.addEventListener('click', () => modal.hidden = true);
 
   document.getElementById('compactMode')?.addEventListener('change', (e) => {
     root.classList.toggle('compact', e.target.checked);

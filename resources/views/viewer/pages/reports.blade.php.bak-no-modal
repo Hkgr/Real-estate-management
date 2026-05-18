@@ -22,5 +22,6 @@
         </div>
 
         @include('viewer.components.reports.quick-settings')
+        @include('viewer.components.reports.modals')
     </div>
 @endsection
