@@ -38,6 +38,7 @@ Route::get('/__headers_sent', function () {
 Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
+    Route::view('/viewer-new/statistics', 'viewer-new.statistics')->name('viewer-new.statistics');
     Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
     Route::get('/viewer-new/reports/owners', OwnersReportController::class)->name('viewer-new.reports.owners');
     Route::get('/viewer-new/reports/signals', SignalsReportController::class)->name('viewer-new.reports.signals');
