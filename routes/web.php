@@ -2,6 +2,7 @@
 use App\Http\Controllers\PropertyCardFileDownloadController;
 use App\Http\Controllers\Viewer\StandaloneViewerHubController;
 use App\Http\Controllers\Viewer\StandaloneViewerReportsController;
+use App\Http\Controllers\ViewerNew\Reports\PropertiesReportController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
 Route::get('/__probe_cookie', function () {
@@ -34,7 +35,7 @@ Route::get('/__headers_sent', function () {
 Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
-    Route::view('/viewer-new/reports/properties', 'viewer-new.reports.properties')->name('viewer-new.reports.properties');
+    Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
     Route::view('/viewer-new/reports/owners', 'viewer-new.reports.owners')->name('viewer-new.reports.owners');
     Route::view('/viewer-new/reports/signals', 'viewer-new.reports.signals')->name('viewer-new.reports.signals');
     Route::view('/viewer-new/reports/attachments', 'viewer-new.reports.attachments')->name('viewer-new.reports.attachments');
