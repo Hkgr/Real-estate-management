@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,9 +15,20 @@
         'resources/js/viewer/reports.js',
     ])
 </head>
-<body dir="rtl" class="viewer-shell">
-    @include('viewer-new.partials.navbar', ['active' => $active ?? 'index'])
+<body class="viewer-shell viewer-reports">
+    <div class="app-wrapper">
+        @include('viewer-new.partials.sidebar')
+        <div class="sidebar-overlay"></div>
 
-    @yield('content')
+        <div class="main-content">
+            @include('viewer-new.partials.topbar')
+            @include('viewer-new.partials.mobile-nav')
+            @yield('content')
+        </div>
+    </div>
+
+    <button type="button" class="qs-fab" aria-label="الإعدادات السريعة">
+        <span>⚙</span>
+    </button>
 </body>
 </html>
