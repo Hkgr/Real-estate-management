@@ -34,6 +34,10 @@ if (root) {
   document.querySelector('[data-close-quick-settings]')?.addEventListener('click', () => quick.hidden = true);
 
 
+  const modal = document.getElementById('reportsInfoModal');
+  if (modal) { setTimeout(() => { modal.hidden = false; }, 300); }
+  document.querySelector('[data-close-modal]')?.addEventListener('click', () => modal.hidden = true);
+
   document.getElementById('compactMode')?.addEventListener('change', (e) => {
     root.classList.toggle('compact', e.target.checked);
   });
@@ -64,4 +68,22 @@ if (root) {
   };
   updateClock();
   setInterval(updateClock, 1000);
+}
+
+if (root) {
+  const closeOverlays = (e) => {
+    if (e.target?.id === 'reportsQuickSettings') e.target.hidden = true;
+    if (e.target?.id === 'reportsInfoModal') e.target.hidden = true;
+  };
+  document.getElementById('reportsQuickSettings')?.addEventListener('click', closeOverlays);
+  document.getElementById('reportsInfoModal')?.addEventListener('click', closeOverlays);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const q = document.getElementById('reportsQuickSettings');
+      const m = document.getElementById('reportsInfoModal');
+      if (q && !q.hidden) q.hidden = true;
+      if (m && !m.hidden) m.hidden = true;
+      root.classList.remove('sidebar-open');
+    }
+  });
 }

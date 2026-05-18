@@ -1,6 +1,8 @@
-@extends('viewer.layouts.app')
+@extends('viewer-new.layout')
 
-@section('title', 'Viewer New Reports')
+@section('page_title', 'التقارير')
+
+@php($active = 'reports')
 
 @section('content')
     <div class="viewer-reports" id="viewerReportsPage" data-hub-url="{{ route('viewer-new.index') }}" data-reports-url="{{ route('viewer-new.reports.index') }}">
@@ -22,5 +24,6 @@
         </div>
 
         @include('viewer.components.reports.quick-settings')
+        @include('viewer.components.reports.modals')
     </div>
 @endsection

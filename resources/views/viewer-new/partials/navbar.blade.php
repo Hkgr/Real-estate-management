@@ -8,11 +8,11 @@
     </a>
   </div>
   <div class="topbar-center">
-    <span class="topbar-status">لوحة التحكم الرئيسية • v0.2.1</span>
-    <span class="topbar-center-divider"></span>
-    <div class="topbar-clock" id="topbar-clock">--:--:--</div>
-    
-
+    <a href="{{ route('viewer-new.index') }}" class="topbar-nav-pill {{ ($active ?? 'index') === 'index' ? 'active' : '' }}">الرئيسية</a>
+    <a href="{{ route('viewer-new.properties.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'properties' ? 'active' : '' }}">العقارات</a>
+    <a href="{{ route('viewer-new.owners.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'owners' ? 'active' : '' }}">الملاك</a>
+    <a href="{{ route('viewer-new.signals.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'signals' ? 'active' : '' }}">الإشارات</a>
+    <a href="{{ route('viewer-new.reports.index') }}" class="topbar-nav-pill {{ ($active ?? '') === 'reports' ? 'active' : '' }}">التقارير</a>
   </div>
   <div class="topbar-right">
     <div class="topbar-user-chip">
