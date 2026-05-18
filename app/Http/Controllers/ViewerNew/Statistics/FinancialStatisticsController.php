@@ -151,7 +151,10 @@ class FinancialStatisticsController extends Controller
         return [
             ['label' => 'عقارات بدون قيمة إجمالية', 'value' => Schema::hasColumn('property_cards', 'total_property_value_usd') ? number_format(PropertyCard::query()->whereNull('total_property_value_usd')->count()) : 'غير متوفر'],
             ['label' => 'عقارات بدون قيمة مملوكة', 'value' => Schema::hasColumn('property_cards', 'owned_property_value_usd') ? number_format(PropertyCard::query()->whereNull('owned_property_value_usd')->count()) : 'غير متوفر'],
-            ['label' => 'عقارات بدون مساحة', 'value' => Schema::hasColumn('property_cards', 'card_total_area') ? number_format(PropertyCard::query()->whereNull('card_total_area')->orWhere('card_total_area', '<=', 0)->count()) : 'غير متوفر'],
+            ['label' => 'عقارات بدون مساحة', 'value' => Schema::hasColumn('property_cards', 'card_total_area') ? number_format(PropertyCard::query()->where(function ($query): void {
+                $query->whereNull('card_total_area')
+                    ->orWhere('card_total_area', '<=', 0);
+            })->count()) : 'غير متوفر'],
             ['label' => 'عقارات بقيمة صفرية أو سالبة', 'value' => Schema::hasColumn('property_cards', 'total_property_value_usd') ? number_format(PropertyCard::query()->whereNotNull('total_property_value_usd')->where('total_property_value_usd', '<=', 0)->count()) : 'غير متوفر'],
         ];
     }
