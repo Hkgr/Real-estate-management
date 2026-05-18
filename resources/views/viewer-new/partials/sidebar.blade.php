@@ -9,7 +9,22 @@
 
     <nav class="vn-sidebar__nav" aria-label="التنقل الرئيسي">
         @foreach($viewerNewNavigation as $group)
-            <div class="vn-nav-group" data-nav-group="{{ $group['group_label'] }}">
+            @php
+                $groupIsActive = false;
+
+                foreach (($group['items'] ?? []) as $groupItem) {
+                    $matchesActiveSection = ($active ?? '') === ($groupItem['active_key'] ?? '');
+                    $matchesExactRoute = request()->routeIs(...($groupItem['route_is'] ?? [$groupItem['route']]));
+                    $matchesGroupRoute = !empty($groupItem['route_is_group']) && request()->routeIs(...$groupItem['route_is_group']);
+
+                    if ($matchesActiveSection || $matchesExactRoute || $matchesGroupRoute) {
+                        $groupIsActive = true;
+                        break;
+                    }
+                }
+            @endphp
+
+            <div class="vn-nav-group {{ $groupIsActive ? 'is-active' : '' }}" data-nav-group="{{ $group['group_label'] }}">
                 <p class="vn-nav-group__label">{{ $group['group_label'] }}</p>
 
                 @foreach($group['items'] as $item)
