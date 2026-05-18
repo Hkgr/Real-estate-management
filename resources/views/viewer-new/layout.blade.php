@@ -15,7 +15,7 @@
         'resources/js/viewer/reports.js',
     ])
 </head>
-<body class="viewer-shell viewer-reports">
+<body class="viewer-shell" data-theme="dark">
     <div class="app-wrapper">
         @include('viewer-new.partials.sidebar')
         <div class="sidebar-overlay"></div>
@@ -27,8 +27,13 @@
         </div>
     </div>
 
-    <button type="button" class="qs-fab" aria-label="الإعدادات السريعة">
-        <span>⚙</span>
-    </button>
+    <div class="qs-fab" id="qs-fab">
+        <div class="qs-panel" id="qs-panel" onclick="event.stopPropagation()">
+            <p>الإعدادات السريعة قريبًا.</p>
+        </div>
+        <button type="button" class="qs-fab-trigger" onclick="toggleQuickSettings()" aria-label="الإعدادات السريعة">
+            ⚙
+        </button>
+    </div>
 </body>
 </html>

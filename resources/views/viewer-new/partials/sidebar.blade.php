@@ -1,6 +1,5 @@
 <aside class="sidebar" aria-label="التنقل الرئيسي">
     <div class="sidebar-logo">
-        <div class="logo-badge">REAL ESTATE</div>
         <div class="logo-title-row">
             <h1 class="logo-title">محفظة العقارات</h1>
             <button type="button" class="sidebar-toggle-top" aria-label="طي الشريط الجانبي">
@@ -9,24 +8,56 @@
                 </svg>
             </button>
         </div>
-        <p class="logo-sub">واجهة العرض الجديدة</p>
+        <p class="logo-sub">لوحة التقارير والإحصاءات</p>
     </div>
 
     <nav class="sidebar-nav">
-        <a href="{{ route('viewer-new.index') }}" class="nav-item {{ ($active ?? 'index') === 'index' ? 'active' : '' }}">
-            <span class="nav-text">الرئيسية</span>
-        </a>
-        <a href="{{ route('viewer-new.properties.index') }}" class="nav-item {{ ($active ?? '') === 'properties' ? 'active' : '' }}">
-            <span class="nav-text">العقارات</span>
-        </a>
-        <a href="{{ route('viewer-new.owners.index') }}" class="nav-item {{ ($active ?? '') === 'owners' ? 'active' : '' }}">
-            <span class="nav-text">الملاك</span>
-        </a>
-        <a href="{{ route('viewer-new.signals.index') }}" class="nav-item {{ ($active ?? '') === 'signals' ? 'active' : '' }}">
-            <span class="nav-text">الإشارات</span>
-        </a>
-        <a href="{{ route('viewer-new.reports.index') }}" class="nav-item {{ ($active ?? '') === 'reports' ? 'active' : '' }}">
-            <span class="nav-text">التقارير</span>
-        </a>
+        <div class="nav-group">
+            <a href="{{ route('viewer-new.reports.index') }}" class="nav-item {{ ($active ?? '') === 'reports' ? 'active' : '' }}">
+                <span class="nav-icon">▦</span>
+                <span class="nav-text">التقارير</span>
+            </a>
+            <div class="nav-submenu">
+                <a href="{{ route('viewer-new.reports.index') }}" class="nav-subitem"><span class="nav-subicon">•</span>الرئيسية</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>تقرير الملاك</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>تقرير العقارات</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>تقرير الإشارات</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>تقرير المرفقات</a>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <a href="{{ route('viewer-new.index') }}" class="nav-item {{ ($active ?? 'index') === 'index' ? 'active' : '' }}">
+                <span class="nav-icon">◫</span>
+                <span class="nav-text">الإحصاءات</span>
+            </a>
+            <div class="nav-submenu">
+                <a href="{{ route('viewer-new.index') }}" class="nav-subitem"><span class="nav-subicon">•</span>الرئيسية</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>الإحصاءات المالية</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>إحصاءات العقارات</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>الإحصاءات القانونية</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>الإحصاءات الإدارية</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>الإحصاءات العامة</a>
+                <a href="#" class="nav-subitem"><span class="nav-subicon">•</span>مولد الإحصاءات</a>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <a href="#" class="nav-item">
+                <span class="nav-icon">◉</span>
+                <span class="nav-text">النشاط</span>
+                <span class="notif-dot" aria-hidden="true"></span>
+            </a>
+        </div>
     </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar" id="user-avatar-letter">م</div>
+            <div>
+                <div class="user-name" id="user-display-name">مستخدم</div>
+                <div class="user-role" id="user-role-label">عارض</div>
+            </div>
+        </div>
+    </div>
 </aside>
