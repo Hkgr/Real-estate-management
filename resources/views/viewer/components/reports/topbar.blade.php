@@ -2,10 +2,10 @@
     <div class="topbar-title topbar-title-desktop" id="topbar-title">بوابة <span>الإحصاءات</span></div>
 
     <nav class="topbar-mobile-nav" aria-label="تنقل رئيسي">
-        <a href="{{ route('viewer-new.reports') }}" class="topbar-nav-pill active" id="mnav-properties">
+        <a href="{{ route('viewer-new.reports.index') }}" class="topbar-nav-pill active" id="mnav-properties">
             <span class="pill-label">التقارير</span>
         </a>
-        <a href="{{ route('viewer-new.hub') }}" class="topbar-nav-pill" id="mnav-dashboard">
+        <a href="{{ route('viewer-new.index') }}" class="topbar-nav-pill" id="mnav-dashboard">
             <span class="pill-label">الإحصاءات</span>
         </a>
     </nav>
@@ -16,7 +16,7 @@
             <span class="topbar-datetime-sep">•</span>
             <span id="topbar-date">جارٍ التحميل…</span>
         </div>
-        <a href="{{ route('viewer-new.reports') }}" class="topbar-btn topbar-btn-props" id="topbar-hub-shortcut" title="الانتقال إلى قسم التقارير">⊞ إلى التقارير</a>
-        <a href="{{ route('viewer-new.hub') }}" class="topbar-btn logout">⎋ الرجوع للبوابة</a>
+        <a href="{{ route('viewer-new.reports.index') }}" class="topbar-btn topbar-btn-props" id="topbar-hub-shortcut" title="الانتقال إلى قسم التقارير">⊞ إلى التقارير</a>
+        <a href="{{ route('viewer-new.index') }}" class="topbar-btn logout">⎋ الرجوع للبوابة</a>
     </div>
 </header>

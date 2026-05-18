@@ -10,7 +10,7 @@
       </button>
       <div class="section-content">
         <div class="nav-cards">
-      <a class="nav-card" href="{{ route('viewer-new.reports') }}">
+      <a class="nav-card" href="{{ route('viewer-new.reports.index') }}">
       <div class="nc-visual">
         <div class="nc-visual-bg">
           <svg width="100%" height="100%" viewBox="0 0 560 176" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
@@ -53,7 +53,7 @@
         </div>
       </div>
       </a>
-      <a class="nav-card" href="{{ route('viewer-new.reports') }}" onclick="gotoProperties(event)">
+      <a class="nav-card" href="{{ route('viewer-new.reports.index') }}" onclick="gotoProperties(event)">
       <div class="nc-visual">
         <div class="nc-visual-bg">
           <svg width="100%" height="100%" viewBox="0 0 560 176" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
@@ -176,7 +176,7 @@
       </button>
       <div class="section-content">
         <div class="mini-photos">
-      <a class="mini-photo" href="{{ route('viewer-new.reports') }}" onclick="gotoProperties(event)">
+      <a class="mini-photo" href="{{ route('viewer-new.reports.index') }}" onclick="gotoProperties(event)">
         <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
           <rect width="200" height="100" fill="#120f08"/>
           <rect x="14" y="48" width="52" height="32" rx="3" fill="#3a2d13"/>
@@ -191,7 +191,7 @@
         </svg>
         <span class="cap">فلل</span>
       </a>
-      <a class="mini-photo" href="{{ route('viewer-new.reports') }}">
+      <a class="mini-photo" href="{{ route('viewer-new.reports.index') }}">
         <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
           <rect width="200" height="100" fill="#100e09"/>
           <rect x="16" y="42" width="30" height="38" rx="2" fill="#4e3a16"/>
@@ -273,7 +273,7 @@ function setPanelColor(colorMode){const p=getPrefs();p.panelColor=colorMode;save
 function resetAllSettings(){const defaults={theme:'dark',fontSize:'normal',currency:'USD',area:'m2',ownership:'sahm',fontFamily:'Tajawal',lang:'ar',fontColor:'default',navbarColor:'default',headerColor:'default',tableColor:'default',panelColor:'plum'};savePrefs(defaults);setThemePref(defaults.theme);setFontSize(defaults.fontSize);setCurrency(defaults.currency);setArea(defaults.area);setOwnership(defaults.ownership);applyFont(defaults.fontFamily);document.querySelectorAll('[name="fontFamily"]').forEach(r=>{r.checked=r.value===defaults.fontFamily;});setFontColor(defaults.fontColor);setNavbarColor(defaults.navbarColor);setHeaderColor(defaults.headerColor);setTableColor(defaults.tableColor);setPanelColor(defaults.panelColor);if(typeof setLang==='function')setLang(defaults.lang);}
 function loadPrefs(){const p=getPrefs();const t=localStorage.getItem('themeMode')||p.theme||'dark';setThemePref(t);if(p.fontSize)setFontSize(p.fontSize);if(p.currency)setCurrency(p.currency);else setCurrency('USD');if(p.area)setArea(p.area);if(p.ownership)setOwnership(p.ownership);if(p.fontFamily){applyFont(p.fontFamily);document.querySelectorAll('[name="fontFamily"]').forEach(r=>{r.checked=r.value===p.fontFamily;});}if(p.lang)setLang(p.lang);if(p.fontColor)setFontColor(p.fontColor);else setFontColor('default');if(p.navbarColor)setNavbarColor(p.navbarColor);else setNavbarColor('default');if(p.headerColor)setHeaderColor(p.headerColor);else setHeaderColor('default');if(p.tableColor)setTableColor(p.tableColor);else setTableColor('default');if(p.panelColor)setPanelColor(p.panelColor);else setPanelColor('plum');updateCurrencyRateUi(p.currency||'USD');}
 function handleLogout(){if(confirm('هل تريد تسجيل الخروج؟')){localStorage.removeItem('loggedInUser');localStorage.removeItem('userRole');window.location.href=(document.querySelector('.viewer-hub')?.dataset.hubUrl||'/viewer-new');}}
-function gotoProperties(e){e.preventDefault();localStorage.setItem('startPage','properties');window.location.href='{{ route('viewer-new.reports') }}';}
+function gotoProperties(e){e.preventDefault();localStorage.setItem('startPage','properties');window.location.href='{{ route('viewer-new.reports.index') }}';}
 function updateTime(){const el=document.getElementById('info-time');if(el){const d=new Date();el.textContent=d.toLocaleString('ar-SA',{hour:'2-digit',minute:'2-digit',weekday:'short',day:'numeric',month:'short'});}}
 function updateHeaderClock(){const el=document.getElementById('topbar-clock');if(!el)return;const d=new Date();el.textContent=d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 initUser();loadPrefs();updateTime();updateHeaderClock();setInterval(updateTime,30000);setInterval(updateHeaderClock,1000);
