@@ -8,7 +8,7 @@
 @endphp
 
 <header class="topbar">
-    <div class="topbar-title">{{ $pageTitle }}</div>
+    <div class="topbar-title" id="topbar-title">{{ $pageTitle }}</div>
 
     <div class="topbar-actions">
         <span class="app-version-badge" aria-label="Application version">v0.2.1</span>
