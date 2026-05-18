@@ -10,23 +10,80 @@
     @include('viewer-new.partials.page-header', ['title' => 'تقرير الملحقات', 'subtitle' => 'مراجعة حالة الملفات والوثائق المرتبطة بالعقارات'])
 
     <section class="vn-report-metrics">
-        <article class="vn-metric-card"><span>عدد الملفات</span><strong>312</strong></article>
-        <article class="vn-metric-card"><span>ملفات ناقصة</span><strong>27</strong></article>
-        <article class="vn-metric-card"><span>ملفات مكتملة</span><strong>285</strong></article>
-        <article class="vn-metric-card"><span>آخر تحديث</span><strong>18-05-2026</strong></article>
+        <article class="vn-metric-card"><span>عدد الملفات</span><strong>{{ $metrics['total_files'] ?? '—' }}</strong></article>
+        <article class="vn-metric-card"><span>العقارات المرتبطة</span><strong>{{ $metrics['linked_properties'] ?? 'غير متوفر' }}</strong></article>
+        <article class="vn-metric-card"><span>عدد أنواع الملفات</span><strong>{{ $metrics['file_types_count'] ?? 'غير متوفر' }}</strong></article>
+        <article class="vn-metric-card"><span>إجمالي الحجم التخزيني</span><strong>{{ $metrics['total_storage_size'] ?? 'غير متوفر' }}</strong></article>
+        <article class="vn-metric-card"><span>آخر رفع/تحديث</span><strong>{{ $metrics['latest_upload_or_update'] ?? 'غير متوفر' }}</strong></article>
     </section>
 
     <section class="vn-table-card vn-report-detail">
         <div class="vn-table-card__head"><h3>تفاصيل الملحقات</h3></div>
-        <div class="vn-table-responsive">
-            <table>
-                <thead><tr><th>نوع الملف</th><th>العقار</th><th>الحالة</th><th>تاريخ الإضافة</th><th>ملاحظات</th></tr></thead>
-                <tbody>
-                    <tr><td>صك ملكية</td><td>فيلا النخبة 12</td><td>مكتمل</td><td>14-05-2026</td><td>نسخة مصدقة</td></tr>
-                    <tr><td>عقد إيجار</td><td>عمارة الواحة 7</td><td>ناقص</td><td>13-05-2026</td><td>توقيع المستأجر مطلوب</td></tr>
-                    <tr><td>رخصة تشغيل</td><td>مخزن الشرق 3</td><td>مكتمل</td><td>11-05-2026</td><td>صالحة حتى 2028</td></tr>
-                </tbody>
-            </table>
-        </div>
+
+        <form method="GET" action="{{ route('viewer-new.reports.attachments') }}" class="vn-attachments-filter">
+            <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث باسم الملف أو نوعه">
+
+            @if(!empty($typeOptions))
+                <select name="type">
+                    <option value="">كل الأنواع</option>
+                    @foreach($typeOptions as $type)
+                        <option value="{{ $type }}" @selected(($filters['type'] ?? '') === $type)>{{ $type }}</option>
+                    @endforeach
+                </select>
+            @endif
+
+            @if(($fieldAvailability['property_card_id'] ?? false) === true)
+                <input type="text" name="property" value="{{ $filters['property'] ?? '' }}" placeholder="بحث بالعقار المرتبط أو رقمه">
+            @endif
+
+            <button type="submit">تطبيق</button>
+            <a href="{{ route('viewer-new.reports.attachments') }}" class="vn-filter-reset">إعادة ضبط</a>
+        </form>
+
+        @if($attachments->count() > 0)
+            <div class="vn-table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم الملف</th>
+                            <th>نوع الملف</th>
+                            <th>العقار المرتبط</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>الحجم</th>
+                            <th>آخر تحديث</th>
+                            <th>تحميل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($attachments as $file)
+                            <tr>
+                                <td>{{ $file['file_name'] }}</td>
+                                <td>{{ $file['mime_type'] }}</td>
+                                <td class="vn-muted-value">{{ $file['property_title'] }}</td>
+                                <td>{{ $file['issued_at'] }}</td>
+                                <td>{{ $file['file_size_human'] }}</td>
+                                <td>{{ $file['created_or_updated_at'] }}</td>
+                                <td>
+                                    @if(!empty($file['download_url']))
+                                        <a class="vn-attachment-download" href="{{ $file['download_url'] }}">تحميل</a>
+                                    @else
+                                        <span class="vn-muted-value">غير متوفر</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="vn-pagination-wrap">
+                {{ $attachments->links() }}
+            </div>
+        @else
+            <div class="vn-empty-state">
+                <h4>لا توجد ملحقات مطابقة</h4>
+                <p>جرّب تعديل معايير البحث أو إزالة الفلاتر لعرض نتائج إضافية.</p>
+            </div>
+        @endif
     </section>
 @endsection

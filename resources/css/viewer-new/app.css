@@ -35,3 +35,9 @@
 .viewer-new .vn-signals-filter{display:flex;gap:.6rem;flex-wrap:wrap;margin:.9rem 0 1rem}
 .viewer-new .vn-signals-filter input,.viewer-new .vn-signals-filter select,.viewer-new .vn-signals-filter button{background:#0f0f0f;color:var(--text);border:1px solid var(--border);padding:.45rem .7rem;border-radius:.5rem}
 .viewer-new .vn-signals-filter input{min-width:260px;flex:1}
+
+.viewer-new .vn-attachments-filter{display:flex;gap:.6rem;flex-wrap:wrap;margin:.9rem 0 1rem}
+.viewer-new .vn-attachments-filter input,.viewer-new .vn-attachments-filter select,.viewer-new .vn-attachments-filter button{background:#0f0f0f;color:var(--text);border:1px solid var(--border);padding:.45rem .7rem;border-radius:.5rem}
+.viewer-new .vn-attachments-filter input{min-width:220px;flex:1}
+.viewer-new .vn-attachment-download{display:inline-flex;align-items:center;justify-content:center;padding:.25rem .6rem;border:1px solid rgba(212,175,55,.35);border-radius:.45rem;color:var(--gold);text-decoration:none;background:rgba(212,175,55,.08)}
+.viewer-new .vn-attachment-download:hover{border-color:rgba(212,175,55,.55);color:#e6c86e}
