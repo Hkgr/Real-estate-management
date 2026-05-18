@@ -7,7 +7,43 @@
     <title>@yield('page_title', 'viewer-new')</title>
     @vite(['resources/css/viewer-new/app.css', 'resources/js/viewer-new/app.js'])
     <style>
-        .viewer-new .vn-sidebar{width:230px}.viewer-new .vn-topbar{min-height:60px;background:#0d0e11}.viewer-new .vn-nav-link__icon svg,.viewer-new .vn-topbar__icon-btn svg,.viewer-new .vn-sidebar__brand-icon svg,.viewer-new .vn-sidebar__user-action svg{max-width:18px;max-height:18px}
+        .viewer-new .vn-sidebar{width:230px;background:#18191f;border-left:1px solid rgba(255,255,255,.08);padding:18px;gap:14px}
+        .viewer-new .vn-sidebar__logo{padding:6px 4px;border:0;background:transparent;gap:10px}
+        .viewer-new .vn-sidebar__brand-icon{width:26px;height:26px;flex:0 0 26px}
+        .viewer-new .vn-sidebar__brand-content h2{margin:0;font-size:1rem;line-height:1.25}
+        .viewer-new .vn-sidebar__brand-content p{margin:2px 0 0;font-size:.74rem;color:#7f838d}
+        .viewer-new .vn-nav-group+.vn-nav-group{padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+        .viewer-new .vn-nav-link{min-height:40px;padding:9px 11px;border-radius:9px;gap:8px}
+        .viewer-new .vn-nav-link.is-active{color:#d4af37;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.45)}
+        .viewer-new .vn-nav-link.is-active::before{content:"";position:absolute;right:-1px;top:8px;bottom:8px;width:2px;background:#d4af37;border-radius:2px}
+        .viewer-new .vn-sidebar__user{padding:8px 10px;min-height:54px;background:rgba(255,255,255,.04)}
+
+        .viewer-new .vn-topbar{min-height:60px;background:#0d0e11;border-bottom:1px solid rgba(255,255,255,.07);padding:10px 18px;flex-wrap:nowrap}
+        .viewer-new .vn-topbar__actions{gap:8px;flex-wrap:nowrap}
+        .viewer-new .vn-topbar__badge,.viewer-new .vn-topbar__icon-btn,.viewer-new .vn-topbar__action-btn,.viewer-new .vn-logout-btn{height:34px;border-radius:8px}
+        .viewer-new .vn-logout-btn{padding:0 10px}
+
+        .viewer-new .vn-breadcrumb{display:flex;align-items:center}
+        .viewer-new .vn-breadcrumb__list{display:flex;align-items:center;gap:6px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+        .viewer-new .vn-breadcrumb__item{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#8f949f}
+        .viewer-new .vn-breadcrumb__link{color:#a8adb7;text-decoration:none}
+        .viewer-new .vn-breadcrumb__current{color:#d9dde4}
+
+        .viewer-new .vn-nav-link__icon,.viewer-new .vn-nav-link__icon svg{width:18px;height:18px;max-width:18px;max-height:18px}
+        .viewer-new .vn-nav-link__icon svg path{fill:currentColor}
+        .viewer-new .vn-topbar__icon-btn svg,.viewer-new .vn-sidebar__brand-icon svg,.viewer-new .vn-sidebar__user-action svg{width:18px;height:18px;max-width:18px;max-height:18px}
+        .viewer-new .vn-pagination-wrap svg{width:20px;height:20px;max-width:20px;max-height:20px}
+
+        .viewer-new__shell.is-collapsed .vn-sidebar{width:80px}
+        .viewer-new__shell.is-collapsed .vn-sidebar__brand-content,
+        .viewer-new__shell.is-collapsed .vn-nav-group__label,
+        .viewer-new__shell.is-collapsed .vn-nav-link__label,
+        .viewer-new__shell.is-collapsed .vn-sidebar__user-copy,
+        .viewer-new__shell.is-collapsed .vn-sidebar__user-action{display:none}
+        .viewer-new__shell.is-collapsed .vn-nav-link{justify-content:center}
+        .viewer-new__shell.is-collapsed .vn-sidebar__toggle{display:inline-flex}
+
+        @media (max-width:1024px){.viewer-new .vn-topbar{flex-wrap:wrap}.viewer-new .vn-topbar__actions{flex-wrap:wrap}}
     </style>
 </head>
 <body class="viewer-new" dir="rtl">
