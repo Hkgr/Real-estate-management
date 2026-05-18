@@ -85,3 +85,10 @@
 .viewer-new .vn-financial-mini-table table{min-width:100%}
 .viewer-new .vn-financial-top-table table{min-width:980px}
 .viewer-new .vn-financial-empty-block{background:rgba(212,175,55,.03)}
+
+.viewer-new .vn-admin-metric-card{border-color:rgba(212,175,55,.22);background:linear-gradient(180deg,rgba(212,175,55,.06),rgba(22,22,22,.95))}
+.viewer-new .vn-admin-recent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.85rem}
+.viewer-new .vn-admin-recent-card h4{margin:0 0 .65rem;color:var(--gold)}
+.viewer-new .vn-admin-mini-table table{min-width:100%}
+.viewer-new .vn-admin-mini-table th,.viewer-new .vn-admin-mini-table td{font-size:.88rem;white-space:nowrap}
+.viewer-new .vn-admin-empty{background:rgba(212,175,55,.03)}
