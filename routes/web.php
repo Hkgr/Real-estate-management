@@ -40,6 +40,10 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
     Route::get('/viewer-new/statistics', StatisticsGatewayController::class)->name('viewer-new.statistics');
+    Route::view('/viewer-new/statistics/general', 'viewer-new.statistics.general')->name('viewer-new.statistics.general');
+    Route::view('/viewer-new/statistics/financial', 'viewer-new.statistics.financial')->name('viewer-new.statistics.financial');
+    Route::view('/viewer-new/statistics/administrative', 'viewer-new.statistics.administrative')->name('viewer-new.statistics.administrative');
+    Route::view('/viewer-new/statistics/generator', 'viewer-new.statistics.generator')->name('viewer-new.statistics.generator');
     Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
     Route::get('/viewer-new/reports/owners', OwnersReportController::class)->name('viewer-new.reports.owners');
     Route::get('/viewer-new/reports/signals', SignalsReportController::class)->name('viewer-new.reports.signals');

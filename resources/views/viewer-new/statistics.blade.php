@@ -13,10 +13,10 @@
     ])
 
     <section class="vn-report-grid">
-        @include('viewer-new.partials.report-card', ['title' => 'إحصاءات عامة', 'description' => 'نظرة شاملة على المحفظة العقارية ومؤشرات النمو.', 'href' => '#general-statistics'])
-        @include('viewer-new.partials.report-card', ['title' => 'إحصاءات مالية', 'description' => 'مؤشرات القيم، المدفوعات، والأرصدة التقديرية.', 'href' => '#financial-statistics'])
-        @include('viewer-new.partials.report-card', ['title' => 'إحصاءات إدارية', 'description' => 'متابعة الإدخالات والتحديثات وحالة البيانات.', 'href' => '#administrative-statistics'])
-        @include('viewer-new.partials.report-card', ['title' => 'مولد الإحصاءات', 'description' => 'إعداد تقارير ومخططات مخصصة لاحقاً.', 'href' => '#statistics-generator'])
+        @include('viewer-new.partials.report-card', ['title' => 'إحصاءات عامة', 'description' => 'نظرة شاملة على المحفظة العقارية ومؤشرات النمو.', 'href' => route('viewer-new.statistics.general')])
+        @include('viewer-new.partials.report-card', ['title' => 'إحصاءات مالية', 'description' => 'مؤشرات القيم، المدفوعات، والأرصدة التقديرية.', 'href' => route('viewer-new.statistics.financial')])
+        @include('viewer-new.partials.report-card', ['title' => 'إحصاءات إدارية', 'description' => 'متابعة الإدخالات والتحديثات وحالة البيانات.', 'href' => route('viewer-new.statistics.administrative')])
+        @include('viewer-new.partials.report-card', ['title' => 'مولد الإحصاءات', 'description' => 'إعداد تقارير ومخططات مخصصة لاحقاً.', 'href' => route('viewer-new.statistics.generator')])
     </section>
 
     <section id="general-statistics" class="vn-report-detail">
