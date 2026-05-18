@@ -78,16 +78,31 @@ class AdministrativeStatisticsController extends Controller
             return $this->emptySection('آخر العقارات', 'غير متوفر');
         }
 
+        $availableColumns = [
+            'card_record_number' => Schema::hasColumn('property_cards', 'card_record_number'),
+            'card_governorate' => Schema::hasColumn('property_cards', 'card_governorate'),
+            'card_region_name' => Schema::hasColumn('property_cards', 'card_region_name'),
+            'card_status' => Schema::hasColumn('property_cards', 'card_status'),
+        ];
+
+        $selectColumns = ['id', 'updated_at'];
+
+        foreach ($availableColumns as $column => $isAvailable) {
+            if ($isAvailable) {
+                $selectColumns[] = $column;
+            }
+        }
+
         $rows = PropertyCard::query()
-            ->select(['id', 'updated_at', 'card_record_number', 'card_governorate', 'card_region_name', 'card_status'])
+            ->select($selectColumns)
             ->latest('updated_at')
             ->limit(8)
             ->get()
             ->map(fn (PropertyCard $item) => [
-                'رقم السجل' => $item->card_record_number ?: '—',
-                'المحافظة' => $item->card_governorate ?: '—',
-                'المنطقة' => $item->card_region_name ?: '—',
-                'الحالة' => $item->card_status ?: '—',
+                'رقم السجل' => $availableColumns['card_record_number'] ? ($item->card_record_number ?: '—') : 'غير متوفر',
+                'المحافظة' => $availableColumns['card_governorate'] ? ($item->card_governorate ?: '—') : 'غير متوفر',
+                'المنطقة' => $availableColumns['card_region_name'] ? ($item->card_region_name ?: '—') : 'غير متوفر',
+                'الحالة' => $availableColumns['card_status'] ? ($item->card_status ?: '—') : 'غير متوفر',
                 'آخر تحديث' => $item->updated_at?->format('Y-m-d H:i') ?? '—',
             ])->all();
 
@@ -116,10 +131,24 @@ class AdministrativeStatisticsController extends Controller
             return $this->emptySection('آخر الإشارات', 'غير متوفر');
         }
 
-        $rows = Signal::query()->select(['id', 'signal_id', 'type', 'signal_date', 'updated_at'])->latest('updated_at')->limit(8)->get()->map(fn (Signal $item) => [
-            'رقم الإشارة' => $item->signal_id ?: '—',
-            'النوع' => $item->type ?: '—',
-            'تاريخ الإشارة' => $item->signal_date ? Carbon::parse($item->signal_date)->format('Y-m-d') : '—',
+        $availableColumns = [
+            'signal_id' => Schema::hasColumn('signals', 'signal_id'),
+            'type' => Schema::hasColumn('signals', 'type'),
+            'signal_date' => Schema::hasColumn('signals', 'signal_date'),
+        ];
+
+        $selectColumns = ['id', 'updated_at'];
+
+        foreach ($availableColumns as $column => $isAvailable) {
+            if ($isAvailable) {
+                $selectColumns[] = $column;
+            }
+        }
+
+        $rows = Signal::query()->select($selectColumns)->latest('updated_at')->limit(8)->get()->map(fn (Signal $item) => [
+            'رقم الإشارة' => $availableColumns['signal_id'] ? ($item->signal_id ?: '—') : 'غير متوفر',
+            'النوع' => $availableColumns['type'] ? ($item->type ?: '—') : 'غير متوفر',
+            'تاريخ الإشارة' => $availableColumns['signal_date'] ? ($item->signal_date ? Carbon::parse($item->signal_date)->format('Y-m-d') : '—') : 'غير متوفر',
             'آخر تحديث' => $item->updated_at?->format('Y-m-d H:i') ?? '—',
         ])->all();
 
@@ -140,10 +169,24 @@ class AdministrativeStatisticsController extends Controller
             return $this->emptySection('آخر الملفات', 'غير متوفر');
         }
 
-        $rows = PropertyCardFile::query()->select(['id', 'file_name', 'mime_type', 'property_card_id', $timeColumn])->latest($timeColumn)->limit(8)->get()->map(fn (PropertyCardFile $item) => [
-            'اسم الملف' => $item->file_name ?: '—',
-            'النوع' => $item->mime_type ?: '—',
-            'رقم العقار' => $item->property_card_id ? (string) $item->property_card_id : '—',
+        $availableColumns = [
+            'file_name' => Schema::hasColumn('property_card_files', 'file_name'),
+            'mime_type' => Schema::hasColumn('property_card_files', 'mime_type'),
+            'property_card_id' => Schema::hasColumn('property_card_files', 'property_card_id'),
+        ];
+
+        $selectColumns = ['id', $timeColumn];
+
+        foreach ($availableColumns as $column => $isAvailable) {
+            if ($isAvailable) {
+                $selectColumns[] = $column;
+            }
+        }
+
+        $rows = PropertyCardFile::query()->select($selectColumns)->latest($timeColumn)->limit(8)->get()->map(fn (PropertyCardFile $item) => [
+            'اسم الملف' => $availableColumns['file_name'] ? ($item->file_name ?: '—') : 'غير متوفر',
+            'النوع' => $availableColumns['mime_type'] ? ($item->mime_type ?: '—') : 'غير متوفر',
+            'رقم العقار' => $availableColumns['property_card_id'] ? ($item->property_card_id ? (string) $item->property_card_id : '—') : 'غير متوفر',
             'آخر تحديث' => $item->{$timeColumn}?->format('Y-m-d H:i') ?? '—',
         ])->all();
 
@@ -200,7 +243,10 @@ class AdministrativeStatisticsController extends Controller
             return 'غير متوفر';
         }
 
-        return number_format($query->whereNull($column)->orWhere($column, '')->count());
+        return number_format($query->where(function ($builder) use ($column): void {
+            $builder->whereNull($column)
+                ->orWhere($column, '');
+        })->count());
     }
 
     private function nullableOrZeroCount(bool $hasTable, string $table, string $column, $query): string
@@ -209,7 +255,10 @@ class AdministrativeStatisticsController extends Controller
             return 'غير متوفر';
         }
 
-        return number_format($query->whereNull($column)->orWhere($column, 0)->count());
+        return number_format($query->where(function ($builder) use ($column): void {
+            $builder->whereNull($column)
+                ->orWhere($column, 0);
+        })->count());
     }
 
     private function tableSection(string $title, array $rows): array
