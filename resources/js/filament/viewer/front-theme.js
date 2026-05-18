@@ -30,6 +30,7 @@ const DEFAULTS = {
 };
 
 let topbarClockInterval = null;
+let globalListenersBound = false;
 
 function getViewerRoot() {
   return document.querySelector('.viewer-front');
@@ -201,7 +202,19 @@ const TABLE_COLOR_VARS = {
 };
 function setTableColor(color) { const root = getViewerRoot(); const v = TABLE_COLOR_VARS[color] !== undefined ? color : DEFAULTS.tableColor; if (root) { const vars = TABLE_COLOR_VARS[v]; if (!vars) applyCssVars(root, { '--table-surface': null, '--table-border': null, '--table-head-bg': null, '--table-head-text': null, '--table-head-hover': null, '--table-row-border': null, '--table-row-hover-bg': null, '--table-row-selected-bg': null, '--table-row-selected-border': null }); else applyCssVars(root, vars); } savePreference(PREF_KEYS.tableColor, v); setActiveFromMap(v, { default: 'table-color-default-btn', obsidian: 'table-color-obsidian-btn', sand: 'table-color-sand-btn', emerald: 'table-color-emerald-btn', royal: 'table-color-royal-btn', burgundy: 'table-color-burgundy-btn' }); }
 
-function setLang(lang) { const root = getViewerRoot(); const v = ['ar', 'en'].includes(lang) ? lang : DEFAULTS.lang; if (root) root.setAttribute('dir', v === 'en' ? 'ltr' : 'rtl'); savePreference(PREF_KEYS.lang, v); setActiveFromMap(v, { ar: 'lang-ar-btn', en: 'lang-en-btn' }); }
+function setLang(lang) {
+  const root = getViewerRoot();
+  const v = ['ar', 'en'].includes(lang) ? lang : DEFAULTS.lang;
+  if (root) {
+    const direction = v === 'en' ? 'ltr' : 'rtl';
+    root.setAttribute('dir', direction);
+    root.style.setProperty('direction', direction);
+    root.classList.toggle('is-ltr', direction === 'ltr');
+    root.classList.toggle('is-rtl', direction === 'rtl');
+  }
+  savePreference(PREF_KEYS.lang, v);
+  setActiveFromMap(v, { ar: 'lang-ar-btn', en: 'lang-en-btn' });
+}
 
 function setFontFamily(fontFamily) {
   const root = getViewerRoot();
@@ -237,6 +250,7 @@ function updateTopbarClock() {
 }
 
 function resetAllSettings() {
+  const root = getViewerRoot();
   Object.values(PREF_KEYS).forEach((key) => { try { localStorage.removeItem(key); } catch (_) {} });
   setThemePref(DEFAULTS.theme);
   setFontSize(DEFAULTS.fontSize);
@@ -250,6 +264,10 @@ function resetAllSettings() {
   setTableColor(DEFAULTS.tableColor);
   setLang(DEFAULTS.lang);
   setFontFamily(DEFAULTS.fontFamily);
+  if (root) {
+    root.classList.remove('sidebar-collapsed');
+    root.classList.remove('sidebar-open');
+  }
 }
 
 function initViewerFrontTheme() {
@@ -269,23 +287,35 @@ function initViewerFrontTheme() {
   setLang(getPreference(PREF_KEYS.lang, DEFAULTS.lang));
   setFontFamily(getPreference(PREF_KEYS.fontFamily, DEFAULTS.fontFamily));
 
-  if (getPreference(PREF_KEYS.sidebarCollapsed, '0') === '1' && !window.matchMedia('(max-width: 991.98px)').matches) {
+  const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
+  if (!isMobile && getPreference(PREF_KEYS.sidebarCollapsed, '0') === '1') {
     root.classList.add('sidebar-collapsed');
+  } else {
+    root.classList.remove('sidebar-collapsed');
   }
 
-  document.querySelectorAll('input[name="fontFamily"]').forEach((input) => {
-    input.addEventListener('change', (event) => setFontFamily(event.target.value));
-  });
+  if (!isMobile) {
+    root.classList.remove('sidebar-open');
+  }
 
-  document.addEventListener('click', (event) => {
-    const fab = document.getElementById('qs-fab');
-    if (!fab || !fab.classList.contains('open')) return;
-    if (!fab.contains(event.target)) closeQuickSettings();
-  });
+  if (!globalListenersBound) {
+    document.addEventListener('change', (event) => {
+      if (event.target && event.target.matches('input[name="fontFamily"]')) {
+        setFontFamily(event.target.value);
+      }
+    });
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeQuickSettings();
-  });
+    document.addEventListener('click', (event) => {
+      const fab = document.getElementById('qs-fab');
+      if (!fab || !fab.classList.contains('open')) return;
+      if (!fab.contains(event.target)) closeQuickSettings();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeQuickSettings();
+    });
+    globalListenersBound = true;
+  }
 
   updateTopbarClock();
   if (topbarClockInterval) clearInterval(topbarClockInterval);
