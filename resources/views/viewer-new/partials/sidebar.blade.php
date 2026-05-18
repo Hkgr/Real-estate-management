@@ -45,7 +45,7 @@
                                 <path d="{{ $item['icon_svg'] }}"></path>
                             </svg>
                         </span>
-                        <span>{{ $item['label'] }}</span>
+                        <span class="vn-nav-link__label">{{ $item['label'] }}</span>
                     </a>
                 @endforeach
             </div>
