@@ -8,6 +8,6 @@ class StandaloneViewerReportsController
 {
     public function __invoke(): View
     {
-        return view('viewer.pages.reports');
+        return view('viewer-new.reports');
     }
 }
