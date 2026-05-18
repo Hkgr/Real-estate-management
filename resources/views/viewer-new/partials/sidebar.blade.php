@@ -1,4 +1,6 @@
-@include('viewer-new.partials.navigation-data')
+@php
+    $viewerNewNavigation = config('viewer-new-navigation', []);
+@endphp
 
 <aside class="vn-sidebar" id="vnSidebar">
     <div class="vn-sidebar__logo">
@@ -36,6 +38,7 @@
                         class="vn-nav-link {{ $isActive ? 'is-active' : '' }}"
                         data-active-key="{{ $item['active_key'] }}"
                         data-icon-key="{{ $item['icon_key'] }}"
+                        @if($isActive) aria-current="page" @endif
                     >
                         <span class="vn-nav-link__icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" focusable="false">
