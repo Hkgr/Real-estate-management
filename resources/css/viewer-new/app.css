@@ -38,7 +38,6 @@
 .viewer-new__shell.is-collapsed .vn-sidebar{width:80px}
 .viewer-new__shell.is-collapsed .vn-sidebar__brand-content,
 .viewer-new__shell.is-collapsed .vn-nav-group__label,
-.viewer-new__shell.is-collapsed .vn-sidebar__toggle,
 .viewer-new__shell.is-collapsed .vn-sidebar__user-copy,
 .viewer-new__shell.is-collapsed .vn-sidebar__user-action{display:none}
 .viewer-new__shell.is-collapsed .vn-sidebar__logo{justify-content:center;padding:.45rem}
@@ -46,6 +45,8 @@
 .viewer-new__shell.is-collapsed .vn-nav-link{justify-content:center}
 .viewer-new__shell.is-collapsed .vn-nav-link__label{display:none}
 .viewer-new__shell.is-collapsed .vn-sidebar__user{justify-content:center;padding:.45rem}
+.viewer-new__shell.is-collapsed .vn-sidebar__toggle{display:inline-flex;align-items:center;justify-content:center;padding:.5rem;width:100%;font-size:0}
+.viewer-new__shell.is-collapsed .vn-sidebar__toggle::before{content:"›";font-size:1.1rem;line-height:1}
 
 @media (prefers-reduced-motion: reduce){
   .vn-nav-link{transition:none}
