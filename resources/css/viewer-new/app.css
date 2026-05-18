@@ -72,3 +72,10 @@
 .viewer-new .vn-generator-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:.8rem}
 .viewer-new .vn-generator-control{border:1px solid var(--border);border-radius:.55rem;padding:.55rem .7rem;background:#101010;color:var(--muted);opacity:.78;cursor:not-allowed}
 .viewer-new .vn-generator-button{margin-top:1rem;background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.35);color:var(--gold);padding:.5rem .9rem;border-radius:.55rem;opacity:.55;cursor:not-allowed}
+
+.viewer-new .vn-stat-distribution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.9rem;margin-top:.75rem}
+.viewer-new .vn-distribution-card h4{margin:0 0 .7rem;color:var(--gold)}
+.viewer-new .vn-mini-table table{min-width:100%}
+.viewer-new .vn-mini-table th,.viewer-new .vn-mini-table td{font-size:.92rem}
+.viewer-new .vn-recent-table table{min-width:760px}
+.viewer-new .vn-empty-block{margin:0}

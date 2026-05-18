@@ -6,6 +6,7 @@ use App\Http\Controllers\ViewerNew\Reports\OwnersReportController;
 use App\Http\Controllers\ViewerNew\Reports\PropertiesReportController;
 use App\Http\Controllers\ViewerNew\Reports\SignalsReportController;
 use App\Http\Controllers\ViewerNew\Reports\AttachmentsReportController;
+use App\Http\Controllers\ViewerNew\Statistics\GeneralStatisticsController;
 use App\Http\Controllers\ViewerNew\Statistics\StatisticsGatewayController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
@@ -40,7 +41,7 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new', StandaloneViewerHubController::class)->name('viewer-new.hub');
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
     Route::get('/viewer-new/statistics', StatisticsGatewayController::class)->name('viewer-new.statistics');
-    Route::view('/viewer-new/statistics/general', 'viewer-new.statistics.general')->name('viewer-new.statistics.general');
+    Route::get('/viewer-new/statistics/general', GeneralStatisticsController::class)->name('viewer-new.statistics.general');
     Route::view('/viewer-new/statistics/financial', 'viewer-new.statistics.financial')->name('viewer-new.statistics.financial');
     Route::view('/viewer-new/statistics/administrative', 'viewer-new.statistics.administrative')->name('viewer-new.statistics.administrative');
     Route::view('/viewer-new/statistics/generator', 'viewer-new.statistics.generator')->name('viewer-new.statistics.generator');

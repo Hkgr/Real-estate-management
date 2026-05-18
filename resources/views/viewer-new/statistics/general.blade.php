@@ -15,21 +15,117 @@
     <section class="vn-report-detail">
         <h3 class="vn-section-title">نظرة عامة</h3>
         <div class="vn-report-metrics">
-            <article class="vn-metric-card vn-stat-placeholder"><span>إجمالي العقارات</span><strong>—</strong></article>
-            <article class="vn-metric-card vn-stat-placeholder"><span>إجمالي المالكين</span><strong>—</strong></article>
-            <article class="vn-metric-card vn-stat-placeholder"><span>إجمالي الإشارات</span><strong>—</strong></article>
-            <article class="vn-metric-card vn-stat-placeholder"><span>إجمالي الملفات</span><strong>—</strong></article>
+            @forelse ($overviewMetrics as $metric)
+                <article class="vn-metric-card">
+                    <span>{{ $metric['label'] }}</span>
+                    <strong>{{ $metric['value'] }}</strong>
+                </article>
+            @empty
+                <div class="vn-empty-state vn-empty-block">
+                    <h4>لا توجد مؤشرات عامة</h4>
+                    <p>تعذر تحميل الإحصاءات العامة حالياً.</p>
+                </div>
+            @endforelse
         </div>
     </section>
 
-    <section class="vn-table-card vn-stat-summary">
-        <h3 class="vn-section-title">ملخص مرحلي</h3>
-        <p>ستعرض هذه الصفحة لاحقاً مؤشرات الأداء الرئيسية العامة على مستوى المحفظة بالكامل مع تحديثات دورية.</p>
+    <section class="vn-report-detail">
+        <h3 class="vn-section-title">توزيع العقارات</h3>
+        <div class="vn-stat-distribution-grid">
+            @forelse($distributionSections as $section)
+                <article class="vn-table-card vn-distribution-card">
+                    <h4>{{ $section['title'] }}</h4>
+
+                    @if (! $section['available'])
+                        <div class="vn-empty-state vn-empty-block">
+                            <p>غير متوفر</p>
+                        </div>
+                    @elseif (filled($section['message']))
+                        <div class="vn-empty-state vn-empty-block">
+                            <p>{{ $section['message'] }}</p>
+                        </div>
+                    @else
+                        <div class="vn-table-responsive vn-mini-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>التصنيف</th>
+                                        <th>العدد</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($section['rows'] as $row)
+                                        <tr>
+                                            <td>{{ $row['label'] }}</td>
+                                            <td>{{ $row['total'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </article>
+            @empty
+                <div class="vn-empty-state vn-empty-block">
+                    <h4>لا توجد بيانات توزيع</h4>
+                    <p>جدول العقارات غير متاح أو لا يحتوي بيانات حالياً.</p>
+                </div>
+            @endforelse
+        </div>
     </section>
 
-    <section class="vn-report-grid vn-stat-detail-grid">
-        <article class="vn-table-card vn-placeholder-block"><h4>توزيع العقارات حسب المنطقة</h4><p>قسم تجريبي ثابت سيتم ربطه ببيانات فعلية في مرحلة لاحقة.</p></article>
-        <article class="vn-table-card vn-placeholder-block"><h4>توزيع الحالات</h4><p>قسم تجريبي ثابت سيتم ربطه ببيانات فعلية في مرحلة لاحقة.</p></article>
-        <article class="vn-table-card vn-placeholder-block"><h4>آخر تحديث عام</h4><p>قسم تجريبي ثابت سيتم ربطه ببيانات فعلية في مرحلة لاحقة.</p></article>
+    <section class="vn-report-detail">
+        <h3 class="vn-section-title">جودة البيانات</h3>
+        <div class="vn-report-metrics">
+            @forelse ($completenessMetrics as $metric)
+                <article class="vn-metric-card">
+                    <span>{{ $metric['label'] }}</span>
+                    <strong>{{ $metric['value'] }}</strong>
+                </article>
+            @empty
+                <div class="vn-empty-state vn-empty-block">
+                    <p>لا توجد مؤشرات جودة بيانات حالياً.</p>
+                </div>
+            @endforelse
+        </div>
     </section>
+
+    <section class="vn-report-detail">
+        <h3 class="vn-section-title">آخر التحديثات</h3>
+        @if (count($recentProperties) > 0)
+            <div class="vn-table-card">
+                <div class="vn-table-responsive vn-recent-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>رقم السجل</th>
+                                <th>المحافظة</th>
+                                <th>المنطقة</th>
+                                <th>الحالة</th>
+                                <th>آخر تحديث</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($recentProperties as $property)
+                                <tr>
+                                    <td>{{ $property['card_record_number'] }}</td>
+                                    <td>{{ $property['card_governorate'] }}</td>
+                                    <td>{{ $property['card_region_name'] }}</td>
+                                    <td>{{ $property['card_status'] }}</td>
+                                    <td>{{ $property['updated_at'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @else
+            <div class="vn-empty-state vn-empty-block">
+                <h4>لا توجد تحديثات حديثة</h4>
+                <p>تعذر الوصول إلى عمود التحديث أو لا توجد سجلات حالياً.</p>
+            </div>
+        @endif
+    </section>
+
+    <p class="vn-static-note">تم توليد هذه البيانات في: {{ $generatedAt ?? '—' }}.</p>
 @endsection
