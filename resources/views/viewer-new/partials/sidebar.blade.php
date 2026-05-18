@@ -8,6 +8,7 @@
     <nav class="vn-sidebar__nav">
         <a href="{{ route('viewer-new.hub') }}" class="vn-nav-link {{ ($active ?? '') === 'hub' ? 'is-active' : '' }}">البوابة</a>
         <a href="{{ route('viewer-new.reports') }}" class="vn-nav-link {{ ($active ?? '') === 'reports' ? 'is-active' : '' }}">التقارير</a>
+        <a href="{{ route('viewer-new.statistics') }}" class="vn-nav-link {{ ($active ?? '') === 'statistics' ? 'is-active' : '' }}">الإحصاءات</a>
     </nav>
 
     <button class="vn-sidebar__toggle" type="button" data-toggle-sidebar>طي القائمة</button>

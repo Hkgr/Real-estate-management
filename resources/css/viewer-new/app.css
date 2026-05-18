@@ -56,3 +56,6 @@
   .viewer-new .vn-report-detail form button,
   .viewer-new .vn-report-detail form .vn-filter-reset{width:100%;justify-content:center}
 }
+
+
+.viewer-new .vn-static-note{margin-top:1rem;padding:.85rem 1rem;border:1px dashed rgba(212,175,55,.35);border-radius:.75rem;color:var(--muted);background:rgba(212,175,55,.05)}
