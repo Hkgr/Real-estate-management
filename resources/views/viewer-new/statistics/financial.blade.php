@@ -13,23 +13,123 @@
     ])
 
     <section class="vn-report-detail">
-        <h3 class="vn-section-title">نظرة عامة</h3>
+        <h3 class="vn-section-title">نظرة مالية عامة</h3>
         <div class="vn-report-metrics">
-            <article class="vn-metric-card vn-stat-placeholder"><span>إجمالي قيمة العقارات</span><strong>—</strong></article>
-            <article class="vn-metric-card vn-stat-placeholder"><span>القيمة المملوكة</span><strong>—</strong></article>
-            <article class="vn-metric-card vn-stat-placeholder"><span>متوسط قيمة العقار</span><strong>—</strong></article>
-            <article class="vn-metric-card vn-stat-placeholder"><span>أعلى قيمة مسجلة</span><strong>—</strong></article>
+            @forelse ($overviewMetrics as $metric)
+                <article class="vn-metric-card">
+                    <span>{{ $metric['label'] }}</span>
+                    <strong>{{ $metric['value'] }}</strong>
+                </article>
+            @empty
+                <div class="vn-empty-state vn-empty-block">
+                    <h4>لا توجد مؤشرات مالية</h4>
+                    <p>تعذر تحميل المؤشرات المالية حالياً.</p>
+                </div>
+            @endforelse
         </div>
     </section>
 
-    <section class="vn-table-card vn-stat-summary">
-        <h3 class="vn-section-title">ملخص مرحلي</h3>
-        <p>ستعرض هذه الصفحة لاحقاً مؤشرات الأداء المالية الرئيسية بما يشمل القيم الإجمالية والمتوسطات والمقارنات.</p>
+    <section class="vn-report-detail">
+        <h3 class="vn-section-title">توزيع القيم</h3>
+        <div class="vn-stat-distribution-grid vn-financial-distribution-grid">
+            @forelse($distributionSections as $section)
+                <article class="vn-table-card vn-distribution-card vn-financial-distribution-card">
+                    <h4>{{ $section['title'] }}</h4>
+
+                    @if (! $section['available'])
+                        <div class="vn-empty-state vn-empty-block">
+                            <p>غير متوفر</p>
+                        </div>
+                    @elseif (filled($section['message']))
+                        <div class="vn-empty-state vn-empty-block">
+                            <p>{{ $section['message'] }}</p>
+                        </div>
+                    @else
+                        <div class="vn-table-responsive vn-mini-table vn-financial-mini-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>التصنيف</th>
+                                        <th>إجمالي القيمة (USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($section['rows'] as $row)
+                                        <tr>
+                                            <td>{{ $row['label'] }}</td>
+                                            <td>{{ $row['value'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </article>
+            @empty
+                <div class="vn-empty-state vn-empty-block vn-financial-empty-block">
+                    <h4>لا توجد بيانات توزيع</h4>
+                    <p>جدول العقارات غير متاح أو لا يحتوي بيانات مالية حالياً.</p>
+                </div>
+            @endforelse
+        </div>
     </section>
 
-    <section class="vn-report-grid vn-stat-detail-grid">
-        <article class="vn-table-card vn-placeholder-block"><h4>القيم التقديرية</h4><p>قسم تجريبي ثابت سيتم ربطه ببيانات فعلية في مرحلة لاحقة.</p></article>
-        <article class="vn-table-card vn-placeholder-block"><h4>الأرصدة</h4><p>قسم تجريبي ثابت سيتم ربطه ببيانات فعلية في مرحلة لاحقة.</p></article>
-        <article class="vn-table-card vn-placeholder-block"><h4>المقارنات المالية</h4><p>قسم تجريبي ثابت سيتم ربطه ببيانات فعلية في مرحلة لاحقة.</p></article>
+    <section class="vn-report-detail">
+        <h3 class="vn-section-title">جودة البيانات المالية</h3>
+        <div class="vn-report-metrics">
+            @forelse ($financialHealthMetrics as $metric)
+                <article class="vn-metric-card">
+                    <span>{{ $metric['label'] }}</span>
+                    <strong>{{ $metric['value'] }}</strong>
+                </article>
+            @empty
+                <div class="vn-empty-state vn-empty-block vn-financial-empty-block">
+                    <p>لا توجد مؤشرات جودة بيانات مالية حالياً.</p>
+                </div>
+            @endforelse
+        </div>
     </section>
+
+    <section class="vn-report-detail">
+        <h3 class="vn-section-title">أعلى العقارات قيمة</h3>
+        @if (count($topProperties) > 0)
+            <div class="vn-table-card">
+                <div class="vn-table-responsive vn-financial-top-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>رقم السجل</th>
+                                <th>المحافظة</th>
+                                <th>المنطقة</th>
+                                <th>الحالة</th>
+                                <th>القيمة الإجمالية (USD)</th>
+                                <th>القيمة المملوكة (USD)</th>
+                                <th>آخر تحديث</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($topProperties as $property)
+                                <tr>
+                                    <td>{{ $property['card_record_number'] }}</td>
+                                    <td>{{ $property['card_governorate'] }}</td>
+                                    <td>{{ $property['card_region_name'] }}</td>
+                                    <td>{{ $property['card_status'] }}</td>
+                                    <td>{{ $property['total_property_value_usd'] }}</td>
+                                    <td>{{ $property['owned_property_value_usd'] }}</td>
+                                    <td>{{ $property['updated_at'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @else
+            <div class="vn-empty-state vn-empty-block vn-financial-empty-block">
+                <h4>لا توجد سجلات مالية متاحة</h4>
+                <p>تعذر عرض أعلى العقارات قيمة حالياً.</p>
+            </div>
+        @endif
+    </section>
+
+    <p class="vn-static-note">تم توليد هذه البيانات في: {{ $generatedAt ?? '—' }}.</p>
 @endsection

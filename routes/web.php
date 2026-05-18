@@ -6,6 +6,7 @@ use App\Http\Controllers\ViewerNew\Reports\OwnersReportController;
 use App\Http\Controllers\ViewerNew\Reports\PropertiesReportController;
 use App\Http\Controllers\ViewerNew\Reports\SignalsReportController;
 use App\Http\Controllers\ViewerNew\Reports\AttachmentsReportController;
+use App\Http\Controllers\ViewerNew\Statistics\FinancialStatisticsController;
 use App\Http\Controllers\ViewerNew\Statistics\GeneralStatisticsController;
 use App\Http\Controllers\ViewerNew\Statistics\StatisticsGatewayController;
 use Illuminate\Support\Facades\Route;
@@ -42,7 +43,7 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
     Route::get('/viewer-new/statistics', StatisticsGatewayController::class)->name('viewer-new.statistics');
     Route::get('/viewer-new/statistics/general', GeneralStatisticsController::class)->name('viewer-new.statistics.general');
-    Route::view('/viewer-new/statistics/financial', 'viewer-new.statistics.financial')->name('viewer-new.statistics.financial');
+    Route::get('/viewer-new/statistics/financial', FinancialStatisticsController::class)->name('viewer-new.statistics.financial');
     Route::view('/viewer-new/statistics/administrative', 'viewer-new.statistics.administrative')->name('viewer-new.statistics.administrative');
     Route::view('/viewer-new/statistics/generator', 'viewer-new.statistics.generator')->name('viewer-new.statistics.generator');
     Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
