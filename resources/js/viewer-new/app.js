@@ -28,15 +28,27 @@
     openSettingsBtn?.addEventListener('click', () => quickSettings?.removeAttribute('hidden'));
     closeSettingsBtn?.addEventListener('click', () => quickSettings?.setAttribute('hidden', 'hidden'));
 
+    const rtlMark = '\u200F';
+    const timeFormatter = new Intl.DateTimeFormat('ar-SA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+    const dateFormatter = new Intl.DateTimeFormat('ar-SA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+
     const updateClock = () => {
         const now = new Date();
 
         if (clockEl) {
-            clockEl.textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+            clockEl.textContent = `${rtlMark}${timeFormatter.format(now)}${rtlMark}`;
         }
 
         if (dateEl) {
-            dateEl.textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            dateEl.textContent = `${rtlMark}${dateFormatter.format(now)}${rtlMark}`;
         }
     };
 
