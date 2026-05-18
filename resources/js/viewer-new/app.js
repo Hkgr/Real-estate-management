@@ -5,6 +5,7 @@
     const closeSettingsBtn = document.querySelector('[data-close-settings]');
     const quickSettings = document.getElementById('vnQuickSettings');
     const clockEl = document.getElementById('vnTopbarClock');
+    const dateEl = document.getElementById('vnTopbarDate');
 
     const SIDEBAR_KEY = 'viewer_new_sidebar_collapsed';
 
@@ -28,10 +29,17 @@
     closeSettingsBtn?.addEventListener('click', () => quickSettings?.setAttribute('hidden', 'hidden'));
 
     const updateClock = () => {
-        if (!clockEl) return;
-        clockEl.textContent = new Date().toLocaleTimeString('ar-SA', { hour12: false });
+        const now = new Date();
+
+        if (clockEl) {
+            clockEl.textContent = now.toLocaleTimeString('ar-SA', { hour12: false });
+        }
+
+        if (dateEl) {
+            dateEl.textContent = now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
     };
 
     updateClock();
-    if (clockEl) setInterval(updateClock, 1000);
+    if (clockEl || dateEl) setInterval(updateClock, 1000);
 })();
