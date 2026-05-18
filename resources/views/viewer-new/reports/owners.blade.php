@@ -9,13 +9,15 @@
 @section('content')
     @include('viewer-new.partials.page-header', ['title' => 'تقرير المالك', 'subtitle' => 'عرض موجز لملفات المالكين ونسب الحصص'])
 
-    <section class="vn-report-metrics">
-        <article class="vn-metric-card"><span>عدد المالكين</span><strong>{{ $metrics['total_owners'] }}</strong></article>
-        <article class="vn-metric-card"><span>إجمالي روابط الملكية</span><strong>{{ $metrics['total_ownership_links'] }}</strong></article>
-        <article class="vn-metric-card"><span>الملكيات الحالية</span><strong>{{ $metrics['current_ownerships'] }}</strong></article>
-        <article class="vn-metric-card"><span>إجمالي العقارات المرتبطة</span><strong>{{ $metrics['total_properties_linked'] }}</strong></article>
-        <article class="vn-metric-card"><span>آخر تحديث</span><strong>{{ $metrics['last_update'] }}</strong></article>
-    </section>
+    @include('viewer-new.partials.report-metrics', [
+        'items' => [
+            ['label' => 'عدد المالكين', 'value' => $metrics['total_owners'] ?? '—'],
+            ['label' => 'إجمالي روابط الملكية', 'value' => $metrics['total_ownership_links'] ?? '—'],
+            ['label' => 'الملكيات الحالية', 'value' => $metrics['current_ownerships'] ?? '—'],
+            ['label' => 'إجمالي العقارات المرتبطة', 'value' => $metrics['total_properties_linked'] ?? '—'],
+            ['label' => 'آخر تحديث', 'value' => $metrics['last_update'] ?? '—'],
+        ],
+    ])
 
     <section class="vn-table-card vn-report-detail">
         <div class="vn-table-card__head"><h3>تفاصيل المالكين</h3></div>
@@ -24,7 +26,7 @@
             <input
                 type="text"
                 name="q"
-                value="{{ $filters['q'] }}"
+                value="{{ $filters['q'] ?? '' }}"
                 placeholder="ابحث بالاسم أو الهاتف أو البريد..."
                 @if (! $fieldAvailability['filters_q']) disabled @endif
             >
@@ -41,7 +43,7 @@
             <a class="vn-filter-reset" href="{{ route('viewer-new.reports.owners') }}">إعادة تعيين</a>
         </form>
 
-        @if ($owners->count())
+        @if (($owners ?? collect())->count() > 0)
             <div class="vn-table-responsive">
                 <table>
                     <thead>
@@ -72,13 +74,10 @@
             </div>
 
             <div class="vn-pagination-wrap">
-                {{ $owners->links() }}
+                @include('viewer-new.partials.pagination', ['paginator' => $owners ?? null])
             </div>
         @else
-            <div class="vn-empty-state">
-                <h4>لا توجد نتائج مطابقة</h4>
-                <p>حاول تعديل معايير البحث أو إزالة الفلاتر لعرض جميع المالكين.</p>
-            </div>
+            @include('viewer-new.partials.empty-state', ['message' => 'حاول تعديل معايير البحث أو إزالة الفلاتر لعرض جميع المالكين.'])
         @endif
     </section>
 @endsection
