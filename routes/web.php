@@ -10,6 +10,7 @@ use App\Http\Controllers\ViewerNew\Statistics\FinancialStatisticsController;
 use App\Http\Controllers\ViewerNew\Statistics\GeneralStatisticsController;
 use App\Http\Controllers\ViewerNew\Statistics\StatisticsGatewayController;
 use App\Http\Controllers\ViewerNew\Statistics\AdministrativeStatisticsController;
+use App\Http\Controllers\ViewerNew\Statistics\StatisticsGeneratorController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
 Route::get('/__probe_cookie', function () {
@@ -46,7 +47,7 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new/statistics/general', GeneralStatisticsController::class)->name('viewer-new.statistics.general');
     Route::get('/viewer-new/statistics/financial', FinancialStatisticsController::class)->name('viewer-new.statistics.financial');
     Route::get('/viewer-new/statistics/administrative', AdministrativeStatisticsController::class)->name('viewer-new.statistics.administrative');
-    Route::view('/viewer-new/statistics/generator', 'viewer-new.statistics.generator')->name('viewer-new.statistics.generator');
+    Route::get('/viewer-new/statistics/generator', StatisticsGeneratorController::class)->name('viewer-new.statistics.generator');
     Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
     Route::get('/viewer-new/reports/owners', OwnersReportController::class)->name('viewer-new.reports.owners');
     Route::get('/viewer-new/reports/signals', SignalsReportController::class)->name('viewer-new.reports.signals');

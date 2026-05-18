@@ -92,3 +92,13 @@
 .viewer-new .vn-admin-mini-table table{min-width:100%}
 .viewer-new .vn-admin-mini-table th,.viewer-new .vn-admin-mini-table td{font-size:.88rem;white-space:nowrap}
 .viewer-new .vn-admin-empty{background:rgba(212,175,55,.03)}
+
+.viewer-new .vn-generator-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:.8rem}
+.viewer-new .vn-generator-form label{display:flex;flex-direction:column;gap:.35rem}
+.viewer-new .vn-generator-form label span{color:var(--muted);font-size:.9rem}
+.viewer-new .vn-generator-form select,.viewer-new .vn-generator-form button,.viewer-new .vn-generator-form .vn-filter-reset{background:#0f0f0f;color:var(--text);border:1px solid var(--border);padding:.5rem .7rem;border-radius:.55rem}
+.viewer-new .vn-generator-actions{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap}
+.viewer-new .vn-generator-actions button{color:var(--gold);border-color:rgba(212,175,55,.35);background:rgba(212,175,55,.08);cursor:pointer}
+.viewer-new .vn-generator-sections{display:grid;gap:.8rem;margin-top:.8rem}
+.viewer-new .vn-generator-section h4{margin:0 0 .6rem;color:var(--gold)}
+.viewer-new .vn-generator-empty{margin-top:.9rem}
