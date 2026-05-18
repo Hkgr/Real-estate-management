@@ -4,6 +4,7 @@ use App\Http\Controllers\Viewer\StandaloneViewerHubController;
 use App\Http\Controllers\Viewer\StandaloneViewerReportsController;
 use App\Http\Controllers\ViewerNew\Reports\OwnersReportController;
 use App\Http\Controllers\ViewerNew\Reports\PropertiesReportController;
+use App\Http\Controllers\ViewerNew\Reports\SignalsReportController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
 Route::get('/__probe_cookie', function () {
@@ -38,7 +39,7 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new/reports', StandaloneViewerReportsController::class)->name('viewer-new.reports');
     Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
     Route::get('/viewer-new/reports/owners', OwnersReportController::class)->name('viewer-new.reports.owners');
-    Route::view('/viewer-new/reports/signals', 'viewer-new.reports.signals')->name('viewer-new.reports.signals');
+    Route::get('/viewer-new/reports/signals', SignalsReportController::class)->name('viewer-new.reports.signals');
     Route::view('/viewer-new/reports/attachments', 'viewer-new.reports.attachments')->name('viewer-new.reports.attachments');
 });
 Route::middleware('auth')->group(function (): void {

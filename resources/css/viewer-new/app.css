@@ -31,3 +31,7 @@
 .viewer-new .vn-pagination-wrap{margin-top:1rem}
 .viewer-new .vn-pagination-wrap nav{display:flex;justify-content:center}
 .viewer-new .vn-muted-value{color:var(--muted);max-width:280px}
+
+.viewer-new .vn-signals-filter{display:flex;gap:.6rem;flex-wrap:wrap;margin:.9rem 0 1rem}
+.viewer-new .vn-signals-filter input,.viewer-new .vn-signals-filter select,.viewer-new .vn-signals-filter button{background:#0f0f0f;color:var(--text);border:1px solid var(--border);padding:.45rem .7rem;border-radius:.5rem}
+.viewer-new .vn-signals-filter input{min-width:260px;flex:1}
