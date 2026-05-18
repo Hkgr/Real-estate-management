@@ -19,7 +19,7 @@
         .viewer-new .vn-sidebar__user{padding:8px 10px;min-height:54px;background:rgba(255,255,255,.04)}
 
         .viewer-new .vn-topbar{min-height:60px;background:#0d0e11;border-bottom:1px solid rgba(255,255,255,.07);padding:10px 18px;flex-wrap:nowrap}
-        .viewer-new .vn-topbar__actions{gap:8px;flex-wrap:nowrap}
+        .viewer-new .vn-topbar__actions{gap:8px;flex-wrap:wrap}
         .viewer-new .vn-topbar__badge,.viewer-new .vn-topbar__icon-btn,.viewer-new .vn-topbar__action-btn,.viewer-new .vn-logout-btn{height:34px;border-radius:8px}
         .viewer-new .vn-logout-btn{padding:0 10px}
 
@@ -43,6 +43,7 @@
         .viewer-new__shell.is-collapsed .vn-nav-link{justify-content:center}
         .viewer-new__shell.is-collapsed .vn-sidebar__toggle{display:inline-flex}
 
+        @media (min-width:1280px){.viewer-new .vn-topbar__actions{flex-wrap:nowrap}}
         @media (max-width:1024px){.viewer-new .vn-topbar{flex-wrap:wrap}.viewer-new .vn-topbar__actions{flex-wrap:wrap}}
     </style>
 </head>
