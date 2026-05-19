@@ -5,7 +5,7 @@
     $avatarLetter = mb_substr($displayName, 0, 1, 'UTF-8') ?: 'م';
     $roleLabel = $currentUser?->role?->name
         ?? $currentUser?->role_name
-        ?? (method_exists($currentUser, 'getRoleNames') ? ($currentUser->getRoleNames()->first() ?: null) : null)
+        ?? (($currentUser && method_exists($currentUser, 'getRoleNames')) ? ($currentUser->getRoleNames()->first() ?: null) : null)
         ?? ($currentUser ? 'مستخدم النظام' : 'عارض');
 @endphp
 
