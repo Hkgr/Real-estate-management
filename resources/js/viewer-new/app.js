@@ -6,6 +6,7 @@
     const quickSettings = document.getElementById('vnQuickSettings');
     const clockEl = document.getElementById('vnTopbarClock');
     const dateEl = document.getElementById('vnTopbarDate');
+    const quickSearchEl = document.getElementById('vnQuickSearch');
 
     const SIDEBAR_KEY = 'viewer_new_sidebar_collapsed';
 
@@ -35,9 +36,10 @@
         hour12: false,
     });
     const dateFormatter = new Intl.DateTimeFormat('ar-SA', {
+        weekday: 'long',
         year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
+        month: 'long',
+        day: 'numeric',
     });
 
     const updateClock = () => {
@@ -52,6 +54,20 @@
         }
     };
 
+    const bindQuickSearchShortcut = () => {
+        if (!quickSearchEl) return;
+
+        document.addEventListener('keydown', (event) => {
+            const isShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+            if (!isShortcut) return;
+
+            event.preventDefault();
+            quickSearchEl.focus();
+            quickSearchEl.select();
+        });
+    };
+
     updateClock();
     if (clockEl || dateEl) setInterval(updateClock, 1000);
+    bindQuickSearchShortcut();
 })();
