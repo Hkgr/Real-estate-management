@@ -1,8 +1,12 @@
 @php
-    $userName = trim((string) (auth()->user()?->name ?? ''));
+    $currentUser = auth()->user();
+    $userName = trim((string) ($currentUser?->name ?? ''));
     $displayName = $userName !== '' ? $userName : 'مستخدم';
     $avatarLetter = mb_substr($displayName, 0, 1, 'UTF-8') ?: 'م';
-    $roleLabel = auth()->check() ? 'مدير النظام' : 'عارض';
+    $roleLabel = $currentUser?->role?->name
+        ?? $currentUser?->role_name
+        ?? (method_exists($currentUser, 'getRoleNames') ? ($currentUser->getRoleNames()->first() ?: null) : null)
+        ?? ($currentUser ? 'مستخدم النظام' : 'عارض');
 @endphp
 
 <header class="vn-app-header" role="banner" aria-label="الشريط العلوي">
@@ -27,6 +31,10 @@
         </div>
 
         <div class="vn-app-header__left">
+            <button type="button" class="vn-app-header__icon-btn" id="vnToggleFullscreen" aria-label="توسيع الشاشة" title="توسيع الشاشة">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 10V4h6v2H6v4H4Zm14 0V6h-4V4h6v6h-2ZM4 20v-6h2v4h4v2H4Zm14-2v-4h2v6h-6v-2h4Z"/></svg>
+            </button>
+
             <div class="vn-app-header__date" aria-live="polite">
                 <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Z"/></svg>
                 <span id="vnTopbarDate">--</span>
