@@ -410,7 +410,20 @@
                                         <span class="vn-file-muted">—</span>
                                     @endif
                                 </td>
-                                <td data-column-key="installments_count">{{ $property->installments_count ?? '—' }}</td>
+                                <td data-column-key="installments_count">
+                                    @php
+                                        $propertyInstallments = collect($installmentsByProperty[$property->id] ?? []);
+                                        $installmentsRowId = 'installments-row-' . $property->id;
+                                    @endphp
+                                    @if ($propertyInstallments->isNotEmpty())
+                                        <div class="vn-installment-cell">
+                                            <span class="vn-installment-count">{{ number_format($propertyInstallments->count()) }} دفعات</span>
+                                            <button type="button" class="vn-installment-toggle" data-property-installments-toggle data-target="{{ $installmentsRowId }}" aria-expanded="false" aria-controls="{{ $installmentsRowId }}">عرض الدفعات</button>
+                                        </div>
+                                    @else
+                                        <span class="vn-installment-muted">—</span>
+                                    @endif
+                                </td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
                                 <td data-column-key="details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
                                 <td data-column-key="actions">
@@ -517,6 +530,31 @@
                                 </tr>
                             @endif
 
+
+
+                            @if ($propertyInstallments->isNotEmpty())
+                                <tr class="vn-property-installments-row" id="{{ $installmentsRowId }}" data-property-installments-row hidden>
+                                    <td colspan="19">
+                                        <div class="vn-property-installments-panel">
+                                            <table class="vn-property-installments-table">
+                                                <thead><tr><th>رقم الدفعة</th><th>قيمة الدفعة</th><th>تاريخ الدفع</th><th>المتبقي بعد الدفع</th><th>تاريخ الإضافة</th><th>آخر تعديل</th></tr></thead>
+                                                <tbody>
+                                                @foreach ($propertyInstallments as $installment)
+                                                    <tr>
+                                                        <td><span class="vn-installment-badge">{{ filled((string) ($installment['installment_id'] ?? '')) ? $installment['installment_id'] : '—' }}</span></td>
+                                                        <td class="vn-installment-amount">{{ isset($installment['payment_amount']) && is_numeric($installment['payment_amount']) ? number_format((float) $installment['payment_amount'], 2) . ' $' : '—' }}</td>
+                                                        <td>{{ filled((string) ($installment['payment_date'] ?? '')) ? $installment['payment_date'] : '—' }}</td>
+                                                        <td class="vn-installment-amount">{{ isset($installment['remaining_after_payment']) && is_numeric($installment['remaining_after_payment']) ? number_format((float) $installment['remaining_after_payment'], 2) . ' $' : '—' }}</td>
+                                                        <td>{{ filled((string) ($installment['installment_created_at'] ?? '')) ? $installment['installment_created_at'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($installment['installment_updated_at'] ?? '')) ? $installment['installment_updated_at'] : '—' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                             @if ($propertySignals->isNotEmpty())
                                 <tr class="vn-property-signals-row" id="{{ $signalsRowId }}" data-property-signals-row hidden>
                                     <td colspan="19">

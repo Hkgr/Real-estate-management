@@ -41,6 +41,7 @@ class PropertiesReportController extends Controller
         $operationsByProperty = $this->buildOperationsForProperties($propertyIds);
         $signalsByProperty = $this->buildSignalsForProperties($propertyIds);
         $filesByProperty = $this->buildFilesForProperties($propertyIds);
+        $installmentsByProperty = $this->buildInstallmentsForProperties($propertyIds);
 
         return view('viewer-new.reports.properties', [
             'metrics' => $this->buildMetrics($baseQuery, $property, $fieldAvailability),
@@ -57,6 +58,7 @@ class PropertiesReportController extends Controller
             'operationsByProperty' => $operationsByProperty,
             'signalsByProperty' => $signalsByProperty,
             'filesByProperty' => $filesByProperty,
+            'installmentsByProperty' => $installmentsByProperty,
         ]);
     }
 
@@ -368,6 +370,102 @@ class PropertiesReportController extends Controller
         return $grouped;
     }
 
+
+
+    private function buildInstallmentsForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === []) {
+            return [];
+        }
+
+        foreach (['property_cards', 'property_installments'] as $table) {
+            if (! Schema::hasTable($table)) {
+                return [];
+            }
+        }
+
+        if (! Schema::hasColumn('property_cards', 'id')
+            || ! Schema::hasColumn('property_installments', 'property_card_id')
+            || ! Schema::hasColumn('property_installments', 'id')) {
+            return [];
+        }
+
+        $propertyCardColumns = $this->resolveTableColumns('property_cards', [
+            'deleted_at',
+            'card_record_number',
+            'card_governorate',
+            'card_region_name',
+            'card_total_area',
+            'total_property_value_usd',
+            'final_balance',
+        ]);
+
+        $installmentColumns = $this->resolveTableColumns('property_installments', [
+            'amount',
+            'payment_date',
+            'remaining_after_payment',
+            'created_at',
+            'updated_at',
+        ]);
+
+        $query = DB::table('property_cards as pc')
+            ->leftJoin('property_installments as pi', 'pi.property_card_id', '=', 'pc.id')
+            ->whereIn('pc.id', $propertyIds);
+
+        if ($propertyCardColumns['deleted_at']) {
+            $query->whereNull('pc.deleted_at');
+        }
+
+        $selectColumns = ['pc.id as property_card_id', 'pi.id as installment_id'];
+        $optionalSelectMap = [
+            'card_record_number' => 'pc.card_record_number as record_number',
+            'card_governorate' => 'pc.card_governorate as governorate',
+            'card_region_name' => 'pc.card_region_name as region_name',
+            'card_total_area' => 'pc.card_total_area as total_area_m2',
+            'total_property_value_usd' => 'pc.total_property_value_usd',
+            'final_balance' => 'pc.final_balance',
+            'amount' => 'pi.amount as payment_amount',
+            'payment_date' => 'pi.payment_date',
+            'remaining_after_payment' => 'pi.remaining_after_payment',
+            'created_at' => 'pi.created_at as installment_created_at',
+            'updated_at' => 'pi.updated_at as installment_updated_at',
+        ];
+
+        foreach ($optionalSelectMap as $column => $selectExpression) {
+            $isPcColumn = str_starts_with($column, 'card_') || in_array($column, ['total_property_value_usd', 'final_balance'], true);
+            $isAvailable = $isPcColumn
+                ? ($propertyCardColumns[$column] ?? false)
+                : ($installmentColumns[$column] ?? false);
+
+            if ($isAvailable) {
+                $selectColumns[] = $selectExpression;
+            }
+        }
+
+        $rows = $query
+            ->orderBy('pc.id')
+            ->orderByRaw(($installmentColumns['payment_date'] ? 'pi.payment_date ASC, ' : '') . 'pi.id ASC')
+            ->get($selectColumns);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $propertyCardId = (int) ($row->property_card_id ?? 0);
+            if ($propertyCardId <= 0 || ! isset($row->installment_id) || $row->installment_id === null) {
+                continue;
+            }
+
+            $grouped[$propertyCardId][] = [
+                'installment_id' => (int) $row->installment_id,
+                'payment_amount' => isset($row->payment_amount) && is_numeric($row->payment_amount) ? (float) $row->payment_amount : null,
+                'payment_date' => $this->normalizeDisplayValue($row->payment_date ?? null),
+                'remaining_after_payment' => isset($row->remaining_after_payment) && is_numeric($row->remaining_after_payment) ? (float) $row->remaining_after_payment : null,
+                'installment_created_at' => $this->normalizeDisplayValue($row->installment_created_at ?? null),
+                'installment_updated_at' => $this->normalizeDisplayValue($row->installment_updated_at ?? null),
+            ];
+        }
+
+        return $grouped;
+    }
 
     private function buildSignalsForProperties(array $propertyIds): array
     {
