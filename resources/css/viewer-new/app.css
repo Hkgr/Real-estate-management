@@ -242,3 +242,107 @@
   .viewer-new .vn-app-header__user-copy{display:none}
   .viewer-new .vn-app-breadcrumb-row{padding:0 12px}
 }
+
+/* Stage 4: viewer-new properties report page (scoped) */
+.viewer-new .vn-properties-report{
+  --vn-pr-bg:#101114;
+  --vn-pr-surface:#17181d;
+  --vn-pr-surface-2:#1d1f25;
+  --vn-pr-border:rgba(212,175,55,.2);
+  --vn-pr-border-soft:rgba(255,255,255,.09);
+  --vn-pr-text:#f3f2ee;
+  --vn-pr-muted:#aba79b;
+  --vn-pr-gold:#d4af37;
+  --vn-pr-gold-soft:#c49a2a;
+  display:grid;
+  gap:1rem;
+  margin:0 auto;
+  max-width:100%;
+  color:var(--vn-pr-text);
+}
+
+.viewer-new .vn-properties-report .vn-report-hero,
+.viewer-new .vn-properties-report .vn-report-kpi-card,
+.viewer-new .vn-properties-report .vn-report-filter-panel,
+.viewer-new .vn-properties-report .vn-results-summary,
+.viewer-new .vn-properties-report .vn-properties-table,
+.viewer-new .vn-properties-report .vn-active-filter-chips{
+  background:linear-gradient(180deg,rgba(212,175,55,.05),rgba(11,11,13,.92));
+  border:1px solid var(--vn-pr-border-soft);
+  border-radius:14px;
+  box-shadow:0 12px 28px rgba(0,0,0,.3);
+}
+
+.viewer-new .vn-properties-report .vn-report-hero{display:flex;justify-content:space-between;gap:1rem;padding:1.1rem 1.2rem;border-color:var(--vn-pr-border);}
+.viewer-new .vn-properties-report .vn-report-hero__content p{margin:0;color:var(--vn-pr-muted);font-size:.92rem;line-height:1.7}
+.viewer-new .vn-properties-report .vn-report-hero__content h1{margin:.2rem 0 .4rem;color:#f8f1df;font-size:1.5rem}
+.viewer-new .vn-properties-report .vn-report-hero__meta{min-width:220px;background:rgba(10,10,12,.45);border:1px solid var(--vn-pr-border);border-radius:12px;padding:.85rem;display:grid;gap:.55rem;align-content:start}
+.viewer-new .vn-properties-report .vn-report-hero__meta a{color:var(--vn-pr-gold);text-decoration:none;font-size:.9rem}
+.viewer-new .vn-properties-report .vn-report-hero__meta span,.viewer-new .vn-properties-report .vn-report-hero__meta small{color:var(--vn-pr-muted)}
+.viewer-new .vn-properties-report .vn-report-hero__meta strong{color:#f4df9a;font-size:1.05rem}
+
+.viewer-new .vn-properties-report .vn-report-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem}
+.viewer-new .vn-properties-report .vn-report-kpi-card{padding:.9rem;border-color:rgba(212,175,55,.22);transition:transform .16s ease,border-color .16s ease}
+.viewer-new .vn-properties-report .vn-report-kpi-card:hover{transform:translateY(-2px);border-color:rgba(212,175,55,.45)}
+.viewer-new .vn-properties-report .vn-report-kpi-card h3{margin:0 0 .25rem;font-size:.88rem;color:var(--vn-pr-muted)}
+.viewer-new .vn-properties-report .vn-report-kpi-card p{margin:0;color:#f7f1df;font-size:1.03rem;font-weight:600}
+
+.viewer-new .vn-properties-report .vn-report-filter-panel{padding:1rem}
+.viewer-new .vn-properties-report .vn-report-filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
+.viewer-new .vn-properties-report .vn-report-filter-grid > div{display:flex;flex-direction:column;gap:.35rem}
+.viewer-new .vn-properties-report .vn-report-filter-grid label{font-size:.83rem;color:#d9cfb2}
+.viewer-new .vn-properties-report .vn-report-filter-grid input,
+.viewer-new .vn-properties-report .vn-report-filter-grid select,
+.viewer-new .vn-properties-report .vn-report-filter-grid button,
+.viewer-new .vn-properties-report .vn-report-filter-grid a{min-height:38px;border-radius:10px;border:1px solid var(--vn-pr-border-soft);background:var(--vn-pr-bg);color:var(--vn-pr-text);padding:.45rem .7rem;text-decoration:none}
+.viewer-new .vn-properties-report .vn-report-filter-grid input:focus,
+.viewer-new .vn-properties-report .vn-report-filter-grid select:focus{outline:none;border-color:rgba(212,175,55,.6);box-shadow:0 0 0 2px rgba(212,175,55,.15)}
+.viewer-new .vn-properties-report .vn-report-filter-grid button{background:rgba(212,175,55,.14);border-color:rgba(212,175,55,.45);color:var(--vn-pr-gold);cursor:pointer}
+.viewer-new .vn-properties-report .vn-report-filter-grid a{display:inline-flex;align-items:center;justify-content:center;background:transparent;color:var(--vn-pr-muted)}
+
+.viewer-new .vn-properties-report .vn-active-filter-chips{padding:.75rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.viewer-new .vn-properties-report .vn-active-filter-chips p{margin:0;color:var(--vn-pr-muted)}
+.viewer-new .vn-properties-report .vn-active-filter-chip{display:inline-flex;align-items:center;padding:.28rem .65rem;border-radius:999px;border:1px solid rgba(212,175,55,.38);background:rgba(212,175,55,.11);color:#f1e4bf;font-size:.82rem}
+.viewer-new .vn-properties-report .vn-active-filter-chips > a{color:var(--vn-pr-gold);font-size:.86rem}
+
+.viewer-new .vn-properties-report .vn-results-summary{padding:.65rem .85rem;display:flex;gap:.85rem;flex-wrap:wrap;color:#d0c4a4;font-size:.86rem}
+
+.viewer-new .vn-properties-report .vn-properties-table{overflow-x:auto}
+.viewer-new .vn-properties-report .vn-properties-table table{width:100%;min-width:1320px;border-collapse:collapse}
+.viewer-new .vn-properties-report .vn-properties-table thead th{position:sticky;top:0;background:var(--vn-pr-surface-2);color:#e4ca7a;font-size:.78rem;padding:.62rem;border-bottom:1px solid var(--vn-pr-border);white-space:nowrap}
+.viewer-new .vn-properties-report .vn-properties-table td{padding:.62rem;border-bottom:1px solid rgba(255,255,255,.06);font-size:.86rem;color:#ece9df;vertical-align:top}
+.viewer-new .vn-properties-report .vn-properties-table tbody tr:hover{background:rgba(212,175,55,.06)}
+.viewer-new .vn-properties-report .vn-properties-table td p,
+.viewer-new .vn-properties-report .vn-properties-table td small{color:var(--vn-pr-muted)}
+
+.viewer-new .vn-properties-report .vn-status-badge{display:inline-flex;align-items:center;justify-content:center;padding:.2rem .58rem;border-radius:999px;font-size:.76rem;font-weight:600;line-height:1.4;border:1px solid transparent;white-space:nowrap}
+.viewer-new .vn-properties-report .vn-status-badge--success{background:rgba(16,185,129,.15);color:#7de1b8;border-color:rgba(16,185,129,.38)}
+.viewer-new .vn-properties-report .vn-status-badge--warning{background:rgba(245,158,11,.16);color:#f6ca75;border-color:rgba(245,158,11,.45)}
+.viewer-new .vn-properties-report .vn-status-badge--danger{background:rgba(239,68,68,.17);color:#f9aaaa;border-color:rgba(239,68,68,.4)}
+.viewer-new .vn-properties-report .vn-status-badge--muted{background:rgba(148,163,184,.14);color:#d0d5de;border-color:rgba(148,163,184,.38)}
+
+.viewer-new .vn-properties-report .vn-row-actions{display:flex;flex-wrap:wrap;gap:.35rem;min-width:130px}
+.viewer-new .vn-properties-report .vn-row-action{display:inline-flex;align-items:center;justify-content:center;padding:.25rem .55rem;border-radius:8px;border:1px solid rgba(212,175,55,.34);background:rgba(212,175,55,.1);color:#f0d98f;text-decoration:none;font-size:.78rem;white-space:nowrap}
+.viewer-new .vn-properties-report .vn-row-action--disabled{opacity:.5;pointer-events:none;background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.28);color:#bac2cf}
+
+.viewer-new .vn-properties-report .vn-empty-state{background:rgba(212,175,55,.05);border:1px dashed rgba(212,175,55,.34)}
+
+@media (max-width: 1024px){
+  .viewer-new .vn-properties-report .vn-report-hero{flex-direction:column}
+  .viewer-new .vn-properties-report .vn-report-hero__meta{width:100%}
+  .viewer-new .vn-properties-report .vn-report-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width: 768px){
+  .viewer-new .vn-properties-report{gap:.85rem}
+  .viewer-new .vn-properties-report .vn-report-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .viewer-new .vn-properties-report .vn-report-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .viewer-new .vn-properties-report .vn-report-filter-grid > div:last-child{grid-column:1 / -1}
+}
+@media (max-width: 520px){
+  .viewer-new .vn-properties-report .vn-report-hero{padding:.9rem}
+  .viewer-new .vn-properties-report .vn-report-hero__content h1{font-size:1.2rem}
+  .viewer-new .vn-properties-report .vn-report-kpi-grid,
+  .viewer-new .vn-properties-report .vn-report-filter-grid{grid-template-columns:1fr}
+  .viewer-new .vn-properties-report .vn-results-summary{font-size:.8rem;gap:.5rem}
+  .viewer-new .vn-properties-report .vn-row-actions{min-width:110px}
+}
