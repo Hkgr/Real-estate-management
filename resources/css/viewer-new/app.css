@@ -389,14 +389,14 @@
 .viewer-new .vn-properties-report .vn-operation-owner-list{max-width:240px;word-break:break-word;line-height:1.7}
 .viewer-new .vn-properties-report .vn-operation-badge{display:inline-flex;align-items:center;padding:.12rem .48rem;border-radius:999px;border:1px solid rgba(212,175,55,.35);background:rgba(212,175,55,.11);color:#f2dfab;white-space:nowrap}
 
-.viewer-new .vn-properties-report .vn-related-cell{display:grid;gap:.35rem}
-.viewer-new .vn-properties-report .vn-related-count{color:#e9dbb3;font-size:.8rem}
-.viewer-new .vn-properties-report .vn-related-toggle{display:inline-flex;align-items:center;justify-content:center;width:max-content;padding:.22rem .6rem;border-radius:999px;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.12);color:#e9d08a;font-size:.76rem;text-decoration:none;cursor:pointer}
-.viewer-new .vn-properties-report .vn-related-toggle:hover{background:rgba(212,175,55,.2)}
-.viewer-new .vn-properties-report .vn-related-muted{color:var(--vn-pr-muted);font-size:.78rem}
-.viewer-new .vn-properties-report .vn-property-related-row td{padding:.35rem .55rem .75rem;background:rgba(8,8,10,.7)}
-.viewer-new .vn-properties-report .vn-property-related-panel{border:1px solid rgba(212,175,55,.25);background:#121318;border-radius:10px;padding:.55rem;overflow-x:auto}
-.viewer-new .vn-properties-report .vn-property-related-table{width:100%;min-width:900px;border-collapse:collapse}
-.viewer-new .vn-properties-report .vn-property-related-table th,.viewer-new .vn-properties-report .vn-property-related-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.06);font-size:.78rem;white-space:nowrap}
-.viewer-new .vn-properties-report .vn-property-related-table th{color:#e1c577;background:rgba(255,255,255,.02)}
-.viewer-new .vn-properties-report .vn-related-badge{display:inline-flex;padding:.18rem .45rem;border-radius:999px;border:1px solid rgba(212,175,55,.3);color:#e1c577;background:rgba(212,175,55,.08)}
+.viewer-new .vn-properties-report .vn-signal-cell{display:grid;gap:.35rem}
+.viewer-new .vn-properties-report .vn-signal-count{color:#e9dbb3;font-size:.8rem}
+.viewer-new .vn-properties-report .vn-signal-toggle{display:inline-flex;align-items:center;justify-content:center;width:max-content;padding:.22rem .6rem;border-radius:999px;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.12);color:#e9d08a;font-size:.76rem;text-decoration:none;cursor:pointer}
+.viewer-new .vn-properties-report .vn-signal-toggle:hover{background:rgba(212,175,55,.2)}
+.viewer-new .vn-properties-report .vn-signal-muted{color:var(--vn-pr-muted);font-size:.78rem}
+.viewer-new .vn-properties-report .vn-property-signals-row td{padding:.35rem .55rem .75rem;background:rgba(8,8,10,.7)}
+.viewer-new .vn-properties-report .vn-property-signals-panel{border:1px solid rgba(212,175,55,.25);background:#121318;border-radius:10px;padding:.55rem;overflow-x:auto}
+.viewer-new .vn-properties-report .vn-property-signals-table{width:100%;min-width:1000px;border-collapse:collapse}
+.viewer-new .vn-properties-report .vn-property-signals-table th,.viewer-new .vn-properties-report .vn-property-signals-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.06);font-size:.78rem;white-space:nowrap}
+.viewer-new .vn-properties-report .vn-property-signals-table th{color:#e1c577;background:rgba(255,255,255,.02)}
+.viewer-new .vn-properties-report .vn-signal-badge{display:inline-flex;padding:.18rem .45rem;border-radius:999px;border:1px solid rgba(212,175,55,.3);color:#e1c577;background:rgba(212,175,55,.08)}

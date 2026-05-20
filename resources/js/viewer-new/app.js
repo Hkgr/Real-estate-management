@@ -232,7 +232,7 @@
         };
 
         bindExpandableRows('[data-property-operations-toggle]', { showLabel: 'عرض العمليات', hideLabel: 'إخفاء العمليات' });
-        bindExpandableRows('[data-property-related-toggle]');
+        bindExpandableRows('[data-property-signals-toggle]', { showLabel: 'عرض الإشارات', hideLabel: 'إخفاء الإشارات' });
 
         fullscreenBtn?.addEventListener('click', () => {
             const target = reportRoot.querySelector('.vn-properties-table') || reportRoot;
