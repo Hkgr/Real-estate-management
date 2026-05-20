@@ -48,12 +48,21 @@
         $activeFilters = [];
         foreach ($filterLabels as $key => $label) {
             $value = $filters[$key] ?? null;
-            if ($value === null || $value === '') {
-                continue;
-            }
 
             if (in_array($key, ['has_owners', 'has_signals', 'has_files'], true)) {
-                $value = (string) $value === '1' ? 'نعم' : ((string) $value === '0' ? 'لا' : $value);
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                if ($value === true || $value === 1 || $value === '1') {
+                    $value = 'نعم';
+                } elseif ($value === false || $value === 0 || $value === '0') {
+                    $value = 'لا';
+                } else {
+                    continue;
+                }
+            } elseif ($value === null || $value === '') {
+                continue;
             }
 
             $activeFilters[] = ['label' => $label, 'value' => $value];
