@@ -234,6 +234,7 @@
         bindExpandableRows('[data-property-operations-toggle]', { showLabel: 'عرض العمليات', hideLabel: 'إخفاء العمليات' });
         bindExpandableRows('[data-property-signals-toggle]', { showLabel: 'عرض الإشارات', hideLabel: 'إخفاء الإشارات' });
         bindExpandableRows('[data-property-files-toggle]', { showLabel: 'عرض الملفات', hideLabel: 'إخفاء الملفات' });
+        bindExpandableRows('[data-property-installments-toggle]', { showLabel: 'عرض الدفعات', hideLabel: 'إخفاء الدفعات' });
 
         fullscreenBtn?.addEventListener('click', () => {
             const target = reportRoot.querySelector('.vn-properties-table') || reportRoot;
