@@ -316,33 +316,33 @@
                                 }
                                                         @endphp
                             <tr>
-                                <td data-column-key="id">{{ $property->id ?? '—' }}</td>
-                                <td data-column-key="property_name">{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
+                               <td data-column-key="id" class="vn-table-number">{{ $property->id ?? '—' }}</td>
+                                <td data-column-key="property_name" class="vn-table-text-long">{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
                                 <td data-column-key="property_country">{{ ($columns['property_country'] ?? false) ? ($property->property_country ?: '—') : '—' }}</td>
                                 <td data-column-key="card_governorate">{{ ($columns['card_governorate'] ?? false) ? ($property->card_governorate ?: '—') : '—' }}</td>
                                 <td data-column-key="card_region_name">{{ ($columns['card_region_name'] ?? false) ? ($property->card_region_name ?: '—') : '—' }}</td>
                                 <td data-column-key="card_subdivision">{{ ($columns['card_subdivision'] ?? false) ? ($property->card_subdivision ?: '—') : '—' }}</td>
                                 <td data-column-key="card_record_number">{{ ($columns['card_record_number'] ?? false) ? ($property->card_record_number ?: '—') : '—' }}</td>
                                 <td data-column-key="card_property_number">{{ ($columns['card_property_number'] ?? false) ? ($property->card_property_number ?: '—') : '—' }}</td>
-                                <td data-column-key="card_total_area">{{ ($columns['card_total_area'] ?? false) && filled($property->card_total_area) ? number_format((float) $property->card_total_area, 2) : '—' }}</td>
+                                <td data-column-key="card_total_area" class="vn-table-number">{{ ($columns['card_total_area'] ?? false) && filled($property->card_total_area) ? number_format((float) $property->card_total_area, 2) : '—' }}</td>
                                 <td data-column-key="card_area_unit">{{ ($columns['card_area_unit'] ?? false) ? $areaUnit : '—' }}</td>
-                                <td data-column-key="total_property_value_usd">{{ ($columns['total_property_value_usd'] ?? false) && filled($property->total_property_value_usd) ? number_format((float) $property->total_property_value_usd, 2) . ' $' : '—' }}</td>
-                                <td data-column-key="owned_property_value_usd">{{ ($columns['owned_property_value_usd'] ?? false) && filled($property->owned_property_value_usd) ? number_format((float) $property->owned_property_value_usd, 2) . ' $' : '—' }}</td>
-                                <td data-column-key="actual_price_usd">{{ ($columns['actual_price_usd'] ?? false) && filled($property->actual_price_usd) ? number_format((float) $property->actual_price_usd, 2) . ' $' : '—' }}</td>
-                                <td data-column-key="estimated_price_usd">{{ ($columns['estimated_price_usd'] ?? false) && filled($property->estimated_price_usd) ? number_format((float) $property->estimated_price_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="total_property_value_usd" class="vn-table-money">{{ ($columns['total_property_value_usd'] ?? false) && filled($property->total_property_value_usd) ? number_format((float) $property->total_property_value_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="owned_property_value_usd" class="vn-table-money">{{ ($columns['owned_property_value_usd'] ?? false) && filled($property->owned_property_value_usd) ? number_format((float) $property->owned_property_value_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="actual_price_usd" class="vn-table-money">{{ ($columns['actual_price_usd'] ?? false) && filled($property->actual_price_usd) ? number_format((float) $property->actual_price_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="estimated_price_usd" class="vn-table-money">{{ ($columns['estimated_price_usd'] ?? false) && filled($property->estimated_price_usd) ? number_format((float) $property->estimated_price_usd, 2) . ' $' : '—' }}</td>
                                 <td data-column-key="card_status"><span class="vn-status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
                                 <td data-column-key="card_investment_type">{{ ($columns['card_investment_type'] ?? false) ? ($property->card_investment_type ?: '—') : '—' }}</td>
                                 <td data-column-key="card_purchase_method">{{ ($columns['card_purchase_method'] ?? false) ? ($property->card_purchase_method ?: '—') : '—' }}</td>
                                 <td data-column-key="card_sale_date">{{ ($columns['card_sale_date'] ?? false) ? ($property->card_sale_date ?: '—') : '—' }}</td>
-                                <td data-column-key="final_balance">{{ ($columns['final_balance'] ?? false) && filled($property->final_balance) ? number_format((float) $property->final_balance, 2) . ' $' : '—' }}</td>
-                                <td data-column-key="card_google_maps_url">
+                                <td data-column-key="final_balance" class="vn-table-money">{{ ($columns['final_balance'] ?? false) && filled($property->final_balance) ? number_format((float) $property->final_balance, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="card_google_maps_url" class="vn-table-map-link">
                                     @if (($columns['card_google_maps_url'] ?? false) && $mapUrl)
                                         <a href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">الخريطة</a>
                                     @else
                                         —
                                     @endif
                                 </td>
-                                <td data-column-key="owners_count">
+                                <td data-column-key="owners_count" class="vn-table-text-long">
                                     @php
                                         $operationOwners = collect($operationOwnersByProperty[$property->id] ?? []);
                                         $ownersToShow = $operationOwners->take(3);
@@ -434,7 +434,7 @@
                                     @endif
                                 </td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
-                                <td data-column-key="card_property_details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
+                                <td data-column-key="card_property_details" class="vn-table-text-long">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
                                 <td data-column-key="actions">
                                     <div class="vn-row-actions">
                                         {{-- TODO: Connect this action when a viewer-new single property route is available. --}}
