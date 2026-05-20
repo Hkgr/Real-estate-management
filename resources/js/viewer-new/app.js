@@ -88,6 +88,11 @@
         const GEN_KEY = 'viewer_new_properties_generator_open';
         const COL_KEY = 'viewer_new_properties_visible_columns';
         const defaultColumns = ['id','property_name','record_number','location','owners_count','area','value','status','updated_at','details','actions'];
+        const validColumnKeys = [
+            'id','property_name','record_number','property_number','location','subdivision','area','value','status',
+            'investment_type','purchase_method','owners_count','operations_count','signals_count','files_count',
+            'installments_count','updated_at','details','actions',
+        ];
         const panel = reportRoot.querySelector('[data-report-generator-panel]');
         const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
         const form = reportRoot.querySelector('[data-report-generator-form]');
@@ -124,9 +129,20 @@
         };
 
         const getChecked = () => checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+        const normalizeColumns = (columns) => {
+            const input = Array.isArray(columns) ? columns : [];
+            const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
+            const hasDataColumn = filtered.some((key) => key !== 'actions');
+            return hasDataColumn ? filtered : defaultColumns;
+        };
 
         const visibleFromStorage = (() => {
-            try { const parsed = JSON.parse(safeGet(COL_KEY) || 'null'); return Array.isArray(parsed) && parsed.length ? parsed : defaultColumns; } catch (_) { return defaultColumns; }
+            try {
+                const parsed = JSON.parse(safeGet(COL_KEY) || 'null');
+                return normalizeColumns(parsed);
+            } catch (_) {
+                return defaultColumns;
+            }
         })();
         syncCheckboxes(visibleFromStorage); applyColumns(visibleFromStorage);
 
@@ -135,12 +151,8 @@
 
         toggleBtn?.addEventListener('click', () => setPanelOpen(!panel?.classList.contains('is-open')));
         genBtn?.addEventListener('click', () => {
-            let cols = getChecked();
-            const hasData = cols.some((c) => c !== 'actions');
-            if (!hasData) {
-                cols = defaultColumns;
-                syncCheckboxes(cols);
-            }
+            let cols = normalizeColumns(getChecked());
+            syncCheckboxes(cols);
             applyColumns(cols);
             safeSet(COL_KEY, JSON.stringify(cols));
             setPanelOpen(false);
@@ -150,10 +162,30 @@
         });
 
         clearSearchBtn?.addEventListener('click', () => {
-            if (!searchInput) return;
+            if (!searchInput || !form) return;
+            const qHadValue = (searchInput.value || '').trim() !== '';
             searchInput.value = '';
-            const actionUrl = form?.getAttribute('action') || window.location.pathname;
-            window.location.assign(actionUrl);
+            const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+            let hasOtherFilters = false;
+            fields.forEach((field) => {
+                const name = field.getAttribute('name');
+                if (!name || name === 'q' || field.disabled || hasOtherFilters) return;
+                if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
+                    if (field.checked) hasOtherFilters = true;
+                    return;
+                }
+                if ((field.value || '').trim() !== '') hasOtherFilters = true;
+            });
+
+            if (hasOtherFilters) {
+                form.submit();
+                return;
+            }
+
+            if (qHadValue) {
+                const actionUrl = form.getAttribute('action') || window.location.pathname;
+                window.location.assign(actionUrl);
+            }
         });
 
         document.addEventListener('keydown', (event) => {

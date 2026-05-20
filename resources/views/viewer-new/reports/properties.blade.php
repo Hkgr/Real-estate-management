@@ -103,13 +103,13 @@
                 <button type="button" class="vn-report-secondary-button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
             </div>
             <div class="vn-report-toolbar__actions">
-                <button type="button" class="vn-report-generate-button" data-report-generator-toggle aria-expanded="false" aria-controls="vn-properties-generator-panel">مولد تقارير</button>
+                <button type="button" class="vn-report-generate-button" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel">مولد تقارير</button>
                 <button type="button" class="vn-report-secondary-button" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير</button>
                 <button type="button" class="vn-report-secondary-button" data-properties-fullscreen>ملء الشاشة</button>
             </div>
         </section>
 
-        <section id="vn-properties-generator-panel" class="vn-report-generator" data-report-generator-panel>
+        <section id="vn-properties-generator-panel" class="vn-report-generator is-open" data-report-generator-panel>
             <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form>
                 <div class="vn-report-generator__filters">
 
