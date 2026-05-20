@@ -39,6 +39,7 @@ class PropertiesReportController extends Controller
         $propertyIds = $properties->getCollection()->pluck('id')->filter()->values()->all();
         $operationOwnersByProperty = $this->buildOperationOwnersForProperties($propertyIds);
         $operationsByProperty = $this->buildOperationsForProperties($propertyIds);
+        $signalsByProperty = $this->buildSignalsForProperties($propertyIds);
 
         return view('viewer-new.reports.properties', [
             'metrics' => $this->buildMetrics($baseQuery, $property, $fieldAvailability),
@@ -53,6 +54,7 @@ class PropertiesReportController extends Controller
             'columns' => $fieldAvailability,
             'operationOwnersByProperty' => $operationOwnersByProperty,
             'operationsByProperty' => $operationsByProperty,
+            'signalsByProperty' => $signalsByProperty,
         ]);
     }
 
@@ -257,6 +259,180 @@ class PropertiesReportController extends Controller
         }
 
         return true;
+    }
+
+
+    private function buildSignalsForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === []) {
+            return [];
+        }
+
+        $requiredTables = ['property_cards', 'signals'];
+        foreach ($requiredTables as $table) {
+            if (! Schema::hasTable($table)) {
+                return [];
+            }
+        }
+
+        if (! Schema::hasColumn('property_cards', 'id')
+            || ! Schema::hasColumn('signals', 'property_card_id')
+            || ! Schema::hasColumn('signals', 'id')) {
+            return [];
+        }
+
+        $propertyCardColumns = $this->resolveTableColumns('property_cards', [
+            'deleted_at',
+            'card_record_number',
+            'card_governorate',
+            'card_region_name',
+        ]);
+
+        $signalColumns = $this->resolveTableColumns('signals', [
+            'deleted_at',
+            'signal_id',
+            'signal_date',
+            'type',
+            'signal_owner',
+            'signal_owners',
+            'signal_source',
+            'signal_sources',
+            'signal_source_number',
+            'signal_source_date',
+            'signal_victim',
+            'signal_victims',
+            'signal_notes',
+            'created_at',
+            'updated_at',
+        ]);
+
+        $query = DB::table('property_cards as pc')
+            ->leftJoin('signals as s', function ($join) use ($signalColumns): void {
+                $join->on('s.property_card_id', '=', 'pc.id');
+                if ($signalColumns['deleted_at']) {
+                    $join->whereNull('s.deleted_at');
+                }
+            })
+            ->whereIn('pc.id', $propertyIds);
+
+        if ($propertyCardColumns['deleted_at']) {
+            $query->whereNull('pc.deleted_at');
+        }
+
+        $selectColumns = ['pc.id as property_card_id', 's.id as signal_db_id'];
+        $optionalSelectMap = [
+            'card_record_number' => 'pc.card_record_number as record_number',
+            'card_governorate' => 'pc.card_governorate as governorate',
+            'card_region_name' => 'pc.card_region_name as region_name',
+            'signal_id' => 's.signal_id as signal_number',
+            'signal_date' => 's.signal_date',
+            'type' => 's.type as signal_type',
+            'signal_owner' => 's.signal_owner',
+            'signal_owners' => 's.signal_owners',
+            'signal_source' => 's.signal_source',
+            'signal_sources' => 's.signal_sources',
+            'signal_source_number' => 's.signal_source_number',
+            'signal_source_date' => 's.signal_source_date',
+            'signal_victim' => 's.signal_victim',
+            'signal_victims' => 's.signal_victims',
+            'signal_notes' => 's.signal_notes',
+            'created_at' => 's.created_at',
+            'updated_at' => 's.updated_at',
+        ];
+
+        foreach ($optionalSelectMap as $column => $selectExpression) {
+            $isPcColumn = str_starts_with($column, 'card_');
+            $isAvailable = $isPcColumn
+                ? ($propertyCardColumns[$column] ?? false)
+                : ($signalColumns[$column] ?? false);
+
+            if ($isAvailable) {
+                $selectColumns[] = $selectExpression;
+            }
+        }
+
+        $rows = $query
+            ->orderBy('pc.id')
+            ->orderByRaw(($signalColumns['signal_date'] ? 's.signal_date DESC, ' : '') . 's.id DESC')
+            ->get($selectColumns);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $propertyCardId = (int) ($row->property_card_id ?? 0);
+            if ($propertyCardId <= 0 || ! isset($row->signal_db_id) || $row->signal_db_id === null) {
+                continue;
+            }
+
+            $signalOwner = $this->normalizeDisplayValue($row->signal_owner ?? null);
+            $signalSource = $this->normalizeDisplayValue($row->signal_source ?? null);
+            $signalVictim = $this->normalizeDisplayValue($row->signal_victim ?? null);
+
+            $grouped[$propertyCardId][] = [
+                'signal_db_id' => (int) $row->signal_db_id,
+                'signal_number' => $this->normalizeDisplayValue($row->signal_number ?? null),
+                'signal_date' => $this->normalizeDisplayValue($row->signal_date ?? null),
+                'signal_type' => $this->normalizeDisplayValue($row->signal_type ?? null),
+                'signal_owner' => $signalOwner,
+                'signal_owners_label' => $this->buildJsonNamesLabel($row->signal_owners ?? null) ?? $signalOwner,
+                'signal_source' => $signalSource,
+                'signal_sources_label' => $this->buildJsonNamesLabel($row->signal_sources ?? null) ?? $signalSource,
+                'signal_source_number' => $this->normalizeDisplayValue($row->signal_source_number ?? null),
+                'signal_source_date' => $this->normalizeDisplayValue($row->signal_source_date ?? null),
+                'signal_victim' => $signalVictim,
+                'signal_victims_label' => $this->buildJsonNamesLabel($row->signal_victims ?? null) ?? $signalVictim,
+                'signal_notes' => $this->normalizeDisplayValue($row->signal_notes ?? null),
+                'created_at' => $this->normalizeDisplayValue($row->created_at ?? null),
+                'updated_at' => $this->normalizeDisplayValue($row->updated_at ?? null),
+            ];
+        }
+
+        return $grouped;
+    }
+
+    private function buildJsonNamesLabel(mixed $value): ?string
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        $names = [];
+        foreach ($decoded as $item) {
+            if (is_array($item)) {
+                $candidate = trim((string) ($item['name'] ?? $item['full_name'] ?? $item['label'] ?? ''));
+
+                if ($candidate === '' && isset($item['owner_id']) && is_numeric($item['owner_id'])) {
+                    $candidate = 'مالك #' . (string) ((int) $item['owner_id']);
+                }
+            } else {
+                $candidate = trim((string) $item);
+            }
+
+            if ($candidate !== '') {
+                $names[] = $candidate;
+            }
+        }
+
+        if ($names === []) {
+            return null;
+        }
+
+        return implode('، ', array_values(array_unique($names)));
+    }
+
+    private function normalizeDisplayValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+
+        return $normalized !== '' ? $normalized : null;
     }
 
     private function resolveFieldAvailability(string $table): array

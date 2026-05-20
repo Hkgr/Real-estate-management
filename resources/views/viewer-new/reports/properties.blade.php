@@ -382,7 +382,20 @@
                                         <span class="vn-operation-muted">{{ $operationsCount > 0 ? number_format($operationsCount) . ' عمليات' : '—' }}</span>
                                     @endif
                                 </td>
-                                <td data-column-key="signals_count">{{ $property->signals_count ?? '—' }}</td>
+                                <td data-column-key="signals_count">
+                                    @php
+                                        $propertySignals = collect($signalsByProperty[$property->id] ?? []);
+                                        $signalsRowId = 'signals-row-' . $property->id;
+                                    @endphp
+                                    @if ($propertySignals->isNotEmpty())
+                                        <div class="vn-signal-cell">
+                                            <span class="vn-signal-count">{{ number_format($propertySignals->count()) }} إشارات</span>
+                                            <button type="button" class="vn-signal-toggle" data-property-signals-toggle data-target="{{ $signalsRowId }}" aria-expanded="false" aria-controls="{{ $signalsRowId }}">عرض الإشارات</button>
+                                        </div>
+                                    @else
+                                        <span class="vn-signal-muted">—</span>
+                                    @endif
+                                </td>
                                 <td data-column-key="files_count">{{ $property->files_count ?? '—' }}</td>
                                 <td data-column-key="installments_count">{{ $property->installments_count ?? '—' }}</td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
@@ -447,6 +460,35 @@
                                                         <td>{{ $decisionContract !== '' ? $decisionContract : '—' }}</td>
                                                         <td>{{ filled((string) $operationDate) ? $operationDate : '—' }}</td>
                                                         <td>{{ filled((string) ($operation['notes'] ?? '')) ? $operation['notes'] : '—' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+
+                            @if ($propertySignals->isNotEmpty())
+                                <tr class="vn-property-signals-row" id="{{ $signalsRowId }}" data-property-signals-row hidden>
+                                    <td colspan="19">
+                                        <div class="vn-property-signals-panel">
+                                            <table class="vn-property-signals-table">
+                                                <thead><tr><th>رقم الإشارة</th><th>النوع</th><th>تاريخ الإشارة</th><th>صاحب الإشارة</th><th>مصدر الإشارة</th><th>رقم المصدر</th><th>تاريخ المصدر</th><th>المتضرر</th><th>ملاحظات</th><th>تاريخ الإضافة</th><th>آخر تعديل</th></tr></thead>
+                                                <tbody>
+                                                @foreach ($propertySignals as $signal)
+                                                    <tr>
+                                                        <td><span class="vn-signal-badge">{{ filled((string) ($signal['signal_number'] ?? '')) ? $signal['signal_number'] : '—' }}</span></td>
+                                                        <td>{{ filled((string) ($signal['signal_type'] ?? '')) ? $signal['signal_type'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_date'] ?? '')) ? $signal['signal_date'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_owners_label'] ?? '')) ? $signal['signal_owners_label'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_sources_label'] ?? '')) ? $signal['signal_sources_label'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_source_number'] ?? '')) ? $signal['signal_source_number'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_source_date'] ?? '')) ? $signal['signal_source_date'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_victims_label'] ?? '')) ? $signal['signal_victims_label'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['signal_notes'] ?? '')) ? $signal['signal_notes'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['created_at'] ?? '')) ? $signal['created_at'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($signal['updated_at'] ?? '')) ? $signal['updated_at'] : '—' }}</td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>

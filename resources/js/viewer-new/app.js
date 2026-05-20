@@ -204,27 +204,35 @@
         });
 
 
-        const operationToggles = [...reportRoot.querySelectorAll('[data-property-operations-toggle]')];
-        operationToggles.forEach((toggle) => {
-            toggle.addEventListener('click', () => {
-                const targetId = toggle.getAttribute('data-target');
-                if (!targetId) return;
+        const bindExpandableRows = (toggleSelector, defaults = {}) => {
+            const toggles = [...reportRoot.querySelectorAll(toggleSelector)];
+            toggles.forEach((toggle) => {
+                const showLabel = toggle.getAttribute('data-show-label') || defaults.showLabel || 'عرض';
+                const hideLabel = toggle.getAttribute('data-hide-label') || defaults.hideLabel || 'إخفاء';
 
-                const row = reportRoot.querySelector(`#${CSS.escape(targetId)}`);
-                if (!row) return;
+                toggle.addEventListener('click', () => {
+                    const targetId = toggle.getAttribute('data-target');
+                    if (!targetId) return;
 
-                const isHidden = row.hasAttribute('hidden');
-                if (isHidden) {
-                    row.removeAttribute('hidden');
-                    toggle.setAttribute('aria-expanded', 'true');
-                    toggle.textContent = 'إخفاء العمليات';
-                } else {
-                    row.setAttribute('hidden', 'hidden');
-                    toggle.setAttribute('aria-expanded', 'false');
-                    toggle.textContent = 'عرض العمليات';
-                }
+                    const row = reportRoot.querySelector(`#${CSS.escape(targetId)}`);
+                    if (!row) return;
+
+                    const isHidden = row.hasAttribute('hidden');
+                    if (isHidden) {
+                        row.removeAttribute('hidden');
+                        toggle.setAttribute('aria-expanded', 'true');
+                        toggle.textContent = hideLabel;
+                    } else {
+                        row.setAttribute('hidden', 'hidden');
+                        toggle.setAttribute('aria-expanded', 'false');
+                        toggle.textContent = showLabel;
+                    }
+                });
             });
-        });
+        };
+
+        bindExpandableRows('[data-property-operations-toggle]', { showLabel: 'عرض العمليات', hideLabel: 'إخفاء العمليات' });
+        bindExpandableRows('[data-property-signals-toggle]', { showLabel: 'عرض الإشارات', hideLabel: 'إخفاء الإشارات' });
 
         fullscreenBtn?.addEventListener('click', () => {
             const target = reportRoot.querySelector('.vn-properties-table') || reportRoot;
