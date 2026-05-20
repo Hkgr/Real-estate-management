@@ -157,6 +157,14 @@
             safeSet(COL_KEY, JSON.stringify(cols));
             setPanelOpen(false);
         });
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                const cols = normalizeColumns(getChecked());
+                syncCheckboxes(cols);
+                applyColumns(cols);
+                safeSet(COL_KEY, JSON.stringify(cols));
+            });
+        });
         resetBtn?.addEventListener('click', () => {
             syncCheckboxes(defaultColumns); applyColumns(defaultColumns); safeSet(COL_KEY, JSON.stringify(defaultColumns));
         });
