@@ -100,12 +100,12 @@
             <div class="vn-report-toolbar__search">
                 <label for="filter-q" class="vn-report-toolbar__search-label">بحث شامل</label>
                 <input id="filter-q" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
-                <button type="button" class="vn-report-secondary-button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
+                <button type="button" class="vn-report-toolbar-button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
             </div>
             <div class="vn-report-toolbar__actions">
-                <button type="button" class="vn-report-generate-button" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel">مولد تقارير</button>
-                <button type="button" class="vn-report-secondary-button" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير</button>
-                <button type="button" class="vn-report-secondary-button" data-properties-fullscreen>ملء الشاشة</button>
+                <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary vn-report-toolbar-button--active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel">مولد تقارير</button>
+                <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير</button>
+                <button type="button" class="vn-report-toolbar-button" data-properties-fullscreen>ملء الشاشة</button>
             </div>
         </section>
 
@@ -113,7 +113,7 @@
             <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form>
                 <div class="vn-report-generator__filters">
 
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-country">الدولة</label>
                     <select id="filter-country" name="country">
                         <option value="">الكل</option>
@@ -122,7 +122,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-governorate">المحافظة</label>
                     <select id="filter-governorate" name="governorate">
                         <option value="">الكل</option>
@@ -131,7 +131,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-region">المنطقة</label>
                     <select id="filter-region" name="region">
                         <option value="">الكل</option>
@@ -140,7 +140,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-status">الحالة</label>
                     <select id="filter-status" name="status">
                         <option value="">الكل</option>
@@ -149,7 +149,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-investment-type">نوع الاستثمار</label>
                     <select id="filter-investment-type" name="investment_type">
                         <option value="">الكل</option>
@@ -158,7 +158,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-purchase-method">طريقة الشراء</label>
                     <select id="filter-purchase-method" name="purchase_method">
                         <option value="">الكل</option>
@@ -167,32 +167,32 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-min-area">المساحة من</label>
                     <input id="filter-min-area" type="number" step="0.01" name="min_area" value="{{ $filters['min_area'] ?? '' }}" />
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-max-area">المساحة إلى</label>
                     <input id="filter-max-area" type="number" step="0.01" name="max_area" value="{{ $filters['max_area'] ?? '' }}" />
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-min-value">القيمة من</label>
                     <input id="filter-min-value" type="number" step="0.01" name="min_value" value="{{ $filters['min_value'] ?? '' }}" />
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-max-value">القيمة إلى</label>
                     <input id="filter-max-value" type="number" step="0.01" name="max_value" value="{{ $filters['max_value'] ?? '' }}" />
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-date-from">من تاريخ</label>
                     <input id="filter-date-from" type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" />
                 </div>
-                <div>
+                <div class="vn-report-generator__field">
                     <label for="filter-date-to">إلى تاريخ</label>
                     <input id="filter-date-to" type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" />
                 </div>
                 @foreach (['has_owners' => 'لديه ملاك', 'has_signals' => 'لديه إشارات', 'has_files' => 'لديه ملفات'] as $name => $label)
-                    <div>
+                    <div class="vn-report-generator__field">
                         <label for="filter-{{ $name }}">{{ $label }}</label>
                         <select id="filter-{{ $name }}" name="{{ $name }}">
                             <option value="">الكل</option>
@@ -229,17 +229,17 @@
                         ];
                     @endphp
                     @foreach ($columnOptions as $key => $label)
-                        <label class="vn-report-column-option">
+                        <label class="vn-report-column-option vn-report-column-option-card">
                             <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
                             <span>{{ $label }}</span>
                         </label>
                     @endforeach
                 </div>
                 <div class="vn-report-generator__actions">
-                    <button type="submit" class="vn-report-secondary-button">تطبيق الفلاتر</button>
-                    <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-secondary-button">إعادة تعيين</a>
-                    <button type="button" class="vn-report-secondary-button" data-reset-columns>إعادة الافتراضي</button>
-                    <button type="button" class="vn-report-generate-button" data-generate-report>توليد تقرير</button>
+                    <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
+                    <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
+                    <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
+                    <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد تقرير</button>
                 </div>
             </form>
         </section>
