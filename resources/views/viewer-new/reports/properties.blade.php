@@ -78,6 +78,7 @@
             </div>
             <div class="vn-report-hero__meta">
                 <a href="{{ route('viewer-new.reports') }}">العودة إلى بوابة التقارير</a>
+                {{-- TODO: Connect export actions when a viewer-new properties export route is available. --}}
                 <span>إجمالي النتائج: {{ number_format((int) $totalResults) }}</span>
                 <div>
                     <strong>{{ $metrics['total_area'] ?? '—' }}</strong>
@@ -270,6 +271,16 @@
                                 } elseif (in_array($statusNormalized, ['sold', 'closed', 'cancelled', 'مباع', 'مغلق', 'ملغى'], true)) {
                                     $statusClass = 'vn-status-badge--danger';
                                 }
+
+                                $mapUrl = null;
+                                if (($columns['card_google_maps_url'] ?? false) && filled($property->card_google_maps_url)) {
+                                    $candidateMapUrl = trim((string) $property->card_google_maps_url);
+                                    $lowerMapUrl = strtolower($candidateMapUrl);
+
+                                    if (str_starts_with($lowerMapUrl, 'http://') || str_starts_with($lowerMapUrl, 'https://')) {
+                                        $mapUrl = $candidateMapUrl;
+                                    }
+                                }
                             @endphp
                             <tr>
                                 <td>{{ $property->id ?? '—' }}</td>
@@ -292,8 +303,8 @@
                                 <td>{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
                                 <td>
                                     <div class="vn-row-actions">
-                                        @if (($columns['card_google_maps_url'] ?? false) && filled($property->card_google_maps_url))
-                                            <a class="vn-row-action" href="{{ $property->card_google_maps_url }}" target="_blank" rel="noopener noreferrer">الخريطة</a>
+                                        @if ($mapUrl)
+                                            <a class="vn-row-action" href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">الخريطة</a>
                                         @endif
                                         {{-- TODO: Connect this action when a viewer-new single property route is available. --}}
                                         <span class="vn-row-action vn-row-action--disabled" aria-disabled="true">استعراض</span>
