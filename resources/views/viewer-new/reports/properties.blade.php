@@ -316,7 +316,7 @@
                                 }
                                                         @endphp
                             <tr>
-                                <td data-column-key="id">{{ ($columns['id'] ?? false) ? ($property->id ?? '—') : '—' }}</td>
+                                <td data-column-key="id">{{ $property->id ?? '—' }}</td>
                                 <td data-column-key="property_name">{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
                                 <td data-column-key="property_country">{{ ($columns['property_country'] ?? false) ? ($property->property_country ?: '—') : '—' }}</td>
                                 <td data-column-key="card_governorate">{{ ($columns['card_governorate'] ?? false) ? ($property->card_governorate ?: '—') : '—' }}</td>
