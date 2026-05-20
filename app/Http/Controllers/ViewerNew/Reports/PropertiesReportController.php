@@ -69,6 +69,19 @@ class PropertiesReportController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $optionalOperationColumns = $this->resolveTableColumns('property_operations', [
+            'operation_type',
+            'operation_method',
+            'case_number',
+            'decision_number',
+            'authority',
+            'judgment_date',
+            'judgment_notes',
+            'contract_number',
+            'contract_date',
+            'contract_notes',
+        ]);
+
         $grouped = [];
 
         foreach ($operations as $operation) {
@@ -92,20 +105,22 @@ class PropertiesReportController extends Controller
 
             $grouped[$propertyCardId][] = [
                 'id' => (int) $operation->id,
-                'operation_type' => $operation->operation_type ?? null,
+                'operation_type' => $optionalOperationColumns['operation_type'] ? ($operation->operation_type ?? null) : null,
                 'transaction_amount' => $transactionAmount,
                 'transaction_unit' => $transactionUnit,
                 'shares_equivalent' => $sharesEquivalent !== null ? round($sharesEquivalent, 2) : null,
-                'operation_method' => $operation->operation_method ?? null,
+                'operation_method' => $optionalOperationColumns['operation_method'] ? ($operation->operation_method ?? null) : null,
                 'old_owners' => $operation->oldOwners->map(fn ($owner) => $this->resolveOwnerDisplayName($owner))->filter()->values()->all(),
                 'new_owners' => $operation->newOwners->map(fn ($owner) => $this->resolveOwnerDisplayName($owner))->filter()->values()->all(),
-                'case_number' => $operation->case_number ?? null,
-                'decision_number' => $operation->decision_number ?? null,
-                'authority' => $operation->authority ?? null,
-                'judgment_date' => $operation->judgment_date ?? null,
-                'contract_number' => $operation->contract_number ?? null,
-                'contract_date' => $operation->contract_date ?? null,
-                'notes' => $operation->judgment_notes ?? $operation->contract_notes ?? null,
+                'case_number' => $optionalOperationColumns['case_number'] ? ($operation->case_number ?? null) : null,
+                'decision_number' => $optionalOperationColumns['decision_number'] ? ($operation->decision_number ?? null) : null,
+                'authority' => $optionalOperationColumns['authority'] ? ($operation->authority ?? null) : null,
+                'judgment_date' => $optionalOperationColumns['judgment_date'] ? ($operation->judgment_date ?? null) : null,
+                'contract_number' => $optionalOperationColumns['contract_number'] ? ($operation->contract_number ?? null) : null,
+                'contract_date' => $optionalOperationColumns['contract_date'] ? ($operation->contract_date ?? null) : null,
+                'notes' => $optionalOperationColumns['judgment_notes']
+                    ? ($operation->judgment_notes ?? null)
+                    : ($optionalOperationColumns['contract_notes'] ? ($operation->contract_notes ?? null) : null),
             ];
         }
 
@@ -115,25 +130,11 @@ class PropertiesReportController extends Controller
     private function canLoadOperations(): bool
     {
         $requiredSchema = [
-            'property_operations' => [
-                'id',
-                'property_card_id',
-                'operation_type',
-                'transaction_amount',
-                'transaction_unit',
-                'operation_method',
-                'case_number',
-                'decision_number',
-                'authority',
-                'judgment_date',
-                'judgment_notes',
-                'contract_number',
-                'contract_date',
-                'contract_notes',
-            ],
+            'property_operations' => ['id', 'property_card_id', 'transaction_amount', 'transaction_unit'],
             'property_operation_old_owner' => ['property_operation_id', 'owner_id'],
             'property_operation_new_owner' => ['property_operation_id', 'owner_id'],
             'owners' => ['id'],
+            'property_cards' => ['id', 'card_total_area'],
         ];
 
         foreach ($requiredSchema as $table => $columns) {
@@ -151,9 +152,25 @@ class PropertiesReportController extends Controller
         return true;
     }
 
+    private function resolveTableColumns(string $table, array $columns): array
+    {
+        if (! Schema::hasTable($table)) {
+            return array_fill_keys($columns, false);
+        }
+
+        $availability = [];
+        foreach ($columns as $column) {
+            $availability[$column] = Schema::hasColumn($table, $column);
+        }
+
+        return $availability;
+    }
+
     private function resolveOwnerDisplayName(object $owner): string
     {
-        return trim((string) ($owner->display_name ?? $owner->company_name ?? $owner->full_name ?? ''));
+        $name = trim((string) ($owner->display_name ?? $owner->company_name ?? $owner->full_name ?? ''));
+
+        return $name !== '' ? $name : 'مالك غير محدد';
     }
     private function buildOperationOwnersForProperties(array $propertyIds): array
     {
