@@ -41,6 +41,7 @@ class PropertiesReportController extends Controller
             'regionOptions' => $this->buildDistinctOptions($fieldAvailability, 'card_region_name'),
             'investmentTypeOptions' => $this->buildDistinctOptions($fieldAvailability, 'card_investment_type'),
             'purchaseMethodOptions' => $this->buildDistinctOptions($fieldAvailability, 'card_purchase_method'),
+            'countryOptions' => $this->buildDistinctOptions($fieldAvailability, 'property_country'),
             'columns' => $fieldAvailability,
         ]);
     }
@@ -53,7 +54,7 @@ class PropertiesReportController extends Controller
 
         $fields = [
             'property_name',
-            'card_country',
+            'property_country',
             'card_governorate',
             'card_region_name',
             'card_subdivision',
@@ -67,8 +68,8 @@ class PropertiesReportController extends Controller
             'card_sale_date',
             'total_property_value_usd',
             'owned_property_value_usd',
-            'actual_price',
-            'approximate_price',
+            'actual_price_usd',
+            'estimated_price_usd',
             'final_balance',
             'card_property_details',
             'card_google_maps_url',
@@ -93,6 +94,7 @@ class PropertiesReportController extends Controller
             'region' => trim((string) $request->query('region', '')),
             'investment_type' => trim((string) $request->query('investment_type', '')),
             'purchase_method' => trim((string) $request->query('purchase_method', '')),
+            'country' => trim((string) $request->query('country', '')),
             'min_area' => $request->query('min_area'),
             'max_area' => $request->query('max_area'),
             'min_value' => $request->query('min_value'),
@@ -113,6 +115,7 @@ class PropertiesReportController extends Controller
         $this->applyExactFilter($query, $filters['region'], 'card_region_name', $columns);
         $this->applyExactFilter($query, $filters['investment_type'], 'card_investment_type', $columns);
         $this->applyExactFilter($query, $filters['purchase_method'], 'card_purchase_method', $columns);
+        $this->applyExactFilter($query, $filters['country'], 'property_country', $columns);
 
         $this->applyRangeFilter($query, $filters['min_area'], $filters['max_area'], 'card_total_area', $columns);
 
@@ -133,9 +136,10 @@ class PropertiesReportController extends Controller
             $query->whereDate($dateColumn, '<=', $dateTo);
         }
 
-        $this->applyHasRelationFilter($query, 'owners', $filters['has_owners']);
-        $this->applyHasRelationFilter($query, 'signals', $filters['has_signals']);
-        $this->applyHasRelationFilter($query, 'files', $filters['has_files']);
+        $property = new PropertyCard();
+        $this->applyHasRelationFilter($query, $property, 'owners', $filters['has_owners']);
+        $this->applyHasRelationFilter($query, $property, 'signals', $filters['has_signals']);
+        $this->applyHasRelationFilter($query, $property, 'files', $filters['has_files']);
     }
 
     private function applySafeCounts(Builder $query, PropertyCard $property): void
@@ -146,7 +150,7 @@ class PropertiesReportController extends Controller
 
         $counts = [];
         foreach ($relations as $relation) {
-            if (method_exists($property, $relation)) {
+            if ($this->relationIsAvailable($property, $relation)) {
                 $counts[] = $relation;
             }
         }
@@ -207,9 +211,9 @@ class PropertiesReportController extends Controller
         }
     }
 
-    private function applyHasRelationFilter(Builder $query, string $relation, ?bool $value): void
+    private function applyHasRelationFilter(Builder $query, PropertyCard $property, string $relation, ?bool $value): void
     {
-        if ($value === null || ! method_exists(new PropertyCard(), $relation)) {
+        if ($value === null || ! $this->relationIsAvailable($property, $relation)) {
             return;
         }
 
@@ -251,13 +255,13 @@ class PropertiesReportController extends Controller
             'total_estimated_value' => $valueColumn
                 ? number_format((float) ((clone $query)->sum($valueColumn) ?? 0), 2) . ' $'
                 : 'غير متوفر',
-            'linked_owners_count' => method_exists($property, 'owners')
+            'linked_owners_count' => $this->relationIsAvailable($property, 'owners')
                 ? number_format((int) (clone $query)->has('owners')->count())
                 : 'غير متوفر',
-            'properties_with_signals' => method_exists($property, 'signals')
+            'properties_with_signals' => $this->relationIsAvailable($property, 'signals')
                 ? number_format((int) (clone $query)->has('signals')->count())
                 : 'غير متوفر',
-            'properties_with_files' => method_exists($property, 'files')
+            'properties_with_files' => $this->relationIsAvailable($property, 'files')
                 ? number_format((int) (clone $query)->has('files')->count())
                 : 'غير متوفر',
             'last_update' => ($columns['updated_at'] ?? false)
@@ -266,6 +270,63 @@ class PropertiesReportController extends Controller
         ];
     }
 
+
+
+    private function relationIsAvailable(PropertyCard $property, string $relation): bool
+    {
+        $config = $this->relationConfig();
+
+        if (! isset($config[$relation])) {
+            return false;
+        }
+
+        $method = $config[$relation]['method'];
+        if (! method_exists($property, $method)) {
+            return false;
+        }
+
+        foreach ($config[$relation]['required_tables'] as $table) {
+            if (! Schema::hasTable($table)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function relationConfig(): array
+    {
+        return [
+            'owners' => [
+                'method' => 'owners',
+                'required_tables' => ['owners', 'owner_property_card'],
+            ],
+            'ownerships' => [
+                'method' => 'ownerships',
+                'required_tables' => ['owner_property_card'],
+            ],
+            'operations' => [
+                'method' => 'operations',
+                'required_tables' => ['property_operations'],
+            ],
+            'signals' => [
+                'method' => 'signals',
+                'required_tables' => ['signals'],
+            ],
+            'files' => [
+                'method' => 'files',
+                'required_tables' => ['property_card_files'],
+            ],
+            'installments' => [
+                'method' => 'installments',
+                'required_tables' => ['property_installments'],
+            ],
+            'payments' => [
+                'method' => 'payments',
+                'required_tables' => ['property_owner_payments'],
+            ],
+        ];
+    }
 
     private function resolveDateFilterColumn(array $columns): ?string
     {
@@ -302,7 +363,7 @@ class PropertiesReportController extends Controller
 
     private function resolveValueColumn(array $columns): ?string
     {
-        foreach (['total_property_value_usd', 'owned_property_value_usd', 'approximate_price', 'actual_price'] as $column) {
+        foreach (['total_property_value_usd', 'owned_property_value_usd', 'estimated_price_usd', 'actual_price_usd'] as $column) {
             if (($columns[$column] ?? false) === true) {
                 return $column;
             }
