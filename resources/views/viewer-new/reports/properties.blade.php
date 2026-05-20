@@ -333,7 +333,67 @@
                                 <td data-column-key="status"><span class="vn-status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
                                 <td data-column-key="investment_type">{{ ($columns['card_investment_type'] ?? false) ? ($property->card_investment_type ?: '—') : '—' }}</td>
                                 <td data-column-key="purchase_method">{{ ($columns['card_purchase_method'] ?? false) ? ($property->card_purchase_method ?: '—') : '—' }}</td>
-                                <td data-column-key="owners_count">{{ $property->owners_count ?? '—' }}</td>
+                                <td data-column-key="owners_count">
+                                    @php
+                                        $ownersRelationLoaded = $property->relationLoaded('owners');
+                                        $ownersCollection = $ownersRelationLoaded ? ($property->owners ?? collect()) : collect();
+                                        $ownersToShow = $ownersCollection->take(3);
+                                        $remainingOwnersCount = max($ownersCollection->count() - $ownersToShow->count(), 0);
+                                    @endphp
+
+                                    @if ($ownersRelationLoaded && $ownersCollection->isNotEmpty())
+                                        <div class="vn-owner-stack">
+                                            @foreach ($ownersToShow as $owner)
+                                                @php
+                                                    $ownerName = trim((string) ($owner->display_name ?? $owner->full_name ?? $owner->company_name ?? ''));
+                                                    $ownerName = $ownerName !== '' ? $ownerName : 'مالك غير محدد';
+
+                                                    $pivot = $owner->pivot ?? null;
+                                                    $ownershipMetric = $pivot?->ownership_metric;
+                                                    $ownershipPercentage = $pivot?->ownership_percentage;
+
+                                                    $shareText = null;
+                                                    if (filled($ownershipMetric)) {
+                                                        if (is_numeric($ownershipMetric)) {
+                                                            $shareText = number_format((float) $ownershipMetric) . ' سهم';
+                                                        } else {
+                                                            $shareText = (string) $ownershipMetric;
+                                                        }
+                                                    } elseif (filled($ownershipPercentage) && is_numeric($ownershipPercentage)) {
+                                                        $shareText = number_format((float) $ownershipPercentage, 2) . '%';
+                                                    }
+
+                                                    $shareText = $shareText ?: 'حصة غير محددة';
+                                                    $percentageMeta = null;
+                                                    if (filled($ownershipMetric) && filled($ownershipPercentage) && is_numeric($ownershipPercentage)) {
+                                                        $percentageMeta = number_format((float) $ownershipPercentage, 2) . '%';
+                                                    }
+
+                                                    $isCurrent = $pivot?->is_current;
+                                                    $isFormerOwner = $isCurrent !== null && (int) $isCurrent === 0;
+                                                @endphp
+
+                                                <div class="vn-owner-pill {{ $isFormerOwner ? 'vn-owner-pill--muted' : '' }}">
+                                                    <span class="vn-owner-pill__dot" aria-hidden="true"></span>
+                                                    <span class="vn-owner-pill__name" title="{{ $ownerName }}">{{ $ownerName }}</span>
+                                                    <span class="vn-owner-pill__share">{{ $shareText }}</span>
+                                                    @if ($percentageMeta)
+                                                        <span class="vn-owner-pill__meta">{{ $percentageMeta }}</span>
+                                                    @endif
+                                                    @if ($isFormerOwner)
+                                                        <span class="vn-owner-pill__meta">سابق</span>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+
+                                            @if ($remainingOwnersCount > 0)
+                                                <span class="vn-owner-stack__more">+ {{ number_format($remainingOwnersCount) }} ملاك</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        {{ $property->owners_count ?? '—' }}
+                                    @endif
+                                </td>
                                 <td data-column-key="operations_count">{{ $property->operations_count ?? '—' }}</td>
                                 <td data-column-key="signals_count">{{ $property->signals_count ?? '—' }}</td>
                                 <td data-column-key="files_count">{{ $property->files_count ?? '—' }}</td>
