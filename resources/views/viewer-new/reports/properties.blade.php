@@ -383,13 +383,13 @@
                                     @endphp
 
                                     @if ($propertyOperations->isNotEmpty())
-                                        <div class="vn-operation-cell">
-                                            <span class="vn-operation-count">{{ number_format($operationsCount) }} عمليات</span>
-                                            <button type="button" class="vn-operation-toggle" data-property-operations-toggle data-target="{{ $operationsRowId }}" aria-expanded="false" aria-controls="{{ $operationsRowId }}">عرض العمليات</button>
+                                        <div class="vn-related-inline">
+                                            <span class="vn-related-inline__count">{{ number_format($operationsCount) }} عمليات</span>
+                                            <button type="button" class="vn-related-inline__toggle" data-property-operations-toggle data-target="{{ $operationsRowId }}" aria-expanded="false" aria-controls="{{ $operationsRowId }}" aria-label="عرض العمليات" data-show-label="▾" data-hide-label="▴">▾</button>
                                         </div>
                                     @else
-                                        <span class="vn-operation-muted">{{ $operationsCount > 0 ? number_format($operationsCount) . ' عمليات' : '—' }}</span>
-                                    @endif
+                                        <span class="vn-operation-muted">—</span>
+                                                                            @endif
                                 </td>
                                 <td data-column-key="signals_count">
                                     @php
@@ -397,9 +397,9 @@
                                         $signalsRowId = 'signals-row-' . $property->id;
                                     @endphp
                                     @if ($propertySignals->isNotEmpty())
-                                        <div class="vn-signal-cell">
-                                            <span class="vn-signal-count">{{ number_format($propertySignals->count()) }} إشارات</span>
-                                            <button type="button" class="vn-signal-toggle" data-property-signals-toggle data-target="{{ $signalsRowId }}" aria-expanded="false" aria-controls="{{ $signalsRowId }}">عرض الإشارات</button>
+                                        <div class="vn-related-inline">
+                                            <span class="vn-related-inline__count">{{ number_format($propertySignals->count()) }} إشارات</span>
+                                            <button type="button" class="vn-related-inline__toggle" data-property-signals-toggle data-target="{{ $signalsRowId }}" aria-expanded="false" aria-controls="{{ $signalsRowId }}" aria-label="عرض الإشارات" data-show-label="▾" data-hide-label="▴">▾</button>
                                         </div>
                                     @else
                                         <span class="vn-signal-muted">—</span>
@@ -411,9 +411,9 @@
                                         $filesRowId = 'files-row-' . $property->id;
                                     @endphp
                                     @if ($propertyFiles->isNotEmpty())
-                                        <div class="vn-file-cell">
-                                            <span class="vn-file-count">{{ number_format($propertyFiles->count()) }} ملفات</span>
-                                            <button type="button" class="vn-file-toggle" data-property-files-toggle data-target="{{ $filesRowId }}" aria-expanded="false" aria-controls="{{ $filesRowId }}">عرض الملفات</button>
+                                        <div class="vn-related-inline">
+                                            <span class="vn-related-inline__count">{{ number_format($propertyFiles->count()) }} ملفات</span>
+                                            <button type="button" class="vn-related-inline__toggle" data-property-files-toggle data-target="{{ $filesRowId }}" aria-expanded="false" aria-controls="{{ $filesRowId }}" aria-label="عرض الملفات" data-show-label="▾" data-hide-label="▴">▾</button>
                                         </div>
                                     @else
                                         <span class="vn-file-muted">—</span>
@@ -425,9 +425,9 @@
                                         $installmentsRowId = 'installments-row-' . $property->id;
                                     @endphp
                                     @if ($propertyInstallments->isNotEmpty())
-                                        <div class="vn-installment-cell">
-                                            <span class="vn-installment-count">{{ number_format($propertyInstallments->count()) }} دفعات</span>
-                                            <button type="button" class="vn-installment-toggle" data-property-installments-toggle data-target="{{ $installmentsRowId }}" aria-expanded="false" aria-controls="{{ $installmentsRowId }}">عرض الدفعات</button>
+                                        <div class="vn-related-inline">
+                                            <span class="vn-related-inline__count">{{ number_format($propertyInstallments->count()) }} دفعات</span>
+                                            <button type="button" class="vn-related-inline__toggle" data-property-installments-toggle data-target="{{ $installmentsRowId }}" aria-expanded="false" aria-controls="{{ $installmentsRowId }}" aria-label="عرض الدفعات" data-show-label="▾" data-hide-label="▴">▾</button>
                                         </div>
                                     @else
                                         <span class="vn-installment-muted">—</span>

@@ -381,6 +381,11 @@
 .viewer-new .vn-properties-report .vn-operation-count{font-size:.8rem;color:#ead7a0}
 .viewer-new .vn-properties-report .vn-operation-toggle{width:max-content;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.12);color:#f1dc9f;padding:.22rem .58rem;border-radius:.48rem;font-size:.74rem;cursor:pointer}
 .viewer-new .vn-properties-report .vn-operation-muted{font-size:.8rem;color:#9fa5af}
+.viewer-new .vn-properties-report .vn-related-inline{display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
+.viewer-new .vn-properties-report .vn-related-inline__count{font-size:.8rem;color:#ead7a0;white-space:nowrap}
+.viewer-new .vn-properties-report .vn-related-inline__toggle{width:1.45rem;height:1.45rem;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:.45rem;border:1px solid rgba(212,175,55,.45);background:#15171d;color:#e8cc7a;font-size:.8rem;line-height:1;cursor:pointer;transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+.viewer-new .vn-properties-report .vn-related-inline__toggle:hover{background:rgba(212,175,55,.16);border-color:rgba(212,175,55,.62);color:#f7de95}
+.viewer-new .vn-properties-report .vn-related-inline__toggle.is-open{background:rgba(212,175,55,.24);border-color:rgba(212,175,55,.72);color:#ffe6a4}
 .viewer-new .vn-properties-report .vn-property-operations-row td{padding:.25rem .62rem .8rem;background:rgba(5,6,8,.65)}
 .viewer-new .vn-properties-report .vn-property-operations-panel{max-height:310px;overflow:auto;border:1px solid rgba(212,175,55,.36);border-radius:.72rem;background:linear-gradient(180deg,rgba(14,15,19,.97),rgba(10,11,14,.95));padding:.3rem}
 .viewer-new .vn-properties-report .vn-property-operations-table{width:100%;min-width:980px;border-collapse:collapse}

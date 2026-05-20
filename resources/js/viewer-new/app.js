@@ -247,10 +247,12 @@
                         row.removeAttribute('hidden');
                         toggle.setAttribute('aria-expanded', 'true');
                         toggle.textContent = hideLabel;
+                        toggle.classList.add('is-open');
                     } else {
                         row.setAttribute('hidden', 'hidden');
                         toggle.setAttribute('aria-expanded', 'false');
                         toggle.textContent = showLabel;
+                        toggle.classList.remove('is-open');
                     }
                 });
             });
