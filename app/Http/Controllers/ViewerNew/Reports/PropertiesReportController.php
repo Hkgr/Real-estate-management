@@ -39,6 +39,8 @@ class PropertiesReportController extends Controller
         $propertyIds = $properties->getCollection()->pluck('id')->filter()->values()->all();
         $operationOwnersByProperty = $this->buildOperationOwnersForProperties($propertyIds);
         $operationsByProperty = $this->buildOperationsForProperties($propertyIds);
+        $signalsByProperty = $this->buildSignalsForProperties($propertyIds);
+        $filesByProperty = $this->buildFilesForProperties($propertyIds);
 
         return view('viewer-new.reports.properties', [
             'metrics' => $this->buildMetrics($baseQuery, $property, $fieldAvailability),
@@ -53,6 +55,8 @@ class PropertiesReportController extends Controller
             'columns' => $fieldAvailability,
             'operationOwnersByProperty' => $operationOwnersByProperty,
             'operationsByProperty' => $operationsByProperty,
+            'signalsByProperty' => $signalsByProperty,
+            'filesByProperty' => $filesByProperty,
         ]);
     }
 
@@ -257,6 +261,161 @@ class PropertiesReportController extends Controller
         }
 
         return true;
+    }
+
+
+    private function buildSignalsForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === [] || ! Schema::hasTable('signals')) {
+            return [];
+        }
+
+        $requiredColumns = ['id', 'property_card_id'];
+        foreach ($requiredColumns as $column) {
+            if (! Schema::hasColumn('signals', $column)) {
+                return [];
+            }
+        }
+
+        $optionalColumns = $this->resolveTableColumns('signals', [
+            'signal_id','signal_date','type','signal_owner','signal_owners','signal_source','signal_source_number','signal_source_date','signal_victim','signal_victims','signal_notes',
+        ]);
+
+        $selectColumns = ['id', 'property_card_id'];
+        foreach ($optionalColumns as $column => $isAvailable) {
+            if ($isAvailable) {
+                $selectColumns[] = $column;
+            }
+        }
+
+        $rows = DB::table('signals')
+            ->whereIn('property_card_id', $propertyIds)
+            ->orderByDesc('id')
+            ->get($selectColumns);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $propertyCardId = (int) ($row->property_card_id ?? 0);
+            if ($propertyCardId <= 0) {
+                continue;
+            }
+
+            $ownersLabel = $this->buildJsonNamesLabel($optionalColumns['signal_owners'] ? ($row->signal_owners ?? null) : null)
+                ?? $this->normalizeDisplayValue($optionalColumns['signal_owner'] ? ($row->signal_owner ?? null) : null)
+                ?? '—';
+
+            $victimsLabel = $this->buildJsonNamesLabel($optionalColumns['signal_victims'] ? ($row->signal_victims ?? null) : null)
+                ?? $this->normalizeDisplayValue($optionalColumns['signal_victim'] ? ($row->signal_victim ?? null) : null)
+                ?? '—';
+
+            $grouped[$propertyCardId][] = [
+                'id' => (int) $row->id,
+                'signal_id' => $this->normalizeDisplayValue($optionalColumns['signal_id'] ? ($row->signal_id ?? null) : null) ?? '—',
+                'signal_date' => $this->normalizeDisplayValue($optionalColumns['signal_date'] ? ($row->signal_date ?? null) : null) ?? '—',
+                'type' => $this->normalizeDisplayValue($optionalColumns['type'] ? ($row->type ?? null) : null) ?? '—',
+                'owners_label' => $ownersLabel,
+                'source' => $this->normalizeDisplayValue($optionalColumns['signal_source'] ? ($row->signal_source ?? null) : null) ?? '—',
+                'source_number' => $this->normalizeDisplayValue($optionalColumns['signal_source_number'] ? ($row->signal_source_number ?? null) : null) ?? '—',
+                'source_date' => $this->normalizeDisplayValue($optionalColumns['signal_source_date'] ? ($row->signal_source_date ?? null) : null) ?? '—',
+                'victims_label' => $victimsLabel,
+                'notes' => $this->normalizeDisplayValue($optionalColumns['signal_notes'] ? ($row->signal_notes ?? null) : null) ?? '—',
+            ];
+        }
+
+        return $grouped;
+    }
+
+    private function buildFilesForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === [] || ! Schema::hasTable('property_card_files')) {
+            return [];
+        }
+
+        $requiredColumns = ['id', 'property_card_id'];
+        foreach ($requiredColumns as $column) {
+            if (! Schema::hasColumn('property_card_files', $column)) {
+                return [];
+            }
+        }
+
+        $optionalColumns = $this->resolveTableColumns('property_card_files', [
+            'file_name','issued_at','storage_disk','storage_path','mime_type','file_size',
+        ]);
+
+        $selectColumns = ['id', 'property_card_id'];
+        foreach ($optionalColumns as $column => $isAvailable) {
+            if ($isAvailable) {
+                $selectColumns[] = $column;
+            }
+        }
+
+        $rows = DB::table('property_card_files')
+            ->whereIn('property_card_id', $propertyIds)
+            ->orderByDesc('id')
+            ->get($selectColumns);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $propertyCardId = (int) ($row->property_card_id ?? 0);
+            if ($propertyCardId <= 0) {
+                continue;
+            }
+
+            $grouped[$propertyCardId][] = [
+                'id' => (int) $row->id,
+                'file_name' => $this->normalizeDisplayValue($optionalColumns['file_name'] ? ($row->file_name ?? null) : null) ?? '—',
+                'issued_at' => $this->normalizeDisplayValue($optionalColumns['issued_at'] ? ($row->issued_at ?? null) : null) ?? '—',
+                'storage_disk' => $this->normalizeDisplayValue($optionalColumns['storage_disk'] ? ($row->storage_disk ?? null) : null) ?? '—',
+                'storage_path' => $this->normalizeDisplayValue($optionalColumns['storage_path'] ? ($row->storage_path ?? null) : null) ?? '—',
+                'mime_type' => $this->normalizeDisplayValue($optionalColumns['mime_type'] ? ($row->mime_type ?? null) : null) ?? '—',
+                'file_size' => ($optionalColumns['file_size'] && is_numeric($row->file_size ?? null)) ? (int) $row->file_size : null,
+                'open_url' => null,
+            ];
+        }
+
+        return $grouped;
+    }
+
+    private function buildJsonNamesLabel(mixed $value): ?string
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        $names = [];
+        foreach ($decoded as $item) {
+            if (is_array($item)) {
+                $candidate = trim((string) ($item['name'] ?? $item['full_name'] ?? $item['label'] ?? ''));
+            } else {
+                $candidate = trim((string) $item);
+            }
+
+            if ($candidate !== '') {
+                $names[] = $candidate;
+            }
+        }
+
+        if ($names === []) {
+            return null;
+        }
+
+        return implode('، ', array_values(array_unique($names)));
+    }
+
+    private function normalizeDisplayValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+
+        return $normalized !== '' ? $normalized : null;
     }
 
     private function resolveFieldAvailability(string $table): array

@@ -382,8 +382,36 @@
                                         <span class="vn-operation-muted">{{ $operationsCount > 0 ? number_format($operationsCount) . ' عمليات' : '—' }}</span>
                                     @endif
                                 </td>
-                                <td data-column-key="signals_count">{{ $property->signals_count ?? '—' }}</td>
-                                <td data-column-key="files_count">{{ $property->files_count ?? '—' }}</td>
+                                <td data-column-key="signals_count">
+                                    @php
+                                        $propertySignals = collect($signalsByProperty[$property->id] ?? []);
+                                        $signalsRowId = 'signals-row-' . $property->id;
+                                        $signalsCount = (int) ($property->signals_count ?? $propertySignals->count());
+                                    @endphp
+                                    <div class="vn-related-cell">
+                                        <span class="vn-related-count">{{ number_format($signalsCount) }} إشارات</span>
+                                        @if ($propertySignals->isNotEmpty())
+                                            <button type="button" class="vn-related-toggle" data-property-related-toggle data-target="{{ $signalsRowId }}" aria-expanded="false" aria-controls="{{ $signalsRowId }}" data-show-label="عرض الإشارات" data-hide-label="إخفاء الإشارات">عرض الإشارات</button>
+                                        @else
+                                            <span class="vn-related-muted">—</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td data-column-key="files_count">
+                                    @php
+                                        $propertyFiles = collect($filesByProperty[$property->id] ?? []);
+                                        $filesRowId = 'files-row-' . $property->id;
+                                        $filesCount = (int) ($property->files_count ?? $propertyFiles->count());
+                                    @endphp
+                                    <div class="vn-related-cell">
+                                        <span class="vn-related-count">{{ number_format($filesCount) }} ملفات</span>
+                                        @if ($propertyFiles->isNotEmpty())
+                                            <button type="button" class="vn-related-toggle" data-property-related-toggle data-target="{{ $filesRowId }}" aria-expanded="false" aria-controls="{{ $filesRowId }}" data-show-label="عرض الملفات" data-hide-label="إخفاء الملفات">عرض الملفات</button>
+                                        @else
+                                            <span class="vn-related-muted">—</span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td data-column-key="installments_count">{{ $property->installments_count ?? '—' }}</td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
                                 <td data-column-key="details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
@@ -447,6 +475,56 @@
                                                         <td>{{ $decisionContract !== '' ? $decisionContract : '—' }}</td>
                                                         <td>{{ filled((string) $operationDate) ? $operationDate : '—' }}</td>
                                                         <td>{{ filled((string) ($operation['notes'] ?? '')) ? $operation['notes'] : '—' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+
+                            @if ($propertySignals->isNotEmpty())
+                                <tr class="vn-property-related-row" id="{{ $signalsRowId }}" data-property-related-row hidden>
+                                    <td colspan="19">
+                                        <div class="vn-property-related-panel">
+                                            <table class="vn-property-related-table">
+                                                <thead><tr><th>رقم الإشارة</th><th>النوع</th><th>التاريخ</th><th>صاحب الإشارة</th><th>المصدر</th><th>رقم المصدر</th><th>تاريخ المصدر</th><th>المتضرر</th><th>ملاحظات</th></tr></thead>
+                                                <tbody>
+                                                @foreach ($propertySignals as $signal)
+                                                    <tr>
+                                                        <td><span class="vn-related-badge">{{ $signal['signal_id'] ?? '—' }}</span></td>
+                                                        <td>{{ $signal['type'] ?? '—' }}</td><td>{{ $signal['signal_date'] ?? '—' }}</td><td>{{ $signal['owners_label'] ?? '—' }}</td><td>{{ $signal['source'] ?? '—' }}</td><td>{{ $signal['source_number'] ?? '—' }}</td><td>{{ $signal['source_date'] ?? '—' }}</td><td>{{ $signal['victims_label'] ?? '—' }}</td><td>{{ $signal['notes'] ?? '—' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+
+                            @if ($propertyFiles->isNotEmpty())
+                                <tr class="vn-property-related-row" id="{{ $filesRowId }}" data-property-related-row hidden>
+                                    <td colspan="19">
+                                        <div class="vn-property-related-panel">
+                                            <table class="vn-property-related-table">
+                                                <thead><tr><th>اسم الملف</th><th>تاريخ الإصدار</th><th>النوع</th><th>الحجم</th><th>الإجراء</th></tr></thead>
+                                                <tbody>
+                                                @foreach ($propertyFiles as $file)
+                                                    <tr>
+                                                        <td>{{ $file['file_name'] ?? '—' }}</td>
+                                                        <td>{{ $file['issued_at'] ?? '—' }}</td>
+                                                        <td>{{ $file['mime_type'] ?? '—' }}</td>
+                                                        <td>{{ isset($file['file_size']) ? number_format((int) $file['file_size']) . ' B' : '—' }}</td>
+                                                        <td>
+                                                            @if (filled($file['open_url'] ?? null))
+                                                                <a href="{{ $file['open_url'] }}" target="_blank" rel="noopener noreferrer" class="vn-related-toggle">فتح</a>
+                                                            @else
+                                                                {{-- TODO: Add a safe viewer-new file open route and map file open_url when available. --}}
+                                                                <span class="vn-related-muted">غير متاح حالياً</span>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>
