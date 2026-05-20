@@ -427,3 +427,13 @@
 .viewer-new .vn-properties-report .vn-property-installments-table th{color:var(--vn-pr-gold-soft)}
 .viewer-new .vn-properties-report .vn-installment-badge{display:inline-flex;align-items:center;padding:.14rem .45rem;border-radius:.45rem;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.08);color:#e9d6a0}
 .viewer-new .vn-properties-report .vn-installment-amount{color:#f1dfab}
+.viewer-new .vn-properties-report .vn-report-toolbar-button{border:1px solid rgba(212,175,55,.3);background:#111;color:#eee;padding:.45rem .8rem;border-radius:.45rem}
+.viewer-new .vn-properties-report .vn-report-toolbar-button--primary{border-bottom:2px solid var(--vn-pr-gold)}
+.viewer-new .vn-properties-report .vn-report-toolbar-button--disabled{opacity:.5;cursor:not-allowed}
+.viewer-new .vn-properties-report .vn-related-inline{display:flex;align-items:center;gap:.35rem;white-space:nowrap}
+.viewer-new .vn-properties-report .vn-related-inline__count{font-size:.8rem;color:#e9d08a}
+.viewer-new .vn-properties-report .vn-related-inline__toggle{border:1px solid rgba(212,175,55,.4);background:rgba(212,175,55,.12);color:#f5deb0;border-radius:.35rem;padding:0 .35rem;line-height:1.2}
+.viewer-new .vn-properties-report .vn-related-inline__toggle.is-open{transform:rotate(180deg)}
+.viewer-new .vn-properties-report .vn-child-panel{border:1px solid rgba(212,175,55,.35);background:#101215;border-radius:.6rem;padding:.5rem}
+.viewer-new .vn-properties-report .vn-child-panel__title{margin:0;color:#e2c778;font-size:.85rem}
+.viewer-new .vn-properties-report .vn-child-table{margin-top:.4rem;color:#c9c9c9;font-size:.8rem}
