@@ -7,10 +7,13 @@ use App\Models\PropertyCard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class PropertiesReportController extends Controller
 {
+    private const TOTAL_SHARES_REFERENCE = 2400;
+
     public function __invoke(Request $request): View
     {
         $property = new PropertyCard();
@@ -27,14 +30,13 @@ class PropertiesReportController extends Controller
 
         $this->applySafeCounts($reportQuery, $property);
 
-        if ($this->relationIsAvailable($property, 'owners')) {
-            $reportQuery->with('owners');
-        }
-
         $properties = $reportQuery
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
+
+        $propertyIds = $properties->getCollection()->pluck('id')->filter()->values()->all();
+        $operationOwnersByProperty = $this->buildOperationOwnersForProperties($propertyIds);
 
         return view('viewer-new.reports.properties', [
             'metrics' => $this->buildMetrics($baseQuery, $property, $fieldAvailability),
@@ -47,7 +49,95 @@ class PropertiesReportController extends Controller
             'purchaseMethodOptions' => $this->buildDistinctOptions($fieldAvailability, 'card_purchase_method'),
             'countryOptions' => $this->buildDistinctOptions($fieldAvailability, 'property_country'),
             'columns' => $fieldAvailability,
+            'operationOwnersByProperty' => $operationOwnersByProperty,
         ]);
+    }
+
+    private function buildOperationOwnersForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === [] || ! $this->canCalculateOperationOwners()) {
+            return [];
+        }
+
+        $totalShares = self::TOTAL_SHARES_REFERENCE;
+        $sharesExpression = "CASE
+            WHEN po.transaction_unit = 'shares' THEN po.transaction_amount
+            WHEN po.transaction_unit = 'percentage' THEN ({$totalShares} * po.transaction_amount / 100)
+            WHEN po.transaction_unit = 'square_meter' THEN CASE
+                WHEN pc.card_total_area IS NULL OR pc.card_total_area = 0 THEN 0
+                ELSE (po.transaction_amount / pc.card_total_area) * {$totalShares}
+            END
+            ELSE 0
+        END";
+        $ownerNameExpression = "CASE
+            WHEN o.owner_type = 'company' THEN COALESCE(o.company_name, o.full_name)
+            ELSE o.full_name
+        END";
+
+        $newOwners = DB::table('property_operations as po')
+            ->join('property_cards as pc', 'pc.id', '=', 'po.property_card_id')
+            ->join('property_operation_new_owner as pno', 'pno.property_operation_id', '=', 'po.id')
+            ->join('owners as o', 'o.id', '=', 'pno.owner_id')
+            ->whereIn('po.property_card_id', $propertyIds)
+            ->whereNull('pc.deleted_at')
+            ->whereNull('o.deleted_at')
+            ->selectRaw("po.property_card_id, o.id as owner_id, {$ownerNameExpression} as owner_name, {$sharesExpression} as shares_delta");
+
+        $oldOwners = DB::table('property_operations as po')
+            ->join('property_cards as pc', 'pc.id', '=', 'po.property_card_id')
+            ->join('property_operation_old_owner as poo', 'poo.property_operation_id', '=', 'po.id')
+            ->join('owners as o', 'o.id', '=', 'poo.owner_id')
+            ->whereIn('po.property_card_id', $propertyIds)
+            ->whereNull('pc.deleted_at')
+            ->whereNull('o.deleted_at')
+            ->selectRaw("po.property_card_id, o.id as owner_id, {$ownerNameExpression} as owner_name, (-1 * ({$sharesExpression})) as shares_delta");
+
+        $rows = DB::query()
+            ->fromSub($newOwners->unionAll($oldOwners), 'x')
+            ->selectRaw("x.property_card_id, x.owner_id, x.owner_name, ROUND(SUM(x.shares_delta), 2) as owner_shares, ROUND((SUM(x.shares_delta) / {$totalShares}) * 100, 2) as ownership_percentage")
+            ->groupBy('x.property_card_id', 'x.owner_id', 'x.owner_name')
+            ->havingRaw('ROUND(SUM(x.shares_delta), 2) > 0')
+            ->orderByDesc('owner_shares')
+            ->get();
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $propertyCardId = (int) $row->property_card_id;
+
+            $grouped[$propertyCardId][] = [
+                'owner_id' => (int) $row->owner_id,
+                'owner_name' => (string) ($row->owner_name ?? ''),
+                'owner_shares' => round((float) $row->owner_shares, 2),
+                'ownership_percentage' => round((float) $row->ownership_percentage, 2),
+            ];
+        }
+
+        return $grouped;
+    }
+
+    private function canCalculateOperationOwners(): bool
+    {
+        $requiredSchema = [
+            'property_operations' => ['property_card_id', 'transaction_unit', 'transaction_amount'],
+            'property_cards' => ['id', 'card_total_area'],
+            'property_operation_new_owner' => ['property_operation_id', 'owner_id'],
+            'property_operation_old_owner' => ['property_operation_id', 'owner_id'],
+            'owners' => ['id', 'owner_type', 'full_name', 'company_name'],
+        ];
+
+        foreach ($requiredSchema as $table => $columns) {
+            if (! Schema::hasTable($table)) {
+                return false;
+            }
+
+            foreach ($columns as $column) {
+                if (! Schema::hasColumn($table, $column)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private function resolveFieldAvailability(string $table): array
