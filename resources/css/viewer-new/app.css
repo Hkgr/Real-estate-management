@@ -400,3 +400,16 @@
 .viewer-new .vn-properties-report .vn-property-signals-table th,.viewer-new .vn-properties-report .vn-property-signals-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.06);font-size:.78rem;white-space:nowrap}
 .viewer-new .vn-properties-report .vn-property-signals-table th{color:#e1c577;background:rgba(255,255,255,.02)}
 .viewer-new .vn-properties-report .vn-signal-badge{display:inline-flex;padding:.18rem .45rem;border-radius:999px;border:1px solid rgba(212,175,55,.3);color:#e1c577;background:rgba(212,175,55,.08)}
+
+/* Stage: properties report files panel */
+.viewer-new .vn-properties-report .vn-file-cell{display:grid;gap:.35rem;justify-items:flex-start}
+.viewer-new .vn-properties-report .vn-file-count{display:inline-flex;align-items:center;padding:.2rem .5rem;border:1px solid rgba(212,175,55,.35);border-radius:999px;background:rgba(212,175,55,.1);color:var(--vn-pr-gold);font-size:.78rem;line-height:1.2}
+.viewer-new .vn-properties-report .vn-file-toggle{background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.28);color:#e5d4a1;border-radius:.5rem;padding:.28rem .55rem;font-size:.78rem;cursor:pointer}
+.viewer-new .vn-properties-report .vn-file-toggle:hover{border-color:rgba(212,175,55,.48);color:#f2dfab}
+.viewer-new .vn-properties-report .vn-file-muted{color:var(--vn-pr-muted)}
+.viewer-new .vn-properties-report .vn-property-files-row td{padding:0!important;border-top:0}
+.viewer-new .vn-properties-report .vn-property-files-panel{border:1px solid rgba(212,175,55,.24);background:linear-gradient(180deg,rgba(18,18,22,.98),rgba(11,11,14,.98));padding:.65rem .7rem;overflow-x:auto}
+.viewer-new .vn-properties-report .vn-property-files-table{width:100%;min-width:980px;border-collapse:collapse}
+.viewer-new .vn-properties-report .vn-property-files-table th,.viewer-new .vn-properties-report .vn-property-files-table td{padding:.42rem .5rem;border-bottom:1px solid rgba(255,255,255,.08);text-align:right;white-space:nowrap;font-size:.8rem}
+.viewer-new .vn-properties-report .vn-property-files-table th{color:var(--vn-pr-gold-soft)}
+.viewer-new .vn-properties-report .vn-file-badge{display:inline-flex;align-items:center;padding:.14rem .45rem;border-radius:.45rem;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.08);color:#e9d6a0}
