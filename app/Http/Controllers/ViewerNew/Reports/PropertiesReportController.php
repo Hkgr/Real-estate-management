@@ -7,7 +7,6 @@ use App\Models\PropertyCard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
 
 class PropertiesReportController extends Controller
@@ -122,11 +121,16 @@ class PropertiesReportController extends Controller
             $this->applyRangeFilter($query, $filters['min_value'], $filters['max_value'], $valueColumn, $columns);
         }
 
-        if (($columns['created_at'] ?? false) && $filters['date_from'] !== '') {
-            $query->whereDate('created_at', '>=', $filters['date_from']);
+        $dateColumn = $this->resolveDateFilterColumn($columns);
+        $dateFrom = $this->normalizeDateFilterValue($filters['date_from']);
+        $dateTo = $this->normalizeDateFilterValue($filters['date_to']);
+
+        if ($dateColumn !== null && $dateFrom !== null) {
+            $query->whereDate($dateColumn, '>=', $dateFrom);
         }
-        if (($columns['created_at'] ?? false) && $filters['date_to'] !== '') {
-            $query->whereDate('created_at', '<=', $filters['date_to']);
+
+        if ($dateColumn !== null && $dateTo !== null) {
+            $query->whereDate($dateColumn, '<=', $dateTo);
         }
 
         $this->applyHasRelationFilter($query, 'owners', $filters['has_owners']);
@@ -260,6 +264,40 @@ class PropertiesReportController extends Controller
                 ? optional((clone $query)->latest('updated_at')->value('updated_at'))?->format('Y-m-d H:i') ?? '—'
                 : 'غير متوفر',
         ];
+    }
+
+
+    private function resolveDateFilterColumn(array $columns): ?string
+    {
+        if (($columns['card_sale_date'] ?? false) === true) {
+            return 'card_sale_date';
+        }
+
+        if (($columns['created_at'] ?? false) === true) {
+            return 'created_at';
+        }
+
+        return null;
+    }
+
+    private function normalizeDateFilterValue(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $date = trim($value);
+        if ($date === '' || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return null;
+        }
+
+        $parsed = date_create_from_format('Y-m-d', $date);
+
+        if ($parsed === false || $parsed->format('Y-m-d') !== $date) {
+            return null;
+        }
+
+        return $date;
     }
 
     private function resolveValueColumn(array $columns): ?string
