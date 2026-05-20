@@ -396,7 +396,20 @@
                                         <span class="vn-signal-muted">—</span>
                                     @endif
                                 </td>
-                                <td data-column-key="files_count">{{ $property->files_count ?? '—' }}</td>
+                                <td data-column-key="files_count">
+                                    @php
+                                        $propertyFiles = collect($filesByProperty[$property->id] ?? []);
+                                        $filesRowId = 'files-row-' . $property->id;
+                                    @endphp
+                                    @if ($propertyFiles->isNotEmpty())
+                                        <div class="vn-file-cell">
+                                            <span class="vn-file-count">{{ number_format($propertyFiles->count()) }} ملفات</span>
+                                            <button type="button" class="vn-file-toggle" data-property-files-toggle data-target="{{ $filesRowId }}" aria-expanded="false" aria-controls="{{ $filesRowId }}">عرض الملفات</button>
+                                        </div>
+                                    @else
+                                        <span class="vn-file-muted">—</span>
+                                    @endif
+                                </td>
                                 <td data-column-key="installments_count">{{ $property->installments_count ?? '—' }}</td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
                                 <td data-column-key="details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
@@ -460,6 +473,41 @@
                                                         <td>{{ $decisionContract !== '' ? $decisionContract : '—' }}</td>
                                                         <td>{{ filled((string) $operationDate) ? $operationDate : '—' }}</td>
                                                         <td>{{ filled((string) ($operation['notes'] ?? '')) ? $operation['notes'] : '—' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+
+                            @if ($propertyFiles->isNotEmpty())
+                                <tr class="vn-property-files-row" id="{{ $filesRowId }}" data-property-files-row hidden>
+                                    <td colspan="19">
+                                        <div class="vn-property-files-panel">
+                                            <table class="vn-property-files-table">
+                                                <thead><tr><th>اسم الملف</th><th>تاريخ الإصدار</th><th>نوع الملف</th><th>الحجم KB</th><th>الحجم MB</th><th>القرص</th><th>المسار</th><th>تاريخ الإضافة</th><th>آخر تعديل</th><th>الإجراء</th></tr></thead>
+                                                <tbody>
+                                                @foreach ($propertyFiles as $propertyFile)
+                                                    <tr>
+                                                        <td><span class="vn-file-badge">{{ filled((string) ($propertyFile['file_name'] ?? '')) ? $propertyFile['file_name'] : '—' }}</span></td>
+                                                        <td>{{ filled((string) ($propertyFile['issued_at'] ?? '')) ? $propertyFile['issued_at'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($propertyFile['mime_type'] ?? '')) ? $propertyFile['mime_type'] : '—' }}</td>
+                                                        <td>{{ isset($propertyFile['file_size_kb']) && is_numeric($propertyFile['file_size_kb']) ? number_format((float) $propertyFile['file_size_kb'], 2) : '—' }}</td>
+                                                        <td>{{ isset($propertyFile['file_size_mb']) && is_numeric($propertyFile['file_size_mb']) ? number_format((float) $propertyFile['file_size_mb'], 2) : '—' }}</td>
+                                                        <td>{{ filled((string) ($propertyFile['storage_disk'] ?? '')) ? $propertyFile['storage_disk'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($propertyFile['storage_path'] ?? '')) ? $propertyFile['storage_path'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($propertyFile['file_created_at'] ?? '')) ? $propertyFile['file_created_at'] : '—' }}</td>
+                                                        <td>{{ filled((string) ($propertyFile['file_updated_at'] ?? '')) ? $propertyFile['file_updated_at'] : '—' }}</td>
+                                                        <td>
+                                                            @if (filled((string) ($propertyFile['open_url'] ?? null)))
+                                                                <a href="{{ $propertyFile['open_url'] }}" target="_blank" rel="noopener noreferrer">فتح</a>
+                                                            @else
+                                                                {{-- TODO: Add a safe viewer-new file open/download route and map open_url when available. --}}
+                                                                <span class="vn-file-muted">غير متاح حالياً</span>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>

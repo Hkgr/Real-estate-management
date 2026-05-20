@@ -40,6 +40,7 @@ class PropertiesReportController extends Controller
         $operationOwnersByProperty = $this->buildOperationOwnersForProperties($propertyIds);
         $operationsByProperty = $this->buildOperationsForProperties($propertyIds);
         $signalsByProperty = $this->buildSignalsForProperties($propertyIds);
+        $filesByProperty = $this->buildFilesForProperties($propertyIds);
 
         return view('viewer-new.reports.properties', [
             'metrics' => $this->buildMetrics($baseQuery, $property, $fieldAvailability),
@@ -55,6 +56,7 @@ class PropertiesReportController extends Controller
             'operationOwnersByProperty' => $operationOwnersByProperty,
             'operationsByProperty' => $operationsByProperty,
             'signalsByProperty' => $signalsByProperty,
+            'filesByProperty' => $filesByProperty,
         ]);
     }
 
@@ -259,6 +261,111 @@ class PropertiesReportController extends Controller
         }
 
         return true;
+    }
+
+
+    private function buildFilesForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === []) {
+            return [];
+        }
+
+        $requiredTables = ['property_cards', 'property_card_files'];
+        foreach ($requiredTables as $table) {
+            if (! Schema::hasTable($table)) {
+                return [];
+            }
+        }
+
+        if (! Schema::hasColumn('property_cards', 'id')
+            || ! Schema::hasColumn('property_card_files', 'property_card_id')
+            || ! Schema::hasColumn('property_card_files', 'id')) {
+            return [];
+        }
+
+        $propertyCardColumns = $this->resolveTableColumns('property_cards', [
+            'deleted_at',
+            'card_record_number',
+            'card_governorate',
+            'card_region_name',
+        ]);
+
+        $fileColumns = $this->resolveTableColumns('property_card_files', [
+            'file_name',
+            'issued_at',
+            'storage_disk',
+            'storage_path',
+            'mime_type',
+            'file_size',
+            'created_at',
+            'updated_at',
+        ]);
+
+        $query = DB::table('property_cards as pc')
+            ->leftJoin('property_card_files as pcf', 'pcf.property_card_id', '=', 'pc.id')
+            ->whereIn('pc.id', $propertyIds);
+
+        if ($propertyCardColumns['deleted_at']) {
+            $query->whereNull('pc.deleted_at');
+        }
+
+        $selectColumns = ['pc.id as property_card_id', 'pcf.id as file_id'];
+        $optionalSelectMap = [
+            'card_record_number' => 'pc.card_record_number as record_number',
+            'card_governorate' => 'pc.card_governorate as governorate',
+            'card_region_name' => 'pc.card_region_name as region_name',
+            'file_name' => 'pcf.file_name',
+            'issued_at' => 'pcf.issued_at',
+            'storage_disk' => 'pcf.storage_disk',
+            'storage_path' => 'pcf.storage_path',
+            'mime_type' => 'pcf.mime_type',
+            'file_size' => 'pcf.file_size',
+            'created_at' => 'pcf.created_at as file_created_at',
+            'updated_at' => 'pcf.updated_at as file_updated_at',
+        ];
+
+        foreach ($optionalSelectMap as $column => $selectExpression) {
+            $isPcColumn = str_starts_with($column, 'card_');
+            $isAvailable = $isPcColumn
+                ? ($propertyCardColumns[$column] ?? false)
+                : ($fileColumns[$column] ?? false);
+
+            if ($isAvailable) {
+                $selectColumns[] = $selectExpression;
+            }
+        }
+
+        $rows = $query
+            ->orderBy('pc.id')
+            ->orderByRaw(($fileColumns['issued_at'] ? 'pcf.issued_at DESC, ' : '') . 'pcf.id DESC')
+            ->get($selectColumns);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $propertyCardId = (int) ($row->property_card_id ?? 0);
+            if ($propertyCardId <= 0 || ! isset($row->file_id) || $row->file_id === null) {
+                continue;
+            }
+
+            $fileSize = isset($row->file_size) && is_numeric($row->file_size) ? (float) $row->file_size : null;
+
+            $grouped[$propertyCardId][] = [
+                'file_id' => (int) $row->file_id,
+                'file_name' => $this->normalizeDisplayValue($row->file_name ?? null),
+                'issued_at' => $this->normalizeDisplayValue($row->issued_at ?? null),
+                'storage_disk' => $this->normalizeDisplayValue($row->storage_disk ?? null),
+                'storage_path' => $this->normalizeDisplayValue($row->storage_path ?? null),
+                'mime_type' => $this->normalizeDisplayValue($row->mime_type ?? null),
+                'file_size' => $fileSize,
+                'file_size_kb' => $fileSize !== null ? round($fileSize / 1024, 2) : null,
+                'file_size_mb' => $fileSize !== null ? round($fileSize / 1024 / 1024, 2) : null,
+                'file_created_at' => $this->normalizeDisplayValue($row->file_created_at ?? null),
+                'file_updated_at' => $this->normalizeDisplayValue($row->file_updated_at ?? null),
+                'open_url' => null,
+            ];
+        }
+
+        return $grouped;
     }
 
 
