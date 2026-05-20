@@ -87,12 +87,8 @@
 
         const GEN_KEY = 'viewer_new_properties_generator_open';
         const COL_KEY = 'viewer_new_properties_visible_columns';
-        const defaultColumns = ['id','property_name','record_number','location','owners_count','area','value','status','updated_at','details','actions'];
-        const validColumnKeys = [
-            'id','property_name','record_number','property_number','location','subdivision','area','value','status',
-            'investment_type','purchase_method','owners_count','operations_count','signals_count','files_count',
-            'installments_count','updated_at','details','actions',
-        ];
+        const defaultColumns = ['id','property_name','property_country','card_governorate','card_region_name','card_subdivision','card_record_number','card_property_number','card_total_area','card_area_unit','total_property_value_usd','owned_property_value_usd','actual_price_usd','estimated_price_usd','card_status','card_investment_type','card_purchase_method','card_sale_date','final_balance','card_google_maps_url','owners_count','operations_count','signals_count','files_count','installments_count','updated_at','card_property_details','actions'];
+        const validColumnKeys = [...defaultColumns];
         const panel = reportRoot.querySelector('[data-report-generator-panel]');
         const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
         const form = reportRoot.querySelector('[data-report-generator-form]');
@@ -221,11 +217,11 @@
                     if (isHidden) {
                         row.removeAttribute('hidden');
                         toggle.setAttribute('aria-expanded', 'true');
-                        toggle.textContent = hideLabel;
+                        toggle.setAttribute('aria-expanded', 'true'); toggle.classList.add('is-open');
                     } else {
                         row.setAttribute('hidden', 'hidden');
                         toggle.setAttribute('aria-expanded', 'false');
-                        toggle.textContent = showLabel;
+                        toggle.setAttribute('aria-expanded', 'false'); toggle.classList.remove('is-open');
                     }
                 });
             });
