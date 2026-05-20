@@ -445,8 +445,13 @@
                             @if ($propertyOperations->isNotEmpty())
                                 <tr class="vn-property-operations-row" id="{{ $operationsRowId }}" data-property-operations-row hidden>
                                     <td colspan="28">
-                                        <div class="vn-property-operations-panel">
-                                            <table class="vn-property-operations-table">
+                                        <div class="vn-property-operations-panel vn-child-panel vn-child-panel--operations">
+                                            <div class="vn-child-panel__header">
+                                                <h4 class="vn-child-panel__title">العمليات المرتبطة</h4>
+                                                <span class="vn-child-panel__meta">{{ number_format($propertyOperations->count()) }} سجلات</span>
+                                            </div>
+                                            <div class="vn-child-panel__table-wrap">
+                                            <table class="vn-property-operations-table vn-child-table">
                                                 <thead>
                                                 <tr>
                                                     <th>العملية</th><th>مقدار التصرف</th><th>ما يعادلها بالأسهم</th><th>المالك القديم</th><th>المالك الجديد</th><th>الطريقة</th><th>القرار / العقد</th><th>التاريخ</th><th>ملاحظات</th>
@@ -483,19 +488,20 @@
                                                         $operationDate = $operation['judgment_date'] ?? $operation['contract_date'] ?? null;
                                                     @endphp
                                                     <tr>
-                                                        <td><span class="vn-operation-badge">{{ $operationTypeLabel }}</span></td>
-                                                        <td>{{ filled($operation['transaction_amount']) ? number_format((float) $operation['transaction_amount'], 2) . ($unitLabel !== '' ? ' ' . $unitLabel : '') : '—' }}</td>
-                                                        <td>{{ filled($operation['shares_equivalent']) ? number_format((float) $operation['shares_equivalent'], 2) : '—' }}</td>
+                                                        <td><span class="vn-operation-badge vn-child-badge vn-child-badge--gold">{{ $operationTypeLabel }}</span></td>
+                                                        <td><span class="vn-child-amount">{{ filled($operation['transaction_amount']) ? number_format((float) $operation['transaction_amount'], 2) . ($unitLabel !== '' ? ' ' . $unitLabel : '') : '—' }}</span></td>
+                                                        <td><span class="vn-child-amount">{{ filled($operation['shares_equivalent']) ? number_format((float) $operation['shares_equivalent'], 2) : '—' }}</span></td>
                                                         <td class="vn-operation-owner-list">{{ $oldOwnersLabel }}</td>
                                                         <td class="vn-operation-owner-list">{{ $newOwnersLabel }}</td>
                                                         <td>{{ filled((string) ($operation['operation_method'] ?? '')) ? $operation['operation_method'] : '—' }}</td>
                                                         <td>{{ $decisionContract !== '' ? $decisionContract : '—' }}</td>
                                                         <td>{{ filled((string) $operationDate) ? $operationDate : '—' }}</td>
-                                                        <td>{{ filled((string) ($operation['notes'] ?? '')) ? $operation['notes'] : '—' }}</td>
+                                                        <td class="vn-child-muted">{{ filled((string) ($operation['notes'] ?? '')) ? $operation['notes'] : '—' }}</td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -504,13 +510,18 @@
                             @if ($propertyFiles->isNotEmpty())
                                 <tr class="vn-property-files-row" id="{{ $filesRowId }}" data-property-files-row hidden>
                                     <td colspan="28">
-                                        <div class="vn-property-files-panel">
-                                            <table class="vn-property-files-table">
+                                        <div class="vn-property-files-panel vn-child-panel vn-child-panel--files">
+                                            <div class="vn-child-panel__header">
+                                                <h4 class="vn-child-panel__title">الملفات المرتبطة</h4>
+                                                <span class="vn-child-panel__meta">{{ number_format($propertyFiles->count()) }} سجلات</span>
+                                            </div>
+                                            <div class="vn-child-panel__table-wrap">
+                                            <table class="vn-property-files-table vn-child-table">
                                                 <thead><tr><th>اسم الملف</th><th>تاريخ الإصدار</th><th>نوع الملف</th><th>الحجم KB</th><th>الحجم MB</th><th>القرص</th><th>المسار</th><th>تاريخ الإضافة</th><th>آخر تعديل</th><th>الإجراء</th></tr></thead>
                                                 <tbody>
                                                 @foreach ($propertyFiles as $propertyFile)
                                                     <tr>
-                                                        <td><span class="vn-file-badge">{{ filled((string) ($propertyFile['file_name'] ?? '')) ? $propertyFile['file_name'] : '—' }}</span></td>
+                                                        <td><span class="vn-file-badge vn-child-badge vn-child-badge--gold">{{ filled((string) ($propertyFile['file_name'] ?? '')) ? $propertyFile['file_name'] : '—' }}</span></td>
                                                         <td>{{ filled((string) ($propertyFile['issued_at'] ?? '')) ? $propertyFile['issued_at'] : '—' }}</td>
                                                         <td>{{ filled((string) ($propertyFile['mime_type'] ?? '')) ? $propertyFile['mime_type'] : '—' }}</td>
                                                         <td>{{ isset($propertyFile['file_size_kb']) && is_numeric($propertyFile['file_size_kb']) ? number_format((float) $propertyFile['file_size_kb'], 2) : '—' }}</td>
@@ -524,13 +535,14 @@
                                                                 <a href="{{ $propertyFile['open_url'] }}" target="_blank" rel="noopener noreferrer">فتح</a>
                                                             @else
                                                                 {{-- TODO: Add a safe viewer-new file open/download route and map open_url when available. --}}
-                                                                <span class="vn-file-muted">غير متاح حالياً</span>
+                                                                <span class="vn-file-muted vn-child-muted">غير متاح حالياً</span>
                                                             @endif
                                                         </td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -541,22 +553,28 @@
                             @if ($propertyInstallments->isNotEmpty())
                                 <tr class="vn-property-installments-row" id="{{ $installmentsRowId }}" data-property-installments-row hidden>
                                     <td colspan="28">
-                                        <div class="vn-property-installments-panel">
-                                            <table class="vn-property-installments-table">
+                                        <div class="vn-property-installments-panel vn-child-panel vn-child-panel--installments">
+                                            <div class="vn-child-panel__header">
+                                                <h4 class="vn-child-panel__title">الدفعات المرتبطة</h4>
+                                                <span class="vn-child-panel__meta">{{ number_format($propertyInstallments->count()) }} سجلات</span>
+                                            </div>
+                                            <div class="vn-child-panel__table-wrap">
+                                            <table class="vn-property-installments-table vn-child-table">
                                                 <thead><tr><th>رقم الدفعة</th><th>قيمة الدفعة</th><th>تاريخ الدفع</th><th>المتبقي بعد الدفع</th><th>تاريخ الإضافة</th><th>آخر تعديل</th></tr></thead>
                                                 <tbody>
                                                 @foreach ($propertyInstallments as $installment)
                                                     <tr>
-                                                        <td><span class="vn-installment-badge">{{ filled((string) ($installment['installment_id'] ?? '')) ? $installment['installment_id'] : '—' }}</span></td>
-                                                        <td class="vn-installment-amount">{{ isset($installment['payment_amount']) && is_numeric($installment['payment_amount']) ? number_format((float) $installment['payment_amount'], 2) . ' $' : '—' }}</td>
+                                                        <td><span class="vn-installment-badge vn-child-badge vn-child-badge--gold">{{ filled((string) ($installment['installment_id'] ?? '')) ? $installment['installment_id'] : '—' }}</span></td>
+                                                        <td class="vn-installment-amount vn-child-amount">{{ isset($installment['payment_amount']) && is_numeric($installment['payment_amount']) ? number_format((float) $installment['payment_amount'], 2) . ' $' : '—' }}</td>
                                                         <td>{{ filled((string) ($installment['payment_date'] ?? '')) ? $installment['payment_date'] : '—' }}</td>
-                                                        <td class="vn-installment-amount">{{ isset($installment['remaining_after_payment']) && is_numeric($installment['remaining_after_payment']) ? number_format((float) $installment['remaining_after_payment'], 2) . ' $' : '—' }}</td>
+                                                        <td class="vn-installment-amount vn-child-amount">{{ isset($installment['remaining_after_payment']) && is_numeric($installment['remaining_after_payment']) ? number_format((float) $installment['remaining_after_payment'], 2) . ' $' : '—' }}</td>
                                                         <td>{{ filled((string) ($installment['installment_created_at'] ?? '')) ? $installment['installment_created_at'] : '—' }}</td>
                                                         <td>{{ filled((string) ($installment['installment_updated_at'] ?? '')) ? $installment['installment_updated_at'] : '—' }}</td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -564,13 +582,18 @@
                             @if ($propertySignals->isNotEmpty())
                                 <tr class="vn-property-signals-row" id="{{ $signalsRowId }}" data-property-signals-row hidden>
                                     <td colspan="28">
-                                        <div class="vn-property-signals-panel">
-                                            <table class="vn-property-signals-table">
+                                        <div class="vn-property-signals-panel vn-child-panel vn-child-panel--signals">
+                                            <div class="vn-child-panel__header">
+                                                <h4 class="vn-child-panel__title">الإشارات المرتبطة</h4>
+                                                <span class="vn-child-panel__meta">{{ number_format($propertySignals->count()) }} سجلات</span>
+                                            </div>
+                                            <div class="vn-child-panel__table-wrap">
+                                            <table class="vn-property-signals-table vn-child-table">
                                                 <thead><tr><th>رقم الإشارة</th><th>النوع</th><th>تاريخ الإشارة</th><th>صاحب الإشارة</th><th>مصدر الإشارة</th><th>رقم المصدر</th><th>تاريخ المصدر</th><th>المتضرر</th><th>ملاحظات</th><th>تاريخ الإضافة</th><th>آخر تعديل</th></tr></thead>
                                                 <tbody>
                                                 @foreach ($propertySignals as $signal)
                                                     <tr>
-                                                        <td><span class="vn-signal-badge">{{ filled((string) ($signal['signal_number'] ?? '')) ? $signal['signal_number'] : '—' }}</span></td>
+                                                        <td><span class="vn-signal-badge vn-child-badge vn-child-badge--gold">{{ filled((string) ($signal['signal_number'] ?? '')) ? $signal['signal_number'] : '—' }}</span></td>
                                                         <td>{{ filled((string) ($signal['signal_type'] ?? '')) ? $signal['signal_type'] : '—' }}</td>
                                                         <td>{{ filled((string) ($signal['signal_date'] ?? '')) ? $signal['signal_date'] : '—' }}</td>
                                                         <td>{{ filled((string) ($signal['signal_owners_label'] ?? '')) ? $signal['signal_owners_label'] : '—' }}</td>
@@ -578,13 +601,14 @@
                                                         <td>{{ filled((string) ($signal['signal_source_number'] ?? '')) ? $signal['signal_source_number'] : '—' }}</td>
                                                         <td>{{ filled((string) ($signal['signal_source_date'] ?? '')) ? $signal['signal_source_date'] : '—' }}</td>
                                                         <td>{{ filled((string) ($signal['signal_victims_label'] ?? '')) ? $signal['signal_victims_label'] : '—' }}</td>
-                                                        <td>{{ filled((string) ($signal['signal_notes'] ?? '')) ? $signal['signal_notes'] : '—' }}</td>
+                                                        <td class="vn-child-muted">{{ filled((string) ($signal['signal_notes'] ?? '')) ? $signal['signal_notes'] : '—' }}</td>
                                                         <td>{{ filled((string) ($signal['created_at'] ?? '')) ? $signal['created_at'] : '—' }}</td>
                                                         <td>{{ filled((string) ($signal['updated_at'] ?? '')) ? $signal['updated_at'] : '—' }}</td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
