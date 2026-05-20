@@ -209,23 +209,32 @@
                         $columnOptions = [
                             'id' => 'ID العقار',
                             'property_name' => 'اسم العقار',
-                            'record_number' => 'رقم المحضر',
-                            'property_number' => 'رقم العقار',
-                            'location' => 'الدولة / المحافظة / المنطقة',
-                            'subdivision' => 'التقسيم',
-                            'area' => 'المساحة',
-                            'value' => 'القيمة',
-                            'status' => 'الحالة',
-                            'investment_type' => 'نوع الاستثمار',
-                            'purchase_method' => 'طريقة الشراء',
+                            'property_country' => 'الدولة',
+                            'card_governorate' => 'المحافظة',
+                            'card_region_name' => 'المنطقة',
+                            'card_subdivision' => 'التقسيم',
+                            'card_record_number' => 'رقم المحضر',
+                            'card_property_number' => 'رقم العقار',
+                            'card_total_area' => 'المساحة',
+                            'card_area_unit' => 'وحدة المساحة',
+                            'total_property_value_usd' => 'القيمة الإجمالية',
+                            'owned_property_value_usd' => 'القيمة المملوكة',
+                            'actual_price_usd' => 'السعر الفعلي',
+                            'estimated_price_usd' => 'السعر التقريبي',
+                            'card_status' => 'الحالة',
+                            'card_investment_type' => 'نوع الاستثمار',
+                            'card_purchase_method' => 'طريقة الشراء',
+                            'card_sale_date' => 'تاريخ البيع',
+                            'final_balance' => 'الرصيد النهائي',
+                            'card_google_maps_url' => 'الخريطة',
                             'owners_count' => 'الملاك',
                             'operations_count' => 'العمليات',
                             'signals_count' => 'الإشارات',
                             'files_count' => 'الملفات',
-                            'installments_count' => 'الأقساط',
+                            'installments_count' => 'الدفعات',
                             'updated_at' => 'آخر تحديث',
-                            'details' => 'ملاحظات',
-                            'actions' => 'إجراءات',
+                            'card_property_details' => 'ملاحظات',
+                            'actions' => 'الإجراءات',
                         ];
                     @endphp
                     @foreach ($columnOptions as $key => $label)
@@ -267,34 +276,19 @@
                 <table>
                     <thead>
                         <tr>
-                            <th data-column-key="id">ID</th><th data-column-key="property_name">اسم العقار</th><th data-column-key="record_number">رقم المحضر</th><th data-column-key="property_number">رقم العقار</th><th data-column-key="location">الدولة / المحافظة / المنطقة</th><th data-column-key="subdivision">التقسيم</th><th data-column-key="area">المساحة</th><th data-column-key="value">القيمة</th><th data-column-key="status">الحالة</th><th data-column-key="investment_type">نوع الاستثمار</th><th data-column-key="purchase_method">طريقة الشراء</th><th data-column-key="owners_count">الملاك</th><th data-column-key="operations_count">العمليات</th><th data-column-key="signals_count">الإشارات</th><th data-column-key="files_count">الملفات</th><th data-column-key="installments_count">الأقساط</th><th data-column-key="updated_at">آخر تحديث</th><th data-column-key="details">ملاحظات</th><th data-column-key="actions">إجراءات</th>
+                            <th data-column-key="id">ID العقار</th><th data-column-key="property_name">اسم العقار</th><th data-column-key="property_country">الدولة</th><th data-column-key="card_governorate">المحافظة</th><th data-column-key="card_region_name">المنطقة</th><th data-column-key="card_subdivision">التقسيم</th><th data-column-key="card_record_number">رقم المحضر</th><th data-column-key="card_property_number">رقم العقار</th><th data-column-key="card_total_area">المساحة</th><th data-column-key="card_area_unit">وحدة المساحة</th><th data-column-key="total_property_value_usd">القيمة الإجمالية</th><th data-column-key="owned_property_value_usd">القيمة المملوكة</th><th data-column-key="actual_price_usd">السعر الفعلي</th><th data-column-key="estimated_price_usd">السعر التقريبي</th><th data-column-key="card_status">الحالة</th><th data-column-key="card_investment_type">نوع الاستثمار</th><th data-column-key="card_purchase_method">طريقة الشراء</th><th data-column-key="card_sale_date">تاريخ البيع</th><th data-column-key="final_balance">الرصيد النهائي</th><th data-column-key="card_google_maps_url">الخريطة</th><th data-column-key="owners_count">الملاك</th><th data-column-key="operations_count">العمليات</th><th data-column-key="signals_count">الإشارات</th><th data-column-key="files_count">الملفات</th><th data-column-key="installments_count">الدفعات</th><th data-column-key="updated_at">آخر تحديث</th><th data-column-key="card_property_details">ملاحظات</th><th data-column-key="actions">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($properties as $property)
                             @php
-                                $locationParts = [
-                                    ($columns['property_country'] ?? false) ? ($property->property_country ?? null) : null,
-                                    ($columns['card_governorate'] ?? false) ? ($property->card_governorate ?? null) : null,
-                                    ($columns['card_region_name'] ?? false) ? ($property->card_region_name ?? null) : null,
-                                ];
-                                $location = implode(' / ', array_values(array_filter($locationParts, fn ($part) => filled((string) $part))));
-
-                                $area = ($columns['card_total_area'] ?? false) ? $property->card_total_area : null;
-                                $areaUnitRaw = ($columns['card_area_unit'] ?? false) ? strtolower((string) ($property->card_area_unit ?? '')) : '';
+                                $areaUnitRaw = strtolower((string) (($columns['card_area_unit'] ?? false) ? ($property->card_area_unit ?? '') : ''));
                                 $areaUnit = match ($areaUnitRaw) {
+                                    'meters', 'square_meter' => 'م²',
                                     'shares' => 'سهم',
                                     'percentage' => '%',
-                                    default => 'م²',
+                                    default => filled($areaUnitRaw) ? $property->card_area_unit : '—',
                                 };
-
-                                $value = null;
-                                foreach (['total_property_value_usd', 'owned_property_value_usd', 'estimated_price_usd', 'actual_price_usd'] as $valueColumn) {
-                                    if (($columns[$valueColumn] ?? false) && filled($property->{$valueColumn})) {
-                                        $value = $property->{$valueColumn};
-                                        break;
-                                    }
-                                }
 
                                 $statusRaw = (string) (($columns['card_status'] ?? false) ? ($property->card_status ?? '') : '');
                                 $statusNormalized = strtolower(trim($statusRaw));
@@ -320,19 +314,34 @@
                                         $mapUrl = $candidateMapUrl;
                                     }
                                 }
-                            @endphp
+                                                        @endphp
                             <tr>
                                 <td data-column-key="id">{{ $property->id ?? '—' }}</td>
                                 <td data-column-key="property_name">{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
-                                <td data-column-key="record_number">{{ ($columns['card_record_number'] ?? false) ? ($property->card_record_number ?: '—') : '—' }}</td>
-                                <td data-column-key="property_number">{{ ($columns['card_property_number'] ?? false) ? ($property->card_property_number ?: '—') : '—' }}</td>
-                                <td data-column-key="location">{{ $location !== '' ? $location : '—' }}</td>
-                                <td data-column-key="subdivision">{{ ($columns['card_subdivision'] ?? false) ? ($property->card_subdivision ?: '—') : '—' }}</td>
-                                <td data-column-key="area">{{ filled($area) ? number_format((float) $area, 2) . ' ' . $areaUnit : '—' }}</td>
-                                <td data-column-key="value">{{ filled($value) ? number_format((float) $value, 2) . ' $' : '—' }}</td>
-                                <td data-column-key="status"><span class="vn-status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
-                                <td data-column-key="investment_type">{{ ($columns['card_investment_type'] ?? false) ? ($property->card_investment_type ?: '—') : '—' }}</td>
-                                <td data-column-key="purchase_method">{{ ($columns['card_purchase_method'] ?? false) ? ($property->card_purchase_method ?: '—') : '—' }}</td>
+                                <td data-column-key="property_country">{{ ($columns['property_country'] ?? false) ? ($property->property_country ?: '—') : '—' }}</td>
+                                <td data-column-key="card_governorate">{{ ($columns['card_governorate'] ?? false) ? ($property->card_governorate ?: '—') : '—' }}</td>
+                                <td data-column-key="card_region_name">{{ ($columns['card_region_name'] ?? false) ? ($property->card_region_name ?: '—') : '—' }}</td>
+                                <td data-column-key="card_subdivision">{{ ($columns['card_subdivision'] ?? false) ? ($property->card_subdivision ?: '—') : '—' }}</td>
+                                <td data-column-key="card_record_number">{{ ($columns['card_record_number'] ?? false) ? ($property->card_record_number ?: '—') : '—' }}</td>
+                                <td data-column-key="card_property_number">{{ ($columns['card_property_number'] ?? false) ? ($property->card_property_number ?: '—') : '—' }}</td>
+                                <td data-column-key="card_total_area">{{ ($columns['card_total_area'] ?? false) && filled($property->card_total_area) ? number_format((float) $property->card_total_area, 2) : '—' }}</td>
+                                <td data-column-key="card_area_unit">{{ ($columns['card_area_unit'] ?? false) ? $areaUnit : '—' }}</td>
+                                <td data-column-key="total_property_value_usd">{{ ($columns['total_property_value_usd'] ?? false) && filled($property->total_property_value_usd) ? number_format((float) $property->total_property_value_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="owned_property_value_usd">{{ ($columns['owned_property_value_usd'] ?? false) && filled($property->owned_property_value_usd) ? number_format((float) $property->owned_property_value_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="actual_price_usd">{{ ($columns['actual_price_usd'] ?? false) && filled($property->actual_price_usd) ? number_format((float) $property->actual_price_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="estimated_price_usd">{{ ($columns['estimated_price_usd'] ?? false) && filled($property->estimated_price_usd) ? number_format((float) $property->estimated_price_usd, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="card_status"><span class="vn-status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
+                                <td data-column-key="card_investment_type">{{ ($columns['card_investment_type'] ?? false) ? ($property->card_investment_type ?: '—') : '—' }}</td>
+                                <td data-column-key="card_purchase_method">{{ ($columns['card_purchase_method'] ?? false) ? ($property->card_purchase_method ?: '—') : '—' }}</td>
+                                <td data-column-key="card_sale_date">{{ ($columns['card_sale_date'] ?? false) ? ($property->card_sale_date ?: '—') : '—' }}</td>
+                                <td data-column-key="final_balance">{{ ($columns['final_balance'] ?? false) && filled($property->final_balance) ? number_format((float) $property->final_balance, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="card_google_maps_url">
+                                    @if (($columns['card_google_maps_url'] ?? false) && $mapUrl)
+                                        <a href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">الخريطة</a>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td data-column-key="owners_count">
                                     @php
                                         $operationOwners = collect($operationOwnersByProperty[$property->id] ?? []);
@@ -425,12 +434,9 @@
                                     @endif
                                 </td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
-                                <td data-column-key="details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
+                                <td data-column-key="card_property_details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
                                 <td data-column-key="actions">
                                     <div class="vn-row-actions">
-                                        @if ($mapUrl)
-                                            <a class="vn-row-action" href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">الخريطة</a>
-                                        @endif
                                         {{-- TODO: Connect this action when a viewer-new single property route is available. --}}
                                         <span class="vn-row-action vn-row-action--disabled" aria-disabled="true">استعراض</span>
                                     </div>
@@ -438,7 +444,7 @@
                             </tr>
                             @if ($propertyOperations->isNotEmpty())
                                 <tr class="vn-property-operations-row" id="{{ $operationsRowId }}" data-property-operations-row hidden>
-                                    <td colspan="19">
+                                    <td colspan="28">
                                         <div class="vn-property-operations-panel">
                                             <table class="vn-property-operations-table">
                                                 <thead>
@@ -497,7 +503,7 @@
 
                             @if ($propertyFiles->isNotEmpty())
                                 <tr class="vn-property-files-row" id="{{ $filesRowId }}" data-property-files-row hidden>
-                                    <td colspan="19">
+                                    <td colspan="28">
                                         <div class="vn-property-files-panel">
                                             <table class="vn-property-files-table">
                                                 <thead><tr><th>اسم الملف</th><th>تاريخ الإصدار</th><th>نوع الملف</th><th>الحجم KB</th><th>الحجم MB</th><th>القرص</th><th>المسار</th><th>تاريخ الإضافة</th><th>آخر تعديل</th><th>الإجراء</th></tr></thead>
@@ -534,7 +540,7 @@
 
                             @if ($propertyInstallments->isNotEmpty())
                                 <tr class="vn-property-installments-row" id="{{ $installmentsRowId }}" data-property-installments-row hidden>
-                                    <td colspan="19">
+                                    <td colspan="28">
                                         <div class="vn-property-installments-panel">
                                             <table class="vn-property-installments-table">
                                                 <thead><tr><th>رقم الدفعة</th><th>قيمة الدفعة</th><th>تاريخ الدفع</th><th>المتبقي بعد الدفع</th><th>تاريخ الإضافة</th><th>آخر تعديل</th></tr></thead>
@@ -557,7 +563,7 @@
                             @endif
                             @if ($propertySignals->isNotEmpty())
                                 <tr class="vn-property-signals-row" id="{{ $signalsRowId }}" data-property-signals-row hidden>
-                                    <td colspan="19">
+                                    <td colspan="28">
                                         <div class="vn-property-signals-panel">
                                             <table class="vn-property-signals-table">
                                                 <thead><tr><th>رقم الإشارة</th><th>النوع</th><th>تاريخ الإشارة</th><th>صاحب الإشارة</th><th>مصدر الإشارة</th><th>رقم المصدر</th><th>تاريخ المصدر</th><th>المتضرر</th><th>ملاحظات</th><th>تاريخ الإضافة</th><th>آخر تعديل</th></tr></thead>
