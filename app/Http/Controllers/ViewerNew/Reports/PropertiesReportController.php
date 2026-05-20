@@ -7,6 +7,7 @@ use App\Models\PropertyCard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use App\Models\PropertyOperation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -37,6 +38,7 @@ class PropertiesReportController extends Controller
 
         $propertyIds = $properties->getCollection()->pluck('id')->filter()->values()->all();
         $operationOwnersByProperty = $this->buildOperationOwnersForProperties($propertyIds);
+        $operationsByProperty = $this->buildOperationsForProperties($propertyIds);
 
         return view('viewer-new.reports.properties', [
             'metrics' => $this->buildMetrics($baseQuery, $property, $fieldAvailability),
@@ -50,9 +52,126 @@ class PropertiesReportController extends Controller
             'countryOptions' => $this->buildDistinctOptions($fieldAvailability, 'property_country'),
             'columns' => $fieldAvailability,
             'operationOwnersByProperty' => $operationOwnersByProperty,
+            'operationsByProperty' => $operationsByProperty,
         ]);
     }
 
+
+    private function buildOperationsForProperties(array $propertyIds): array
+    {
+        if ($propertyIds === [] || ! $this->canLoadOperations()) {
+            return [];
+        }
+
+        $operations = PropertyOperation::query()
+            ->with(['oldOwners', 'newOwners', 'propertyCard'])
+            ->whereIn('property_card_id', $propertyIds)
+            ->orderByDesc('id')
+            ->get();
+
+        $optionalOperationColumns = $this->resolveTableColumns('property_operations', [
+            'operation_type',
+            'operation_method',
+            'case_number',
+            'decision_number',
+            'authority',
+            'judgment_date',
+            'judgment_notes',
+            'contract_number',
+            'contract_date',
+            'contract_notes',
+        ]);
+
+        $grouped = [];
+
+        foreach ($operations as $operation) {
+            $propertyCardId = (int) ($operation->property_card_id ?? 0);
+            if ($propertyCardId <= 0) {
+                continue;
+            }
+
+            $transactionAmount = is_numeric($operation->transaction_amount) ? (float) $operation->transaction_amount : null;
+            $transactionUnit = is_string($operation->transaction_unit) ? strtolower(trim($operation->transaction_unit)) : null;
+            $cardArea = is_numeric(optional($operation->propertyCard)->card_total_area) ? (float) optional($operation->propertyCard)->card_total_area : null;
+
+            $sharesEquivalent = match ($transactionUnit) {
+                'shares' => $transactionAmount,
+                'percentage' => $transactionAmount !== null ? (self::TOTAL_SHARES_REFERENCE * $transactionAmount / 100) : null,
+                'square_meter', 'meters' => ($transactionAmount !== null && $cardArea && $cardArea > 0)
+                    ? (($transactionAmount / $cardArea) * self::TOTAL_SHARES_REFERENCE)
+                    : null,
+                default => null,
+            };
+
+            $grouped[$propertyCardId][] = [
+                'id' => (int) $operation->id,
+                'operation_type' => $optionalOperationColumns['operation_type'] ? ($operation->operation_type ?? null) : null,
+                'transaction_amount' => $transactionAmount,
+                'transaction_unit' => $transactionUnit,
+                'shares_equivalent' => $sharesEquivalent !== null ? round($sharesEquivalent, 2) : null,
+                'operation_method' => $optionalOperationColumns['operation_method'] ? ($operation->operation_method ?? null) : null,
+                'old_owners' => $operation->oldOwners->map(fn ($owner) => $this->resolveOwnerDisplayName($owner))->filter()->values()->all(),
+                'new_owners' => $operation->newOwners->map(fn ($owner) => $this->resolveOwnerDisplayName($owner))->filter()->values()->all(),
+                'case_number' => $optionalOperationColumns['case_number'] ? ($operation->case_number ?? null) : null,
+                'decision_number' => $optionalOperationColumns['decision_number'] ? ($operation->decision_number ?? null) : null,
+                'authority' => $optionalOperationColumns['authority'] ? ($operation->authority ?? null) : null,
+                'judgment_date' => $optionalOperationColumns['judgment_date'] ? ($operation->judgment_date ?? null) : null,
+                'contract_number' => $optionalOperationColumns['contract_number'] ? ($operation->contract_number ?? null) : null,
+                'contract_date' => $optionalOperationColumns['contract_date'] ? ($operation->contract_date ?? null) : null,
+                'notes' => $optionalOperationColumns['judgment_notes']
+                    ? ($operation->judgment_notes ?? null)
+                    : ($optionalOperationColumns['contract_notes'] ? ($operation->contract_notes ?? null) : null),
+            ];
+        }
+
+        return $grouped;
+    }
+
+    private function canLoadOperations(): bool
+    {
+        $requiredSchema = [
+            'property_operations' => ['id', 'property_card_id', 'transaction_amount', 'transaction_unit'],
+            'property_operation_old_owner' => ['property_operation_id', 'owner_id'],
+            'property_operation_new_owner' => ['property_operation_id', 'owner_id'],
+            'owners' => ['id'],
+            'property_cards' => ['id', 'card_total_area'],
+        ];
+
+        foreach ($requiredSchema as $table => $columns) {
+            if (! Schema::hasTable($table)) {
+                return false;
+            }
+
+            foreach ($columns as $column) {
+                if (! Schema::hasColumn($table, $column)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function resolveTableColumns(string $table, array $columns): array
+    {
+        if (! Schema::hasTable($table)) {
+            return array_fill_keys($columns, false);
+        }
+
+        $availability = [];
+        foreach ($columns as $column) {
+            $availability[$column] = Schema::hasColumn($table, $column);
+        }
+
+        return $availability;
+    }
+
+    private function resolveOwnerDisplayName(object $owner): string
+    {
+        $name = trim((string) ($owner->display_name ?? $owner->company_name ?? $owner->full_name ?? ''));
+
+        return $name !== '' ? $name : 'مالك غير محدد';
+    }
     private function buildOperationOwnersForProperties(array $propertyIds): array
     {
         if ($propertyIds === [] || ! $this->canCalculateOperationOwners()) {

@@ -375,3 +375,16 @@
 .viewer-new .vn-properties-report .vn-owner-pill--muted{opacity:.72;border-color:rgba(255,255,255,.2)}
 .viewer-new .vn-properties-report .vn-owner-pill--muted .vn-owner-pill__dot{background:#6b7280;box-shadow:none}
 .viewer-new .vn-properties-report .vn-owner-stack__more{font-size:.74rem;color:#b6aa91;padding-inline:.2rem}
+
+/* Stage 7: expandable property operations rows */
+.viewer-new .vn-properties-report .vn-operation-cell{display:grid;gap:.35rem;min-width:124px}
+.viewer-new .vn-properties-report .vn-operation-count{font-size:.8rem;color:#ead7a0}
+.viewer-new .vn-properties-report .vn-operation-toggle{width:max-content;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.12);color:#f1dc9f;padding:.22rem .58rem;border-radius:.48rem;font-size:.74rem;cursor:pointer}
+.viewer-new .vn-properties-report .vn-operation-muted{font-size:.8rem;color:#9fa5af}
+.viewer-new .vn-properties-report .vn-property-operations-row td{padding:.25rem .62rem .8rem;background:rgba(5,6,8,.65)}
+.viewer-new .vn-properties-report .vn-property-operations-panel{max-height:310px;overflow:auto;border:1px solid rgba(212,175,55,.36);border-radius:.72rem;background:linear-gradient(180deg,rgba(14,15,19,.97),rgba(10,11,14,.95));padding:.3rem}
+.viewer-new .vn-properties-report .vn-property-operations-table{width:100%;min-width:980px;border-collapse:collapse}
+.viewer-new .vn-properties-report .vn-property-operations-table th{font-size:.75rem;color:#e2c778;background:rgba(212,175,55,.08);padding:.5rem .55rem;border-bottom:1px solid rgba(212,175,55,.3);white-space:nowrap}
+.viewer-new .vn-properties-report .vn-property-operations-table td{font-size:.78rem;color:#ece7db;padding:.45rem .55rem;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+.viewer-new .vn-properties-report .vn-operation-owner-list{max-width:240px;word-break:break-word;line-height:1.7}
+.viewer-new .vn-properties-report .vn-operation-badge{display:inline-flex;align-items:center;padding:.12rem .48rem;border-radius:999px;border:1px solid rgba(212,175,55,.35);background:rgba(212,175,55,.11);color:#f2dfab;white-space:nowrap}

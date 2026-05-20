@@ -203,6 +203,29 @@
             if (panel?.classList.contains('is-open')) setPanelOpen(false);
         });
 
+
+        const operationToggles = [...reportRoot.querySelectorAll('[data-property-operations-toggle]')];
+        operationToggles.forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const targetId = toggle.getAttribute('data-target');
+                if (!targetId) return;
+
+                const row = reportRoot.querySelector(`#${CSS.escape(targetId)}`);
+                if (!row) return;
+
+                const isHidden = row.hasAttribute('hidden');
+                if (isHidden) {
+                    row.removeAttribute('hidden');
+                    toggle.setAttribute('aria-expanded', 'true');
+                    toggle.textContent = 'إخفاء العمليات';
+                } else {
+                    row.setAttribute('hidden', 'hidden');
+                    toggle.setAttribute('aria-expanded', 'false');
+                    toggle.textContent = 'عرض العمليات';
+                }
+            });
+        });
+
         fullscreenBtn?.addEventListener('click', () => {
             const target = reportRoot.querySelector('.vn-properties-table') || reportRoot;
             if (!document.fullscreenElement && target.requestFullscreen) { target.requestFullscreen().catch(() => {}); return; }
