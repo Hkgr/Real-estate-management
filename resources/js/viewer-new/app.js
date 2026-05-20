@@ -85,121 +85,121 @@
         const reportRoot = document.querySelector('.vn-properties-report');
         if (!reportRoot) return;
 
-        const FILTER_PANEL_KEY = 'viewer_new_properties_filters_open';
-        const form = reportRoot.querySelector('[data-properties-filter-form]');
-        const panel = reportRoot.querySelector('[data-properties-filter-panel]');
-        const toggleBtn = reportRoot.querySelector('[data-properties-filter-toggle]');
-        const searchInput = reportRoot.querySelector('#filter-q');
+        const GEN_KEY = 'viewer_new_properties_generator_open';
+        const COL_KEY = 'viewer_new_properties_visible_columns';
+        const defaultColumns = ['id','property_name','record_number','location','owners_count','area','value','status','updated_at','details','actions'];
+        const validColumnKeys = [
+            'id','property_name','record_number','property_number','location','subdivision','area','value','status',
+            'investment_type','purchase_method','owners_count','operations_count','signals_count','files_count',
+            'installments_count','updated_at','details','actions',
+        ];
+        const panel = reportRoot.querySelector('[data-report-generator-panel]');
+        const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
+        const form = reportRoot.querySelector('[data-report-generator-form]');
         const clearSearchBtn = reportRoot.querySelector('[data-properties-clear-search]');
+        const searchInput = reportRoot.querySelector('#filter-q');
+        const genBtn = reportRoot.querySelector('[data-generate-report]');
+        const resetBtn = reportRoot.querySelector('[data-reset-columns]');
+        const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
+        const table = reportRoot.querySelector('.vn-properties-table table');
+        const fullscreenBtn = reportRoot.querySelector('[data-properties-fullscreen]');
+
+        const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+        const safeSet = (k,v) => { try { localStorage.setItem(k,v); } catch (_) {} };
         const hasActiveFilters = reportRoot.querySelectorAll('.vn-active-filter-chip').length > 0;
 
-        let currentOpenState = true;
-
-        const readStoredState = () => {
-            try {
-                return localStorage.getItem(FILTER_PANEL_KEY);
-            } catch (_) {
-                return null;
-            }
+        const setPanelOpen = (open, persist = true) => {
+            if (!panel) return;
+            panel.classList.toggle('is-open', !!open);
+            toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (persist) safeSet(GEN_KEY, open ? '1' : '0');
         };
 
-        const writeStoredState = (isOpen) => {
-            try {
-                localStorage.setItem(FILTER_PANEL_KEY, isOpen ? '1' : '0');
-            } catch (_) {}
-        };
-
-        const updatePanelState = (isOpen, persist = true) => {
-            currentOpenState = !!isOpen;
-
-            if (panel) {
-                panel.hidden = !currentOpenState;
-                panel.setAttribute('aria-hidden', currentOpenState ? 'false' : 'true');
-            }
-
-            if (toggleBtn) {
-                toggleBtn.setAttribute('aria-expanded', currentOpenState ? 'true' : 'false');
-                toggleBtn.textContent = currentOpenState ? 'إخفاء الفلاتر' : 'إظهار الفلاتر';
-            }
-
-            if (persist) writeStoredState(currentOpenState);
-        };
-
-        const getActiveFilterFieldCount = () => {
-            if (!form) return 0;
-            const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
-            let count = 0;
-            fields.forEach((field) => {
-                const name = field.getAttribute('name') || '';
-                if (!name || field.disabled) return;
-
-                if ((field instanceof HTMLInputElement) && (field.type === 'checkbox' || field.type === 'radio')) {
-                    if (!field.checked) return;
-                }
-
-                const value = (field.value || '').trim();
-                if (value !== '') count += 1;
+        const applyColumns = (columns) => {
+            if (!table) return;
+            const selected = new Set(columns);
+            table.querySelectorAll('[data-column-key]').forEach((cell) => {
+                cell.style.display = selected.has(cell.getAttribute('data-column-key') || '') ? '' : 'none';
             });
-            return count;
         };
 
-        const initState = () => {
-            const stored = readStoredState();
-            if (hasActiveFilters && stored === null) {
-                updatePanelState(true, false);
-                return;
-            }
-
-            if (stored === '0') {
-                updatePanelState(false, false);
-                return;
-            }
-
-            updatePanelState(true, false);
+        const syncCheckboxes = (columns) => {
+            const selected = new Set(columns);
+            checkboxes.forEach((cb) => { cb.checked = selected.has(cb.value); });
         };
 
-        toggleBtn?.addEventListener('click', () => {
-            updatePanelState(!currentOpenState, true);
+        const getChecked = () => checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+        const normalizeColumns = (columns) => {
+            const input = Array.isArray(columns) ? columns : [];
+            const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
+            const hasDataColumn = filtered.some((key) => key !== 'actions');
+            return hasDataColumn ? filtered : defaultColumns;
+        };
+
+        const visibleFromStorage = (() => {
+            try {
+                const parsed = JSON.parse(safeGet(COL_KEY) || 'null');
+                return normalizeColumns(parsed);
+            } catch (_) {
+                return defaultColumns;
+            }
+        })();
+        syncCheckboxes(visibleFromStorage); applyColumns(visibleFromStorage);
+
+        const initialOpen = safeGet(GEN_KEY) === '1' || (hasActiveFilters && safeGet(GEN_KEY) === null);
+        setPanelOpen(initialOpen, false);
+
+        toggleBtn?.addEventListener('click', () => setPanelOpen(!panel?.classList.contains('is-open')));
+        genBtn?.addEventListener('click', () => {
+            let cols = normalizeColumns(getChecked());
+            syncCheckboxes(cols);
+            applyColumns(cols);
+            safeSet(COL_KEY, JSON.stringify(cols));
+            setPanelOpen(false);
+        });
+        resetBtn?.addEventListener('click', () => {
+            syncCheckboxes(defaultColumns); applyColumns(defaultColumns); safeSet(COL_KEY, JSON.stringify(defaultColumns));
         });
 
         clearSearchBtn?.addEventListener('click', () => {
-            if (!searchInput) return;
+            if (!searchInput || !form) return;
+            const qHadValue = (searchInput.value || '').trim() !== '';
             searchInput.value = '';
+            const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+            let hasOtherFilters = false;
+            fields.forEach((field) => {
+                const name = field.getAttribute('name');
+                if (!name || name === 'q' || field.disabled || hasOtherFilters) return;
+                if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
+                    if (field.checked) hasOtherFilters = true;
+                    return;
+                }
+                if ((field.value || '').trim() !== '') hasOtherFilters = true;
+            });
 
-            const activeFilterCount = getActiveFilterFieldCount();
-            if (activeFilterCount > 0 && form) {
+            if (hasOtherFilters) {
                 form.submit();
                 return;
             }
 
-            const actionUrl = form?.getAttribute('action') || window.location.pathname;
-            window.location.assign(actionUrl);
-        });
-
-        form?.querySelectorAll('[data-auto-submit="true"]').forEach((el) => {
-            const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
-            el.addEventListener(eventName, () => form.submit());
+            if (qHadValue) {
+                const actionUrl = form.getAttribute('action') || window.location.pathname;
+                window.location.assign(actionUrl);
+            }
         });
 
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
-
             const activeEl = document.activeElement;
-            const isInputLike = activeEl instanceof HTMLInputElement
-                || activeEl instanceof HTMLSelectElement
-                || activeEl instanceof HTMLTextAreaElement;
-
-            if (isInputLike && form?.contains(activeEl)) {
-                activeEl.blur();
-                return;
-            }
-
-            if (currentOpenState) {
-                updatePanelState(false, true);
-            }
+            if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLSelectElement || activeEl instanceof HTMLTextAreaElement) { activeEl.blur(); return; }
+            if (panel?.classList.contains('is-open')) setPanelOpen(false);
         });
 
-        initState();
+        fullscreenBtn?.addEventListener('click', () => {
+            const target = reportRoot.querySelector('.vn-properties-table') || reportRoot;
+            if (!document.fullscreenElement && target.requestFullscreen) { target.requestFullscreen().catch(() => {}); return; }
+            if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        });
     };
 
     updateClock();

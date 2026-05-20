@@ -346,3 +346,21 @@
   .viewer-new .vn-properties-report .vn-results-summary{font-size:.8rem;gap:.5rem}
   .viewer-new .vn-properties-report .vn-row-actions{min-width:110px}
 }
+
+/* Stage 6.5: properties report generator toolbar */
+.viewer-new .vn-properties-report .vn-report-toolbar{display:flex;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding:.8rem 1rem;background:#121317;border:1px solid rgba(212,175,55,.35);border-radius:.8rem}
+.viewer-new .vn-properties-report .vn-report-toolbar__search{display:flex;align-items:center;gap:.45rem;flex:1;min-width:260px}
+.viewer-new .vn-properties-report .vn-report-toolbar__search-label{color:var(--vn-pr-muted);font-size:.9rem}
+.viewer-new .vn-properties-report .vn-report-toolbar__search input{flex:1;background:#0c0d10;border:1px solid rgba(255,255,255,.12);color:#f2f3f5;border-radius:.55rem;padding:.5rem .7rem}
+.viewer-new .vn-properties-report .vn-report-toolbar__actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.viewer-new .vn-properties-report .vn-report-secondary-button,.viewer-new .vn-properties-report .vn-report-generate-button{border:1px solid rgba(255,255,255,.16);background:#17191f;color:#e5e5e5;padding:.5rem .8rem;border-radius:.55rem;cursor:pointer;text-decoration:none}
+.viewer-new .vn-properties-report .vn-report-generate-button{background:rgba(212,175,55,.15);border-color:rgba(212,175,55,.45);color:#d4af37}
+.viewer-new .vn-properties-report .vn-report-generate-button[aria-expanded="true"]{background:rgba(212,175,55,.28)}
+.viewer-new .vn-properties-report .vn-report-generator{display:none;padding:1rem;background:#131419;border:1px solid rgba(212,175,55,.3);border-radius:.8rem}
+.viewer-new .vn-properties-report .vn-report-generator.is-open{display:block}
+.viewer-new .vn-properties-report .vn-report-generator__filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.65rem}
+.viewer-new .vn-properties-report .vn-report-generator__filters label{display:block;color:var(--vn-pr-muted);font-size:.85rem;margin-bottom:.25rem}
+.viewer-new .vn-properties-report .vn-report-generator__filters input,.viewer-new .vn-properties-report .vn-report-generator__filters select{width:100%;background:#0c0d10;color:#f3f2ee;border:1px solid rgba(255,255,255,.12);border-radius:.5rem;padding:.45rem .6rem}
+.viewer-new .vn-properties-report .vn-report-generator__columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid rgba(255,255,255,.08)}
+.viewer-new .vn-properties-report .vn-report-column-option{display:flex;align-items:center;gap:.45rem;background:#1b1d23;border:1px solid rgba(255,255,255,.09);padding:.45rem .55rem;border-radius:.5rem}
+.viewer-new .vn-properties-report .vn-report-generator__actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}

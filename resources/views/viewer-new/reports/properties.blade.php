@@ -96,18 +96,23 @@
             @endforeach
         </section>
 
-        <section class="vn-report-filter-panel" aria-label="فلاتر التقرير">
-            <div class="vn-report-filter-panel__header">
-                <h2>فلاتر التقرير</h2>
-                <button type="button" data-properties-filter-toggle aria-expanded="true" aria-controls="vn-properties-filter-panel">إخفاء الفلاتر</button>
+        <section class="vn-report-toolbar" aria-label="شريط أدوات تقرير العقارات">
+            <div class="vn-report-toolbar__search">
+                <label for="filter-q" class="vn-report-toolbar__search-label">بحث شامل</label>
+                <input id="filter-q" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
+                <button type="button" class="vn-report-secondary-button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
             </div>
-            <div id="vn-properties-filter-panel" data-properties-filter-panel>
-            <form method="GET" action="{{ route('viewer-new.reports.properties') }}" class="vn-report-filter-grid" data-properties-filter-form>
-                <div>
-                    <label for="filter-q">بحث شامل</label>
-                    <input id="filter-q" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
-                    <button type="button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
-                </div>
+            <div class="vn-report-toolbar__actions">
+                <button type="button" class="vn-report-generate-button" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel">مولد تقارير</button>
+                <button type="button" class="vn-report-secondary-button" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير</button>
+                <button type="button" class="vn-report-secondary-button" data-properties-fullscreen>ملء الشاشة</button>
+            </div>
+        </section>
+
+        <section id="vn-properties-generator-panel" class="vn-report-generator is-open" data-report-generator-panel>
+            <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form>
+                <div class="vn-report-generator__filters">
+
                 <div>
                     <label for="filter-country">الدولة</label>
                     <select id="filter-country" name="country">
@@ -197,12 +202,46 @@
                     </div>
                 @endforeach
 
-                <div>
-                    <button type="submit">تطبيق الفلاتر</button>
-                    <a href="{{ route('viewer-new.reports.properties') }}">إعادة تعيين</a>
+                
+                </div>
+                <div class="vn-report-generator__columns" data-column-picker>
+                    @php
+                        $columnOptions = [
+                            'id' => 'ID العقار',
+                            'property_name' => 'اسم العقار',
+                            'record_number' => 'رقم المحضر',
+                            'property_number' => 'رقم العقار',
+                            'location' => 'الدولة / المحافظة / المنطقة',
+                            'subdivision' => 'التقسيم',
+                            'area' => 'المساحة',
+                            'value' => 'القيمة',
+                            'status' => 'الحالة',
+                            'investment_type' => 'نوع الاستثمار',
+                            'purchase_method' => 'طريقة الشراء',
+                            'owners_count' => 'الملاك',
+                            'operations_count' => 'العمليات',
+                            'signals_count' => 'الإشارات',
+                            'files_count' => 'الملفات',
+                            'installments_count' => 'الأقساط',
+                            'updated_at' => 'آخر تحديث',
+                            'details' => 'ملاحظات',
+                            'actions' => 'إجراءات',
+                        ];
+                    @endphp
+                    @foreach ($columnOptions as $key => $label)
+                        <label class="vn-report-column-option">
+                            <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
+                            <span>{{ $label }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                <div class="vn-report-generator__actions">
+                    <button type="submit" class="vn-report-secondary-button">تطبيق الفلاتر</button>
+                    <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-secondary-button">إعادة تعيين</a>
+                    <button type="button" class="vn-report-secondary-button" data-reset-columns>إعادة الافتراضي</button>
+                    <button type="button" class="vn-report-generate-button" data-generate-report>توليد تقرير</button>
                 </div>
             </form>
-            </div>
         </section>
 
         <section class="vn-active-filter-chips" aria-label="الفلاتر المفعلة">
@@ -228,7 +267,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th><th>اسم العقار</th><th>رقم المحضر</th><th>رقم العقار</th><th>الدولة / المحافظة / المنطقة</th><th>التقسيم</th><th>المساحة</th><th>القيمة</th><th>الحالة</th><th>نوع الاستثمار</th><th>طريقة الشراء</th><th>الملاك</th><th>العمليات</th><th>الإشارات</th><th>الملفات</th><th>الأقساط</th><th>آخر تحديث</th><th>ملاحظات</th><th>إجراءات</th>
+                            <th data-column-key="id">ID</th><th data-column-key="property_name">اسم العقار</th><th data-column-key="record_number">رقم المحضر</th><th data-column-key="property_number">رقم العقار</th><th data-column-key="location">الدولة / المحافظة / المنطقة</th><th data-column-key="subdivision">التقسيم</th><th data-column-key="area">المساحة</th><th data-column-key="value">القيمة</th><th data-column-key="status">الحالة</th><th data-column-key="investment_type">نوع الاستثمار</th><th data-column-key="purchase_method">طريقة الشراء</th><th data-column-key="owners_count">الملاك</th><th data-column-key="operations_count">العمليات</th><th data-column-key="signals_count">الإشارات</th><th data-column-key="files_count">الملفات</th><th data-column-key="installments_count">الأقساط</th><th data-column-key="updated_at">آخر تحديث</th><th data-column-key="details">ملاحظات</th><th data-column-key="actions">إجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -283,25 +322,25 @@
                                 }
                             @endphp
                             <tr>
-                                <td>{{ $property->id ?? '—' }}</td>
-                                <td>{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
-                                <td>{{ ($columns['card_record_number'] ?? false) ? ($property->card_record_number ?: '—') : '—' }}</td>
-                                <td>{{ ($columns['card_property_number'] ?? false) ? ($property->card_property_number ?: '—') : '—' }}</td>
-                                <td>{{ $location !== '' ? $location : '—' }}</td>
-                                <td>{{ ($columns['card_subdivision'] ?? false) ? ($property->card_subdivision ?: '—') : '—' }}</td>
-                                <td>{{ filled($area) ? number_format((float) $area, 2) . ' ' . $areaUnit : '—' }}</td>
-                                <td>{{ filled($value) ? number_format((float) $value, 2) . ' $' : '—' }}</td>
-                                <td><span class="vn-status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
-                                <td>{{ ($columns['card_investment_type'] ?? false) ? ($property->card_investment_type ?: '—') : '—' }}</td>
-                                <td>{{ ($columns['card_purchase_method'] ?? false) ? ($property->card_purchase_method ?: '—') : '—' }}</td>
-                                <td>{{ $property->owners_count ?? '—' }}</td>
-                                <td>{{ $property->operations_count ?? '—' }}</td>
-                                <td>{{ $property->signals_count ?? '—' }}</td>
-                                <td>{{ $property->files_count ?? '—' }}</td>
-                                <td>{{ $property->installments_count ?? '—' }}</td>
-                                <td>{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
-                                <td>{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
-                                <td>
+                                <td data-column-key="id">{{ $property->id ?? '—' }}</td>
+                                <td data-column-key="property_name">{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
+                                <td data-column-key="record_number">{{ ($columns['card_record_number'] ?? false) ? ($property->card_record_number ?: '—') : '—' }}</td>
+                                <td data-column-key="property_number">{{ ($columns['card_property_number'] ?? false) ? ($property->card_property_number ?: '—') : '—' }}</td>
+                                <td data-column-key="location">{{ $location !== '' ? $location : '—' }}</td>
+                                <td data-column-key="subdivision">{{ ($columns['card_subdivision'] ?? false) ? ($property->card_subdivision ?: '—') : '—' }}</td>
+                                <td data-column-key="area">{{ filled($area) ? number_format((float) $area, 2) . ' ' . $areaUnit : '—' }}</td>
+                                <td data-column-key="value">{{ filled($value) ? number_format((float) $value, 2) . ' $' : '—' }}</td>
+                                <td data-column-key="status"><span class="vn-status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
+                                <td data-column-key="investment_type">{{ ($columns['card_investment_type'] ?? false) ? ($property->card_investment_type ?: '—') : '—' }}</td>
+                                <td data-column-key="purchase_method">{{ ($columns['card_purchase_method'] ?? false) ? ($property->card_purchase_method ?: '—') : '—' }}</td>
+                                <td data-column-key="owners_count">{{ $property->owners_count ?? '—' }}</td>
+                                <td data-column-key="operations_count">{{ $property->operations_count ?? '—' }}</td>
+                                <td data-column-key="signals_count">{{ $property->signals_count ?? '—' }}</td>
+                                <td data-column-key="files_count">{{ $property->files_count ?? '—' }}</td>
+                                <td data-column-key="installments_count">{{ $property->installments_count ?? '—' }}</td>
+                                <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
+                                <td data-column-key="details">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
+                                <td data-column-key="actions">
                                     <div class="vn-row-actions">
                                         @if ($mapUrl)
                                             <a class="vn-row-action" href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">الخريطة</a>
