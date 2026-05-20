@@ -27,6 +27,10 @@ class PropertiesReportController extends Controller
 
         $this->applySafeCounts($reportQuery, $property);
 
+        if ($this->relationIsAvailable($property, 'owners')) {
+            $reportQuery->with('owners');
+        }
+
         $properties = $reportQuery
             ->latest('id')
             ->paginate(15)
