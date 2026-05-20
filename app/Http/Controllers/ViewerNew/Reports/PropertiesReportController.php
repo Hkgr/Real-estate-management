@@ -404,6 +404,10 @@ class PropertiesReportController extends Controller
         foreach ($decoded as $item) {
             if (is_array($item)) {
                 $candidate = trim((string) ($item['name'] ?? $item['full_name'] ?? $item['label'] ?? ''));
+
+                if ($candidate === '' && isset($item['owner_id']) && is_numeric($item['owner_id'])) {
+                    $candidate = 'مالك #' . (string) ((int) $item['owner_id']);
+                }
             } else {
                 $candidate = trim((string) $item);
             }
