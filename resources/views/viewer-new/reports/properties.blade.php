@@ -366,7 +366,22 @@
                                         —
                                     @endif
                                 </td>
-                                <td data-column-key="operations_count">{{ $property->operations_count ?? '—' }}</td>
+                                <td data-column-key="operations_count">
+                                    @php
+                                        $propertyOperations = collect($operationsByProperty[$property->id] ?? []);
+                                        $operationsRowId = 'operations-row-' . $property->id;
+                                        $operationsCount = (int) ($property->operations_count ?? $propertyOperations->count());
+                                    @endphp
+
+                                    @if ($propertyOperations->isNotEmpty())
+                                        <div class="vn-operation-cell">
+                                            <span class="vn-operation-count">{{ number_format($operationsCount) }} عمليات</span>
+                                            <button type="button" class="vn-operation-toggle" data-property-operations-toggle data-target="{{ $operationsRowId }}" aria-expanded="false" aria-controls="{{ $operationsRowId }}">عرض العمليات</button>
+                                        </div>
+                                    @else
+                                        <span class="vn-operation-muted">{{ $operationsCount > 0 ? number_format($operationsCount) . ' عمليات' : '—' }}</span>
+                                    @endif
+                                </td>
                                 <td data-column-key="signals_count">{{ $property->signals_count ?? '—' }}</td>
                                 <td data-column-key="files_count">{{ $property->files_count ?? '—' }}</td>
                                 <td data-column-key="installments_count">{{ $property->installments_count ?? '—' }}</td>
@@ -382,6 +397,64 @@
                                     </div>
                                 </td>
                             </tr>
+                            @if ($propertyOperations->isNotEmpty())
+                                <tr class="vn-property-operations-row" id="{{ $operationsRowId }}" data-property-operations-row hidden>
+                                    <td colspan="19">
+                                        <div class="vn-property-operations-panel">
+                                            <table class="vn-property-operations-table">
+                                                <thead>
+                                                <tr>
+                                                    <th>العملية</th><th>مقدار التصرف</th><th>ما يعادلها بالأسهم</th><th>المالك القديم</th><th>المالك الجديد</th><th>الطريقة</th><th>القرار / العقد</th><th>التاريخ</th><th>ملاحظات</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach ($propertyOperations as $operation)
+                                                    @php
+                                                        $operationTypeRaw = strtolower((string) ($operation['operation_type'] ?? ''));
+                                                        $operationTypeLabel = match ($operationTypeRaw) {
+                                                            'acquisition' => 'اكتساب',
+                                                            'sale' => 'بيع',
+                                                            'transfer' => 'نقل ملكية',
+                                                            'court_judgment' => 'حكم قضائي',
+                                                            'regular_contract' => 'عقد عادي',
+                                                            'commercial_register_contract' => 'عقد سجل تجاري',
+                                                            default => filled((string) ($operation['operation_type'] ?? '')) ? $operation['operation_type'] : '—',
+                                                        };
+                                                        $unitRaw = strtolower((string) ($operation['transaction_unit'] ?? ''));
+                                                        $unitLabel = match ($unitRaw) {
+                                                            'shares' => 'سهم',
+                                                            'percentage' => '%',
+                                                            'square_meter', 'meters' => 'م²',
+                                                            default => filled($unitRaw) ? $unitRaw : '',
+                                                        };
+                                                        $oldOwnersLabel = ! empty($operation['old_owners']) ? implode('، ', $operation['old_owners']) : '—';
+                                                        $newOwnersLabel = ! empty($operation['new_owners']) ? implode('، ', $operation['new_owners']) : '—';
+                                                        $decisionContract = collect([
+                                                            filled((string) ($operation['case_number'] ?? '')) ? 'قضية: ' . $operation['case_number'] : null,
+                                                            filled((string) ($operation['decision_number'] ?? '')) ? 'قرار: ' . $operation['decision_number'] : null,
+                                                            filled((string) ($operation['authority'] ?? '')) ? 'جهة: ' . $operation['authority'] : null,
+                                                            filled((string) ($operation['contract_number'] ?? '')) ? 'عقد: ' . $operation['contract_number'] : null,
+                                                        ])->filter()->implode(' • ');
+                                                        $operationDate = $operation['judgment_date'] ?? $operation['contract_date'] ?? null;
+                                                    @endphp
+                                                    <tr>
+                                                        <td><span class="vn-operation-badge">{{ $operationTypeLabel }}</span></td>
+                                                        <td>{{ filled($operation['transaction_amount']) ? number_format((float) $operation['transaction_amount'], 2) . ($unitLabel !== '' ? ' ' . $unitLabel : '') : '—' }}</td>
+                                                        <td>{{ filled($operation['shares_equivalent']) ? number_format((float) $operation['shares_equivalent'], 2) : '—' }}</td>
+                                                        <td class="vn-operation-owner-list">{{ $oldOwnersLabel }}</td>
+                                                        <td class="vn-operation-owner-list">{{ $newOwnersLabel }}</td>
+                                                        <td>{{ filled((string) ($operation['operation_method'] ?? '')) ? $operation['operation_method'] : '—' }}</td>
+                                                        <td>{{ $decisionContract !== '' ? $decisionContract : '—' }}</td>
+                                                        <td>{{ filled((string) $operationDate) ? $operationDate : '—' }}</td>
+                                                        <td>{{ filled((string) ($operation['notes'] ?? '')) ? $operation['notes'] : '—' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
