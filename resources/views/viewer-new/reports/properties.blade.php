@@ -96,10 +96,16 @@
         </section>
 
         <section class="vn-report-filter-panel" aria-label="فلاتر التقرير">
-            <form method="GET" action="{{ route('viewer-new.reports.properties') }}" class="vn-report-filter-grid">
+            <div class="vn-report-filter-panel__header">
+                <h2>فلاتر التقرير</h2>
+                <button type="button" data-properties-filter-toggle aria-expanded="true" aria-controls="vn-properties-filter-panel">إخفاء الفلاتر</button>
+            </div>
+            <div id="vn-properties-filter-panel" data-properties-filter-panel>
+            <form method="GET" action="{{ route('viewer-new.reports.properties') }}" class="vn-report-filter-grid" data-properties-filter-form>
                 <div>
                     <label for="filter-q">بحث شامل</label>
                     <input id="filter-q" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
+                    <button type="button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
                 </div>
                 <div>
                     <label for="filter-country">الدولة</label>
@@ -195,6 +201,7 @@
                     <a href="{{ route('viewer-new.reports.properties') }}">إعادة تعيين</a>
                 </div>
             </form>
+            </div>
         </section>
 
         <section class="vn-active-filter-chips" aria-label="الفلاتر المفعلة">
