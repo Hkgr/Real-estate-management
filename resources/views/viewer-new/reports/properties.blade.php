@@ -15,6 +15,15 @@
         $currentPage = $hasPaginator ? $paginator->currentPage() : 1;
         $lastPage = $hasPaginator ? $paginator->lastPage() : 1;
         $currentCount = $hasPaginator ? $paginator->count() : 0;
+        $propertyTableColspan = 28;
+        $propertyTableColumnKeys = [
+            'id', 'property_name', 'property_country', 'card_governorate', 'card_region_name',
+            'card_subdivision', 'card_record_number', 'card_property_number', 'card_total_area',
+            'card_area_unit', 'total_property_value_usd', 'owned_property_value_usd', 'actual_price_usd',
+            'estimated_price_usd', 'card_status', 'card_investment_type', 'card_purchase_method',
+            'card_sale_date', 'final_balance', 'card_google_maps_url', 'owners_count', 'operations_count',
+            'signals_count', 'files_count', 'installments_count', 'updated_at', 'card_property_details', 'actions',
+        ];
 
         $kpiItems = [
             ['label' => 'عدد العقارات', 'value' => $metrics['total_properties'] ?? '—'],
@@ -69,47 +78,54 @@
         }
     @endphp
 
-    <section class="vn-properties-report">
-        <header class="vn-report-hero">
-            <div class="vn-report-hero__content">
-                <p>تقرير العقارات الكامل</p>
-                <h1>تقرير العقارات</h1>
-                <p>جميع بطاقات العقارات والبيانات المرتبطة بها — مع تصفية متقدمة واستعراض منظم</p>
-            </div>
-            <div class="vn-report-hero__meta">
-                <a href="{{ route('viewer-new.reports') }}">العودة إلى بوابة التقارير</a>
-                {{-- TODO: Connect export actions when a viewer-new properties export route is available. --}}
-                <span>إجمالي النتائج: {{ number_format((int) $totalResults) }}</span>
-                <div>
-                    <strong>{{ $metrics['total_area'] ?? '—' }}</strong>
-                    <small>المساحة الإجمالية ضمن نتائج البحث الحالية</small>
+    <section class="vn-properties-report" id="page-properties">
+        <header class="page-header vn-report-hero">
+            <div class="page-header-row vn-report-hero__row">
+                <div class="vn-report-hero__content">
+                    <div class="page-eyebrow">تقرير العقارات الكامل</div>
+                    <h1 class="page-title">تقرير <em>العقارات</em></h1>
+                    <p class="page-subtitle">جميع بطاقات العقارات والبيانات المرتبطة بها — مع تصفية متقدمة واستعراض منظم</p>
+                </div>
+                <div id="props-cards-float" class="vn-report-hero__meta-wrap">
+                    <div class="selection-card vn-report-hero__meta">
+                        <div class="selection-title">ملخص النتائج الحالية</div>
+                        <a href="{{ route('viewer-new.reports') }}" class="vn-report-hero__back">العودة إلى بوابة التقارير</a>
+                        <div class="selection-main-value" id="vn-selection-area">{{ $metrics['total_area'] ?? '—' }}</div>
+                        <div class="selection-subvalue" id="vn-selection-count">إجمالي النتائج: {{ number_format((int) $totalResults) }}</div>
+                        <div class="selection-bar" aria-hidden="true"><div class="selection-bar-fill" id="vn-selection-bar-fill" style="width:{{ $totalResults > 0 ? '100' : '0' }}%"></div></div>
+                        <div class="selection-meta">
+                            <span id="vn-selection-mode">نتائج البحث الحالية</span>
+                            <span id="vn-selection-share">{{ number_format((int) $currentCount) }} معروض</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <section class="vn-report-kpi-grid" aria-label="مؤشرات تقرير العقارات">
+        <section class="stats-grid vn-report-kpi-grid" aria-label="مؤشرات تقرير العقارات">
             @foreach ($kpiItems as $item)
-                <article class="vn-report-kpi-card">
-                    <h3>{{ $item['label'] }}</h3>
-                    <p>{{ filled((string) ($item['value'] ?? null)) ? $item['value'] : '—' }}</p>
+                <article class="stat-card vn-report-kpi-card">
+                    <div class="stat-label">{{ $item['label'] }}</div>
+                    <div class="stat-value">{{ filled((string) ($item['value'] ?? null)) ? $item['value'] : '—' }}</div>
                 </article>
             @endforeach
         </section>
 
-        <section class="vn-report-toolbar" aria-label="شريط أدوات تقرير العقارات">
-            <div class="vn-report-toolbar__search">
-                <label for="filter-q" class="vn-report-toolbar__search-label">بحث شامل</label>
-                <input id="filter-q" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
-                <button type="button" class="vn-report-toolbar-button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
-            </div>
-            <div class="vn-report-toolbar__actions">
-                <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary vn-report-toolbar-button--active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel">مولد تقارير</button>
-                <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير</button>
-                <button type="button" class="vn-report-toolbar-button" data-properties-fullscreen>ملء الشاشة</button>
+        <div id="vn-properties-focus-target" class="report-focus-target" data-properties-focus-target>
+        <section class="table-toolbar vn-report-toolbar" aria-label="شريط أدوات تقرير العقارات">
+            <div class="toolbar-main-actions vn-report-toolbar__main">
+                <div class="toolbar-inline-search vn-report-toolbar__search active" id="vn-toolbar-inline-search">
+                    <label for="filter-q" class="vn-report-toolbar__search-label filter-label">بحث شامل</label>
+                    <input id="filter-q" class="search-input" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
+                    <button type="button" class="toolbar-search-close vn-report-toolbar-button" data-properties-clear-search aria-label="مسح البحث">✕</button>
+                </div>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--primary active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel" id="toolbar-main-reports">مولد تقارير</button>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير ▾</button>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-properties-fullscreen id="properties-fullscreen-btn">⛶ ملء الشاشة</button>
             </div>
         </section>
 
-        <section id="vn-properties-generator-panel" class="vn-report-generator is-open" data-report-generator-panel>
+        <section id="vn-properties-generator-panel" class="toolbar-mode-panel vn-report-generator is-open" data-report-generator-panel>
             <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form>
                 <div class="vn-report-generator__filters">
 
@@ -244,6 +260,10 @@
                         </label>
                     @endforeach
                 </div>
+                <div class="vn-col-pin-bar" data-properties-pin-bar>
+                    <button type="button" class="vn-col-unpin-all" data-properties-unpin-all>إلغاء تثبيت الكل</button>
+                    <span class="vn-col-pin-count" data-properties-pin-count></span>
+                </div>
                 <div class="vn-report-generator__actions">
                     <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
                     <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
@@ -272,11 +292,54 @@
         </section>
 
         @if ($currentCount > 0)
-            <div class="vn-table-responsive vn-properties-table">
-                <table>
+            <div class="vn-table-card vn-property-table-card">
+            <div class="vn-table-with-scroll">
+            <div class="vn-table-responsive vn-properties-table" id="vn-properties-overflow">
+                <table id="vn-properties-table" class="vn-big-table" data-property-table-colspan="{{ $propertyTableColspan }}">
+                    <colgroup id="vn-properties-colgroup">
+                        @foreach ($propertyTableColumnKeys as $colKey)
+                            @php
+                                $colStyle = match ($colKey) {
+                                    'id' => 'width:110px;min-width:110px',
+                                    'property_name' => 'min-width:200px;width:15%',
+                                    'owners_count' => 'min-width:190px;width:12%',
+                                    'card_property_details', 'actions' => 'width:1px',
+                                    default => 'width:1px',
+                                };
+                            @endphp
+                            <col class="vn-col-{{ $colKey }}" data-column-key="{{ $colKey }}" style="{{ $colStyle }}">
+                        @endforeach
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th data-column-key="id">ID العقار</th><th data-column-key="property_name">اسم العقار</th><th data-column-key="property_country">الدولة</th><th data-column-key="card_governorate">المحافظة</th><th data-column-key="card_region_name">المنطقة</th><th data-column-key="card_subdivision">التقسيم</th><th data-column-key="card_record_number">رقم المحضر</th><th data-column-key="card_property_number">رقم العقار</th><th data-column-key="card_total_area">المساحة</th><th data-column-key="card_area_unit">وحدة المساحة</th><th data-column-key="total_property_value_usd">القيمة الإجمالية</th><th data-column-key="owned_property_value_usd">القيمة المملوكة</th><th data-column-key="actual_price_usd">السعر الفعلي</th><th data-column-key="estimated_price_usd">السعر التقريبي</th><th data-column-key="card_status">الحالة</th><th data-column-key="card_investment_type">نوع الاستثمار</th><th data-column-key="card_purchase_method">طريقة الشراء</th><th data-column-key="card_sale_date">تاريخ البيع</th><th data-column-key="final_balance">الرصيد النهائي</th><th data-column-key="card_google_maps_url">الخريطة</th><th data-column-key="owners_count">الملاك</th><th data-column-key="operations_count">العمليات</th><th data-column-key="signals_count">الإشارات</th><th data-column-key="files_count">الملفات</th><th data-column-key="installments_count">الدفعات</th><th data-column-key="updated_at">آخر تحديث</th><th data-column-key="card_property_details">ملاحظات</th><th data-column-key="actions">الإجراءات</th>
+                            <th data-column-key="id"><div class="vn-th-inner">ID العقار</div></th>
+                            <th data-column-key="property_name"><div class="vn-th-inner">اسم العقار</div></th>
+                            <th data-column-key="property_country"><div class="vn-th-inner">الدولة</div></th>
+                            <th data-column-key="card_governorate"><div class="vn-th-inner">المحافظة</div></th>
+                            <th data-column-key="card_region_name"><div class="vn-th-inner">المنطقة</div></th>
+                            <th data-column-key="card_subdivision"><div class="vn-th-inner">التقسيم</div></th>
+                            <th data-column-key="card_record_number"><div class="vn-th-inner">رقم المحضر</div></th>
+                            <th data-column-key="card_property_number"><div class="vn-th-inner">رقم العقار</div></th>
+                            <th data-column-key="card_total_area"><div class="vn-th-inner">المساحة</div></th>
+                            <th data-column-key="card_area_unit"><div class="vn-th-inner">وحدة المساحة</div></th>
+                            <th data-column-key="total_property_value_usd"><div class="vn-th-inner">القيمة الإجمالية</div></th>
+                            <th data-column-key="owned_property_value_usd"><div class="vn-th-inner">القيمة المملوكة</div></th>
+                            <th data-column-key="actual_price_usd"><div class="vn-th-inner">السعر الفعلي</div></th>
+                            <th data-column-key="estimated_price_usd"><div class="vn-th-inner">السعر التقريبي</div></th>
+                            <th data-column-key="card_status"><div class="vn-th-inner">الحالة</div></th>
+                            <th data-column-key="card_investment_type"><div class="vn-th-inner">نوع الاستثمار</div></th>
+                            <th data-column-key="card_purchase_method"><div class="vn-th-inner">طريقة الشراء</div></th>
+                            <th data-column-key="card_sale_date"><div class="vn-th-inner">تاريخ البيع</div></th>
+                            <th data-column-key="final_balance"><div class="vn-th-inner">الرصيد النهائي</div></th>
+                            <th data-column-key="card_google_maps_url"><div class="vn-th-inner">الخريطة</div></th>
+                            <th data-column-key="owners_count"><div class="vn-th-inner">الملاك</div></th>
+                            <th data-column-key="operations_count"><div class="vn-th-inner">العمليات</div></th>
+                            <th data-column-key="signals_count"><div class="vn-th-inner">الإشارات</div></th>
+                            <th data-column-key="files_count"><div class="vn-th-inner">الملفات</div></th>
+                            <th data-column-key="installments_count"><div class="vn-th-inner">الدفعات</div></th>
+                            <th data-column-key="updated_at"><div class="vn-th-inner">آخر تحديث</div></th>
+                            <th data-column-key="card_property_details"><div class="vn-th-inner">ملاحظات</div></th>
+                            <th data-column-key="actions"><div class="vn-th-inner">الإجراءات</div></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -434,7 +497,20 @@
                                     @endif
                                 </td>
                                 <td data-column-key="updated_at">{{ ($columns['updated_at'] ?? false) && $property->updated_at ? $property->updated_at->format('Y-m-d H:i') : '—' }}</td>
-                                <td data-column-key="card_property_details" class="vn-table-text-long">{{ ($columns['card_property_details'] ?? false) ? ($property->card_property_details ?: '—') : '—' }}</td>
+                                @php
+                                    $notesRowId = 'notes-row-' . $property->id;
+                                    $propertyNotes = trim((string) ($property->card_property_details ?? ''));
+                                    $hasPropertyNotes = ($columns['card_property_details'] ?? false) && $propertyNotes !== '';
+                                @endphp
+                                <td data-column-key="card_property_details" class="vn-table-notes-cell">
+                                    @if ($hasPropertyNotes)
+                                        <button type="button" class="vn-details-toggle" data-property-notes-toggle data-target="{{ $notesRowId }}" aria-expanded="false" aria-controls="{{ $notesRowId }}" aria-label="عرض ملاحظات العقار">
+                                            <span>ملاحظات</span><span aria-hidden="true">▾</span>
+                                        </button>
+                                    @else
+                                        <span class="vn-notes-muted">—</span>
+                                    @endif
+                                </td>
                                 <td data-column-key="actions">
                                     <div class="vn-row-actions">
                                         {{-- TODO: Connect this action when a viewer-new single property route is available. --}}
@@ -442,6 +518,15 @@
                                     </div>
                                 </td>
                             </tr>
+                            @if ($hasPropertyNotes)
+                                <tr class="vn-property-notes-row vn-detail-row" id="{{ $notesRowId }}" data-property-notes-row>
+                                    <td colspan="{{ $propertyTableColspan }}" class="vn-detail-cell">
+                                        <div class="vn-property-notes-wrap">
+                                            <p class="vn-property-notes-text">{{ $propertyNotes }}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                             @if ($propertyOperations->isNotEmpty())
                                 <tr class="vn-property-operations-row" id="{{ $operationsRowId }}" data-property-operations-row hidden>
                                     <td colspan="28">
@@ -617,10 +702,153 @@
                     </tbody>
                 </table>
             </div>
+            </div>
+            </div>
 
             @include('viewer-new.partials.pagination', ['paginator' => $properties ?? null])
         @else
             @include('viewer-new.partials.empty-state', ['message' => 'لم يتم العثور على عقارات وفقاً لعوامل البحث الحالية.'])
         @endif
     </section>
+
+    {{-- Fallback until Vite assets are rebuilt (production manifest may lag source). --}}
+    @if ($currentCount > 0)
+        @php
+            $propertiesTableFallbackVersion = '2';
+        @endphp
+        <style>
+            .viewer-new .vn-properties-report .vn-detail-row{display:none;background:rgba(0,0,0,.4)}
+            .viewer-new .vn-properties-report .vn-detail-row.open{display:table-row}
+            .viewer-new .vn-properties-report col.vn-col-notes{width:1px}
+            .viewer-new .vn-properties-report .vn-properties-table th[data-column-key="card_property_details"],
+            .viewer-new .vn-properties-report .vn-properties-table td.vn-table-notes-cell{width:1px;max-width:108px;min-width:0;padding:.5rem .45rem!important;white-space:nowrap;text-align:center}
+            .viewer-new .vn-properties-report .vn-details-toggle{padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.1);color:#a8adb7;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+            .viewer-new .vn-properties-report .vn-details-toggle span{font-size:12px}
+            .viewer-new .vn-properties-report .vn-details-toggle:hover{border-color:rgba(212,175,55,.35);color:#e8d48b;background:rgba(212,175,55,.06)}
+            .viewer-new .vn-properties-report .vn-details-toggle.open{border-color:rgba(212,175,55,.4);color:#e8d48b;background:rgba(212,175,55,.08)}
+            .viewer-new .vn-properties-report .vn-detail-row td.vn-detail-cell{padding:16px 24px;line-height:1.9;overflow-wrap:anywhere;border-top:0}
+            .viewer-new .vn-properties-report .vn-property-notes-wrap{border:1px solid rgba(212,175,55,.18);border-radius:12px;background:linear-gradient(160deg,rgba(212,175,55,.07),rgba(255,255,255,.015));padding:12px}
+            .viewer-new .vn-properties-report .vn-property-notes-text{margin:0;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+            .viewer-new .vn-properties-report .vn-th-inner{display:flex;align-items:center;gap:6px}
+            .viewer-new .vn-properties-report .vn-col-pin-btn{display:inline-flex;margin-inline-start:auto;opacity:0;border:0;background:transparent;cursor:pointer;color:#6b6560;padding:2px}
+            .viewer-new .vn-properties-report .vn-big-table thead th:hover .vn-col-pin-btn,.viewer-new .vn-properties-report .vn-col-pin-btn.active{opacity:1}
+            .viewer-new .vn-properties-report .vn-col-pin-btn.active{color:#e8c96a}
+            .viewer-new .vn-properties-report .vn-big-table thead th.vn-col-pinned,.viewer-new .vn-properties-report .vn-big-table tbody td.vn-col-pinned{position:sticky!important;z-index:20!important}
+            .viewer-new .vn-properties-report .vn-col-resize-handle{position:absolute;top:0;inset-inline-start:-5px;width:10px;height:100%;cursor:col-resize;opacity:0;z-index:4}
+            .viewer-new .vn-properties-report .vn-big-table thead th:hover .vn-col-resize-handle{opacity:1}
+            .viewer-new .vn-properties-report .vn-tbl-top-scroll{overflow-x:auto;height:12px;display:none;background:rgba(255,255,255,.03)}
+            .viewer-new .vn-properties-report .vn-tbl-top-scroll.is-visible{display:block}
+            .viewer-new .vn-properties-report .vn-col-pin-bar.is-visible{display:flex;gap:8px;align-items:center}
+        </style>
+        <script>
+            (function () {
+                if (window.__vnPropertiesTableFallback === '{{ $propertiesTableFallbackVersion }}') return;
+                window.__vnPropertiesTableFallback = '{{ $propertiesTableFallbackVersion }}';
+                const report = document.querySelector('.vn-properties-report');
+                const table = document.getElementById('vn-properties-table');
+                const scroller = document.getElementById('vn-properties-overflow') || report?.querySelector('.vn-properties-table');
+                const colgroup = document.getElementById('vn-properties-colgroup');
+                if (!report || !table || !scroller) return;
+                const PIN_KEY = 'viewer_new_properties_pinned_cols';
+                const WIDTH_KEY = 'viewer_new_properties_col_widths';
+                const PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
+                let pinned = [];
+                try { pinned = JSON.parse(localStorage.getItem(PIN_KEY) || '[]') || []; } catch (_) {}
+                const colClass = (k) => 'vn-col-' + k;
+                const applyPin = () => {
+                    table.classList.remove('vn-has-pinned-cols');
+                    table.querySelectorAll('.vn-col-pinned,.vn-col-pin-edge').forEach((el) => { el.classList.remove('vn-col-pinned','vn-col-pin-edge'); el.style.removeProperty('right'); });
+                    table.querySelectorAll('.vn-col-pin-btn').forEach((b) => { b.classList.remove('active'); b.title = 'تثبيت العمود'; });
+                    const visible = pinned.filter((k) => { const th = table.querySelector('thead th[data-column-key="'+k+'"]'); return th && getComputedStyle(th).display !== 'none'; });
+                    if (!visible.length) { report.querySelector('[data-properties-pin-bar]')?.classList.remove('is-visible'); return; }
+                    table.classList.add('vn-has-pinned-cols');
+                    let off = 0;
+                    visible.forEach((k) => {
+                        const th = table.querySelector('thead th.'+colClass(k));
+                        const w = th ? th.offsetWidth : 100;
+                        table.querySelectorAll('th.'+colClass(k)+',td.'+colClass(k)).forEach((el) => { if (getComputedStyle(el).display !== 'none') { el.classList.add('vn-col-pinned'); el.style.right = off+'px'; } });
+                        th?.querySelector('.vn-col-pin-btn')?.classList.add('active');
+                        off += w;
+                    });
+                    const last = visible[visible.length-1];
+                    table.querySelectorAll('th.'+colClass(last)+',td.'+colClass(last)).forEach((el) => { if (el.classList.contains('vn-col-pinned')) el.classList.add('vn-col-pin-edge'); });
+                    report.querySelector('[data-properties-pin-bar]')?.classList.add('is-visible');
+                    const cnt = report.querySelector('[data-properties-pin-count]');
+                    if (cnt) cnt.textContent = visible.length + ' مثبت';
+                };
+                table.querySelectorAll('[data-column-key]').forEach((c) => c.classList.add(colClass(c.getAttribute('data-column-key'))));
+                table.querySelectorAll('thead th[data-column-key]').forEach((th) => {
+                    const key = th.getAttribute('data-column-key');
+                    const inner = th.querySelector('.vn-th-inner') || th;
+                    if (!th.querySelector('.vn-col-pin-btn')) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button'; btn.className = 'vn-col-pin-btn'; btn.innerHTML = PIN_SVG; btn.title = 'تثبيت العمود';
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const i = pinned.indexOf(key);
+                            if (i === -1) pinned.push(key); else pinned.splice(i, 1);
+                            localStorage.setItem(PIN_KEY, JSON.stringify(pinned));
+                            applyPin();
+                        });
+                        inner.appendChild(btn);
+                    }
+                    if (key !== 'id' && !th.querySelector('.vn-col-resize-handle')) {
+                        const h = document.createElement('span');
+                        h.className = 'vn-col-resize-handle';
+                        th.appendChild(h);
+                        h.addEventListener('pointerdown', (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const col = colgroup?.querySelector('col.'+colClass(key));
+                            if (!col) return;
+                            const sx = e.clientX, sw = Math.max(th.getBoundingClientRect().width, 72);
+                            const move = (ev) => { col.style.width = Math.max(72, sw + (ev.clientX - sx)) + 'px'; };
+                            const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); applyPin(); };
+                            window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+                        });
+                    }
+                });
+                report.querySelector('[data-properties-unpin-all]')?.addEventListener('click', () => { pinned = []; localStorage.setItem(PIN_KEY, '[]'); applyPin(); });
+                let top = scroller.parentElement?.querySelector('.vn-tbl-top-scroll');
+                if (!top) {
+                    top = document.createElement('div');
+                    top.className = 'vn-tbl-top-scroll';
+                    top.innerHTML = '<div class="vn-tbl-top-scroll-inner"></div>';
+                    scroller.parentElement?.insertBefore(top, scroller);
+                }
+                const syncTop = () => {
+                    const inner = top.querySelector('.vn-tbl-top-scroll-inner');
+                    if (inner) inner.style.width = table.scrollWidth + 'px';
+                    top.classList.toggle('is-visible', scroller.scrollWidth > scroller.clientWidth + 4);
+                };
+                if (top.dataset.wired !== '1') {
+                    top.dataset.wired = '1';
+                    top.addEventListener('scroll', () => { scroller.scrollLeft = top.scrollLeft; }, { passive: true });
+                    scroller.addEventListener('scroll', () => { top.scrollLeft = scroller.scrollLeft; syncTop(); }, { passive: true });
+                }
+                applyPin(); syncTop(); window.addEventListener('resize', () => { applyPin(); syncTop(); });
+            })();
+        </script>
+        <script>
+            (function () {
+                if (window.__vnPropertyNotesReady) return;
+                const report = document.querySelector('.vn-properties-report');
+                const table = report?.querySelector('.vn-properties-table table');
+                if (!report || !table) return;
+                const esc = (id) => (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+                table.addEventListener('click', (event) => {
+                    const btn = event.target instanceof Element ? event.target.closest('[data-property-notes-toggle]') : null;
+                    if (!btn) return;
+                    event.preventDefault();
+                    const row = table.querySelector('#' + esc(btn.getAttribute('data-target') || ''));
+                    if (!row) return;
+                    const open = row.classList.toggle('open');
+                    btn.classList.toggle('open', open);
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    const caret = btn.querySelector('span:last-child');
+                    if (caret) caret.textContent = open ? '▴' : '▾';
+                });
+                window.__vnPropertyNotesReady = true;
+            })();
+        </script>
+    @endif
 @endsection
