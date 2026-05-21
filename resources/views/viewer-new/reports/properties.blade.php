@@ -25,16 +25,6 @@
             'signals_count', 'files_count', 'installments_count', 'updated_at', 'card_property_details', 'actions',
         ];
 
-        $kpiItems = [
-            ['label' => 'عدد العقارات', 'value' => $metrics['total_properties'] ?? '—'],
-            ['label' => 'المساحة الإجمالية', 'value' => $metrics['total_area'] ?? '—'],
-            ['label' => 'القيمة التقديرية', 'value' => $metrics['total_estimated_value'] ?? '—'],
-            ['label' => 'عقارات مرتبطة بملاك', 'value' => $metrics['linked_owners_count'] ?? '—'],
-            ['label' => 'عقارات عليها إشارات', 'value' => $metrics['properties_with_signals'] ?? '—'],
-            ['label' => 'عقارات لها ملفات', 'value' => $metrics['properties_with_files'] ?? '—'],
-            ['label' => 'آخر تحديث', 'value' => $metrics['last_update'] ?? '—'],
-        ];
-
         $filterLabels = [
             'q' => 'بحث شامل',
             'country' => 'الدولة',
@@ -79,6 +69,10 @@
     @endphp
 
     <section class="vn-properties-report" id="page-properties">
+        <style>
+            .viewer-new .vn-properties-report :is(.stats-grid,.stat-card,.vn-report-kpi-grid,.vn-report-kpi-card,.vn-report-metrics){display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important}
+            .viewer-new .vn-properties-report .vn-report-hero :is(.stats-grid,.stat-card,.vn-report-kpi-grid,.vn-report-metrics){display:revert!important;height:auto!important;margin:revert!important;padding:revert!important;overflow:revert!important;border:revert!important}
+        </style>
         <header class="page-header vn-report-hero">
             <div class="page-header-row vn-report-hero__row">
                 <div class="vn-report-hero__content">
@@ -101,15 +95,6 @@
                 </div>
             </div>
         </header>
-
-        <section class="stats-grid vn-report-kpi-grid" aria-label="مؤشرات تقرير العقارات">
-            @foreach ($kpiItems as $item)
-                <article class="stat-card vn-report-kpi-card">
-                    <div class="stat-label">{{ $item['label'] }}</div>
-                    <div class="stat-value">{{ filled((string) ($item['value'] ?? null)) ? $item['value'] : '—' }}</div>
-                </article>
-            @endforeach
-        </section>
 
         <div id="vn-properties-focus-target" class="report-focus-target" data-properties-focus-target>
         <section class="table-toolbar vn-report-toolbar" aria-label="شريط أدوات تقرير العقارات">
@@ -300,11 +285,15 @@
                         @foreach ($propertyTableColumnKeys as $colKey)
                             @php
                                 $colStyle = match ($colKey) {
-                                    'id' => 'width:110px;min-width:110px',
-                                    'property_name' => 'min-width:200px;width:15%',
-                                    'owners_count' => 'min-width:190px;width:12%',
-                                    'card_property_details', 'actions' => 'width:1px',
-                                    default => 'width:1px',
+                                    'id' => 'width:96px;min-width:96px',
+                                    'property_name' => 'width:200px;min-width:200px',
+                                    'owners_count' => 'width:220px;min-width:220px',
+                                    'property_country', 'card_governorate', 'card_region_name', 'card_subdivision' => 'width:110px;min-width:110px',
+                                    'card_record_number', 'card_property_number' => 'width:100px;min-width:100px',
+                                    'total_property_value_usd', 'owned_property_value_usd', 'actual_price_usd', 'estimated_price_usd', 'final_balance' => 'width:120px;min-width:120px',
+                                    'operations_count', 'signals_count', 'files_count', 'installments_count' => 'width:108px;min-width:108px',
+                                    'card_property_details', 'actions', 'card_google_maps_url' => 'width:92px;min-width:92px',
+                                    default => 'width:96px;min-width:96px',
                                 };
                             @endphp
                             <col class="vn-col-{{ $colKey }}" data-column-key="{{ $colKey }}" style="{{ $colStyle }}">
@@ -714,9 +703,12 @@
     {{-- Fallback until Vite assets are rebuilt (production manifest may lag source). --}}
     @if ($currentCount > 0)
         @php
-            $propertiesTableFallbackVersion = '2';
+            $propertiesTableFallbackVersion = '4';
         @endphp
         <style>
+            .viewer-new .vn-properties-report .vn-report-kpi-grid{display:none!important}
+            .viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row) td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+            .viewer-new .vn-properties-report #vn-properties-overflow{isolation:isolate}
             .viewer-new .vn-properties-report .vn-detail-row{display:none;background:rgba(0,0,0,.4)}
             .viewer-new .vn-properties-report .vn-detail-row.open{display:table-row}
             .viewer-new .vn-properties-report col.vn-col-notes{width:1px}
@@ -749,6 +741,9 @@
                 const scroller = document.getElementById('vn-properties-overflow') || report?.querySelector('.vn-properties-table');
                 const colgroup = document.getElementById('vn-properties-colgroup');
                 if (!report || !table || !scroller) return;
+                report.querySelectorAll('.stats-grid,.vn-report-kpi-grid,.vn-report-metrics').forEach((el) => {
+                    if (!el.closest('.vn-report-hero')) el.remove();
+                });
                 const PIN_KEY = 'viewer_new_properties_pinned_cols';
                 const WIDTH_KEY = 'viewer_new_properties_col_widths';
                 const PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
@@ -801,7 +796,11 @@
                             const col = colgroup?.querySelector('col.'+colClass(key));
                             if (!col) return;
                             const sx = e.clientX, sw = Math.max(th.getBoundingClientRect().width, 72);
-                            const move = (ev) => { col.style.width = Math.max(72, sw + (ev.clientX - sx)) + 'px'; };
+                            const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+                            const move = (ev) => {
+                                const d = ev.clientX - sx;
+                                col.style.width = Math.max(72, sw + (rtl ? -d : d)) + 'px';
+                            };
                             const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); applyPin(); };
                             window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
                         });
@@ -822,8 +821,8 @@
                 };
                 if (top.dataset.wired !== '1') {
                     top.dataset.wired = '1';
-                    top.addEventListener('scroll', () => { scroller.scrollLeft = top.scrollLeft; }, { passive: true });
-                    scroller.addEventListener('scroll', () => { top.scrollLeft = scroller.scrollLeft; syncTop(); }, { passive: true });
+                    top.addEventListener('scroll', () => { scroller.scrollLeft = top.scrollLeft; applyPin(); }, { passive: true });
+                    scroller.addEventListener('scroll', () => { top.scrollLeft = scroller.scrollLeft; syncTop(); applyPin(); }, { passive: true });
                 }
                 applyPin(); syncTop(); window.addEventListener('resize', () => { applyPin(); syncTop(); });
             })();

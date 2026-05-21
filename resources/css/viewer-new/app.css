@@ -243,7 +243,7 @@
   .viewer-new .vn-app-breadcrumb-row{padding:0 12px}
 }
 
-<<<<<<< HEAD
+
 /* Properties report — FRONT/index.html parity (scoped .vn-properties-report only) */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
 
@@ -265,10 +265,6 @@
 
 .viewer-new .vn-properties-report{
   --vn-pr-fs-scale:1;
-=======
-/* Properties report page — scoped (FRONT/index.html reference, vn-* classes) */
-.viewer-new :is(.vn-properties-report, .vn-owners-report){
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   --vn-pr-bg:#0a0a0a;
   --vn-pr-surface:#1a1a1a;
   --vn-pr-border:#2a2a2a;
@@ -299,13 +295,9 @@
   line-height:1.8;
 }
 
-<<<<<<< HEAD
+
 /* page-header / selection-card */
 .viewer-new .vn-properties-report .vn-report-hero{
-=======
-/* ── Page header (page-header / selection-card) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
@@ -348,15 +340,10 @@
   line-height:1.2;
   color:var(--vn-pr-text);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-hero__content p:last-child{
   margin:.35rem 0 0;
   font-size:calc(13px * var(--vn-pr-fs-scale));
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__content p:last-child{
-  margin:0;
-  font-size:.82rem;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   color:var(--vn-pr-muted);
 }
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta{
@@ -371,59 +358,43 @@
   gap:.45rem;
   box-shadow:var(--vn-pr-shadow-card);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-hero__meta a{
   font-family:var(--vn-pr-font-ui);
   font-size:calc(12px * var(--vn-pr-fs-scale));
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta a{
-  color:var(--vn-pr-gold-light);
-  text-decoration:none;
-  font-size:.75rem;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   letter-spacing:.12em;
   color:var(--vn-pr-gold-mid);
   text-decoration:none;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-hero__meta a:hover{color:var(--vn-pr-gold)}
 .viewer-new .vn-properties-report .vn-report-hero__meta > span{font-size:calc(12px * var(--vn-pr-fs-scale));color:var(--vn-pr-text-secondary)}
 .viewer-new .vn-properties-report .vn-report-hero__meta strong{
   font-family:var(--vn-pr-font-display);
   font-size:calc(20px * var(--vn-pr-fs-scale));
   color:var(--vn-pr-gold);
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta a:hover{color:var(--vn-pr-gold)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta > span{
-  font-size:.78rem;
-  color:var(--vn-pr-text-secondary);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta strong{
-  display:block;
-  font-size:1.25rem;
-  font-weight:700;
-  color:var(--vn-pr-gold);
-  line-height:1.25;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta small{
-  font-size:.75rem;
-  color:var(--vn-pr-muted);
-  line-height:1.6;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
 }
 .viewer-new .vn-properties-report .vn-report-hero__meta small{font-size:calc(12px * var(--vn-pr-fs-scale));color:var(--vn-pr-muted)}
 
-<<<<<<< HEAD
-/* stat-card grid */
-.viewer-new .vn-properties-report .vn-report-kpi-grid{
-=======
-/* ── KPI grid (stat-card) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-kpi-grid{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:1.125rem;
-  margin-bottom:.25rem;
+
+/* stat-card grid — hidden on properties report (summary card only in hero) */
+.viewer-new .vn-properties-report :is(.stats-grid,.stat-card,.vn-report-kpi-grid,.vn-report-kpi-card,.vn-report-metrics){
+  display:none!important;
+  margin:0!important;
+  padding:0!important;
+  height:0!important;
+  overflow:hidden!important;
+  border:0!important;
+  visibility:hidden!important;
+}
+.viewer-new .vn-properties-report .vn-report-hero :is(.stats-grid,.stat-card,.vn-report-kpi-grid,.vn-report-metrics){
+  display:revert!important;
+  margin:revert!important;
+  padding:revert!important;
+  height:auto!important;
+  overflow:revert!important;
+  border:revert!important;
+  visibility:visible!important;
 }
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-kpi-card{
   position:relative;
@@ -449,18 +420,12 @@
   border-color:rgba(212,175,55,.2);
   box-shadow:var(--vn-pr-shadow-gold),var(--vn-pr-shadow-card);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-kpi-card h3{
   margin:0 0 .625rem;
   font-family:var(--vn-pr-font-ui);
   font-size:calc(11px * var(--vn-pr-fs-scale));
   letter-spacing:.1em;
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-kpi-card h3{
-  margin:0 0 .35rem;
-  font-size:.78rem;
-  letter-spacing:.06em;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   color:var(--vn-pr-muted);
   font-weight:600;
 }
@@ -473,13 +438,9 @@
   color:var(--vn-pr-gold);
 }
 
-<<<<<<< HEAD
+
 /* table-toolbar */
 .viewer-new .vn-properties-report .vn-report-toolbar{
-=======
-/* ── Toolbar (table-toolbar / toolbar-main-actions) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:flex;
   flex-direction:column;
   align-items:stretch;
@@ -496,7 +457,7 @@
   border-radius:var(--vn-pr-r-lg);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 12px 28px rgba(0,0,0,.28),0 0 0 1px rgba(212,175,55,.06);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-toolbar::before{
   content:'';
   position:absolute;
@@ -508,9 +469,6 @@
 .viewer-new .vn-properties-report .vn-report-toolbar > *{position:relative;z-index:1}
 .viewer-new .vn-properties-report .vn-report-toolbar__search,
 .viewer-new .vn-properties-report .vn-report-toolbar__actions{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar__search{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:flex;
   align-items:center;
   gap:.625rem;
@@ -525,15 +483,10 @@
   border-radius:var(--vn-pr-r-md);
   padding:.35rem .45rem;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-toolbar__search-label{
   font-family:var(--vn-pr-font-ui);
   font-size:calc(11px * var(--vn-pr-fs-scale));
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar__search-label{
-  color:var(--vn-pr-gold-mid);
-  font-size:.72rem;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   letter-spacing:.1em;
   font-weight:700;
   color:var(--vn-pr-gold-mid);
@@ -551,23 +504,10 @@
   font-size:calc(13px * var(--vn-pr-fs-scale));
   outline:none;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-toolbar__search input::placeholder{color:var(--vn-pr-muted)}
 .viewer-new .vn-properties-report .vn-report-toolbar__search input:focus{border-color:rgba(212,175,55,.4)}
 .viewer-new .vn-properties-report .vn-report-toolbar-button{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar__search input::placeholder{color:var(--vn-pr-muted)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar__search input:focus{
-  border-color:rgba(212,175,55,.4);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar__actions{
-  display:flex;
-  align-items:center;
-  gap:.5rem;
-  flex-wrap:wrap;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   position:relative;
   overflow:hidden;
   min-height:40px;
@@ -614,13 +554,9 @@
   background:linear-gradient(135deg,var(--vn-pr-gold-deep),var(--vn-pr-gold-mid),var(--vn-pr-gold));
   box-shadow:0 0 0 2px rgba(212,175,55,.3),0 0 28px rgba(212,175,55,.45),0 10px 22px rgba(0,0,0,.28);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-toolbar-button--active::before,
 .viewer-new .vn-properties-report .vn-report-toolbar-button--primary::before{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button--primary::before,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button--active::before{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   content:'';
   position:absolute;
   bottom:-1px;
@@ -636,29 +572,21 @@
   from{opacity:.7;box-shadow:0 0 8px rgba(255,235,120,.6),0 0 16px rgba(212,175,55,.4)}
   to{opacity:1;box-shadow:0 0 14px rgba(255,235,120,1),0 0 26px rgba(212,175,55,.7)}
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-toolbar-button--disabled,
 .viewer-new .vn-properties-report .vn-report-toolbar-button:disabled{
   opacity:.72;
   cursor:not-allowed;
   transform:none;
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button--disabled,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button:disabled{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   background:rgba(255,255,255,.03);
   border-color:var(--vn-pr-border);
   color:var(--vn-pr-muted);
   box-shadow:none;
 }
 
-<<<<<<< HEAD
+
 /* toolbar-mode-panel */
 .viewer-new .vn-properties-report .vn-report-generator{
-=======
-/* ── Report generator (toolbar-mode-panel / filter-group) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:none;
   padding:1rem 1.1rem;
   background:rgba(255,255,255,.015);
@@ -671,17 +599,9 @@
   grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
   gap:.5rem .65rem;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-generator__field{display:flex;flex-direction:column;gap:.35rem}
 .viewer-new .vn-properties-report .vn-report-generator__filters label{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__field{
-  display:flex;
-  flex-direction:column;
-  gap:.35rem;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__filters label{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   margin:0;
   font-family:var(--vn-pr-font-ui);
   font-size:calc(9px * var(--vn-pr-fs-scale));
@@ -704,17 +624,10 @@
   font-size:calc(13px * var(--vn-pr-fs-scale));
   outline:none;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-generator__filters input:focus-visible,
 .viewer-new .vn-properties-report .vn-report-generator__filters select:focus-visible{border-color:rgba(212,175,55,.4)}
 .viewer-new .vn-properties-report .vn-report-generator__columns{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__filters input:focus-visible,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__filters select:focus-visible{
-  border-color:rgba(212,175,55,.4);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__columns{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
   gap:.45rem;
@@ -733,20 +646,11 @@
   border-radius:var(--vn-pr-r-md);
   cursor:pointer;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-report-column-option-card:hover{border-color:rgba(212,175,55,.3);background:rgba(212,175,55,.05)}
 .viewer-new .vn-properties-report .vn-report-column-option-card input{accent-color:var(--vn-pr-gold)}
 .viewer-new .vn-properties-report .vn-report-column-option-card span{font-size:.8rem;color:var(--vn-pr-text-secondary)}
 .viewer-new .vn-properties-report .vn-report-generator__actions{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-column-option-card:hover{
-  border-color:rgba(212,175,55,.3);
-  background:rgba(212,175,55,.05);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-column-option-card input{accent-color:var(--vn-pr-gold);flex:0 0 auto}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-column-option-card span{font-size:.8rem;color:var(--vn-pr-text-secondary)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__actions{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:flex;
   gap:.45rem;
   flex-wrap:wrap;
@@ -755,13 +659,9 @@
   border-top:1px solid var(--vn-pr-border);
 }
 
-<<<<<<< HEAD
+
 /* filter-chips */
 .viewer-new .vn-properties-report .vn-active-filter-chips{
-=======
-/* ── Active filter chips (filter-chips / chip) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-active-filter-chips{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:flex;
   flex-wrap:wrap;
   gap:.5rem;
@@ -797,15 +697,9 @@
   font-size:.75rem;
   text-decoration:none;
 }
-<<<<<<< HEAD
+
 
 .viewer-new .vn-properties-report .vn-results-summary{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-active-filter-chips > a:hover{color:var(--vn-pr-gold)}
-
-/* ── Results summary ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-results-summary{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:flex;
   gap:.85rem;
   flex-wrap:wrap;
@@ -816,19 +710,17 @@
   color:var(--vn-pr-text-secondary);
 }
 
-<<<<<<< HEAD
+
 /* table-card + big-table */
 .viewer-new .vn-properties-report .vn-table-with-scroll{
   position:relative;
 }
 .viewer-new .vn-properties-report .vn-table-responsive.vn-properties-table{
-=======
-/* ── Main table (table-card / big-table) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table){
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   position:relative;
   overflow-x:auto;
   overflow-y:visible;
+  isolation:isolate;
+  -webkit-overflow-scrolling:touch;
   border:1px solid var(--vn-pr-border);
   border-radius:var(--vn-pr-r-lg) var(--vn-pr-r-lg) 0 0;
   background:var(--vn-pr-surface);
@@ -851,19 +743,14 @@
   pointer-events:none;
   z-index:3;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-table-responsive.vn-properties-table::-webkit-scrollbar{height:11px}
 .viewer-new .vn-properties-report .vn-table-responsive.vn-properties-table::-webkit-scrollbar-thumb{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::-webkit-scrollbar{height:11px}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::-webkit-scrollbar-track{background:rgba(16,17,22,.95);border-radius:999px}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::-webkit-scrollbar-thumb{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   background:linear-gradient(180deg,rgba(212,175,55,.62),rgba(196,154,42,.52));
   border-radius:999px;
   border:2px solid rgba(16,17,22,.95);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-table-card{
   border:1px solid var(--vn-pr-border);
   border-radius:var(--vn-pr-r-lg);
@@ -874,9 +761,6 @@
 .viewer-new .vn-properties-report .vn-table-with-scroll{position:relative}
 .viewer-new .vn-properties-report .vn-properties-table table,
 .viewer-new .vn-properties-report .vn-big-table{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) table{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   width:auto;
   min-width:1460px;
   table-layout:fixed;
@@ -884,7 +768,7 @@
   border-spacing:0;
   background:var(--vn-pr-surface);
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-big-table.vn-id-only-compact{
   table-layout:auto;
   width:max-content;
@@ -892,13 +776,6 @@
 }
 .viewer-new .vn-properties-report .vn-properties-table thead{position:relative;isolation:isolate}
 .viewer-new .vn-properties-report .vn-properties-table thead::after{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead{
-  position:relative;
-  isolation:isolate;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead::after{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   content:'';
   position:absolute;
   bottom:0;
@@ -909,12 +786,9 @@
   opacity:.88;
   pointer-events:none;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-properties-table thead th,
 .viewer-new .vn-properties-report .vn-big-table thead th{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead th{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   position:sticky;
   top:0;
   z-index:15;
@@ -932,7 +806,7 @@
   box-shadow:0 8px 24px rgba(0,0,0,.38);
   user-select:none;
 }
-<<<<<<< HEAD
+
 .viewer-new .vn-properties-report .vn-th-inner{
   display:flex;
   align-items:center;
@@ -972,7 +846,7 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   background:transparent;
   padding:2px;
   cursor:pointer;
-  opacity:0;
+  opacity:.55;
   transition:opacity .15s,color .15s;
   color:var(--vn-pr-muted);
   flex-shrink:0;
@@ -1056,59 +930,30 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   border-radius:3px;
 }
 .viewer-new .vn-properties-report .vn-tbl-top-scroll-inner{height:1px}
-.viewer-new .vn-properties-report .vn-properties-table td{
-  padding:.8125rem 1rem;
-  font-size:calc(13px * var(--vn-pr-fs-scale));
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead th:hover{
-  color:var(--vn-pr-gold-mid);
-  background:rgba(212,175,55,.06);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) td{
-  padding:.8rem 1rem;
-  font-size:.82rem;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
+.viewer-new .vn-properties-report .vn-properties-table td,
+.viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row) td{
+  padding:.45rem .65rem;
+  font-size:calc(12.5px * var(--vn-pr-fs-scale));
   color:var(--vn-pr-text-secondary);
   border-bottom:1px solid var(--vn-pr-table-row-border);
   vertical-align:middle;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
-<<<<<<< HEAD
-.viewer-new .vn-properties-report .vn-properties-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.012)}
-.viewer-new .vn-properties-report .vn-properties-table tbody tr:hover td{background:rgba(212,175,55,.03);color:var(--vn-pr-text)}
+.viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row) td > *{
+  white-space:inherit;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+
+.viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row):nth-child(even) td{background:rgba(255,255,255,.018)}
+.viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row):hover td{background:rgba(212,175,55,.05);color:var(--vn-pr-text)}
 .viewer-new .vn-properties-report .vn-properties-table tbody tr.vn-row-hidden{display:none}
-.viewer-new .vn-properties-report .vn-properties-table tbody tr:last-child td{border-bottom:none}
+.viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row):last-child td{border-bottom:none}
 .viewer-new .vn-properties-report .vn-table-money{color:var(--vn-pr-gold)!important;font-family:var(--vn-pr-font-display);font-size:calc(15px * var(--vn-pr-fs-scale))!important;font-weight:700!important}
 .viewer-new .vn-properties-report .vn-table-map-link a{
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) tbody tr:nth-child(even) td{background:rgba(255,255,255,.012)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) tbody tr:hover td{
-  background:rgba(212,175,55,.03);
-  color:var(--vn-pr-text);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) tbody tr:last-child td{border-bottom:none}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) td p,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) td small{color:var(--vn-pr-muted)}
-
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td[data-column-key="property_name"]{max-width:220px;white-space:normal;word-break:break-word}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td[data-column-key="card_property_details"]{max-width:360px;white-space:normal;word-break:break-word;line-height:1.75}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td[data-column-key="card_google_maps_url"]{white-space:nowrap}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td[data-column-key="owners_count"]{
-  min-width:190px;
-  max-width:260px;
-  padding-top:.45rem!important;
-  padding-bottom:.45rem!important;
-  vertical-align:middle;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-number,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-money{font-variant-numeric:tabular-nums;white-space:nowrap}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-money{
-  color:var(--vn-pr-gold)!important;
-  font-size:.88rem!important;
-  font-weight:700!important;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-text-long{white-space:normal;word-break:break-word}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-map-link a{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:inline-flex;
   padding:.2rem .55rem;
   border-radius:20px;
@@ -1116,25 +961,12 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   background:rgba(212,175,55,.08);
   color:var(--vn-pr-gold-light);
   text-decoration:none;
-<<<<<<< HEAD
+
   font-size:calc(11px * var(--vn-pr-fs-scale));
 }
 
 /* status-badge */
 .viewer-new .vn-properties-report .vn-status-badge{
-=======
-  font-size:.7rem;
-  transition:all .18s ease;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-map-link a:hover{
-  border-color:rgba(212,175,55,.5);
-  background:rgba(212,175,55,.14);
-  color:var(--vn-pr-gold);
-}
-
-/* Status badges (status-badge) */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-status-badge{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:inline-flex;
   padding:.2rem .65rem;
   border-radius:20px;
@@ -1147,7 +979,7 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-status-badge--danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.22)}
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-status-badge--muted{background:rgba(148,163,184,.08);color:#94a3b8;border:1px solid rgba(148,163,184,.15)}
 
-<<<<<<< HEAD
+
 /* poc-stack */
 .viewer-new .vn-properties-report .vn-owner-stack{display:flex;flex-direction:column;border-radius:var(--vn-pr-r-md);overflow:hidden;border:1px solid rgba(212,175,55,.2)}
 .viewer-new .vn-properties-report .vn-owner-pill{
@@ -1342,9 +1174,19 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   color:var(--vn-pr-gold)!important;
 }
 
-.viewer-new .vn-properties-report .vn-properties-table td[data-column-key="property_name"],
-.viewer-new .vn-properties-report .vn-table-text-long{max-width:220px;white-space:normal;word-break:break-word}
-.viewer-new .vn-properties-report .vn-properties-table td[data-column-key="owners_count"]{min-width:190px;max-width:260px;padding-top:.45rem!important;padding-bottom:.45rem!important}
+.viewer-new .vn-properties-report .vn-properties-table td[data-column-key="owners_count"]{
+  min-width:220px;
+  max-width:280px;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  padding-top:.4rem!important;
+  padding-bottom:.4rem!important;
+}
+.viewer-new .vn-properties-report .vn-properties-table td[data-column-key="property_name"]{
+  min-width:200px;
+  max-width:280px;
+}
 .viewer-new .vn-properties-report .vn-properties-table col.vn-col-notes{width:1px}
 .viewer-new .vn-properties-report .vn-properties-table th[data-column-key="card_property_details"],
 .viewer-new .vn-properties-report .vn-properties-table td.vn-table-notes-cell{
@@ -1423,11 +1265,6 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
 
 .viewer-new .vn-properties-report .vn-row-actions{display:flex;flex-wrap:wrap;gap:.3rem;min-width:96px}
 .viewer-new .vn-properties-report .vn-row-action{
-=======
-/* Row actions */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-row-actions{display:flex;flex-wrap:wrap;gap:.3rem;min-width:96px}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-row-action{
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -1439,15 +1276,7 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   font-size:calc(11px * var(--vn-pr-fs-scale));
   text-decoration:none;
   white-space:nowrap;
-<<<<<<< HEAD
-=======
-  transition:all .18s ease;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-row-action:hover{
-  border-color:rgba(212,175,55,.5);
-  background:rgba(212,175,55,.14);
-  color:var(--vn-pr-gold);
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
+
 }
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-row-action--disabled{
   opacity:.55;
@@ -1463,7 +1292,7 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   border-radius:var(--vn-pr-r-lg);
   padding:1rem;
 }
-<<<<<<< HEAD
+
 
 /* fullscreen (report-focus-target) */
 .viewer-new .vn-properties-report.vn-report-focus-target:fullscreen,
@@ -1474,111 +1303,13 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   max-width:none;
   width:100vw;
   height:100vh;
-=======
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-pagination-wrap{margin-top:.35rem}
-
-/* Owner pills (poc-card / poc-stack) */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-stack{
-  display:flex;
-  flex-direction:column;
-  border-radius:var(--vn-pr-r-md);
-  overflow:hidden;
-  border:1px solid rgba(212,175,55,.2);
-  min-width:0;
-  max-width:100%;
-  gap:0;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill{
-  display:flex;
-  align-items:center;
-  gap:.5rem;
-  padding:.38rem .55rem .38rem .45rem;
-  border:none;
-  border-bottom:1px solid rgba(212,175,55,.1);
-  border-radius:0;
-  background:rgba(212,175,55,.04);
-  max-width:100%;
-  position:relative;
-  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill:first-child{border-radius:var(--vn-pr-r-md) var(--vn-pr-r-md) 0 0}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill:last-child{border-radius:0 0 var(--vn-pr-r-md) var(--vn-pr-r-md);border-bottom:none}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill:only-child{border-radius:var(--vn-pr-r-md)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill::before{
-  content:'';
-  position:absolute;
-  inset-inline-end:0;
-  top:0;
-  bottom:0;
-  width:3px;
-  background:linear-gradient(to bottom,rgba(212,175,55,.5),rgba(212,175,55,.15));
-  border-radius:0 var(--vn-pr-r-md) var(--vn-pr-r-md) 0;
-  opacity:0;
-  transition:opacity .18s ease;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill:hover{
-  border-color:rgba(212,175,55,.42);
-  background:rgba(212,175,55,.08);
-  box-shadow:0 2px 12px rgba(0,0,0,.25);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill:hover::before{opacity:1}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill__dot{
-  flex:0 0 10px;
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  background:rgba(212,175,55,.16);
-  border:1px solid rgba(212,175,55,.35);
-  box-shadow:none;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill__name{
-  flex:1 1 0;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  font-size:.75rem;
-  font-weight:600;
-  color:var(--vn-pr-text);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill__share{
-  flex:0 0 auto;
-  padding:.15rem .4rem;
-  border-radius:99px;
-  font-size:.58rem;
-  font-weight:700;
-  font-variant-numeric:tabular-nums;
-  color:var(--vn-pr-gold);
-  background:rgba(212,175,55,.12);
-  border:1px solid rgba(212,175,55,.25);
-  white-space:nowrap;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill__meta{
-  flex:0 0 auto;
-  font-size:.58rem;
-  font-weight:700;
-  font-variant-numeric:tabular-nums;
-  color:#63b3ed;
-  background:rgba(99,179,237,.1);
-  border:1px solid rgba(99,179,237,.22);
-  padding:.15rem .4rem;
-  border-radius:99px;
-  white-space:nowrap;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill--muted{opacity:.72}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill--muted .vn-owner-pill__dot{background:rgba(255,255,255,.04);border-color:var(--vn-pr-border)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-stack__more{
-  font-size:.68rem;
-  color:var(--vn-pr-gold-mid);
-  padding:.25rem .35rem .1rem;
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
 }
 body.vn-report-fullscreen-active .viewer-new .vn-app-header,
 body.vn-report-fullscreen-active .viewer-new .vn-app-breadcrumb-row,
 body.vn-report-fullscreen-active .vn-sidebar{display:none!important}
 body.vn-report-fullscreen-active .viewer-new__main{padding:0}
 
-<<<<<<< HEAD
+
 @media (max-width:1200px){
   .viewer-new .vn-properties-report .vn-report-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
@@ -1602,153 +1333,4 @@ body.vn-report-fullscreen-active .viewer-new__main{padding:0}
   .viewer-new .vn-properties-report .vn-owner-pill{transition:none}
   .viewer-new .vn-properties-report .vn-report-toolbar-button::after{display:none}
   .viewer-new .vn-properties-report .vn-report-toolbar-button--active::before{animation:none}
-=======
-/* Expandable rows (detail-row / ops-row) */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-related-inline{display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-related-inline__count{font-size:.75rem;color:var(--vn-pr-gold-light)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-related-inline__toggle{
-  width:1.5rem;
-  height:1.5rem;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:0;
-  border-radius:var(--vn-pr-r-md);
-  border:1px solid rgba(212,175,55,.35);
-  background:rgba(212,175,55,.08);
-  color:var(--vn-pr-gold-light);
-  font-size:.75rem;
-  line-height:1;
-  cursor:pointer;
-  transition:all .18s ease;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-related-inline__toggle:hover{
-  border-color:rgba(212,175,55,.5);
-  background:rgba(212,175,55,.14);
-  color:var(--vn-pr-gold);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-related-inline__toggle.is-open{
-  border-color:rgba(212,175,55,.65);
-  background:linear-gradient(135deg,var(--vn-pr-gold-deep),var(--vn-pr-gold-mid));
-  color:#0a0a0a;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-operation-muted,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-signal-muted,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-file-muted,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-installment-muted{color:var(--vn-pr-muted);font-size:.78rem}
-
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-property-operations-row td,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-property-signals-row td,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-property-files-row td,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-property-installments-row td{
-  padding:1rem 1.5rem;
-  background:rgba(0,0,0,.4);
-  border-top:0;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel{
-  border:1px solid rgba(212,175,55,.18);
-  border-radius:12px;
-  background:linear-gradient(160deg,rgba(212,175,55,.07),rgba(255,255,255,.015));
-  padding:.85rem 1rem;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel__header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:.6rem;
-  margin-bottom:.55rem;
-  padding-bottom:.4rem;
-  border-bottom:1px solid rgba(212,175,55,.16);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel__title{
-  margin:0;
-  font-size:.88rem;
-  font-weight:700;
-  color:var(--vn-pr-gold-light);
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel__meta{font-size:.72rem;color:var(--vn-pr-muted)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel__table-wrap{max-width:100%;overflow-x:auto;border-radius:var(--vn-pr-r-md)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-table{
-  width:100%;
-  min-width:920px;
-  border-collapse:collapse;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-table th{
-  padding:.45rem .55rem;
-  font-size:.68rem;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--vn-pr-gold-mid);
-  background:rgba(212,175,55,.09);
-  border-bottom:1px solid rgba(212,175,55,.25);
-  white-space:nowrap;
-  text-align:right;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-table td{
-  padding:.45rem .55rem;
-  font-size:.78rem;
-  color:var(--vn-pr-text-secondary);
-  border-bottom:1px solid rgba(255,255,255,.07);
-  vertical-align:top;
-  white-space:normal;
-  word-break:break-word;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-table tbody tr:hover td{background:rgba(255,255,255,.02)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-operation-owner-list{max-width:240px;word-break:break-word;line-height:1.7}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-operation-badge,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-signal-badge,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-file-badge,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-installment-badge,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-badge{
-  display:inline-flex;
-  align-items:center;
-  padding:.15rem .5rem;
-  border-radius:20px;
-  border:1px solid rgba(212,175,55,.3);
-  background:rgba(212,175,55,.08);
-  color:var(--vn-pr-gold-light);
-  max-width:260px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-badge--gold{border-color:rgba(212,175,55,.35);background:rgba(212,175,55,.11);color:var(--vn-pr-gold-light)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-badge--muted{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#cbd3df}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-muted{color:var(--vn-pr-muted);line-height:1.75}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-amount,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-installment-amount{
-  color:var(--vn-pr-gold);
-  font-variant-numeric:tabular-nums;
-  font-weight:700;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel__table-wrap a{
-  color:var(--vn-pr-gold-light);
-  text-decoration:none;
-}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-child-panel__table-wrap a:hover{color:var(--vn-pr-gold);text-decoration:underline}
-
-@media (max-width: 1024px){
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero{flex-direction:column}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__meta{width:100%;max-width:none}
-}
-@media (max-width: 768px){
-  .viewer-new :is(.vn-properties-report, .vn-owners-report){gap:.9rem}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__content h1{font-size:1.75rem}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar{align-items:stretch}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar__search{min-width:0}
-}
-@media (max-width: 520px){
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__content h1{font-size:1.35rem}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-kpi-grid{grid-template-columns:1fr}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-results-summary{font-size:.72rem;gap:.45rem}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-generator__filters{grid-template-columns:1fr}
-}
-@media (prefers-reduced-motion: reduce){
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-kpi-card,
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button,
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-owner-pill{transition:none}
-  .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-toolbar-button::after{display:none}
->>>>>>> d89a8b33d9d0895f4406952a3b4c043050a9475e
 }

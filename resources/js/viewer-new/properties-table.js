@@ -8,6 +8,36 @@ const VN_COLGROUP_ID = 'vn-properties-colgroup';
 const VN_PIN_KEY = 'viewer_new_properties_pinned_cols';
 const VN_WIDTH_KEY = 'viewer_new_properties_col_widths';
 const LOCKED_RESIZE_KEYS = new Set(['id']);
+const DEFAULT_COL_MIN_WIDTHS = {
+    id: 96,
+    property_name: 200,
+    property_country: 100,
+    card_governorate: 110,
+    card_region_name: 110,
+    card_subdivision: 100,
+    card_record_number: 100,
+    card_property_number: 100,
+    card_total_area: 88,
+    card_area_unit: 72,
+    total_property_value_usd: 120,
+    owned_property_value_usd: 120,
+    actual_price_usd: 110,
+    estimated_price_usd: 110,
+    card_status: 96,
+    card_investment_type: 110,
+    card_purchase_method: 100,
+    card_sale_date: 100,
+    final_balance: 110,
+    card_google_maps_url: 88,
+    owners_count: 220,
+    operations_count: 108,
+    signals_count: 96,
+    files_count: 88,
+    installments_count: 96,
+    updated_at: 120,
+    card_property_details: 92,
+    actions: 88,
+};
 const VN_PIN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
   <line x1="12" y1="17" x2="12" y2="22"/>
   <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
@@ -81,6 +111,17 @@ export function initPropertiesTableAdvanced(options) {
         }
     };
 
+    const applyDefaultColWidths = () => {
+        if (!colgroupEl) return;
+        colgroupEl.querySelectorAll('col[data-column-key]').forEach((col) => {
+            const key = col.getAttribute('data-column-key');
+            if (!key) return;
+            const min = DEFAULT_COL_MIN_WIDTHS[key] || 96;
+            const current = parseInt(col.style.width || '0', 10);
+            if (!current || current < min) col.style.width = `${min}px`;
+        });
+    };
+
     const restoreColWidths = () => {
         if (!colgroupEl) return;
         let widths = {};
@@ -93,6 +134,7 @@ export function initPropertiesTableAdvanced(options) {
             const col = colgroupEl.querySelector(`col.${colClassForKey(key)}`) || colgroupEl.querySelector(`col[data-column-key="${key}"]`);
             if (col && Number(w) >= 72) col.style.width = `${Math.round(w)}px`;
         });
+        applyDefaultColWidths();
     };
 
     const persistColWidth = (key, widthPx) => {
@@ -233,7 +275,8 @@ export function initPropertiesTableAdvanced(options) {
                 if (!col) return;
                 const startX = e.clientX;
                 const startWidth = Math.max(th.getBoundingClientRect().width, 72);
-                const minWidth = 72;
+                const minWidth = DEFAULT_COL_MIN_WIDTHS[key] || 72;
+                const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
                 let moved = false;
                 document.body.classList.add('vn-is-col-resizing');
                 if (handle.setPointerCapture) {
@@ -242,7 +285,7 @@ export function initPropertiesTableAdvanced(options) {
                 const onMove = (ev) => {
                     const delta = ev.clientX - startX;
                     if (!moved && Math.abs(delta) > 2) moved = true;
-                    const nextWidth = Math.max(minWidth, startWidth + delta);
+                    const nextWidth = Math.max(minWidth, startWidth + (rtl ? startX - ev.clientX : delta));
                     col.style.width = `${nextWidth}px`;
                 };
                 const onUp = () => {
@@ -299,16 +342,27 @@ export function initPropertiesTableAdvanced(options) {
         topScroll.classList.toggle('is-visible', tableScroller.scrollWidth > tableScroller.clientWidth + 4);
     };
 
+    let pinScrollRaf = 0;
+    const schedulePinSync = () => {
+        if (pinScrollRaf) return;
+        pinScrollRaf = window.requestAnimationFrame(() => {
+            pinScrollRaf = 0;
+            applyColumnPinning();
+        });
+    };
+
     const wireTopScrollSync = () => {
         const topScroll = ensureTopScrollMirror();
         if (!topScroll || topScroll.dataset.wired === '1') return;
         topScroll.dataset.wired = '1';
         topScroll.addEventListener('scroll', () => {
             tableScroller.scrollLeft = topScroll.scrollLeft;
+            schedulePinSync();
             notifyLayout();
         }, { passive: true });
         tableScroller.addEventListener('scroll', () => {
-            topScroll.scrollLeft = tableScroller.scrollLeft;
+            if (topScroll) topScroll.scrollLeft = tableScroller.scrollLeft;
+            schedulePinSync();
         }, { passive: true });
     };
 
@@ -317,8 +371,11 @@ export function initPropertiesTableAdvanced(options) {
         unpinAllColumns();
     });
 
+    tableScroller.classList.add('vn-table-scrollport');
+
     ensureThInners();
     syncColClasses();
+    applyDefaultColWidths();
     restoreColWidths();
     injectPinButtons();
     ensureColumnResizers();

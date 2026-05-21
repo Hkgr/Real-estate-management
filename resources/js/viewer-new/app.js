@@ -87,6 +87,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const reportRoot = document.querySelector('.vn-properties-report');
         if (!reportRoot) return;
 
+        reportRoot.querySelectorAll(':is(.stats-grid,.vn-report-kpi-grid,.vn-report-metrics)').forEach((el) => {
+            if (!el.closest('.vn-report-hero')) el.remove();
+        });
+
         reportRoot.classList.add('vn-report-focus-target');
 
         const GEN_KEY = 'viewer_new_properties_generator_open';
