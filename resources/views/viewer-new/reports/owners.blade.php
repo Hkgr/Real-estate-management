@@ -63,23 +63,18 @@
             <div class="vn-report-toolbar__search">
                 <label for="owners-filter-q" class="vn-report-toolbar__search-label">بحث شامل</label>
                 <input id="owners-filter-q" type="text" name="q" form="vn-owners-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="ابحث بالاسم أو الهاتف أو البريد..." @if (! ($fieldAvailability['filters_q'] ?? false)) disabled @endif />
-                <button type="button" class="vn-report-toolbar-button" data-properties-clear-search aria-label="مسح البحث">مسح</button>
+                <button type="button" class="vn-report-toolbar-button" data-owners-clear-search aria-label="مسح البحث">مسح</button>
             </div>
             <div class="vn-report-toolbar__actions">
                 <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary vn-report-toolbar-button--active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-owners-generator-panel">مولد تقارير</button>
                 <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير</button>
-                <button type="button" class="vn-report-toolbar-button" data-properties-fullscreen>ملء الشاشة</button>
+                <button type="button" class="vn-report-toolbar-button" data-owners-fullscreen>ملء الشاشة</button>
             </div>
         </section>
 
         <section id="vn-owners-generator-panel" class="vn-report-generator is-open" data-report-generator-panel>
             <form id="vn-owners-report-generator-form" method="GET" action="{{ route('viewer-new.reports.owners') }}" data-report-generator-form>
                 <div class="vn-report-generator__filters">
-                    <div class="vn-report-generator__field">
-                        <label for="owners-generator-q">بحث شامل</label>
-                        <input id="owners-generator-q" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="ابحث بالاسم أو الهاتف أو البريد..." @if (! ($fieldAvailability['filters_q'] ?? false)) disabled @endif />
-                    </div>
-
                     @if ($fieldAvailability['is_current'] ?? false)
                         <div class="vn-report-generator__field">
                             <label for="owners-filter-current">حالة الملكية</label>
@@ -120,7 +115,7 @@
             @endif
         </section>
 
-        <section class="vn-report-summary" aria-label="ملخص النتائج">
+        <section class="vn-results-summary" aria-label="ملخص النتائج">
             <article><h3>عدد النتائج الكلي</h3><p>{{ number_format((int) $totalResults) }}</p></article>
             <article><h3>الصفحة الحالية</h3><p>{{ number_format((int) $currentPage) }}</p></article>
             <article><h3>آخر صفحة</h3><p>{{ number_format((int) $lastPage) }}</p></article>
