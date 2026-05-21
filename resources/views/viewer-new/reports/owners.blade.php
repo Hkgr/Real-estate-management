@@ -111,7 +111,7 @@
                     <span class="vn-active-filter-chip">{{ $activeFilter['label'] }}: {{ $activeFilter['value'] }}</span>
                 @endforeach
             @else
-                <span class="vn-active-filter-chip">لا توجد فلاتر مفعّلة</span>
+                <p>لا توجد فلاتر مفعّلة حالياً.</p>
             @endif
         </section>
 

@@ -670,7 +670,7 @@
 }
 
 /* ── Main table (table-card / big-table) ── */
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive.vn-properties-table{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table){
   position:relative;
   overflow-x:auto;
   overflow-y:visible;
@@ -680,7 +680,7 @@
   box-shadow:0 2px 0 rgba(212,175,55,.08),0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04);
   scrollbar-color:rgba(212,175,55,.45) rgba(22,23,28,.9);
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive.vn-properties-table::before{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::before{
   content:'';
   position:absolute;
   top:0;
@@ -693,14 +693,14 @@
   pointer-events:none;
   z-index:3;
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive.vn-properties-table::-webkit-scrollbar{height:11px}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive.vn-properties-table::-webkit-scrollbar-track{background:rgba(16,17,22,.95);border-radius:999px}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive.vn-properties-table::-webkit-scrollbar-thumb{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::-webkit-scrollbar{height:11px}
+.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::-webkit-scrollbar-track{background:rgba(16,17,22,.95);border-radius:999px}
+.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-table-responsive:is(.vn-properties-table, .vn-owners-table)::-webkit-scrollbar-thumb{
   background:linear-gradient(180deg,rgba(212,175,55,.62),rgba(196,154,42,.52));
   border-radius:999px;
   border:2px solid rgba(16,17,22,.95);
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table table{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) table{
   width:auto;
   min-width:1460px;
   table-layout:fixed;
@@ -708,11 +708,11 @@
   border-spacing:0;
   background:var(--vn-pr-surface);
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table thead{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead{
   position:relative;
   isolation:isolate;
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table thead::after{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead::after{
   content:'';
   position:absolute;
   bottom:0;
@@ -723,7 +723,7 @@
   opacity:.88;
   pointer-events:none;
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table thead th{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead th{
   position:sticky;
   top:0;
   z-index:15;
@@ -740,11 +740,11 @@
   box-shadow:0 8px 24px rgba(0,0,0,.38);
   transition:color .2s ease,background .2s ease;
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table thead th:hover{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) thead th:hover{
   color:var(--vn-pr-gold-mid);
   background:rgba(212,175,55,.06);
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) td{
   padding:.8rem 1rem;
   font-size:.82rem;
   color:var(--vn-pr-text-secondary);
@@ -752,14 +752,14 @@
   vertical-align:middle;
   transition:background .15s ease,color .15s ease;
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.012)}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table tbody tr:hover td{
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) tbody tr:nth-child(even) td{background:rgba(255,255,255,.012)}
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) tbody tr:hover td{
   background:rgba(212,175,55,.03);
   color:var(--vn-pr-text);
 }
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table tbody tr:last-child td{border-bottom:none}
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td p,
-.viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td small{color:var(--vn-pr-muted)}
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) tbody tr:last-child td{border-bottom:none}
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) td p,
+.viewer-new :is(.vn-properties-report, .vn-owners-report) :is(.vn-properties-table, .vn-owners-table) td small{color:var(--vn-pr-muted)}
 
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td[data-column-key="property_name"]{max-width:220px;white-space:normal;word-break:break-word}
 .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-properties-table td[data-column-key="card_property_details"]{max-width:360px;white-space:normal;word-break:break-word;line-height:1.75}
