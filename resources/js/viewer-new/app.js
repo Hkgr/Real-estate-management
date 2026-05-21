@@ -399,10 +399,37 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             requestFloatingHeadSync();
         };
 
-        const updateTblNavPill = () => {
-            if (!tableScroller || !tblNavPill) return;
-            tblNavPill.classList.toggle('is-visible', tableScroller.scrollWidth > tableScroller.clientWidth + 4);
-        };
+        const GEN_KEY = 'viewer_new_owners_generator_open';
+        const COL_KEY = 'viewer_new_owners_visible_columns';
+        const defaultColumns = [
+            'id',
+            'name',
+            'owner_type',
+            'father_name',
+            'phone',
+            'email',
+            'national_id',
+            'commercial_register_number',
+            'real_estate_registry_number',
+            'birth_date',
+            'properties_linked_count',
+            'ownership_percentage',
+            'current_ownerships_count',
+            'created_at',
+            'last_update',
+            'status_or_notes',
+        ];
+        const validColumnKeys = [...defaultColumns];
+        const panel = reportRoot.querySelector('[data-report-generator-panel]');
+        const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
+        const form = reportRoot.querySelector('[data-report-generator-form]');
+        const clearSearchBtn = reportRoot.querySelector('[data-owners-clear-search]');
+        const searchInput = reportRoot.querySelector('#owners-filter-q');
+        const genBtn = reportRoot.querySelector('[data-generate-report]');
+        const resetBtn = reportRoot.querySelector('[data-reset-columns]');
+        const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
+        const table = reportRoot.querySelector('.vn-owners-table table');
+        const fullscreenBtn = reportRoot.querySelector('[data-owners-fullscreen]');
 
         if (tableScroller && !reportRoot.querySelector('.vn-tbl-nav-pill')) {
             let wrap = tableScroller.closest('.vn-table-with-scroll');
