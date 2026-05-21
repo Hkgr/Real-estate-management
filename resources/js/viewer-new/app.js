@@ -270,9 +270,128 @@
         });
     };
 
+    const bindOwnersReportInteractions = () => {
+        const reportRoot = document.querySelector('.vn-owners-report');
+        if (!reportRoot) return;
+
+        const GEN_KEY = 'viewer_new_owners_generator_open';
+        const COL_KEY = 'viewer_new_owners_visible_columns';
+        const defaultColumns = [
+            'name',
+            'phone',
+            'properties_linked_count',
+            'ownership_percentage',
+            'current_ownerships_count',
+            'last_update',
+            'status_or_notes',
+        ];
+        const validColumnKeys = [...defaultColumns];
+        const panel = reportRoot.querySelector('[data-report-generator-panel]');
+        const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
+        const form = reportRoot.querySelector('[data-report-generator-form]');
+        const clearSearchBtn = reportRoot.querySelector('[data-owners-clear-search]');
+        const searchInput = reportRoot.querySelector('#owners-filter-q');
+        const genBtn = reportRoot.querySelector('[data-generate-report]');
+        const resetBtn = reportRoot.querySelector('[data-reset-columns]');
+        const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
+        const table = reportRoot.querySelector('.vn-owners-table table');
+        const fullscreenBtn = reportRoot.querySelector('[data-owners-fullscreen]');
+
+        const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+        const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
+        const hasActiveFilters = reportRoot.querySelectorAll('.vn-active-filter-chip').length > 0;
+
+        const setPanelOpen = (open, persist = true) => {
+            if (!panel) return;
+            panel.classList.toggle('is-open', !!open);
+            toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (persist) safeSet(GEN_KEY, open ? '1' : '0');
+        };
+
+        const applyColumns = (columns) => {
+            if (!table) return;
+            const selected = new Set(columns);
+            table.querySelectorAll('[data-column-key]').forEach((cell) => {
+                cell.style.display = selected.has(cell.getAttribute('data-column-key') || '') ? '' : 'none';
+            });
+        };
+        const syncCheckboxes = (columns) => {
+            const selected = new Set(columns);
+            checkboxes.forEach((cb) => { cb.checked = selected.has(cb.value); });
+        };
+        const getChecked = () => checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+        const normalizeColumns = (columns) => {
+            const input = Array.isArray(columns) ? columns : [];
+            const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
+            return filtered.length > 0 ? filtered : defaultColumns;
+        };
+
+        const visibleFromStorage = (() => {
+            try { return normalizeColumns(JSON.parse(safeGet(COL_KEY) || 'null')); } catch (_) { return defaultColumns; }
+        })();
+        syncCheckboxes(visibleFromStorage);
+        applyColumns(visibleFromStorage);
+
+        const initialOpen = safeGet(GEN_KEY) === '1' || (hasActiveFilters && safeGet(GEN_KEY) === null);
+        setPanelOpen(initialOpen, false);
+
+        toggleBtn?.addEventListener('click', () => setPanelOpen(!panel?.classList.contains('is-open')));
+        genBtn?.addEventListener('click', () => {
+            const cols = normalizeColumns(getChecked());
+            syncCheckboxes(cols);
+            applyColumns(cols);
+            safeSet(COL_KEY, JSON.stringify(cols));
+            setPanelOpen(false);
+        });
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                const cols = normalizeColumns(getChecked());
+                syncCheckboxes(cols);
+                applyColumns(cols);
+                safeSet(COL_KEY, JSON.stringify(cols));
+            });
+        });
+        resetBtn?.addEventListener('click', () => {
+            syncCheckboxes(defaultColumns);
+            applyColumns(defaultColumns);
+            safeSet(COL_KEY, JSON.stringify(defaultColumns));
+        });
+
+        clearSearchBtn?.addEventListener('click', () => {
+            if (!searchInput || !form) return;
+            const qHadValue = (searchInput.value || '').trim() !== '';
+            searchInput.value = '';
+
+            const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+            let hasOtherFilters = false;
+            fields.forEach((field) => {
+                const name = field.getAttribute('name');
+                if (!name || name === 'q' || field.disabled || hasOtherFilters) return;
+                if ((field.value || '').trim() !== '') hasOtherFilters = true;
+            });
+
+            if (hasOtherFilters) {
+                form.submit();
+                return;
+            }
+
+            if (qHadValue) {
+                const actionUrl = form.getAttribute('action') || window.location.pathname;
+                window.location.assign(actionUrl);
+            }
+        });
+
+        fullscreenBtn?.addEventListener('click', () => {
+            const target = reportRoot.querySelector('.vn-owners-table') || reportRoot;
+            if (!document.fullscreenElement && target.requestFullscreen) { target.requestFullscreen().catch(() => {}); return; }
+            if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        });
+    };
+
     updateClock();
     if (clockEl || dateEl) setInterval(updateClock, 1000);
     bindQuickSearchShortcut();
     bindFullscreenToggle();
     bindPropertiesReportInteractions();
+    bindOwnersReportInteractions();
 })();
