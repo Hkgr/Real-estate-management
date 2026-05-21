@@ -149,6 +149,11 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         let tblNavPill = null;
         let tableAdvancedApi = null;
 
+        const updateTblNavPill = () => {
+            if (!tblNavPill || !tableScroller) return;
+            tblNavPill.classList.toggle('is-visible', tableScroller.scrollWidth > tableScroller.clientWidth + 4);
+        };
+
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
             toggleBtn?.classList.toggle('vn-report-toolbar-button--primary', !!open);
@@ -399,38 +404,6 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             requestFloatingHeadSync();
         };
 
-        const GEN_KEY = 'viewer_new_owners_generator_open';
-        const COL_KEY = 'viewer_new_owners_visible_columns';
-        const defaultColumns = [
-            'id',
-            'name',
-            'owner_type',
-            'father_name',
-            'phone',
-            'email',
-            'national_id',
-            'commercial_register_number',
-            'real_estate_registry_number',
-            'birth_date',
-            'properties_linked_count',
-            'ownership_percentage',
-            'current_ownerships_count',
-            'created_at',
-            'last_update',
-            'status_or_notes',
-        ];
-        const validColumnKeys = [...defaultColumns];
-        const panel = reportRoot.querySelector('[data-report-generator-panel]');
-        const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
-        const form = reportRoot.querySelector('[data-report-generator-form]');
-        const clearSearchBtn = reportRoot.querySelector('[data-owners-clear-search]');
-        const searchInput = reportRoot.querySelector('#owners-filter-q');
-        const genBtn = reportRoot.querySelector('[data-generate-report]');
-        const resetBtn = reportRoot.querySelector('[data-reset-columns]');
-        const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
-        const table = reportRoot.querySelector('.vn-owners-table table');
-        const fullscreenBtn = reportRoot.querySelector('[data-owners-fullscreen]');
-
         if (tableScroller && !reportRoot.querySelector('.vn-tbl-nav-pill')) {
             let wrap = tableScroller.closest('.vn-table-with-scroll');
             if (!wrap) {
@@ -467,6 +440,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         };
 
         const hideFloatingHead = () => {
+            reportRoot.classList.remove('vn-floating-head-on');
             if (!floatingHost) return;
             floatingHost.style.display = 'none';
             floatingHost.style.width = '';
@@ -494,11 +468,14 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             const headRect = thead.getBoundingClientRect();
             const headerH = Math.max(28, Math.ceil(headRect.height || 32));
             const shouldPin = headRect.top <= stickyTop - 18 && rect.bottom > stickyTop + headerH + 2;
+            const showFloatingHead = shouldPin && document.fullscreenElement !== reportRoot;
 
-            if (!shouldPin || document.fullscreenElement === reportRoot) {
+            if (!showFloatingHead) {
                 hideFloatingHead();
                 return;
             }
+
+            reportRoot.classList.add('vn-floating-head-on');
 
             ensureFloatingHost();
             const boxRect = tableScroller.getBoundingClientRect();
@@ -526,12 +503,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 const src = sourceThs[i];
                 if (!src) return;
                 const w = Math.ceil(src.getBoundingClientRect().width);
-                th.style.display = getComputedStyle(src).display === 'none' ? 'none' : '';
+                const visible = getComputedStyle(src).display !== 'none';
+                th.style.display = visible ? '' : 'none';
                 th.style.width = `${w}px`;
                 th.style.minWidth = `${w}px`;
                 th.style.maxWidth = `${w}px`;
+                th.style.boxSizing = 'border-box';
                 th.style.position = 'static';
                 th.style.top = 'auto';
+                th.style.right = 'auto';
+                th.style.insetInlineEnd = 'auto';
             });
 
             floatingTable.className = tableEl.className;
@@ -593,16 +574,36 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             updateTblNavPill();
         });
 
-        tableAdvancedApi = initPropertiesTableAdvanced({
-            reportRoot,
-            tableEl,
-            tableScroller,
-            onLayoutChange: () => {
-                requestFloatingHeadSync();
-                updateTblNavPill();
-                tableAdvancedApi?.syncTopScrollWidth();
-            },
-        });
+        if (!window.__vnPropertiesTableMechanicsApi) {
+            tableAdvancedApi = initPropertiesTableAdvanced({
+                reportRoot,
+                tableEl,
+                tableScroller,
+                onLayoutChange: () => {
+                    requestFloatingHeadSync();
+                    updateTblNavPill();
+                    tableAdvancedApi?.syncTopScrollWidth();
+                    window.__vnPropertiesTableMechanicsApi?.applyPin?.();
+                },
+            });
+        } else {
+            tableAdvancedApi = {
+                applyColumnPinning: () => window.__vnPropertiesTableMechanicsApi.applyPin(),
+                syncTopScrollWidth: () => window.__vnPropertiesTableMechanicsApi.syncTop(),
+                onColumnsVisibilityChange: (visibleKeys) => {
+                    const colgroup = document.getElementById('vn-properties-colgroup');
+                    if (colgroup && Array.isArray(visibleKeys)) {
+                        const selected = new Set(visibleKeys);
+                        colgroup.querySelectorAll('col[data-column-key]').forEach((col) => {
+                            const key = col.getAttribute('data-column-key');
+                            col.style.display = key && selected.has(key) ? '' : 'none';
+                        });
+                    }
+                    window.__vnPropertiesTableMechanicsApi.applyPin();
+                    window.__vnPropertiesTableMechanicsApi.syncTop();
+                },
+            };
+        }
 
         setPanelOpen(initialOpen, false);
         updateStickyOffset();

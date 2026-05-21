@@ -164,6 +164,8 @@ export function initPropertiesTableAdvanced(options) {
         tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge').forEach((el) => {
             el.classList.remove('vn-col-pinned', 'vn-col-pin-edge');
             el.style.removeProperty('right');
+            el.style.removeProperty('inset-inline-end');
+            el.style.removeProperty('left');
         });
         tableEl.querySelectorAll('.vn-col-pin-btn').forEach((btn) => {
             btn.classList.remove('active');
@@ -185,7 +187,9 @@ export function initPropertiesTableAdvanced(options) {
             tableEl.querySelectorAll(`th.${colClassForKey(colKey)}, td.${colClassForKey(colKey)}`).forEach((el) => {
                 if (getComputedStyle(el).display === 'none') return;
                 el.classList.add('vn-col-pinned');
+                el.style.insetInlineEnd = `${offset}px`;
                 el.style.right = `${offset}px`;
+                el.style.left = 'auto';
             });
             const btn = th?.querySelector('.vn-col-pin-btn');
             if (btn) {
@@ -217,6 +221,19 @@ export function initPropertiesTableAdvanced(options) {
         pinnedCols = [];
         safeSet(VN_PIN_KEY, '[]');
         applyColumnPinning();
+    };
+
+    const bindExistingPinButtons = () => {
+        tableEl.querySelectorAll('[data-col-pin]').forEach((btn) => {
+            if (btn.dataset.pinBound === '1') return;
+            btn.dataset.pinBound = '1';
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const key = btn.getAttribute('data-col-pin');
+                if (key) togglePinColumn(key);
+            });
+        });
     };
 
     const injectPinButtons = () => {
@@ -276,23 +293,23 @@ export function initPropertiesTableAdvanced(options) {
                 const startX = e.clientX;
                 const startWidth = Math.max(th.getBoundingClientRect().width, 72);
                 const minWidth = DEFAULT_COL_MIN_WIDTHS[key] || 72;
-                const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
                 let moved = false;
-                document.body.classList.add('vn-is-col-resizing');
+                document.body.classList.add('vn-is-col-resizing', 'is-col-resizing');
+                col.style.minWidth = '0';
                 if (handle.setPointerCapture) {
                     try { handle.setPointerCapture(e.pointerId); } catch (_) {}
                 }
                 const onMove = (ev) => {
                     const delta = ev.clientX - startX;
                     if (!moved && Math.abs(delta) > 2) moved = true;
-                    const nextWidth = Math.max(minWidth, startWidth + (rtl ? startX - ev.clientX : delta));
+                    const nextWidth = Math.max(minWidth, startWidth + delta);
                     col.style.width = `${nextWidth}px`;
                 };
                 const onUp = () => {
                     window.removeEventListener('pointermove', onMove);
                     window.removeEventListener('pointerup', onUp);
                     window.removeEventListener('pointercancel', onUp);
-                    document.body.classList.remove('vn-is-col-resizing');
+                    document.body.classList.remove('vn-is-col-resizing', 'is-col-resizing');
                     if (moved) {
                         th.dataset.recentlyResized = String(Date.now());
                         persistColWidth(key, th.getBoundingClientRect().width);
@@ -377,6 +394,7 @@ export function initPropertiesTableAdvanced(options) {
     syncColClasses();
     applyDefaultColWidths();
     restoreColWidths();
+    bindExistingPinButtons();
     injectPinButtons();
     ensureColumnResizers();
     bindColumnResizeHandlers();
