@@ -17,11 +17,20 @@
         $currentCount = $hasPaginator ? $paginator->count() : 0;
 
         $columnOptions = [
+            'id' => 'ID',
             'name' => 'المالك',
+            'owner_type' => 'نوع المالك',
+            'father_name' => 'اسم الأب',
             'phone' => 'رقم الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'national_id' => 'الرقم الوطني',
+            'commercial_register_number' => 'رقم السجل التجاري',
+            'real_estate_registry_number' => 'رقم السجل العقاري',
+            'birth_date' => 'تاريخ الميلاد',
             'properties_linked_count' => 'عدد العقارات المرتبطة',
             'ownership_percentage' => 'الحصة',
             'current_ownerships_count' => 'الملكيات الحالية',
+            'created_at' => 'تاريخ الإضافة',
             'last_update' => 'آخر تحديث',
             'status_or_notes' => 'الحالة / الملاحظات',
         ];
@@ -127,11 +136,20 @@
                 <table>
                     <thead>
                         <tr>
+                            <th data-column-key="id">ID</th>
                             <th data-column-key="name">المالك</th>
+                            <th data-column-key="owner_type">نوع المالك</th>
+                            <th data-column-key="father_name">اسم الأب</th>
                             <th data-column-key="phone">رقم الهاتف</th>
+                            <th data-column-key="email">البريد الإلكتروني</th>
+                            <th data-column-key="national_id">الرقم الوطني</th>
+                            <th data-column-key="commercial_register_number">رقم السجل التجاري</th>
+                            <th data-column-key="real_estate_registry_number">رقم السجل العقاري</th>
+                            <th data-column-key="birth_date">تاريخ الميلاد</th>
                             <th data-column-key="properties_linked_count">عدد العقارات المرتبطة</th>
                             <th data-column-key="ownership_percentage">الحصة</th>
                             <th data-column-key="current_ownerships_count">الملكيات الحالية</th>
+                            <th data-column-key="created_at">تاريخ الإضافة</th>
                             <th data-column-key="last_update">آخر تحديث</th>
                             <th data-column-key="status_or_notes">الحالة / الملاحظات</th>
                         </tr>
@@ -139,11 +157,20 @@
                     <tbody>
                         @foreach ($owners as $owner)
                             <tr>
+                                <td data-column-key="id">{{ filled((string) ($owner['id'] ?? null)) ? $owner['id'] : '—' }}</td>
                                 <td data-column-key="name">{{ filled((string) ($owner['name'] ?? null)) ? $owner['name'] : '—' }}</td>
+                                <td data-column-key="owner_type">{{ filled((string) ($owner['owner_type'] ?? null)) ? $owner['owner_type'] : '—' }}</td>
+                                <td data-column-key="father_name">{{ filled((string) ($owner['father_name'] ?? null)) ? $owner['father_name'] : '—' }}</td>
                                 <td data-column-key="phone">{{ filled((string) ($owner['phone'] ?? null)) ? $owner['phone'] : '—' }}</td>
+                                <td data-column-key="email">{{ filled((string) ($owner['email'] ?? null)) ? $owner['email'] : '—' }}</td>
+                                <td data-column-key="national_id">{{ filled((string) ($owner['national_id'] ?? null)) ? $owner['national_id'] : '—' }}</td>
+                                <td data-column-key="commercial_register_number">{{ filled((string) ($owner['commercial_register_number'] ?? null)) ? $owner['commercial_register_number'] : '—' }}</td>
+                                <td data-column-key="real_estate_registry_number">{{ filled((string) ($owner['real_estate_registry_number'] ?? null)) ? $owner['real_estate_registry_number'] : '—' }}</td>
+                                <td data-column-key="birth_date">{{ filled((string) ($owner['birth_date'] ?? null)) ? $owner['birth_date'] : '—' }}</td>
                                 <td data-column-key="properties_linked_count">{{ filled((string) ($owner['properties_linked_count'] ?? null)) ? $owner['properties_linked_count'] : '—' }}</td>
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ filled((string) ($owner['ownership_percentage'] ?? null)) ? $owner['ownership_percentage'] : '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ filled((string) ($owner['current_ownerships_count'] ?? null)) ? $owner['current_ownerships_count'] : '—' }}</td>
+                                <td data-column-key="created_at">{{ filled((string) ($owner['created_at'] ?? null)) ? $owner['created_at'] : '—' }}</td>
                                 <td data-column-key="last_update">{{ filled((string) ($owner['last_update'] ?? null)) ? $owner['last_update'] : '—' }}</td>
                                 <td data-column-key="status_or_notes" class="vn-muted-value">{{ filled((string) ($owner['status_or_notes'] ?? null)) ? $owner['status_or_notes'] : '—' }}</td>
                             </tr>

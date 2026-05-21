@@ -277,11 +277,20 @@
         const GEN_KEY = 'viewer_new_owners_generator_open';
         const COL_KEY = 'viewer_new_owners_visible_columns';
         const defaultColumns = [
+            'id',
             'name',
+            'owner_type',
+            'father_name',
             'phone',
+            'email',
+            'national_id',
+            'commercial_register_number',
+            'real_estate_registry_number',
+            'birth_date',
             'properties_linked_count',
             'ownership_percentage',
             'current_ownerships_count',
+            'created_at',
             'last_update',
             'status_or_notes',
         ];

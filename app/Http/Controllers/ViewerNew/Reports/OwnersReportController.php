@@ -81,12 +81,35 @@ class OwnersReportController extends Controller
                 ? rtrim(rtrim(number_format((float) $owner->ownership_percentage_max, 2, '.', ''), '0'), '.') . '%'
                 : '—';
 
+            $ownerTypeRaw = $ownerHas('owner_type') ? trim((string) ($owner->owner_type ?? '')) : '';
+            $ownerType = match ($ownerTypeRaw) {
+                'individual', 'person', 'فرد' => 'فرد',
+                'company', 'شركة' => 'شركة',
+                default => $ownerTypeRaw !== '' ? $ownerTypeRaw : '—',
+            };
+
+            $registryNumber = '—';
+            if ($ownerHas('real_estate_registry_number')) {
+                $registryNumber = trim((string) ($owner->real_estate_registry_number ?? '')) ?: '—';
+            } elseif ($ownerHas('real_estate_record_number')) {
+                $registryNumber = trim((string) ($owner->real_estate_record_number ?? '')) ?: '—';
+            }
+
             return [
+                'id' => $owner->getKey() ?? '—',
                 'name' => $owner->display_name ?: '—',
+                'owner_type' => $ownerType,
+                'father_name' => $ownerHas('father_name') ? (trim((string) ($owner->father_name ?? '')) ?: '—') : '—',
                 'phone' => $ownerHas('phone') ? ($owner->phone ?: '—') : '—',
+                'email' => $ownerHas('email') ? (trim((string) ($owner->email ?? '')) ?: '—') : '—',
+                'national_id' => $ownerHas('national_id') ? (trim((string) ($owner->national_id ?? '')) ?: '—') : '—',
+                'commercial_register_number' => $ownerHas('commercial_register_number') ? (trim((string) ($owner->commercial_register_number ?? '')) ?: '—') : '—',
+                'real_estate_registry_number' => $registryNumber,
+                'birth_date' => $ownerHas('birth_date') ? ($owner->birth_date?->format('Y-m-d') ?? '—') : '—',
                 'properties_linked_count' => $owner->properties_linked_count ?? '—',
                 'ownership_percentage' => $ownershipPercentage,
                 'current_ownerships_count' => $hasCurrentColumn ? ($owner->current_ownerships_count ?? 0) : '—',
+                'created_at' => $ownerHas('created_at') ? ($owner->created_at?->format('Y-m-d H:i') ?? '—') : '—',
                 'last_update' => $ownerHas('updated_at') ? ($owner->updated_at?->format('Y-m-d H:i') ?? '—') : '—',
                 'status_or_notes' => $ownerHas('notes')
                     ? ($owner->notes ?: '—')
