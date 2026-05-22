@@ -1,5 +1,152 @@
 import { initPropertiesTableAdvanced } from './properties-table.js';
 
+const PROPERTIES_PIN_KEY = 'viewer_new_properties_pinned_cols';
+
+const propertiesColClass = (key) => `vn-col-${key}`;
+
+const setupPropertiesColumnPinning = ({
+    reportRoot,
+    tableEl,
+    tableScroller,
+    safeGet,
+    safeSet,
+    onLayoutChange,
+}) => {
+    if (!reportRoot || !tableEl) return null;
+
+    let pinnedCols = [];
+    try {
+        const parsed = JSON.parse(safeGet(PROPERTIES_PIN_KEY) || '[]');
+        pinnedCols = Array.isArray(parsed) ? parsed.filter((k) => typeof k === 'string') : [];
+    } catch (_) {
+        pinnedCols = [];
+    }
+
+    let pinScrollRaf = 0;
+
+    const syncPinBar = (count) => {
+        const pinBar = reportRoot.querySelector('[data-properties-pin-bar]');
+        const pinCountEl = reportRoot.querySelector('[data-properties-pin-count]');
+        pinBar?.classList.toggle('is-visible', count > 0);
+        if (pinCountEl) pinCountEl.textContent = count > 0 ? `${count} مثبت` : '';
+    };
+
+    const applyColumnPinning = () => {
+        const pinned = pinnedCols.filter((key) => {
+            const th = tableEl.querySelector(`thead th[data-column-key="${key}"]`);
+            return th && getComputedStyle(th).display !== 'none';
+        });
+
+        tableEl.classList.remove('vn-has-pinned-cols', 'has-pinned-cols');
+        tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge, .col-pinned, .col-pin-edge').forEach((el) => {
+            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge', 'col-pinned', 'col-pin-edge');
+            el.style.removeProperty('right');
+            el.style.removeProperty('inset-inline-end');
+            el.style.removeProperty('left');
+        });
+        tableEl.querySelectorAll('.vn-col-pin-btn, .col-pin-btn').forEach((btn) => {
+            btn.classList.remove('active');
+            btn.title = 'تثبيت العمود';
+            btn.setAttribute('aria-pressed', 'false');
+        });
+
+        if (pinned.length === 0) {
+            syncPinBar(0);
+            if (typeof onLayoutChange === 'function') onLayoutChange();
+            return;
+        }
+
+        tableEl.classList.add('vn-has-pinned-cols', 'has-pinned-cols');
+        let offset = 0;
+
+        pinned.forEach((colKey) => {
+            const th = tableEl.querySelector(`thead th.${propertiesColClass(colKey)}`);
+            const colW = th ? th.offsetWidth : 120;
+
+            tableEl.querySelectorAll(`th.${propertiesColClass(colKey)}, td.${propertiesColClass(colKey)}`).forEach((el) => {
+                if (getComputedStyle(el).display === 'none') return;
+                el.classList.add('vn-col-pinned', 'col-pinned');
+                el.style.insetInlineEnd = `${offset}px`;
+                el.style.right = `${offset}px`;
+                el.style.left = 'auto';
+            });
+
+            const btn = th?.querySelector('.vn-col-pin-btn, .col-pin-btn');
+            if (btn) {
+                btn.classList.add('active');
+                btn.title = 'إلغاء التثبيت';
+                btn.setAttribute('aria-pressed', 'true');
+            }
+
+            offset += colW;
+        });
+
+        const lastKey = pinned[pinned.length - 1];
+        tableEl.querySelectorAll(`th.${propertiesColClass(lastKey)}, td.${propertiesColClass(lastKey)}`).forEach((el) => {
+            if (el.classList.contains('vn-col-pinned')) {
+                el.classList.add('vn-col-pin-edge', 'col-pin-edge');
+            }
+        });
+
+        syncPinBar(pinned.length);
+        if (typeof onLayoutChange === 'function') onLayoutChange();
+    };
+
+    const schedulePinSync = () => {
+        if (pinScrollRaf) return;
+        pinScrollRaf = window.requestAnimationFrame(() => {
+            pinScrollRaf = 0;
+            applyColumnPinning();
+        });
+    };
+
+    const togglePinColumn = (colKey) => {
+        if (!colKey) return;
+        const idx = pinnedCols.indexOf(colKey);
+        if (idx === -1) pinnedCols.push(colKey);
+        else pinnedCols.splice(idx, 1);
+        safeSet(PROPERTIES_PIN_KEY, JSON.stringify(pinnedCols));
+        applyColumnPinning();
+    };
+
+    if (tableEl.dataset.vnPinDelegation !== '1') {
+        tableEl.dataset.vnPinDelegation = '1';
+        tableEl.addEventListener('click', (event) => {
+            const btn = event.target instanceof Element ? event.target.closest('[data-col-pin]') : null;
+            if (!btn || !tableEl.contains(btn)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            togglePinColumn(btn.getAttribute('data-col-pin'));
+        }, true);
+    }
+
+    const unpinAllBtn = reportRoot.querySelector('[data-properties-unpin-all]');
+    if (unpinAllBtn && unpinAllBtn.dataset.vnUnpinBound !== '1') {
+        unpinAllBtn.dataset.vnUnpinBound = '1';
+        unpinAllBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            pinnedCols = [];
+            safeSet(PROPERTIES_PIN_KEY, '[]');
+            applyColumnPinning();
+        });
+    }
+
+    tableScroller?.addEventListener('scroll', schedulePinSync, { passive: true });
+    window.addEventListener('resize', schedulePinSync);
+
+    tableEl.querySelectorAll('[data-column-key]').forEach((cell) => {
+        const key = cell.getAttribute('data-column-key');
+        if (key && !cell.classList.contains(propertiesColClass(key))) {
+            cell.classList.add(propertiesColClass(key));
+        }
+    });
+
+    applyColumnPinning();
+
+    return { applyColumnPinning, togglePinColumn, schedulePinSync };
+};
+
 (() => {
     const shell = document.querySelector('.viewer-new__shell');
     const toggleSidebarBtn = document.querySelector('[data-toggle-sidebar]');
@@ -424,9 +571,25 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             tblNavPill = reportRoot.querySelector('.vn-tbl-nav-pill');
         }
 
+        const pinApi = tableEl
+            ? setupPropertiesColumnPinning({
+                reportRoot,
+                tableEl,
+                tableScroller,
+                safeGet,
+                safeSet,
+                onLayoutChange: () => {
+                    requestFloatingHeadSync();
+                    updateTblNavPill();
+                    window.__vnPropertiesTableMechanicsApi?.syncTop?.();
+                },
+            })
+            : null;
+
         tableScroller?.addEventListener('scroll', () => {
             requestFloatingHeadSync();
             updateTblNavPill();
+            pinApi?.schedulePinSync();
         }, { passive: true });
 
         const ensureFloatingHost = () => {
@@ -574,6 +737,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             updateTblNavPill();
         });
 
+        const syncTopScroll = () => window.__vnPropertiesTableMechanicsApi?.syncTop?.();
+
         if (!window.__vnPropertiesTableMechanicsApi) {
             tableAdvancedApi = initPropertiesTableAdvanced({
                 reportRoot,
@@ -583,13 +748,17 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                     requestFloatingHeadSync();
                     updateTblNavPill();
                     tableAdvancedApi?.syncTopScrollWidth();
-                    window.__vnPropertiesTableMechanicsApi?.applyPin?.();
+                    pinApi?.applyColumnPinning();
                 },
             });
+            if (tableAdvancedApi && pinApi) {
+                tableAdvancedApi.applyColumnPinning = pinApi.applyColumnPinning;
+            }
         } else {
+            window.__vnPropertiesTableMechanicsApi.applyPin = () => pinApi?.applyColumnPinning();
             tableAdvancedApi = {
-                applyColumnPinning: () => window.__vnPropertiesTableMechanicsApi.applyPin(),
-                syncTopScrollWidth: () => window.__vnPropertiesTableMechanicsApi.syncTop(),
+                applyColumnPinning: () => pinApi?.applyColumnPinning(),
+                syncTopScrollWidth: syncTopScroll,
                 onColumnsVisibilityChange: (visibleKeys) => {
                     const colgroup = document.getElementById('vn-properties-colgroup');
                     if (colgroup && Array.isArray(visibleKeys)) {
@@ -599,8 +768,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                             col.style.display = key && selected.has(key) ? '' : 'none';
                         });
                     }
-                    window.__vnPropertiesTableMechanicsApi.applyPin();
-                    window.__vnPropertiesTableMechanicsApi.syncTop();
+                    pinApi?.applyColumnPinning();
+                    syncTopScroll();
                 },
             };
         }
