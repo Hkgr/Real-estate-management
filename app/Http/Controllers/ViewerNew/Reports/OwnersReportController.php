@@ -8,6 +8,7 @@ use App\Models\OwnerPropertyCard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class OwnersReportController extends Controller
 {
@@ -37,6 +38,11 @@ class OwnersReportController extends Controller
         $filters = [
             'q' => trim((string) $request->query('q', '')),
             'current' => (string) $request->query('current', ''),
+            'owner_type' => trim((string) $request->query('owner_type', '')),
+            'registry' => trim((string) $request->query('registry', '')),
+            'birth_date_from' => $this->normalizeDateFilter($request->query('birth_date_from')),
+            'birth_date_to' => $this->normalizeDateFilter($request->query('birth_date_to')),
+            'has_properties' => (string) $request->query('has_properties', ''),
         ];
 
         $hasCurrentColumn = $pivotHas('is_current');
@@ -56,6 +62,42 @@ class OwnersReportController extends Controller
             $ownersQuery->whereHas('propertyCards', function ($query) use ($filters): void {
                 $query->where('owner_property_card.is_current', $filters['current'] === '1');
             });
+        }
+
+        if ($ownerHas('owner_type') && $filters['owner_type'] !== '') {
+            $ownerTypeMap = [
+                'individual' => ['individual', 'person', 'فرد'],
+                'person' => ['individual', 'person', 'فرد'],
+                'فرد' => ['individual', 'person', 'فرد'],
+                'company' => ['company', 'شركة'],
+                'شركة' => ['company', 'شركة'],
+            ];
+
+            $ownerTypeKey = Str::lower($filters['owner_type']);
+            $ownersQuery->whereIn("{$ownersTable}.owner_type", $ownerTypeMap[$ownerTypeKey] ?? [$filters['owner_type']]);
+        }
+
+        if ($filters['registry'] !== '') {
+            if ($ownerHas('real_estate_registry_number')) {
+                $ownersQuery->where("{$ownersTable}.real_estate_registry_number", 'like', "%{$filters['registry']}%");
+            } elseif ($ownerHas('real_estate_record_number')) {
+                $ownersQuery->where("{$ownersTable}.real_estate_record_number", 'like', "%{$filters['registry']}%");
+            }
+        }
+
+        if ($ownerHas('birth_date')) {
+            if ($filters['birth_date_from'] !== '') {
+                $ownersQuery->whereDate("{$ownersTable}.birth_date", '>=', $filters['birth_date_from']);
+            }
+
+            if ($filters['birth_date_to'] !== '') {
+                $ownersQuery->whereDate("{$ownersTable}.birth_date", '<=', $filters['birth_date_to']);
+            }
+        }
+
+        if ($hasPivotTable && in_array($filters['has_properties'], ['1', '0'], true)) {
+            $method = $filters['has_properties'] === '1' ? 'whereHas' : 'whereDoesntHave';
+            $ownersQuery->{$method}('propertyCards');
         }
 
         if ($hasPivotTable) {
@@ -154,5 +196,22 @@ class OwnersReportController extends Controller
                 'filters_q' => $searchableColumns !== [],
             ],
         ]);
+    }
+
+    private function normalizeDateFilter(mixed $value): string
+    {
+        if (! is_string($value)) {
+            return '';
+        }
+
+        $value = trim($value);
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return '';
+        }
+
+        $date = \DateTime::createFromFormat('Y-m-d', $value);
+
+        return $date && $date->format('Y-m-d') === $value ? $value : '';
     }
 }
