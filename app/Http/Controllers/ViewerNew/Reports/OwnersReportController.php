@@ -77,6 +77,20 @@ class OwnersReportController extends Controller
         $owners = $ownersQuery->paginate(15)->withQueryString();
 
         $owners->setCollection($owners->getCollection()->map(function (Owner $owner) use ($ownerHas, $pivotHas, $hasCurrentColumn): array {
+            $formatDate = static function (mixed $value, string $format): string {
+                if (blank($value)) {
+                    return '—';
+                }
+
+                if ($value instanceof \DateTimeInterface) {
+                    return $value->format($format);
+                }
+
+                $timestamp = strtotime((string) $value);
+
+                return $timestamp !== false ? date($format, $timestamp) : '—';
+            };
+
             $ownershipPercentage = $pivotHas('ownership_percentage') && $owner->ownership_percentage_max !== null
                 ? rtrim(rtrim(number_format((float) $owner->ownership_percentage_max, 2, '.', ''), '0'), '.') . '%'
                 : '—';
@@ -105,12 +119,12 @@ class OwnersReportController extends Controller
                 'national_id' => $ownerHas('national_id') ? (trim((string) ($owner->national_id ?? '')) ?: '—') : '—',
                 'commercial_register_number' => $ownerHas('commercial_register_number') ? (trim((string) ($owner->commercial_register_number ?? '')) ?: '—') : '—',
                 'real_estate_registry_number' => $registryNumber,
-                'birth_date' => $ownerHas('birth_date') ? ($owner->birth_date?->format('Y-m-d') ?? '—') : '—',
+                'birth_date' => $ownerHas('birth_date') ? $formatDate($owner->getAttribute('birth_date'), 'Y-m-d') : '—',
                 'properties_linked_count' => $owner->properties_linked_count ?? '—',
                 'ownership_percentage' => $ownershipPercentage,
                 'current_ownerships_count' => $hasCurrentColumn ? ($owner->current_ownerships_count ?? 0) : '—',
-                'created_at' => $ownerHas('created_at') ? ($owner->created_at?->format('Y-m-d H:i') ?? '—') : '—',
-                'last_update' => $ownerHas('updated_at') ? ($owner->updated_at?->format('Y-m-d H:i') ?? '—') : '—',
+                'created_at' => $ownerHas('created_at') ? $formatDate($owner->getAttribute('created_at'), 'Y-m-d H:i') : '—',
+                'last_update' => $ownerHas('updated_at') ? $formatDate($owner->getAttribute('updated_at'), 'Y-m-d H:i') : '—',
                 'status_or_notes' => $ownerHas('notes')
                     ? ($owner->notes ?: '—')
                     : ($ownerHas('is_active') ? ((bool) $owner->is_active ? 'نشط' : 'غير نشط') : '—'),
