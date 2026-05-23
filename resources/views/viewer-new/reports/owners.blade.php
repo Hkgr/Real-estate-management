@@ -152,10 +152,11 @@
                     @endphp
                     @foreach ($columnOptions as $key => $label)
                         <label class="vn-report-column-option vn-report-column-option-card">
-                            <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
+                            <input type="checkbox" value="{{ $key }}" checked disabled aria-disabled="true">
                             <span>{{ $label }}</span>
                         </label>
                     @endforeach
+                    <p class="vn-muted-value">اختيار الأعمدة سيتم ضبطه لاحقاً من واجهة العرض.</p>
                 </div>
 
                 <div class="vn-report-generator__actions">
