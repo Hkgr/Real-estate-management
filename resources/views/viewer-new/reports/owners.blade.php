@@ -62,7 +62,7 @@
         }
     @endphp
 
-    <section class="vn-owners-report" id="page-owners">
+    <section class="vn-properties-report vn-owners-report" id="page-owners">
         <header class="page-header vn-report-hero">
             <div class="page-header-row vn-report-hero__row">
                 <div class="vn-report-hero__content">
@@ -166,9 +166,9 @@
         </section>
 
         @if ($activeFilters !== [])
-            <section class="vn-active-filters" aria-label="الفلاتر المفعلة">
+            <section class="vn-active-filter-chips" aria-label="الفلاتر المفعلة">
                 @foreach ($activeFilters as $filter)
-                    <span class="vn-filter-chip">{{ $filter['label'] }}: {{ $filter['value'] }}</span>
+                    <span class="vn-active-filter-chip">{{ $filter['label'] }}: {{ $filter['value'] }}</span>
                 @endforeach
             </section>
         @endif
@@ -181,7 +181,7 @@
         </section>
 
         @if (($owners ?? collect())->count() > 0)
-            <div class="vn-table-responsive vn-owners-table">
+            <div class="vn-table-responsive vn-properties-table vn-owners-table">
                 <table>
                     <thead>
                         <tr>
