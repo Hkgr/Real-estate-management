@@ -245,7 +245,6 @@
 
 
 /* Properties report — FRONT/index.html parity (scoped .vn-properties-report only) */
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
 
 .viewer-new .viewer-new__main:has(.vn-properties-report){
   position:relative;
