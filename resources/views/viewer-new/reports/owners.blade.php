@@ -94,10 +94,11 @@
                 <div class="toolbar-inline-search vn-report-toolbar__search active" id="vn-toolbar-inline-search">
                     <label for="filter-q" class="vn-report-toolbar__search-label filter-label">بحث شامل</label>
                     <input id="filter-q" class="search-input" type="text" name="q" form="vn-owners-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="ابحث بالاسم أو الهاتف أو البريد..." @if (! $fieldAvailability['filters_q']) disabled @endif />
+                    <button type="button" class="toolbar-search-close vn-report-toolbar-button" data-owners-clear-search aria-label="مسح البحث">✕</button>
                 </div>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--primary active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-owners-generator-panel">مولد تقارير</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير ▾</button>
-                <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="غير متاح حالياً">⛶ ملء الشاشة</button>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-owners-fullscreen id="owners-fullscreen-btn">⛶ ملء الشاشة</button>
             </div>
         </section>
 
@@ -159,16 +160,17 @@
                     @endphp
                     @foreach ($columnOptions as $key => $label)
                         <label class="vn-report-column-option vn-report-column-option-card">
-                            <input type="checkbox" value="{{ $key }}" checked disabled aria-disabled="true">
+                            <input type="checkbox" data-owners-column-toggle value="{{ $key }}" checked>
                             <span>{{ $label }}</span>
                         </label>
                     @endforeach
-                    <p class="vn-muted-value">اختيار الأعمدة سيتم ضبطه لاحقاً من واجهة العرض.</p>
                 </div>
 
                 <div class="vn-report-generator__actions">
                     <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
                     <a href="{{ route('viewer-new.reports.owners') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
+                    <button type="button" class="vn-report-toolbar-button" data-owners-reset-columns>إعادة الافتراضي</button>
+                    <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-owners-generate-report>توليد تقرير</button>
                 </div>
             </form>
         </section>
