@@ -36,6 +36,7 @@
             'created_at',
             'status_or_notes',
         ];
+        $ownerTableColspan = count($ownerTableColumnKeys);
 
         $filterLabels = [
             'q' => 'بحث شامل',
@@ -215,7 +216,7 @@
             <div class="vn-table-card vn-property-table-card">
                 <div class="vn-table-with-scroll">
                     <div class="vn-table-responsive vn-owners-table" id="vn-owners-overflow">
-                        <table id="vn-owners-table" class="vn-big-table">
+                        <table id="vn-owners-table" class="vn-big-table" data-owner-table-colspan="{{ $ownerTableColspan }}">
                     <thead>
                         <tr>
                             <th data-column-key="id"><div class="vn-th-inner">ID</div></th>
@@ -251,99 +252,33 @@
                                 <td data-column-key="commercial_register_number">{{ $owner['commercial_register_number'] ?? '—' }}</td>
                                 <td data-column-key="real_estate_registry_number">{{ $owner['real_estate_registry_number'] ?? '—' }}</td>
                                 <td data-column-key="birth_date">{{ $owner['birth_date'] ?? '—' }}</td>
+                                @php
+                                    $relatedProperties = collect($owner['related_properties'] ?? []);
+                                    $signals = collect($owner['signals'] ?? []);
+                                    $propertiesRowId = 'owner-properties-row-' . ($owner['id'] ?? 'na');
+                                    $signalsRowId = 'owner-signals-row-' . ($owner['id'] ?? 'na');
+                                    $signalsTotalCount = (int) ($owner['signals_total_count'] ?? $signals->count());
+                                @endphp
                                 <td data-column-key="properties_linked_count">
-                                    @php
-                                        $relatedProperties = $owner['related_properties'] ?? [];
-                                    @endphp
-                                    <div class="vn-related-inline">
-                                        <span class="vn-related-inline__count">{{ $owner['properties_linked_count'] ?? '—' }}</span>
-                                    </div>
-                                    @if (count($relatedProperties) > 0)
-                                        <details>
-                                            <summary>عرض العقارات المرتبطة</summary>
-                                            <table class="vn-big-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>ID</th>
-                                                        <th>الاسم</th>
-                                                        <th>الدولة</th>
-                                                        <th>المحافظة</th>
-                                                        <th>المنطقة</th>
-                                                        <th>رقم المحضر</th>
-                                                        <th>رقم العقار</th>
-                                                        <th>الحصة</th>
-                                                        <th>الأسهم</th>
-                                                        <th>حالي</th>
-                                                        <th>آخر تحديث</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($relatedProperties as $property)
-                                                        <tr>
-                                                            <td>{{ $property['property_id'] ?? '—' }}</td>
-                                                            <td>{{ $property['property_name'] ?? '—' }}</td>
-                                                            <td>{{ $property['country'] ?? '—' }}</td>
-                                                            <td>{{ $property['governorate'] ?? '—' }}</td>
-                                                            <td>{{ $property['region'] ?? '—' }}</td>
-                                                            <td>{{ $property['record_number'] ?? '—' }}</td>
-                                                            <td>{{ $property['property_number'] ?? '—' }}</td>
-                                                            <td>{{ $property['ownership_percentage'] ?? '—' }}</td>
-                                                            <td>{{ $property['shares'] ?? '—' }}</td>
-                                                            <td>{{ $property['is_current'] ?? '—' }}</td>
-                                                            <td>{{ $property['updated_at'] ?? '—' }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </details>
+                                    @if ($relatedProperties->isNotEmpty())
+                                        <div class="vn-related-inline">
+                                            <span class="vn-related-inline__count">{{ number_format($relatedProperties->count()) }} عقارات</span>
+                                            <button type="button" class="vn-related-inline__toggle" data-owner-child-toggle data-owner-properties-toggle data-target="{{ $propertiesRowId }}" aria-expanded="false" aria-controls="{{ $propertiesRowId }}" data-show-label="▾" data-hide-label="▴">▾</button>
+                                        </div>
+                                    @else
+                                        <span class="vn-muted-value">—</span>
                                     @endif
                                 </td>
                                 <td data-column-key="signals_for_count">
+                                    @php $signalsForCount = (int) ($owner['signals_for_count'] ?? 0); @endphp
                                     <div class="vn-related-inline">
-                                        <span class="vn-related-inline__count">{{ $owner['signals_for_count'] ?? 0 }}</span>
+                                        <span class="vn-related-inline__count">له: {{ number_format($signalsForCount) }}</span>
+                                        @if ($signalsTotalCount > 0)
+                                            <button type="button" class="vn-related-inline__toggle" data-owner-child-toggle data-owner-signals-toggle data-target="{{ $signalsRowId }}" aria-expanded="false" aria-controls="{{ $signalsRowId }}" data-show-label="▾" data-hide-label="▴">▾</button>
+                                        @endif
                                     </div>
-                                    @php
-                                        $signals = $owner['signals'] ?? [];
-                                    @endphp
-                                    @if (($owner['signals_total_count'] ?? 0) > 0)
-                                        <details>
-                                            <summary>عرض الإشارات</summary>
-                                            <table class="vn-big-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>الاتجاه</th>
-                                                        <th>رقم الإشارة</th>
-                                                        <th>التاريخ</th>
-                                                        <th>النوع</th>
-                                                        <th>المالك / أصحاب الإشارة</th>
-                                                        <th>المتضرر / المتضررون</th>
-                                                        <th>المصدر</th>
-                                                        <th>رقم المصدر</th>
-                                                        <th>تاريخ المصدر</th>
-                                                        <th>ملاحظات</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($signals as $signal)
-                                                        <tr>
-                                                            <td>{{ $signal['signal_direction'] ?? '—' }}</td>
-                                                            <td>{{ $signal['signal_number'] ?? '—' }}</td>
-                                                            <td>{{ $signal['signal_date'] ?? '—' }}</td>
-                                                            <td>{{ $signal['signal_type'] ?? '—' }}</td>
-                                                            <td>{{ ($signal['signal_owner'] ?? '—') }} / {{ ($signal['signal_owners'] ?? '—') }}</td>
-                                                            <td>{{ ($signal['signal_victim'] ?? '—') }} / {{ ($signal['signal_victims'] ?? '—') }}</td>
-                                                            <td>{{ ($signal['signal_source'] ?? '—') }} / {{ ($signal['signal_sources'] ?? '—') }}</td>
-                                                            <td>{{ $signal['signal_source_number'] ?? '—' }}</td>
-                                                            <td>{{ $signal['signal_source_date'] ?? '—' }}</td>
-                                                            <td>{{ $signal['signal_notes'] ?? '—' }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </details>
-                                    @endif
                                 </td>
-                                <td data-column-key="signals_against_count">{{ $owner['signals_against_count'] ?? 0 }}</td>
+                                <td data-column-key="signals_against_count">عليه: {{ number_format((int) ($owner['signals_against_count'] ?? 0)) }}</td>
 
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ $owner['ownership_percentage'] ?? '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ $owner['current_ownerships_count'] ?? '—' }}</td>
@@ -351,6 +286,54 @@
                                 <td data-column-key="created_at">{{ $owner['created_at'] ?? '—' }}</td>
                                 <td data-column-key="status_or_notes" class="vn-muted-value vn-table-text-long">{{ $owner['status_or_notes'] ?? '—' }}</td>
                             </tr>
+                            @if ($relatedProperties->isNotEmpty())
+                                <tr class="vn-owner-properties-row vn-owner-child-row" id="{{ $propertiesRowId }}" data-owner-properties-row hidden>
+                                    <td colspan="{{ $ownerTableColspan }}">
+                                        <div class="vn-owner-properties-panel vn-child-panel vn-child-panel--properties">
+                                            <div class="vn-child-panel__header">
+                                                <h4 class="vn-child-panel__title">العقارات المرتبطة</h4>
+                                                <span class="vn-child-panel__meta">{{ number_format($relatedProperties->count()) }} سجلات</span>
+                                            </div>
+                                            <div class="vn-child-panel__table-wrap">
+                                                <table class="vn-owner-properties-table vn-child-table">
+                                                    <thead><tr><th>ID</th><th>الاسم</th><th>الدولة</th><th>المحافظة</th><th>المنطقة</th><th>رقم المحضر</th><th>رقم العقار</th><th>الحصة</th><th>الأسهم</th><th>حالي</th><th>آخر تحديث</th></tr></thead>
+                                                    <tbody>
+                                                    @foreach ($relatedProperties as $property)
+                                                        <tr>
+                                                            <td>{{ $property['property_id'] ?? '—' }}</td><td>{{ $property['property_name'] ?? '—' }}</td><td>{{ $property['country'] ?? '—' }}</td><td>{{ $property['governorate'] ?? '—' }}</td><td>{{ $property['region'] ?? '—' }}</td><td>{{ $property['record_number'] ?? '—' }}</td><td>{{ $property['property_number'] ?? '—' }}</td><td>{{ $property['ownership_percentage'] ?? '—' }}</td><td>{{ $property['shares'] ?? '—' }}</td><td>{{ $property['is_current'] ?? '—' }}</td><td>{{ $property['updated_at'] ?? '—' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+                            @if ($signalsTotalCount > 0)
+                                <tr class="vn-owner-signals-row vn-owner-child-row" id="{{ $signalsRowId }}" data-owner-signals-row hidden>
+                                    <td colspan="{{ $ownerTableColspan }}">
+                                        <div class="vn-owner-signals-panel vn-child-panel vn-child-panel--signals">
+                                            <div class="vn-child-panel__header">
+                                                <h4 class="vn-child-panel__title">الإشارات المرتبطة</h4>
+                                                <span class="vn-child-panel__meta">{{ number_format($signals->count()) }} سجلات</span>
+                                            </div>
+                                            <div class="vn-child-panel__table-wrap">
+                                                <table class="vn-owner-signals-table vn-child-table">
+                                                    <thead><tr><th>الاتجاه</th><th>رقم الإشارة</th><th>التاريخ</th><th>النوع</th><th>المالك / أصحاب الإشارة</th><th>المتضرر / المتضررون</th><th>المصدر</th><th>رقم المصدر</th><th>تاريخ المصدر</th><th>ملاحظات</th></tr></thead>
+                                                    <tbody>
+                                                    @foreach ($signals as $signal)
+                                                        <tr>
+                                                            <td>{{ $signal['signal_direction'] ?? '—' }}</td><td>{{ $signal['signal_number'] ?? '—' }}</td><td>{{ $signal['signal_date'] ?? '—' }}</td><td>{{ $signal['signal_type'] ?? '—' }}</td><td>{{ ($signal['signal_owner'] ?? '—') }} / {{ ($signal['signal_owners'] ?? '—') }}</td><td>{{ ($signal['signal_victim'] ?? '—') }} / {{ ($signal['signal_victims'] ?? '—') }}</td><td>{{ ($signal['signal_source'] ?? '—') }} / {{ ($signal['signal_sources'] ?? '—') }}</td><td>{{ $signal['signal_source_number'] ?? '—' }}</td><td>{{ $signal['signal_source_date'] ?? '—' }}</td><td>{{ $signal['signal_notes'] ?? '—' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -365,4 +348,28 @@
             @include('viewer-new.partials.empty-state', ['message' => 'حاول تعديل معايير البحث أو إزالة الفلاتر لعرض جميع المالكين.'])
         @endif
     </section>
+
+
+    <style>
+        .viewer-new .vn-owners-report .vn-owner-child-row > td { padding: 14px 18px; }
+    </style>
+    <script>
+        (function () {
+            const report = document.querySelector('.vn-owners-report');
+            if (!report) return;
+            report.addEventListener('click', function (event) {
+                const btn = event.target.closest('[data-owner-child-toggle],[data-owner-properties-toggle],[data-owner-signals-toggle]');
+                if (!btn || !report.contains(btn)) return;
+                const targetId = btn.getAttribute('data-target');
+                if (!targetId) return;
+                const row = report.querySelector('#' + CSS.escape(targetId));
+                if (!row) return;
+                const willOpen = row.hidden;
+                row.hidden = !willOpen;
+                btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                btn.textContent = willOpen ? (btn.dataset.hideLabel || '▴') : (btn.dataset.showLabel || '▾');
+            });
+        })();
+    </script>
 @endsection
+
