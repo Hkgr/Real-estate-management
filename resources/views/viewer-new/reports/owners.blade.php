@@ -60,13 +60,27 @@
                     <tbody>
                         @foreach ($owners as $owner)
                             <tr>
-                                <td>{{ $owner['name'] }}</td>
-                                <td>{{ $owner['phone'] }}</td>
+                                <td>
+                                    <div>{{ $owner['name'] }}</div>
+                                    <div class="vn-muted-value">نوع المالك: {{ $owner['owner_type'] ?? '—' }}</div>
+                                    <div class="vn-muted-value">اسم الأب: {{ $owner['father_name'] ?? '—' }}</div>
+                                </td>
+                                <td>
+                                    <div>{{ $owner['phone'] }}</div>
+                                    <div class="vn-muted-value vn-table-text-long">البريد: {{ $owner['email'] ?? '—' }}</div>
+                                </td>
                                 <td>{{ $owner['properties_linked_count'] }}</td>
                                 <td class="vn-muted-value">{{ $owner['ownership_percentage'] }}</td>
                                 <td>{{ $owner['current_ownerships_count'] }}</td>
                                 <td>{{ $owner['last_update'] }}</td>
-                                <td class="vn-muted-value">{{ $owner['status_or_notes'] }}</td>
+                                <td class="vn-muted-value">
+                                    <div class="vn-table-text-long">{{ $owner['status_or_notes'] }}</div>
+                                    <div>الرقم الوطني: {{ $owner['national_id'] ?? '—' }}</div>
+                                    <div>رقم السجل التجاري: {{ $owner['commercial_register_number'] ?? '—' }}</div>
+                                    <div>رقم السجل العقاري: {{ $owner['real_estate_registry_number'] ?? '—' }}</div>
+                                    <div>تاريخ الميلاد: {{ $owner['birth_date'] ?? '—' }}</div>
+                                    <div>تاريخ الإضافة: {{ $owner['created_at'] ?? '—' }}</div>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
