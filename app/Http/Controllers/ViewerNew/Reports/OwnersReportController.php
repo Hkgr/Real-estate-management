@@ -96,7 +96,7 @@ class OwnersReportController extends Controller
             }
 
             return [
-                'id' => $owner->getKey() ?? '—',
+                'id' => $ownerHas('id') ? ($owner->getAttribute('id') ?? '—') : '—',
                 'name' => $owner->display_name ?: '—',
                 'owner_type' => $ownerType,
                 'father_name' => $ownerHas('father_name') ? (trim((string) ($owner->father_name ?? '')) ?: '—') : '—',
