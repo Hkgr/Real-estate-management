@@ -270,16 +270,15 @@
                                     @endif
                                 </td>
                                 <td data-column-key="signals_for_count">
-                                    @if ($signalsTotalCount > 0)
-                                        <div class="vn-related-inline">
-                                            <span class="vn-related-inline__count">{{ number_format($signalsTotalCount) }} إشارات</span>
+                                    @php $signalsForCount = (int) ($owner['signals_for_count'] ?? 0); @endphp
+                                    <div class="vn-related-inline">
+                                        <span class="vn-related-inline__count">له: {{ number_format($signalsForCount) }}</span>
+                                        @if ($signalsTotalCount > 0)
                                             <button type="button" class="vn-related-inline__toggle" data-owner-child-toggle data-owner-signals-toggle data-target="{{ $signalsRowId }}" aria-expanded="false" aria-controls="{{ $signalsRowId }}" data-show-label="▾" data-hide-label="▴">▾</button>
-                                        </div>
-                                    @else
-                                        <span class="vn-muted-value">{{ $owner['signals_for_count'] ?? 0 }}</span>
-                                    @endif
+                                        @endif
+                                    </div>
                                 </td>
-                                <td data-column-key="signals_against_count">{{ $owner['signals_against_count'] ?? 0 }}</td>
+                                <td data-column-key="signals_against_count">عليه: {{ number_format((int) ($owner['signals_against_count'] ?? 0)) }}</td>
 
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ $owner['ownership_percentage'] ?? '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ $owner['current_ownerships_count'] ?? '—' }}</td>
