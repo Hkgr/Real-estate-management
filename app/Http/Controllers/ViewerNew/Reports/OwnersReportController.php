@@ -160,6 +160,8 @@ class OwnersReportController extends Controller
                 $registryNumber = trim((string) ($owner->real_estate_record_number ?? '')) ?: '—';
             }
 
+            $ownerRelatedProperties = $relatedPropertiesByOwner[(int) $owner->id] ?? [];
+
             return [
                 'id' => $ownerHas('id') ? ($owner->getAttribute('id') ?? '—') : '—',
                 'name' => $owner->display_name ?: '—',
@@ -171,7 +173,7 @@ class OwnersReportController extends Controller
                 'commercial_register_number' => $ownerHas('commercial_register_number') ? (trim((string) ($owner->commercial_register_number ?? '')) ?: '—') : '—',
                 'real_estate_registry_number' => $registryNumber,
                 'birth_date' => $ownerHas('birth_date') ? $formatDate($owner->getAttribute('birth_date'), 'Y-m-d') : '—',
-                'properties_linked_count' => count($relatedPropertiesByOwner[(int) $owner->id] ?? []),
+                'properties_linked_count' => count($ownerRelatedProperties),
                 'ownership_percentage' => $ownershipPercentage,
                 'current_ownerships_count' => $hasCurrentColumn ? ($owner->current_ownerships_count ?? 0) : '—',
                 'created_at' => $ownerHas('created_at') ? $formatDate($owner->getAttribute('created_at'), 'Y-m-d H:i') : '—',
@@ -179,7 +181,7 @@ class OwnersReportController extends Controller
                 'status_or_notes' => $ownerHas('notes')
                     ? ($owner->notes ?: '—')
                     : ($ownerHas('is_active') ? ((bool) $owner->is_active ? 'نشط' : 'غير نشط') : '—'),
-                'related_properties' => $relatedPropertiesByOwner[(int) $owner->id] ?? [],
+                'related_properties' => $ownerRelatedProperties,
             ];
         }));
 
