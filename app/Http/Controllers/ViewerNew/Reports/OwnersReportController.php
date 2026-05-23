@@ -377,7 +377,7 @@ class OwnersReportController extends Controller
         $fullNameExpr = $ownersHasFullName ? "NULLIF(TRIM(o.full_name), '')" : 'NULL';
         $companyNameExpr = $ownersHasCompanyName ? "NULLIF(TRIM(o.company_name), '')" : 'NULL';
         $displayNameExpr = $ownersHasOwnerType && $ownersHasCompanyName && $ownersHasFullName
-            ? "CASE WHEN o.owner_type = 'company' THEN COALESCE({$companyNameExpr}, {$fullNameExpr}) ELSE {$fullNameExpr} END"
+            ? "CASE WHEN o.owner_type IN ('company', 'شركة') THEN COALESCE({$companyNameExpr}, {$fullNameExpr}) ELSE COALESCE({$fullNameExpr}, {$companyNameExpr}) END"
             : "COALESCE({$fullNameExpr}, {$companyNameExpr})";
 
         $query->whereRaw("{$displayNameExpr} IS NOT NULL");
@@ -386,13 +386,13 @@ class OwnersReportController extends Controller
         $againstClauses = [];
         foreach (['signal_owner', 'signal_owners'] as $field) {
             if ($signalColumnMap[$field] !== null) {
-                $forClauses[] = "s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$fullNameExpr}, '%')";
+                $forClauses[] = "{$fullNameExpr} IS NOT NULL AND s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$fullNameExpr}, '%')";
                 $forClauses[] = "{$companyNameExpr} IS NOT NULL AND s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$companyNameExpr}, '%')";
             }
         }
         foreach (['signal_victim', 'signal_victims'] as $field) {
             if ($signalColumnMap[$field] !== null) {
-                $againstClauses[] = "s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$fullNameExpr}, '%')";
+                $againstClauses[] = "{$fullNameExpr} IS NOT NULL AND s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$fullNameExpr}, '%')";
                 $againstClauses[] = "{$companyNameExpr} IS NOT NULL AND s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$companyNameExpr}, '%')";
             }
         }
