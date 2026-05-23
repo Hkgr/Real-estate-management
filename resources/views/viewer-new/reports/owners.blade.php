@@ -27,6 +27,11 @@
         $filterLabels = [
             'q' => 'بحث شامل',
             'current' => 'حالة الملكية',
+            'owner_type' => 'نوع المالك',
+            'registry' => 'السجل العقاري',
+            'birth_date_from' => 'تاريخ الميلاد من',
+            'birth_date_to' => 'تاريخ الميلاد إلى',
+            'has_properties' => 'امتلاك عقارات',
         ];
 
         $activeFilters = [];
@@ -38,6 +43,14 @@
                     $value = 'ملكية حالية فقط';
                 } elseif ($value === '0') {
                     $value = 'ملكية غير حالية فقط';
+                } else {
+                    continue;
+                }
+            } elseif ($key === 'has_properties') {
+                if ($value === '1') {
+                    $value = 'مرتبط بعقارات';
+                } elseif ($value === '0') {
+                    $value = 'بدون عقارات مرتبطة';
                 } else {
                     continue;
                 }
@@ -95,6 +108,34 @@
                             </select>
                         </div>
                     @endif
+                    <div class="vn-report-generator__field">
+                        <label for="filter-owner-type">نوع المالك</label>
+                        <select id="filter-owner-type" name="owner_type">
+                            <option value="">الكل</option>
+                            <option value="فرد" @selected(($filters['owner_type'] ?? '') === 'فرد')>فرد</option>
+                            <option value="شركة" @selected(($filters['owner_type'] ?? '') === 'شركة')>شركة</option>
+                        </select>
+                    </div>
+                    <div class="vn-report-generator__field">
+                        <label for="filter-registry">السجل العقاري</label>
+                        <input id="filter-registry" type="text" name="registry" value="{{ $filters['registry'] ?? '' }}" />
+                    </div>
+                    <div class="vn-report-generator__field">
+                        <label for="filter-birth-date-from">تاريخ الميلاد من</label>
+                        <input id="filter-birth-date-from" type="date" name="birth_date_from" value="{{ $filters['birth_date_from'] ?? '' }}" />
+                    </div>
+                    <div class="vn-report-generator__field">
+                        <label for="filter-birth-date-to">تاريخ الميلاد إلى</label>
+                        <input id="filter-birth-date-to" type="date" name="birth_date_to" value="{{ $filters['birth_date_to'] ?? '' }}" />
+                    </div>
+                    <div class="vn-report-generator__field">
+                        <label for="filter-has-properties">امتلاك عقارات</label>
+                        <select id="filter-has-properties" name="has_properties">
+                            <option value="">الكل</option>
+                            <option value="1" @selected(($filters['has_properties'] ?? '') === '1')>مرتبط بعقارات</option>
+                            <option value="0" @selected(($filters['has_properties'] ?? '') === '0')>بدون عقارات مرتبطة</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="vn-report-generator__columns" data-column-picker>
