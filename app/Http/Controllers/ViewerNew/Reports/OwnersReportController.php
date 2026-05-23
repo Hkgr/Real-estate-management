@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Owner;
 use App\Models\OwnerPropertyCard;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -161,6 +160,8 @@ class OwnersReportController extends Controller
                 $registryNumber = trim((string) ($owner->real_estate_record_number ?? '')) ?: '—';
             }
 
+            $ownerRelatedProperties = $relatedPropertiesByOwner[(int) $owner->id] ?? [];
+
             return [
                 'id' => $ownerHas('id') ? ($owner->getAttribute('id') ?? '—') : '—',
                 'name' => $owner->display_name ?: '—',
@@ -172,7 +173,7 @@ class OwnersReportController extends Controller
                 'commercial_register_number' => $ownerHas('commercial_register_number') ? (trim((string) ($owner->commercial_register_number ?? '')) ?: '—') : '—',
                 'real_estate_registry_number' => $registryNumber,
                 'birth_date' => $ownerHas('birth_date') ? $formatDate($owner->getAttribute('birth_date'), 'Y-m-d') : '—',
-                'properties_linked_count' => $owner->properties_linked_count ?? '—',
+                'properties_linked_count' => count($ownerRelatedProperties),
                 'ownership_percentage' => $ownershipPercentage,
                 'current_ownerships_count' => $hasCurrentColumn ? ($owner->current_ownerships_count ?? 0) : '—',
                 'created_at' => $ownerHas('created_at') ? $formatDate($owner->getAttribute('created_at'), 'Y-m-d H:i') : '—',
@@ -180,7 +181,7 @@ class OwnersReportController extends Controller
                 'status_or_notes' => $ownerHas('notes')
                     ? ($owner->notes ?: '—')
                     : ($ownerHas('is_active') ? ((bool) $owner->is_active ? 'نشط' : 'غير نشط') : '—'),
-                'related_properties' => $relatedPropertiesByOwner[(int) $owner->id] ?? [],
+                'related_properties' => $ownerRelatedProperties,
             ];
         }));
 
@@ -226,6 +227,7 @@ class OwnersReportController extends Controller
         return $date && $date->format('Y-m-d') === $value ? $value : '';
     }
 
+
     private function buildRelatedPropertiesByOwner(array $ownerIds): array
     {
         $ownerIds = array_values(array_unique(array_filter(array_map('intval', $ownerIds), static fn (int $id): bool => $id > 0)));
@@ -233,59 +235,113 @@ class OwnersReportController extends Controller
             return [];
         }
 
-        $pivotTable = (new OwnerPropertyCard())->getTable();
-        $propertyCardsTable = (new \App\Models\PropertyCard())->getTable();
-        $propertiesTable = (new \App\Models\Property())->getTable();
+        $requiredTables = [
+            'property_operations',
+            'property_operation_new_owner',
+            'property_operation_old_owner',
+            'owners',
+            'property_cards',
+        ];
 
-        if (! Schema::hasTable($pivotTable)) {
-            return [];
+        foreach ($requiredTables as $table) {
+            if (! Schema::hasTable($table)) {
+                return [];
+            }
         }
 
-        $pivotColumns = Schema::getColumnListing($pivotTable);
-        $pivotHas = static fn (string $column): bool => in_array($column, $pivotColumns, true);
+        $requiredColumns = [
+            'property_operations' => ['id', 'property_card_id', 'transaction_unit', 'transaction_amount'],
+            'property_operation_new_owner' => ['property_operation_id', 'owner_id'],
+            'property_operation_old_owner' => ['property_operation_id', 'owner_id'],
+            'owners' => ['id'],
+            'property_cards' => ['id', 'card_record_number', 'card_governorate', 'card_region_name', 'card_total_area'],
+        ];
 
-        if (! $pivotHas('owner_id')) {
-            return [];
-        }
-
-        $canJoinPropertyCards = $pivotHas('property_card_id') && Schema::hasTable($propertyCardsTable);
-        $propertyCardColumns = $canJoinPropertyCards ? Schema::getColumnListing($propertyCardsTable) : [];
-        $propertyCardHas = static fn (string $column): bool => in_array($column, $propertyCardColumns, true);
-
-        $hasPropertiesTable = Schema::hasTable($propertiesTable);
-        $propertyColumns = $hasPropertiesTable ? Schema::getColumnListing($propertiesTable) : [];
-        $propertyHas = static fn (string $column): bool => in_array($column, $propertyColumns, true);
-
-        $query = DB::table($pivotTable . ' as opc')->whereIn('opc.owner_id', $ownerIds);
-
-        if ($canJoinPropertyCards) {
-            $query->leftJoin($propertyCardsTable . ' as pc', 'pc.id', '=', 'opc.property_card_id');
-        }
-
-        $canJoinProperties = $canJoinPropertyCards && $hasPropertiesTable && $propertyCardHas('property_id');
-        if ($canJoinProperties) {
-            $query->leftJoin($propertiesTable . ' as p', function (JoinClause $join) use ($propertyHas): void {
-                $join->on('p.id', '=', 'pc.property_id');
-                if ($propertyHas('deleted_at')) {
-                    $join->whereNull('p.deleted_at');
+        foreach ($requiredColumns as $table => $columns) {
+            foreach ($columns as $column) {
+                if (! Schema::hasColumn($table, $column)) {
+                    return [];
                 }
-            });
+            }
         }
 
-        $rows = $query->select([
-            'opc.owner_id',
-            DB::raw($pivotHas('property_card_id') ? 'opc.property_card_id as property_id' : 'NULL as property_id'),
-            DB::raw($canJoinProperties && $propertyHas('property_name') ? 'p.property_name as property_name' : 'NULL as property_name'),
-            DB::raw($canJoinProperties && $propertyHas('property_country') ? 'p.property_country as country' : 'NULL as country'),
-            DB::raw($canJoinPropertyCards && $propertyCardHas('card_governorate') ? 'pc.card_governorate as governorate' : 'NULL as governorate'),
-            DB::raw($canJoinPropertyCards && $propertyCardHas('card_region_name') ? 'pc.card_region_name as region' : 'NULL as region'),
-            DB::raw($canJoinPropertyCards && $propertyCardHas('card_record_number') ? 'pc.card_record_number as record_number' : 'NULL as record_number'),
-            DB::raw($canJoinPropertyCards && $propertyCardHas('card_property_number') ? 'pc.card_property_number as property_number' : 'NULL as property_number'),
-            DB::raw($pivotHas('ownership_percentage') ? 'opc.ownership_percentage as ownership_percentage' : 'NULL as ownership_percentage'),
-            DB::raw($pivotHas('ownership_metric') ? 'opc.ownership_metric as shares' : 'NULL as shares'),
-            DB::raw($pivotHas('is_current') ? 'opc.is_current as is_current' : 'NULL as is_current'),
-            DB::raw($pivotHas('updated_at') ? 'opc.updated_at as updated_at' : 'NULL as updated_at'),
-        ])->get();
+        $ownersHasDeletedAt = Schema::hasColumn('owners', 'deleted_at');
+        $ownersHasOwnerType = Schema::hasColumn('owners', 'owner_type');
+        $ownersHasCompanyName = Schema::hasColumn('owners', 'company_name');
+        $ownersHasFullName = Schema::hasColumn('owners', 'full_name');
+        $propertyCardsHasDeletedAt = Schema::hasColumn('property_cards', 'deleted_at');
+
+        $totalSharesReference = 2400;
+
+        $ownerNameExpression = $ownersHasOwnerType && $ownersHasCompanyName && $ownersHasFullName
+            ? "CASE WHEN o.owner_type IN ('company', 'شركة') THEN COALESCE(NULLIF(TRIM(o.company_name), ''), NULLIF(TRIM(o.full_name), ''), '—') ELSE COALESCE(NULLIF(TRIM(o.full_name), ''), NULLIF(TRIM(o.company_name), ''), '—') END"
+            : ($ownersHasCompanyName && $ownersHasFullName
+                ? "COALESCE(NULLIF(TRIM(o.full_name), ''), NULLIF(TRIM(o.company_name), ''), '—')"
+                : ($ownersHasFullName
+                    ? "COALESCE(NULLIF(TRIM(o.full_name), ''), '—')"
+                    : ($ownersHasCompanyName
+                        ? "COALESCE(NULLIF(TRIM(o.company_name), ''), '—')"
+                        : "'—'")));
+
+        $sharesExpression = "CASE WHEN po.transaction_unit = 'shares' THEN po.transaction_amount WHEN po.transaction_unit = 'percentage' THEN ({$totalSharesReference} * po.transaction_amount / 100) WHEN po.transaction_unit = 'square_meter' THEN (po.transaction_amount / NULLIF(pc.card_total_area, 0)) * {$totalSharesReference} ELSE 0 END";
+
+        $newOwnersQuery = DB::table('property_operation_new_owner as pono')
+            ->join('property_operations as po', 'po.id', '=', 'pono.property_operation_id')
+            ->join('property_cards as pc', 'pc.id', '=', 'po.property_card_id')
+            ->join('owners as o', 'o.id', '=', 'pono.owner_id')
+            ->selectRaw("po.property_card_id,
+                pc.card_record_number as record_number,
+                pc.card_governorate as governorate,
+                pc.card_region_name as region_name,
+                pc.card_total_area as total_area_m2,
+                pono.owner_id,
+                {$ownerNameExpression} as owner_name,
+                {$sharesExpression} as shares_delta");
+
+        if ($propertyCardsHasDeletedAt) {
+            $newOwnersQuery->whereNull('pc.deleted_at');
+        }
+        if ($ownersHasDeletedAt) {
+            $newOwnersQuery->whereNull('o.deleted_at');
+        }
+
+        $oldOwnersQuery = DB::table('property_operation_old_owner as pooo')
+            ->join('property_operations as po', 'po.id', '=', 'pooo.property_operation_id')
+            ->join('property_cards as pc', 'pc.id', '=', 'po.property_card_id')
+            ->join('owners as o', 'o.id', '=', 'pooo.owner_id')
+            ->selectRaw("po.property_card_id,
+                pc.card_record_number as record_number,
+                pc.card_governorate as governorate,
+                pc.card_region_name as region_name,
+                pc.card_total_area as total_area_m2,
+                pooo.owner_id,
+                {$ownerNameExpression} as owner_name,
+                (-1 * ({$sharesExpression})) as shares_delta");
+
+        if ($propertyCardsHasDeletedAt) {
+            $oldOwnersQuery->whereNull('pc.deleted_at');
+        }
+        if ($ownersHasDeletedAt) {
+            $oldOwnersQuery->whereNull('o.deleted_at');
+        }
+
+        $unionQuery = $newOwnersQuery->unionAll($oldOwnersQuery);
+
+        $rows = DB::query()
+            ->fromSub($unionQuery, 'x')
+            ->selectRaw("x.property_card_id,
+                x.record_number,
+                x.governorate,
+                x.region_name,
+                x.total_area_m2,
+                x.owner_id,
+                x.owner_name,
+                ROUND(SUM(x.shares_delta), 2) as owner_shares,
+                ROUND((SUM(x.shares_delta) / {$totalSharesReference}) * 100, 2) as ownership_percentage")
+            ->whereIn('x.owner_id', $ownerIds)
+            ->groupBy('x.property_card_id', 'x.record_number', 'x.governorate', 'x.region_name', 'x.total_area_m2', 'x.owner_id', 'x.owner_name')
+            ->havingRaw('ROUND(SUM(x.shares_delta), 2) > 0')
+            ->get();
 
         $formatValue = static fn (mixed $value): string => blank($value) ? '—' : (string) $value;
 
@@ -296,23 +352,27 @@ class OwnersReportController extends Controller
                 continue;
             }
 
+            $propertyId = blank($row->property_card_id ?? null) ? null : (int) $row->property_card_id;
+            $propertyName = $propertyId !== null ? "عقار #{$propertyId}" : '—';
+
             $relatedByOwner[$ownerId][] = [
-                'property_id' => $formatValue($row->property_id ?? null),
-                'property_name' => $formatValue($row->property_name ?? null),
-                'country' => $formatValue($row->country ?? null),
+                'property_id' => $propertyId !== null ? (string) $propertyId : '—',
+                'property_name' => $propertyName,
+                'country' => '—',
                 'governorate' => $formatValue($row->governorate ?? null),
-                'region' => $formatValue($row->region ?? null),
+                'region' => $formatValue($row->region_name ?? null),
                 'record_number' => $formatValue($row->record_number ?? null),
-                'property_number' => $formatValue($row->property_number ?? null),
+                'property_number' => '—',
                 'ownership_percentage' => $row->ownership_percentage !== null
                     ? rtrim(rtrim(number_format((float) $row->ownership_percentage, 2, '.', ''), '0'), '.') . '%'
                     : '—',
-                'shares' => $formatValue($row->shares ?? null),
-                'is_current' => $row->is_current === null ? '—' : ((bool) $row->is_current ? 'نعم' : 'لا'),
-                'updated_at' => blank($row->updated_at) ? '—' : (string) $row->updated_at,
+                'shares' => $formatValue($row->owner_shares ?? null),
+                'is_current' => 'نعم',
+                'updated_at' => '—',
             ];
         }
 
         return $relatedByOwner;
     }
+
 }
