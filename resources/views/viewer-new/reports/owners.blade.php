@@ -18,6 +18,7 @@
             'name',
             'phone',
             'properties_linked_count',
+            'signals_count',
             'ownership_percentage',
             'current_ownerships_count',
             'last_update',
@@ -144,6 +145,7 @@
                             'name' => 'المالك',
                             'phone' => 'رقم الهاتف',
                             'properties_linked_count' => 'عدد العقارات المرتبطة',
+                            'signals_count' => 'الإشارات',
                             'ownership_percentage' => 'الحصة',
                             'current_ownerships_count' => 'الملكيات الحالية',
                             'last_update' => 'آخر تحديث',
@@ -189,6 +191,7 @@
                             <th data-column-key="name">المالك</th>
                             <th data-column-key="phone">رقم الهاتف</th>
                             <th data-column-key="properties_linked_count">عدد العقارات المرتبطة</th>
+                            <th data-column-key="signals_count">الإشارات</th>
                             <th data-column-key="ownership_percentage">الحصة</th>
                             <th data-column-key="current_ownerships_count">الملكيات الحالية</th>
                             <th data-column-key="last_update">آخر تحديث</th>
@@ -252,6 +255,51 @@
                                         </details>
                                     @endif
                                 </td>
+                                <td data-column-key="signals_count">
+                                    <div>له: {{ $owner['signals_for_count'] ?? 0 }}</div>
+                                    <div>عليه: {{ $owner['signals_against_count'] ?? 0 }}</div>
+                                    @php
+                                        $signals = $owner['signals'] ?? [];
+                                    @endphp
+                                    @if (($owner['signals_total_count'] ?? 0) > 0)
+                                        <details>
+                                            <summary>عرض الإشارات</summary>
+                                            <table class="vn-big-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>الاتجاه</th>
+                                                        <th>رقم الإشارة</th>
+                                                        <th>التاريخ</th>
+                                                        <th>النوع</th>
+                                                        <th>المالك / أصحاب الإشارة</th>
+                                                        <th>المتضرر / المتضررون</th>
+                                                        <th>المصدر</th>
+                                                        <th>رقم المصدر</th>
+                                                        <th>تاريخ المصدر</th>
+                                                        <th>ملاحظات</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($signals as $signal)
+                                                        <tr>
+                                                            <td>{{ $signal['signal_direction'] ?? '—' }}</td>
+                                                            <td>{{ $signal['signal_number'] ?? '—' }}</td>
+                                                            <td>{{ $signal['signal_date'] ?? '—' }}</td>
+                                                            <td>{{ $signal['signal_type'] ?? '—' }}</td>
+                                                            <td>{{ ($signal['signal_owner'] ?? '—') }} / {{ ($signal['signal_owners'] ?? '—') }}</td>
+                                                            <td>{{ ($signal['signal_victim'] ?? '—') }} / {{ ($signal['signal_victims'] ?? '—') }}</td>
+                                                            <td>{{ ($signal['signal_source'] ?? '—') }} / {{ ($signal['signal_sources'] ?? '—') }}</td>
+                                                            <td>{{ $signal['signal_source_number'] ?? '—' }}</td>
+                                                            <td>{{ $signal['signal_source_date'] ?? '—' }}</td>
+                                                            <td>{{ $signal['signal_notes'] ?? '—' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </details>
+                                    @endif
+                                </td>
+
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ $owner['ownership_percentage'] ?? '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ $owner['current_ownerships_count'] ?? '—' }}</td>
                                 <td data-column-key="last_update">{{ $owner['last_update'] ?? '—' }}</td>
