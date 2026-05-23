@@ -233,7 +233,7 @@
   display: none; /* toggled by JS */
   width: fit-content;
   max-width: min(1280px, 100%);
-  min-width: min(100%, 720px);
+  min-width: min(100%, calc(var(--vn-pr-filter-cols, 6) * var(--vn-pr-filter-field-width, 132px) + (var(--vn-pr-filter-cols, 6) - 1) * 12px + 32px));
   align-self: flex-start;
   background: rgba(255,255,255,.015);
   border: 1px solid var(--border, #2A2A2A);
@@ -257,12 +257,16 @@
   border-color: #dfd5c6;
 }
 
-/* Filter fields grid */
+/* Filter fields grid — 6 filters per row (matches --vn-pr-filter-cols in app.css) */
 .vn-properties-report .vn-report-generator__filters {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
   gap: 10px 12px;
   margin-bottom: 14px;
+}
+
+.vn-properties-report .vn-report-generator__filters--compact {
+  grid-template-columns: repeat(var(--vn-pr-filter-cols, 6), var(--vn-pr-filter-col, 132px));
 }
 
 .vn-properties-report .vn-report-generator__field {
@@ -322,10 +326,10 @@
   filter: none; opacity: .55;
 }
 
-/* Column picker */
+/* Column picker — 6 options per row */
 .vn-properties-report .vn-report-generator__columns {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
   gap: 5px;
   margin-bottom: 12px;
   padding: 10px;
@@ -334,6 +338,10 @@
   border-radius: var(--r-md, 8px);
   max-height: 200px;
   overflow-y: auto;
+}
+
+.vn-properties-report .vn-report-generator__columns--compact {
+  grid-template-columns: repeat(var(--vn-pr-filter-cols, 6), var(--vn-pr-filter-col, 132px));
 }
 
 .vn-properties-report .vn-report-column-option {
@@ -407,6 +415,15 @@
   padding-top: 12px;
   border-top: 1px solid rgba(212,175,55,.12);
   margin-top: 4px;
+}
+
+.vn-properties-report .vn-report-generator__actions .vn-report-toolbar-button {
+  flex: 0 0 var(--vn-pr-generator-btn-width, 9.5rem);
+  width: var(--vn-pr-generator-btn-width, 9.5rem);
+  min-width: var(--vn-pr-generator-btn-width, 9.5rem);
+  max-width: var(--vn-pr-generator-btn-width, 9.5rem);
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1198,11 +1215,13 @@
 ═══════════════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
-  .vn-properties-report .vn-report-generator__filters {
-    grid-template-columns: 1fr 1fr;
+  .vn-properties-report .vn-report-generator__filters,
+  .vn-properties-report .vn-report-generator__filters--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .vn-properties-report .vn-report-generator__columns {
-    grid-template-columns: 1fr 1fr;
+  .vn-properties-report .vn-report-generator__columns,
+  .vn-properties-report .vn-report-generator__columns--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .vn-properties-report .vn-results-summary {
     gap: 0;
@@ -1219,7 +1238,12 @@
 }
 
 @media (max-width: 480px) {
-  .vn-properties-report .vn-report-generator__filters {
+  .vn-properties-report .vn-report-generator__filters,
+  .vn-properties-report .vn-report-generator__filters--compact {
+    grid-template-columns: 1fr;
+  }
+  .vn-properties-report .vn-report-generator__columns,
+  .vn-properties-report .vn-report-generator__columns--compact {
     grid-template-columns: 1fr;
   }
   .vn-properties-report .vn-child-panel { padding: 12px; }
