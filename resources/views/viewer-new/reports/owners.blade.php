@@ -62,7 +62,7 @@
         }
     @endphp
 
-    <section class="vn-owners-report" id="page-owners">
+    <section class="vn-properties-report vn-owners-report" id="page-owners">
         <header class="page-header vn-report-hero">
             <div class="page-header-row vn-report-hero__row">
                 <div class="vn-report-hero__content">
@@ -152,10 +152,11 @@
                     @endphp
                     @foreach ($columnOptions as $key => $label)
                         <label class="vn-report-column-option vn-report-column-option-card">
-                            <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
+                            <input type="checkbox" value="{{ $key }}" checked disabled aria-disabled="true">
                             <span>{{ $label }}</span>
                         </label>
                     @endforeach
+                    <p class="vn-muted-value">اختيار الأعمدة سيتم ضبطه لاحقاً من واجهة العرض.</p>
                 </div>
 
                 <div class="vn-report-generator__actions">
@@ -166,9 +167,9 @@
         </section>
 
         @if ($activeFilters !== [])
-            <section class="vn-active-filters" aria-label="الفلاتر المفعلة">
+            <section class="vn-active-filter-chips" aria-label="الفلاتر المفعلة">
                 @foreach ($activeFilters as $filter)
-                    <span class="vn-filter-chip">{{ $filter['label'] }}: {{ $filter['value'] }}</span>
+                    <span class="vn-active-filter-chip">{{ $filter['label'] }}: {{ $filter['value'] }}</span>
                 @endforeach
             </section>
         @endif
@@ -182,7 +183,7 @@
 
         @if (($owners ?? collect())->count() > 0)
             <div class="vn-table-responsive vn-owners-table">
-                <table>
+                <table class="vn-big-table">
                     <thead>
                         <tr>
                             <th data-column-key="name">المالك</th>
