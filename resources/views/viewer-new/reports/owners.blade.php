@@ -181,8 +181,8 @@
         </section>
 
         @if (($owners ?? collect())->count() > 0)
-            <div class="vn-table-responsive vn-properties-table vn-owners-table">
-                <table>
+            <div class="vn-table-responsive vn-owners-table">
+                <table class="vn-big-table">
                     <thead>
                         <tr>
                             <th data-column-key="name">المالك</th>
