@@ -1,6 +1,9 @@
 @extends('viewer-new.layouts.app')
 
 @section('page_title', 'تقرير العقارات')
+@section('extra_styles')
+    @vite(['resources/css/viewer-new/properties-report.css'])
+@endsection
 @section('topbar_title', 'تقرير العقارات')
 @section('active', 'reports')
 @section('back_url', route('viewer-new.reports'))
@@ -84,6 +87,7 @@
             'card_property_details' => 92,
             'actions' => 88,
         ];
+        $propertyTableColTotal = max(1, (int) array_sum($propertyTableColWidths));
 
         $filterLabels = [
             'q' => 'بحث شامل',
@@ -128,19 +132,16 @@
         }
     @endphp
 
-    <section class="vn-properties-report" id="page-properties">
-        <style>
-            .viewer-new .vn-properties-report :is(.stats-grid,.stat-card,.vn-report-kpi-grid,.vn-report-kpi-card,.vn-report-metrics){display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important}
-            .viewer-new .vn-properties-report .vn-report-hero :is(.stats-grid,.stat-card,.vn-report-kpi-grid,.vn-report-metrics){display:revert!important;height:auto!important;margin:revert!important;padding:revert!important;overflow:revert!important;border:revert!important}
-            .viewer-new .vn-properties-report .vn-report-hero__row{display:flex!important;flex-direction:row!important;direction:ltr!important;justify-content:flex-start!important;align-items:flex-start!important;gap:1.5rem!important;width:100%!important}
-            .viewer-new .vn-properties-report .vn-report-hero__meta-wrap{order:1!important;direction:rtl!important;flex:0 0 min(280px,100%)!important;margin:0!important}
-            .viewer-new .vn-properties-report .vn-report-hero__content{order:2!important;direction:rtl!important;flex:1 1 auto!important;min-width:0!important;text-align:right!important;margin-inline-start:auto!important}
-        </style>
+    <section class="vn-properties-report" id="page-properties" style="--vn-pr-table-min-width: {{ $propertyTableColTotal }}px">
         <header class="page-header vn-report-hero">
             <div class="page-header-row vn-report-hero__row">
+                <div class="vn-report-hero__content">
+                    <div class="page-eyebrow">تقرير العقارات الكامل</div>
+                    <h1 class="page-title">تقرير <em>العقارات</em></h1>
+                    <p class="page-subtitle">جميع بطاقات العقارات والبيانات المرتبطة بها — مع تصفية متقدمة واستعراض منظم</p>
+                </div>
                 <div id="props-cards-float" class="vn-report-hero__meta-wrap" data-hero-summary-card>
                     <div class="selection-card vn-report-hero__meta">
-                        <div class="selection-title">ملخص النتائج الحالية</div>
                         <a href="{{ route('viewer-new.reports') }}" class="vn-report-hero__back">العودة إلى بوابة التقارير</a>
                         <div class="selection-main-value" id="vn-selection-area">{{ $metrics['total_area'] ?? '—' }}</div>
                         <div class="selection-subvalue" id="vn-selection-count">إجمالي النتائج: {{ number_format((int) $totalResults) }}</div>
@@ -150,11 +151,6 @@
                             <span id="vn-selection-share">{{ number_format((int) $currentCount) }} معروض</span>
                         </div>
                     </div>
-                </div>
-                <div class="vn-report-hero__content">
-                    <div class="page-eyebrow">تقرير العقارات الكامل</div>
-                    <h1 class="page-title">تقرير <em>العقارات</em></h1>
-                    <p class="page-subtitle">جميع بطاقات العقارات والبيانات المرتبطة بها — مع تصفية متقدمة واستعراض منظم</p>
                 </div>
             </div>
         </header>
@@ -174,8 +170,9 @@
         </section>
 
         <section id="vn-properties-generator-panel" class="toolbar-mode-panel vn-report-generator is-open" data-report-generator-panel>
-            <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form>
-                <div class="vn-report-generator__filters">
+            <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form class="vn-report-generator__form">
+                <div class="vn-report-generator__body">
+                <div class="vn-report-generator__filters vn-report-generator__filters--compact">
 
                 <div class="vn-report-generator__field">
                     <label for="filter-country">الدولة</label>
@@ -231,27 +228,27 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="vn-report-generator__field">
+                <div class="vn-report-generator__field vn-report-generator__field--pair">
                     <label for="filter-min-area">المساحة من</label>
                     <input id="filter-min-area" type="number" step="0.01" name="min_area" value="{{ $filters['min_area'] ?? '' }}" />
                 </div>
-                <div class="vn-report-generator__field">
+                <div class="vn-report-generator__field vn-report-generator__field--pair">
                     <label for="filter-max-area">المساحة إلى</label>
                     <input id="filter-max-area" type="number" step="0.01" name="max_area" value="{{ $filters['max_area'] ?? '' }}" />
                 </div>
-                <div class="vn-report-generator__field">
+                <div class="vn-report-generator__field vn-report-generator__field--pair">
                     <label for="filter-min-value">القيمة من</label>
                     <input id="filter-min-value" type="number" step="0.01" name="min_value" value="{{ $filters['min_value'] ?? '' }}" />
                 </div>
-                <div class="vn-report-generator__field">
+                <div class="vn-report-generator__field vn-report-generator__field--pair">
                     <label for="filter-max-value">القيمة إلى</label>
                     <input id="filter-max-value" type="number" step="0.01" name="max_value" value="{{ $filters['max_value'] ?? '' }}" />
                 </div>
-                <div class="vn-report-generator__field">
+                <div class="vn-report-generator__field vn-report-generator__field--pair">
                     <label for="filter-date-from">من تاريخ</label>
                     <input id="filter-date-from" type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" />
                 </div>
-                <div class="vn-report-generator__field">
+                <div class="vn-report-generator__field vn-report-generator__field--pair">
                     <label for="filter-date-to">إلى تاريخ</label>
                     <input id="filter-date-to" type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" />
                 </div>
@@ -266,9 +263,8 @@
                     </div>
                 @endforeach
 
-                
                 </div>
-                <div class="vn-report-generator__columns" data-column-picker>
+                <div class="vn-report-generator__columns vn-report-generator__columns--compact" data-column-picker>
                     @foreach ($propertyTableColumnLabels as $key => $label)
                         <label class="vn-report-column-option vn-report-column-option-card">
                             <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
@@ -285,6 +281,7 @@
                     <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
                     <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
                     <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد تقرير</button>
+                </div>
                 </div>
             </form>
         </section>
@@ -314,7 +311,7 @@
                 <table id="vn-properties-table" class="vn-big-table big-table" data-property-table-colspan="{{ $propertyTableColspan }}">
                     <colgroup id="vn-properties-colgroup">
                         @foreach ($propertyTableColumnKeys as $colKey)
-                            <col class="vn-col-{{ $colKey }}" data-column-key="{{ $colKey }}" data-col-key="{{ $colKey }}" style="width:{{ $propertyTableColWidths[$colKey] ?? 96 }}px">
+                            <col class="vn-col-{{ $colKey }}" data-column-key="{{ $colKey }}" data-col-key="{{ $colKey }}" style="width:{{ (int) ($propertyTableColWidths[$colKey] ?? 96) }}px;min-width:{{ (int) ($propertyTableColWidths[$colKey] ?? 96) }}px">
                         @endforeach
                     </colgroup>
                     <thead>
@@ -704,30 +701,5 @@
     </section>
 
     @include('viewer-new.partials.properties-table-mechanics')
-
-    @if ($currentCount > 0)
-        <script>
-            (function () {
-                if (window.__vnPropertyNotesReady) return;
-                const report = document.querySelector('.vn-properties-report');
-                const table = report?.querySelector('.vn-properties-table table');
-                if (!report || !table) return;
-                const esc = (id) => (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, '\\$&');
-                table.addEventListener('click', (event) => {
-                    const btn = event.target instanceof Element ? event.target.closest('[data-property-notes-toggle]') : null;
-                    if (!btn) return;
-                    event.preventDefault();
-                    const row = table.querySelector('#' + esc(btn.getAttribute('data-target') || ''));
-                    if (!row) return;
-                    const open = row.classList.toggle('open');
-                    btn.classList.toggle('open', open);
-                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                    const caret = btn.querySelector('span:last-child');
-                    if (caret) caret.textContent = open ? '▴' : '▾';
-                    window.__vnPropertiesTableMechanicsApi?.applyPin?.();
-                });
-                window.__vnPropertyNotesReady = true;
-            })();
-        </script>
-    @endif
+    @vite(['resources/js/viewer-new/properties-report.js'])
 @endsection

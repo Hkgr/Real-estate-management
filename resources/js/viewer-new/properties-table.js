@@ -55,6 +55,24 @@ const escapeDomId = (id) => {
 
 const colClassForKey = (key) => `vn-col-${key}`;
 
+const getAnchorColumn = (tableEl) => {
+    const anchorTh =
+        tableEl.querySelector('thead th[data-column-key="id"]')
+        || tableEl.querySelector('thead th[data-column-key]');
+    if (!anchorTh || getComputedStyle(anchorTh).display === 'none') return null;
+    const key = anchorTh.getAttribute('data-column-key');
+    return key ? { key, th: anchorTh } : null;
+};
+
+const sortPinnedByDomOrder = (tableEl, keys) =>
+    keys
+        .map((key) => {
+            const th = tableEl.querySelector(`thead th.${colClassForKey(key)}`);
+            return { key, index: th ? th.cellIndex : 9999 };
+        })
+        .sort((a, b) => a.index - b.index)
+        .map((entry) => entry.key);
+
 export function initPropertiesTableAdvanced(options) {
     const {
         reportRoot,
@@ -161,11 +179,9 @@ export function initPropertiesTableAdvanced(options) {
         });
 
         tableEl.classList.remove('vn-has-pinned-cols');
-        tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge').forEach((el) => {
-            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge');
+        tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge, .vn-col-anchor, .col-pinned, .col-pin-edge, .col-anchor').forEach((el) => {
+            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge', 'vn-col-anchor', 'col-pinned', 'col-pin-edge', 'col-anchor');
             el.style.removeProperty('right');
-            el.style.removeProperty('inset-inline-end');
-            el.style.removeProperty('left');
         });
         tableEl.querySelectorAll('.vn-col-pin-btn').forEach((btn) => {
             btn.classList.remove('active');
@@ -179,18 +195,38 @@ export function initPropertiesTableAdvanced(options) {
             return;
         }
 
-        tableEl.classList.add('vn-has-pinned-cols');
+        tableEl.classList.add('vn-has-pinned-cols', 'has-pinned-cols');
+
+        const anchor = getAnchorColumn(tableEl);
         let offset = 0;
-        pinned.forEach((colKey) => {
-            const th = tableEl.querySelector(`thead th.${colClassForKey(colKey)}`);
-            const colW = th ? th.offsetWidth : 120;
+
+        const pinCells = (colKey, rightPx, { anchor: isAnchor = false } = {}) => {
             tableEl.querySelectorAll(`th.${colClassForKey(colKey)}, td.${colClassForKey(colKey)}`).forEach((el) => {
                 if (getComputedStyle(el).display === 'none') return;
-                el.classList.add('vn-col-pinned');
-                el.style.insetInlineEnd = `${offset}px`;
-                el.style.right = `${offset}px`;
-                el.style.left = 'auto';
+                el.classList.add('vn-col-pinned', 'col-pinned');
+                if (isAnchor) el.classList.add('vn-col-anchor', 'col-anchor');
+                el.style.right = `${rightPx}px`;
             });
+        };
+
+        if (anchor) {
+            pinCells(anchor.key, 0, { anchor: true });
+            offset = anchor.th.offsetWidth;
+        }
+
+        sortPinnedByDomOrder(tableEl, pinned).forEach((colKey) => {
+            if (anchor && colKey === anchor.key) {
+                const btn = anchor.th.querySelector('.vn-col-pin-btn');
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.title = 'إلغاء التثبيت';
+                    btn.setAttribute('aria-pressed', 'true');
+                }
+                return;
+            }
+            const th = tableEl.querySelector(`thead th.${colClassForKey(colKey)}`);
+            const colW = th ? th.offsetWidth : 120;
+            pinCells(colKey, offset);
             const btn = th?.querySelector('.vn-col-pin-btn');
             if (btn) {
                 btn.classList.add('active');
@@ -200,7 +236,8 @@ export function initPropertiesTableAdvanced(options) {
             offset += colW;
         });
 
-        const lastKey = pinned[pinned.length - 1];
+        const orderedPinned = sortPinnedByDomOrder(tableEl, pinned);
+        const lastKey = orderedPinned[orderedPinned.length - 1];
         tableEl.querySelectorAll(`th.${colClassForKey(lastKey)}, td.${colClassForKey(lastKey)}`).forEach((el) => {
             if (el.classList.contains('vn-col-pinned')) el.classList.add('vn-col-pin-edge');
         });

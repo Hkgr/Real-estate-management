@@ -4,6 +4,24 @@ const PROPERTIES_PIN_KEY = 'viewer_new_properties_pinned_cols';
 
 const propertiesColClass = (key) => `vn-col-${key}`;
 
+const getPropertiesAnchorColumn = (tableEl) => {
+    const anchorTh =
+        tableEl.querySelector('thead th[data-column-key="id"]')
+        || tableEl.querySelector('thead th[data-column-key]');
+    if (!anchorTh || getComputedStyle(anchorTh).display === 'none') return null;
+    const key = anchorTh.getAttribute('data-column-key');
+    return key ? { key, th: anchorTh } : null;
+};
+
+const sortPropertiesPinnedByDomOrder = (tableEl, keys) =>
+    keys
+        .map((key) => {
+            const th = tableEl.querySelector(`thead th.${propertiesColClass(key)}`);
+            return { key, index: th ? th.cellIndex : 9999 };
+        })
+        .sort((a, b) => a.index - b.index)
+        .map((entry) => entry.key);
+
 const setupPropertiesColumnPinning = ({
     reportRoot,
     tableEl,
@@ -38,11 +56,9 @@ const setupPropertiesColumnPinning = ({
         });
 
         tableEl.classList.remove('vn-has-pinned-cols', 'has-pinned-cols');
-        tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge, .col-pinned, .col-pin-edge').forEach((el) => {
-            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge', 'col-pinned', 'col-pin-edge');
+        tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge, .vn-col-anchor, .col-pinned, .col-pin-edge, .col-anchor').forEach((el) => {
+            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge', 'vn-col-anchor', 'col-pinned', 'col-pin-edge', 'col-anchor');
             el.style.removeProperty('right');
-            el.style.removeProperty('inset-inline-end');
-            el.style.removeProperty('left');
         });
         tableEl.querySelectorAll('.vn-col-pin-btn, .col-pin-btn').forEach((btn) => {
             btn.classList.remove('active');
@@ -57,31 +73,48 @@ const setupPropertiesColumnPinning = ({
         }
 
         tableEl.classList.add('vn-has-pinned-cols', 'has-pinned-cols');
+
+        const anchor = getPropertiesAnchorColumn(tableEl);
         let offset = 0;
 
-        pinned.forEach((colKey) => {
-            const th = tableEl.querySelector(`thead th.${propertiesColClass(colKey)}`);
-            const colW = th ? th.offsetWidth : 120;
-
+        const pinCells = (colKey, rightPx, { anchor: isAnchor = false } = {}) => {
             tableEl.querySelectorAll(`th.${propertiesColClass(colKey)}, td.${propertiesColClass(colKey)}`).forEach((el) => {
                 if (getComputedStyle(el).display === 'none') return;
                 el.classList.add('vn-col-pinned', 'col-pinned');
-                el.style.insetInlineEnd = `${offset}px`;
-                el.style.right = `${offset}px`;
-                el.style.left = 'auto';
+                if (isAnchor) el.classList.add('vn-col-anchor', 'col-anchor');
+                el.style.right = `${rightPx}px`;
             });
+        };
 
+        if (anchor) {
+            pinCells(anchor.key, 0, { anchor: true });
+            offset = anchor.th.offsetWidth;
+        }
+
+        sortPropertiesPinnedByDomOrder(tableEl, pinned).forEach((colKey) => {
+            if (anchor && colKey === anchor.key) {
+                const btn = anchor.th.querySelector('.vn-col-pin-btn, .col-pin-btn');
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.title = 'إلغاء التثبيت';
+                    btn.setAttribute('aria-pressed', 'true');
+                }
+                return;
+            }
+            const th = tableEl.querySelector(`thead th.${propertiesColClass(colKey)}`);
+            const colW = th ? th.offsetWidth : 120;
+            pinCells(colKey, offset);
             const btn = th?.querySelector('.vn-col-pin-btn, .col-pin-btn');
             if (btn) {
                 btn.classList.add('active');
                 btn.title = 'إلغاء التثبيت';
                 btn.setAttribute('aria-pressed', 'true');
             }
-
             offset += colW;
         });
 
-        const lastKey = pinned[pinned.length - 1];
+        const orderedPinned = sortPropertiesPinnedByDomOrder(tableEl, pinned);
+        const lastKey = orderedPinned[orderedPinned.length - 1];
         tableEl.querySelectorAll(`th.${propertiesColClass(lastKey)}, td.${propertiesColClass(lastKey)}`).forEach((el) => {
             if (el.classList.contains('vn-col-pinned')) {
                 el.classList.add('vn-col-pin-edge', 'col-pin-edge');
@@ -503,42 +536,58 @@ const setupPropertiesColumnPinning = ({
             window.__vnPropertyNotesReady = true;
         };
 
-        const bindExpandableRows = (toggleSelector, defaults = {}) => {
-            const toggles = [...reportRoot.querySelectorAll(toggleSelector)];
-            toggles.forEach((toggle) => {
-                const showLabel = toggle.getAttribute('data-show-label') || defaults.showLabel || '▾';
-                const hideLabel = toggle.getAttribute('data-hide-label') || defaults.hideLabel || '▴';
+        const childRowToggleSelector = [
+            '[data-property-operations-toggle]',
+            '[data-property-signals-toggle]',
+            '[data-property-files-toggle]',
+            '[data-property-installments-toggle]',
+        ].join(',');
 
-                toggle.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const targetId = toggle.getAttribute('data-target');
-                    if (!targetId) return;
+        const toggleChildRow = (toggle) => {
+            const targetId = toggle.getAttribute('data-target');
+            if (!targetId) return;
 
-                    const row = findNotesRow(targetId) || reportRoot.querySelector(`#${escapeDomId(targetId)}`);
-                    if (!row) return;
+            const row = findNotesRow(targetId);
+            if (!row) return;
 
-                    const isHidden = row.hasAttribute('hidden');
-                    if (isHidden) {
-                        row.removeAttribute('hidden');
-                        toggle.setAttribute('aria-expanded', 'true');
-                        toggle.classList.add('is-open');
-                        toggle.textContent = hideLabel;
-                    } else {
-                        row.setAttribute('hidden', 'hidden');
-                        toggle.setAttribute('aria-expanded', 'false');
-                        toggle.classList.remove('is-open');
-                        toggle.textContent = showLabel;
-                    }
-                    requestFloatingHeadSync();
-                });
+            const showLabel = toggle.getAttribute('data-show-label') || '▾';
+            const hideLabel = toggle.getAttribute('data-hide-label') || '▴';
+            const isHidden = row.hasAttribute('hidden');
+
+            if (isHidden) {
+                row.removeAttribute('hidden');
+                toggle.setAttribute('aria-expanded', 'true');
+                toggle.classList.add('is-open');
+                toggle.textContent = hideLabel;
+            } else {
+                row.setAttribute('hidden', '');
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.classList.remove('is-open');
+                toggle.textContent = showLabel;
+            }
+
+            requestFloatingHeadSync();
+            window.__vnPropertiesTableMechanicsApi?.applyPin?.();
+        };
+
+        const bindExpandableChildRows = () => {
+            if (!tableEl || tableEl.dataset.vnChildRowToggleBound === '1') return;
+            tableEl.dataset.vnChildRowToggleBound = '1';
+
+            tableEl.addEventListener('click', (event) => {
+                const toggle = event.target instanceof Element
+                    ? event.target.closest(childRowToggleSelector)
+                    : null;
+                if (!toggle || !reportRoot.contains(toggle)) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                toggleChildRow(toggle);
             });
         };
 
         bindPropertyNotesToggle();
-        bindExpandableRows('[data-property-operations-toggle]');
-        bindExpandableRows('[data-property-signals-toggle]');
-        bindExpandableRows('[data-property-files-toggle]');
-        bindExpandableRows('[data-property-installments-toggle]');
+        bindExpandableChildRows();
 
         const tblNavScroll = (direction) => {
             if (!tableScroller) return;
@@ -779,6 +828,8 @@ const setupPropertiesColumnPinning = ({
         updateTblNavPill();
         requestFloatingHeadSync();
         syncFullscreenUi();
+
+        window.__vnPropertiesReportReady = true;
     };
 
     updateClock();

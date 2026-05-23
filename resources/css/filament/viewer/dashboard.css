@@ -427,10 +427,10 @@ body.sidebar-collapsed .sidebar::after{
   transition: opacity .22s ease;
 }
 
-.viewer-dashboard /* Hide toggle buttons on desktop — hover controls the sidebar */
+/* Hide toggle buttons on desktop — hover controls the sidebar */
 @media (min-width: 769px){
-  .sidebar-toggle-top,
-  .sidebar-toggle-inside {
+  .viewer-dashboard .sidebar-toggle-top,
+  .viewer-dashboard .sidebar-toggle-inside {
     display: none !important;
   }
 }
@@ -918,10 +918,10 @@ body:not(.sidebar-collapsed) .sidebar-toggle-inside{
 .viewer-dashboard .qs-span2{ grid-column: 1 / -1; }
 .viewer-dashboard .qs-tpill-disabled{ opacity: .45; cursor: not-allowed; font-style: italic; letter-spacing: .3px; }
 
-.viewer-dashboard /* At 1300px and below, .viewer-dashboard hide extra topbar clutter to avoid overflow (scoped to header only) */
+/* At 1300px and below, .viewer-dashboard hide extra topbar clutter to avoid overflow (scoped to header only) */
 @media (max-width: 1300px){
-  .topbar .topbar-datetime { display: none; }
-  .topbar .topbar-btn:not(.logout) { display: none; }
+  .viewer-dashboard .topbar .topbar-datetime { display: none; }
+  .viewer-dashboard .topbar .topbar-btn:not(.logout) { display: none; }
 }
 
 @media (max-width: 1100px) { .viewer-dashboard .topbar{
@@ -1157,23 +1157,23 @@ body:not(.sidebar-collapsed) .sidebar-toggle-inside{
 .viewer-dashboard /* On desktop, .viewer-dashboard keep the topbar-title-desktop visible; hide mobile nav */
 .topbar-title-desktop{ display: block; }
 
-.viewer-dashboard /* ── Mobile breakpoint: sidebar hidden, .viewer-dashboard bottom nav takes over ── */
+/* ── Mobile breakpoint: sidebar hidden, .viewer-dashboard bottom nav takes over ── */
 @media (max-width: 1024px){
-  .sidebar { display: none !important; }
-  .sidebar-overlay { display: none !important; }
-  .main-content { margin-right: 0 !important; }
+  .viewer-dashboard .sidebar { display: none !important; }
+  .viewer-dashboard .sidebar-overlay { display: none !important; }
+  .viewer-dashboard .main-content { margin-right: 0 !important; }
 
   /* Hide top nav pills — replaced by bottom nav bar */
-  .topbar-mobile-nav { display: none !important; }
-  .topbar-title-desktop { display: none; }
-  .topbar-btn-props { display: none; }
+  .viewer-dashboard .topbar-mobile-nav { display: none !important; }
+  .viewer-dashboard .topbar-title-desktop { display: none; }
+  .viewer-dashboard .topbar-btn-props { display: none; }
 
   /* Clean topbar: brand + actions only */
-  .topbar {
+  .viewer-dashboard .topbar {
     padding: 8px 14px;
     gap: 8px;
   }
-  .topbar-actions {
+  .viewer-dashboard .topbar-actions {
     flex-shrink: 0;
     margin-inline-start: auto;
   }
@@ -4777,14 +4777,14 @@ input[type="date"].search-input{
   margin-bottom: 8px;
 }
 
-.viewer-dashboard /* ═══ RESPONSIVE ═══ */
+/* ═══ RESPONSIVE ═══ */
 @media (max-width: 1200px){
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .charts-row { grid-template-columns: 1fr 1fr; }
-  .charts-row > *:last-child { grid-column: span 2; }
-  .legal-charts-row { grid-template-columns: 1fr; }
-  .legal-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .general-kpi-grid { grid-template-columns: 1fr; }
+  .viewer-dashboard .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .viewer-dashboard .charts-row { grid-template-columns: 1fr 1fr; }
+  .viewer-dashboard .charts-row > *:last-child { grid-column: span 2; }
+  .viewer-dashboard .legal-charts-row { grid-template-columns: 1fr; }
+  .viewer-dashboard .legal-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .viewer-dashboard .general-kpi-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) { .viewer-dashboard .charts-row{ grid-template-columns: 1fr; } .viewer-dashboard .charts-row > *:last-child{ grid-column: span 1; } .viewer-dashboard .legal-charts-row{ grid-template-columns: 1fr; } .viewer-dashboard .legal-kpi-grid{ grid-template-columns: 1fr; } .viewer-dashboard .general-kpi-grid{ grid-template-columns: 1fr; }
@@ -4876,7 +4876,7 @@ input[type="date"].search-input{
 .viewer-dashboard /* Tablet portrait vertical-table toggle: hidden by default */
 .mobile-table-view-toggle{ display: none; }
 
-.viewer-dashboard /* ═══════════════════════════════════════
+/* ═══════════════════════════════════════
    BREAKPOINT: ≤ 1024px  (tablets + phones)
 ═══════════════════════════════════════ */
 @media (max-width: 1024px){
@@ -4885,75 +4885,75 @@ input[type="date"].search-input{
   /* (sidebar { display:none } is already set in the mobile nav CSS above) */
 
   /* ── Main content: full width ── */
-  .main-content {
+  .viewer-dashboard .main-content {
     margin-right: 0 !important;
     padding-bottom: 20px;
   }
 
   /* ── Page padding ── */
-  .page { padding: 18px 14px 80px; }
+  .viewer-dashboard .page { padding: 18px 14px 80px; }
 
   /* ── Topbar ── */
-  .topbar { padding: 8px 12px; gap: 8px; flex-wrap: wrap; row-gap: 10px; }
-  .topbar .topbar-datetime { display: none; }
-  .topbar .topbar-btn:not(.logout) { display: none; }
+  .viewer-dashboard .topbar { padding: 8px 12px; gap: 8px; flex-wrap: wrap; row-gap: 10px; }
+  .viewer-dashboard .topbar .topbar-datetime { display: none; }
+  .viewer-dashboard .topbar .topbar-btn:not(.logout) { display: none; }
 
   /* ── Properties page: stack header + selection card ── */
-  .page-header-row {
+  .viewer-dashboard .page-header-row {
     flex-direction: column;
     gap: 14px;
   }
-  .selection-card {
+  .viewer-dashboard .selection-card {
     width: 100%;
     max-width: none;
     margin-left: 0;
   }
 
   /* ── Table toolbar: wrap nicely ── */
-  .table-toolbar {
+  .viewer-dashboard .table-toolbar {
     top: 64px;
     gap: 10px;
   }
-  .table-toolbar .toolbar-separator { display: none; }
+  .viewer-dashboard .table-toolbar .toolbar-separator { display: none; }
   .toolbar-main-actions,
-  .toolbar-mode-panel {
+  .viewer-dashboard .toolbar-mode-panel {
     padding: 9px;
   }
-  .toolbar-main-btn {
+  .viewer-dashboard .toolbar-main-btn {
     flex: 1 1 120px;
   }
-  .toolbar-main-btn.search-icon-btn {
+  .viewer-dashboard .toolbar-main-btn.search-icon-btn {
     flex: 0 0 42px;
   }
-  .search-wrap {
+  .viewer-dashboard .search-wrap {
     flex: 1 1 200px;
     min-width: 0;
     max-width: none;
   }
-  .filter-dropdown {
+  .viewer-dashboard .filter-dropdown {
     flex: 1 1 160px;
     min-width: 140px;
   }
-  .filter-group {
+  .viewer-dashboard .filter-group {
     min-width: 0;
   }
-  .filter-group-wide {
+  .viewer-dashboard .filter-group-wide {
     grid-column: 1 / -1;
   }
 
   /* RTL column menu */
-  .col-menu { left: auto; right: 0; }
+  .viewer-dashboard .col-menu { left: auto; right: 0; }
 
   /* Stats: 2 columns on tablet */
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .viewer-dashboard .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-.viewer-dashboard /* Show vertical toggle hint on portrait tablets */
+/* Show vertical toggle hint on portrait tablets */
 @media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px){
-  .mobile-table-view-toggle { display: inline-flex; }
+  .viewer-dashboard .mobile-table-view-toggle { display: inline-flex; }
 }
 
-.viewer-dashboard /* ═══════════════════════════════════════
+/* ═══════════════════════════════════════
    BREAKPOINT: ≤ 600px  (phones)
    Strategy: horizontal scroll table —
    keeps all columns, .viewer-dashboard user swipes to see all.
@@ -4961,22 +4961,22 @@ input[type="date"].search-input{
 ═══════════════════════════════════════ */
 @media (max-width: 600px){
 
-  .page { padding: 14px 10px 80px; }
+  .viewer-dashboard .page { padding: 14px 10px 80px; }
 
   /* ── Stats: single column on small phones ── */
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .stat-value { font-size: calc(26px * var(--fs-scale)); }
+  .viewer-dashboard .stats-grid { grid-template-columns: 1fr 1fr; }
+  .viewer-dashboard .stat-value { font-size: calc(26px * var(--fs-scale)); }
 
   /* ── Headings & chart cards ── */
-  .page-title { font-size: calc(26px * var(--fs-scale)); line-height: 1.22; }
-  .page-subtitle { font-size: calc(12px * var(--fs-scale)); }
-  .chart-card { padding: 16px 14px; }
-  .recent-header {
+  .viewer-dashboard .page-title { font-size: calc(26px * var(--fs-scale)); line-height: 1.22; }
+  .viewer-dashboard .page-subtitle { font-size: calc(12px * var(--fs-scale)); }
+  .viewer-dashboard .chart-card { padding: 16px 14px; }
+  .viewer-dashboard .recent-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  .bar-chart {
+  .viewer-dashboard .bar-chart {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
@@ -4985,13 +4985,13 @@ input[type="date"].search-input{
     margin-inline: -4px;
     padding-inline: 4px;
   }
-  .bar-wrap { flex: 0 0 auto; min-width: 36px; max-width: 56px; }
+  .viewer-dashboard .bar-wrap { flex: 0 0 auto; min-width: 36px; max-width: 56px; }
 
   /* ── Topbar compact ── */
-  .topbar-title { font-size: calc(16px * var(--fs-scale)); }
+  .viewer-dashboard .topbar-title { font-size: calc(16px * var(--fs-scale)); }
 
   /* ── Table: horizontal + vertical scroll pan ── */
-  .table-overflow {
+  .viewer-dashboard .table-overflow {
     overflow-x: auto;
     overflow-y: auto;
     max-height: calc(100vh - 240px);
@@ -5008,85 +5008,85 @@ input[type="date"].search-input{
 
   /* Keep table as real table — do NOT convert to block cards on phone.
      User scrolls horizontally with finger. All columns + expand rows stay intact. */
-  .big-table {
+  .viewer-dashboard .big-table {
     table-layout: fixed;
     width: auto;
     min-width: 600px;
   }
 
-  .big-table thead { display: table-header-group; }
+  .viewer-dashboard .big-table thead { display: table-header-group; }
 
-  .big-table thead th {
+  .viewer-dashboard .big-table thead th {
     box-shadow: 0 7px 22px rgba(0, 0, 0, 0.42);
   }
 
-  .big-table th {
+  .viewer-dashboard .big-table th {
     padding: 10px 8px;
     font-size: calc(10px * var(--fs-scale));
     white-space: nowrap;
   }
 
-  .big-table td {
+  .viewer-dashboard .big-table td {
     padding: 10px 8px;
     font-size: calc(12px * var(--fs-scale));
     white-space: nowrap;
   }
 
-  .big-table td.col-propOwners {
+  .viewer-dashboard .big-table td.col-propOwners {
     white-space: normal !important;
   }
 
   /* Expandable rows stay as table rows */
   .big-table tbody tr.detail-row,
-  .big-table tbody tr.ops-row {
+  .viewer-dashboard .big-table tbody tr.ops-row {
     display: none;
   }
-  .big-table tbody tr.detail-row.open {
+  .viewer-dashboard .big-table tbody tr.detail-row.open {
     display: table-row;
   }
-  .big-table tbody tr.ops-row.open {
+  .viewer-dashboard .big-table tbody tr.ops-row.open {
     display: table-row;
   }
 
   /* Detail + ops cells span full width inside the table row */
   .detail-cell,
-  .ops-cell {
+  .viewer-dashboard .ops-cell {
     padding: 14px 12px;
     white-space: normal !important;
   }
 
   /* Larger tap targets for action buttons */
-  .eye-btn {
+  .viewer-dashboard .eye-btn {
     width: 38px;
     height: 38px;
     font-size: calc(16px * var(--fs-scale));
   }
 
-  .details-toggle {
+  .viewer-dashboard .details-toggle {
     padding: 7px 10px;
     font-size: calc(11px * var(--fs-scale));
   }
 
   /* Dashboard mini-table */
-  .mini-table th { padding: 10px 10px; font-size: calc(10px * var(--fs-scale)); }
-  .mini-table td { padding: 11px 10px; font-size: calc(12px * var(--fs-scale)); }
+  .viewer-dashboard .mini-table th { padding: 10px 10px; font-size: calc(10px * var(--fs-scale)); }
+  .viewer-dashboard .mini-table td { padding: 11px 10px; font-size: calc(12px * var(--fs-scale)); }
 
   /* Export bar: stack on phone */
-  .export-bar {
+  .viewer-dashboard .export-bar {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  .export-btns { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .viewer-dashboard .export-btns { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
 
   /* Pagination: tighter */
-  .pagination { gap: 4px; padding: 12px; }
-  .page-btn { width: 30px; height: 30px; font-size: calc(12px * var(--fs-scale)); }
+  .viewer-dashboard .pagination { gap: 4px; padding: 12px; }
+  .viewer-dashboard .page-btn { width: 30px; height: 30px; font-size: calc(12px * var(--fs-scale)); }
 }
 
-.viewer-dashboard /* Registry Export PDF — print table area only on main SPA (detail-card windows skip this body class). */
+/* Registry Export PDF — print table area only on main SPA (detail-card windows skip this body class). */
 @media print{
-  body.print-registry-table-only {
+  .viewer-dashboard body.print-registry-table-only {
     background: #fff !important;
   }
   body.print-registry-table-only aside.sidebar,
@@ -5096,31 +5096,31 @@ input[type="date"].search-input{
   body.print-registry-table-only #mobile-nav,
   body.print-registry-table-only nav.topbar-mobile-nav,
   body.print-registry-table-only #mob-nav-bar,
-  body.print-registry-table-only #mob-nav-overlay {
+  .viewer-dashboard body.print-registry-table-only #mob-nav-overlay {
     display: none !important;
   }
-  body.print-registry-table-only .main-content {
+  .viewer-dashboard body.print-registry-table-only .main-content {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
     max-width: none !important;
   }
-  body.print-registry-table-only .page:not(.active) {
+  .viewer-dashboard body.print-registry-table-only .page:not(.active) {
     display: none !important;
   }
-  body.print-registry-table-only .page.active {
+  .viewer-dashboard body.print-registry-table-only .page.active {
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
   }
-  body.print-registry-table-only .page.active * {
+  .viewer-dashboard body.print-registry-table-only .page.active * {
     visibility: hidden !important;
   }
   body.print-registry-table-only .page.active .registry-pdf-print-root,
-  body.print-registry-table-only .page.active .registry-pdf-print-root * {
+  .viewer-dashboard body.print-registry-table-only .page.active .registry-pdf-print-root * {
     visibility: visible !important;
   }
-  body.print-registry-table-only .page.active .registry-pdf-print-root {
+  .viewer-dashboard body.print-registry-table-only .page.active .registry-pdf-print-root {
     position: relative !important;
     width: 100% !important;
     max-width: none !important;
@@ -5128,44 +5128,44 @@ input[type="date"].search-input{
     background: #fff !important;
     border: 1px solid #ccc !important;
   }
-  body.print-registry-table-only .registry-pdf-print-root .table-overflow {
+  .viewer-dashboard body.print-registry-table-only .registry-pdf-print-root .table-overflow {
     overflow: visible !important;
   }
-  body.print-registry-table-only .registry-pdf-print-root .big-table {
+  .viewer-dashboard body.print-registry-table-only .registry-pdf-print-root .big-table {
     color: #111 !important;
   }
   body.print-registry-table-only .registry-pdf-print-root .big-table th,
-  body.print-registry-table-only .registry-pdf-print-root .big-table td {
+  .viewer-dashboard body.print-registry-table-only .registry-pdf-print-root .big-table td {
     background: #fff !important;
     color: #111 !important;
     border-color: #ccc !important;
   }
-  body.print-registry-table-only .registry-pdf-print-root .table-scroll-start-bar {
+  .viewer-dashboard body.print-registry-table-only .registry-pdf-print-root .table-scroll-start-bar {
     display: none !important;
   }
-  body.print-registry-table-only .registry-pdf-print-root .pagination > div:not(:first-child) {
+  .viewer-dashboard body.print-registry-table-only .registry-pdf-print-root .pagination > div:not(:first-child) {
     display: none !important;
   }
 }
 
-.viewer-dashboard /* ═══════════════════════════════════════
+/* ═══════════════════════════════════════
    TABLET PORTRAIT vertical table (opt-in toggle)
    Only applies when user taps the toggle button
 ═══════════════════════════════════════ */
 @media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px){
 
-  .property-table--vertical .big-table thead { display: none; }
+  .viewer-dashboard .property-table--vertical .big-table thead { display: none; }
 
   .property-table--vertical .big-table tbody tr.detail-row,
-  .property-table--vertical .big-table tbody tr.ops-row { display: none !important; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr.ops-row { display: none !important; }
   .property-table--vertical .big-table tbody tr.detail-row.open,
-  .property-table--vertical .big-table tbody tr.ops-row.open { display: block !important; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr.ops-row.open { display: block !important; }
   .property-table--vertical .big-table tbody tr.detail-row td,
-  .property-table--vertical .big-table tbody tr.ops-row td { display: block !important; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr.ops-row td { display: block !important; }
   .property-table--vertical .detail-cell,
-  .property-table--vertical .ops-cell { padding: 14px 12px !important; }
+  .viewer-dashboard .property-table--vertical .ops-cell { padding: 14px 12px !important; }
 
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) {
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) {
     display: block;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
@@ -5174,13 +5174,13 @@ input[type="date"].search-input{
     margin-bottom: 12px;
   }
 
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td {
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td {
     display: block;
     padding: 12px 14px;
     border-bottom: 1px solid rgba(42,42,42,.35);
     white-space: normal;
   }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:last-child {
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:last-child {
     border-bottom: none;
   }
 
@@ -5189,10 +5189,10 @@ input[type="date"].search-input{
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(2),
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(4),
   .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(9),
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(12) { display: none; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(12) { display: none; }
 
   /* Column labels */
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td::before {
     display: block;
     font-family: var(--font-ui);
     font-size: calc(10px * var(--fs-scale));
@@ -5200,24 +5200,24 @@ input[type="date"].search-input{
     letter-spacing: .06em;
     margin-bottom: 4px;
   }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before  { content: 'رقم العقار'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5)::before  { content: 'المحافظة'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6)::before  { content: 'المنطقة العقارية'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(7)::before  { content: 'المقسم'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before  { content: 'المساحة'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'بطاقة التفاصيل'; }
-  .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(3)::before { content: 'رقم العقار'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(5)::before { content: 'المحافظة'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(6)::before { content: 'المنطقة العقارية'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(7)::before { content: 'المقسم'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(8)::before { content: 'المساحة'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(10)::before { content: 'الحالة'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(11)::before { content: 'العمليات'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(13)::before { content: 'بطاقة التفاصيل'; }
+  .viewer-dashboard .property-table--vertical .big-table tbody tr:not(.detail-row):not(.ops-row) td:nth-child(14)::before { content: 'تفاصيل'; }
 
   /* Bigger tap targets */
-  .property-table--vertical .big-table .eye-btn {
+  .viewer-dashboard .property-table--vertical .big-table .eye-btn {
     width: 44px;
     height: 44px;
     border-radius: 14px;
     font-size: calc(18px * var(--fs-scale));
   }
-  .property-table--vertical .big-table .details-toggle {
+  .viewer-dashboard .property-table--vertical .big-table .details-toggle {
     width: 100%;
     justify-content: center;
     padding: 10px;
@@ -5444,12 +5444,12 @@ input[type="date"].search-input{
   letter-spacing: .05em;
 }
 
-.viewer-dashboard /* Add bottom padding to page content so it doesn't hide under nav */
+/* Add bottom padding to page content so it doesn't hide under nav */
 @media (max-width: 1024px){
-  .mob-nav-bar { display: flex; flex-direction: column-reverse; }
-  .page { padding-bottom: 80px !important; }
+  .viewer-dashboard .mob-nav-bar { display: flex; flex-direction: column-reverse; }
+  .viewer-dashboard .page { padding-bottom: 80px !important; }
   /* Dim main content when drawer is open */
-  .mob-nav-overlay {
+  .viewer-dashboard .mob-nav-overlay {
     display: none;
     position: fixed;
     inset: 0;
@@ -5458,7 +5458,7 @@ input[type="date"].search-input{
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
-  .mob-nav-overlay.visible { display: block; }
+  .viewer-dashboard .mob-nav-overlay.visible { display: block; }
 }
 
 .viewer-dashboard [data-theme="light"] .mob-nav-bar{

@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('page_title', 'viewer-new')</title>
     @vite(['resources/css/viewer-new/app.css', 'resources/js/viewer-new/app.js'])
+    @yield('extra_styles')
     <style>
         .viewer-new .vn-sidebar{width:230px;background:#18191f;border-left:1px solid rgba(255,255,255,.08);padding:18px;gap:14px}
         .viewer-new .vn-sidebar__logo{padding:6px 4px;border:0;background:transparent;gap:10px}

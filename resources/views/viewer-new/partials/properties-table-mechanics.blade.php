@@ -1,5 +1,5 @@
 {{-- Table pin/resize/top-scroll — always loaded (Vite bundle may lag). Matches FRONT/index.html. --}}
-@php $propertiesTableMechanicsVersion = '7'; @endphp
+@php $propertiesTableMechanicsVersion = '9'; @endphp
 <script>
 (function () {
     if (window.__vnPropertiesTableMechanics === '{{ $propertiesTableMechanicsVersion }}') return;
@@ -20,8 +20,16 @@
     const colClass = (k) => 'vn-col-' + k;
     const minWidthFor = (k) => ({ id: 72, property_name: 120, owners_count: 160 }[k] || 72);
 
-    let pinned = [];
-    try { pinned = JSON.parse(localStorage.getItem(PIN_KEY) || '[]') || []; } catch (_) { pinned = []; }
+    const loadPinned = () => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(PIN_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed.filter((k) => typeof k === 'string') : [];
+        } catch (_) {
+            return [];
+        }
+    };
+
+    let pinned = loadPinned();
 
     const persistWidth = (key, px) => {
         let widths = {};
@@ -39,13 +47,27 @@
         });
     };
 
-    const applyPin = () => {
+    const getAnchor = () => {
+        const anchorTh = table.querySelector('thead th[data-column-key="id"]') || table.querySelector('thead th[data-column-key]');
+        if (!anchorTh || getComputedStyle(anchorTh).display === 'none') return null;
+        const key = anchorTh.getAttribute('data-column-key');
+        return key ? { key, th: anchorTh } : null;
+    };
+
+    const sortPinned = (keys) => keys
+        .map((k) => {
+            const th = table.querySelector('thead th.' + colClass(k));
+            return { k, i: th ? th.cellIndex : 9999 };
+        })
+        .sort((a, b) => a.i - b.i)
+        .map((e) => e.k);
+
+    const applyPinLegacy = () => {
+        pinned = loadPinned();
         table.classList.remove('vn-has-pinned-cols', 'has-pinned-cols');
-        table.querySelectorAll('.vn-col-pinned,.vn-col-pin-edge,.col-pinned,.col-pin-edge').forEach((el) => {
-            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge', 'col-pinned', 'col-pin-edge');
+        table.querySelectorAll('.vn-col-pinned,.vn-col-pin-edge,.vn-col-anchor,.col-pinned,.col-pin-edge,.col-anchor').forEach((el) => {
+            el.classList.remove('vn-col-pinned', 'vn-col-pin-edge', 'vn-col-anchor', 'col-pinned', 'col-pin-edge', 'col-anchor');
             el.style.removeProperty('right');
-            el.style.removeProperty('inset-inline-end');
-            el.style.removeProperty('left');
         });
         table.querySelectorAll('.vn-col-pin-btn,.col-pin-btn').forEach((b) => {
             b.classList.remove('active');
@@ -62,17 +84,33 @@
             return;
         }
         table.classList.add('vn-has-pinned-cols', 'has-pinned-cols');
+        const anchor = getAnchor();
         let off = 0;
-        visible.forEach((k) => {
-            const th = table.querySelector('thead th.' + colClass(k));
-            const w = th ? th.offsetWidth : 100;
+        const pinCells = (k, px, isAnchor) => {
             table.querySelectorAll('th.' + colClass(k) + ',td.' + colClass(k)).forEach((el) => {
                 if (getComputedStyle(el).display === 'none') return;
                 el.classList.add('vn-col-pinned', 'col-pinned');
-                el.style.insetInlineEnd = off + 'px';
-                el.style.right = off + 'px';
-                el.style.left = 'auto';
+                if (isAnchor) el.classList.add('vn-col-anchor', 'col-anchor');
+                el.style.right = px + 'px';
             });
+        };
+        if (anchor) {
+            pinCells(anchor.key, 0, true);
+            off = anchor.th.offsetWidth;
+        }
+        sortPinned(visible).forEach((k) => {
+            if (anchor && k === anchor.key) {
+                const btn = anchor.th.querySelector('.vn-col-pin-btn');
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.title = 'إلغاء التثبيت';
+                    btn.setAttribute('aria-pressed', 'true');
+                }
+                return;
+            }
+            const th = table.querySelector('thead th.' + colClass(k));
+            const w = th ? th.offsetWidth : 100;
+            pinCells(k, off, false);
             const btn = th?.querySelector('.vn-col-pin-btn');
             if (btn) {
                 btn.classList.add('active');
@@ -81,7 +119,8 @@
             }
             off += w;
         });
-        const last = visible[visible.length - 1];
+        const ordered = sortPinned(visible);
+        const last = ordered[ordered.length - 1];
         table.querySelectorAll('th.' + colClass(last) + ',td.' + colClass(last)).forEach((el) => {
             if (el.classList.contains('vn-col-pinned')) el.classList.add('vn-col-pin-edge', 'col-pin-edge');
         });
@@ -90,31 +129,21 @@
         if (cnt) cnt.textContent = visible.length + ' مثبت';
     };
 
+    const applyPin = () => {
+        const apiApply = window.__vnPropertiesTableMechanicsApi?.applyPin;
+        if (typeof apiApply === 'function' && apiApply !== applyPinLegacy) {
+            apiApply();
+            return;
+        }
+        applyPinLegacy();
+    };
+
     table.querySelectorAll('[data-column-key]').forEach((el) => {
         const key = el.getAttribute('data-column-key');
         if (key && !el.classList.contains(colClass(key))) el.classList.add(colClass(key));
     });
 
     restoreWidths();
-
-    const togglePin = (key) => {
-        if (!key) return;
-        const i = pinned.indexOf(key);
-        if (i === -1) pinned.push(key);
-        else pinned.splice(i, 1);
-        try { localStorage.setItem(PIN_KEY, JSON.stringify(pinned)); } catch (_) {}
-        applyPin();
-    };
-
-    table.querySelectorAll('[data-col-pin]').forEach((btn) => {
-        if (btn.dataset.pinBound === '1') return;
-        btn.dataset.pinBound = '1';
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            togglePin(btn.getAttribute('data-col-pin'));
-        });
-    });
 
     table.querySelectorAll('[data-col-resize]').forEach((handle) => {
         if (handle.dataset.resizeBound === '1') return;
@@ -156,13 +185,6 @@
         });
     });
 
-    report.querySelector('[data-properties-unpin-all]')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        pinned = [];
-        try { localStorage.setItem(PIN_KEY, '[]'); } catch (_) {}
-        applyPin();
-    });
-
     let top = scroller.parentElement?.querySelector('.vn-tbl-top-scroll');
     if (!top) {
         top = document.createElement('div');
@@ -186,6 +208,11 @@
     syncTop();
     window.addEventListener('resize', () => { applyPin(); syncTop(); });
 
-    window.__vnPropertiesTableMechanicsApi = { applyPin, syncTop, restoreWidths };
+    window.__vnPropertiesTableMechanicsApi = {
+        applyPin,
+        applyPinLegacy,
+        syncTop,
+        restoreWidths,
+    };
 })();
 </script>
