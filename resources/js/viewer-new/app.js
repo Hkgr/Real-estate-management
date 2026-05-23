@@ -635,11 +635,28 @@ const setupPropertiesColumnPinning = ({
             })
             : null;
 
+        // Wire top-scroll bar ↔ table horizontal scroll sync
+        const topScrollBar = reportRoot.querySelector('.vn-tbl-top-scroll');
+        const topScrollInner = topScrollBar?.querySelector('.vn-tbl-top-scroll-inner');
+        const syncTopScrollWidth = () => {
+            if (topScrollInner && tableScroller) {
+                topScrollInner.style.width = tableScroller.scrollWidth + 'px';
+                topScrollBar.classList.toggle('is-visible', tableScroller.scrollWidth > tableScroller.clientWidth + 4);
+            }
+        };
+        if (topScrollBar && tableScroller) {
+            topScrollBar.addEventListener('scroll', () => { tableScroller.scrollLeft = topScrollBar.scrollLeft; }, { passive: true });
+        }
+
         tableScroller?.addEventListener('scroll', () => {
             requestFloatingHeadSync();
             updateTblNavPill();
             pinApi?.schedulePinSync();
+            if (topScrollBar) topScrollBar.scrollLeft = tableScroller.scrollLeft;
         }, { passive: true });
+
+        syncTopScrollWidth();
+        window.addEventListener('resize', syncTopScrollWidth, { passive: true });
 
         const ensureFloatingHost = () => {
             if (floatingHost) return;
