@@ -96,9 +96,22 @@ class OwnersReportController extends Controller
             }
         }
 
-        if ($hasPivotTable && in_array($filters['has_properties'], ['1', '0'], true)) {
-            $method = $filters['has_properties'] === '1' ? 'whereHas' : 'whereDoesntHave';
-            $ownersQuery->{$method}('propertyCards');
+        $operationOwnedOwnerIds = [];
+        if (in_array($filters['has_properties'], ['1', '0'], true)) {
+            $operationOwnedOwnerIds = $this->operationOwnedOwnerIds();
+            if ($operationOwnedOwnerIds !== null) {
+                if ($filters['has_properties'] === '1') {
+                    if ($operationOwnedOwnerIds === []) {
+                        $ownersQuery->whereRaw('1 = 0');
+                    } else {
+                        $ownersQuery->whereIn("{$ownersTable}.id", $operationOwnedOwnerIds);
+                    }
+                } else {
+                    if ($operationOwnedOwnerIds !== []) {
+                        $ownersQuery->whereNotIn("{$ownersTable}.id", $operationOwnedOwnerIds);
+                    }
+                }
+            }
         }
 
         if ($hasPivotTable) {
@@ -175,7 +188,7 @@ class OwnersReportController extends Controller
                 'birth_date' => $ownerHas('birth_date') ? $formatDate($owner->getAttribute('birth_date'), 'Y-m-d') : '—',
                 'properties_linked_count' => count($ownerRelatedProperties),
                 'ownership_percentage' => $ownershipPercentage,
-                'current_ownerships_count' => $hasCurrentColumn ? ($owner->current_ownerships_count ?? 0) : '—',
+                'current_ownerships_count' => count($ownerRelatedProperties),
                 'created_at' => $ownerHas('created_at') ? $formatDate($owner->getAttribute('created_at'), 'Y-m-d H:i') : '—',
                 'last_update' => $ownerHas('updated_at') ? $formatDate($owner->getAttribute('updated_at'), 'Y-m-d H:i') : '—',
                 'status_or_notes' => $ownerHas('notes')
@@ -225,6 +238,84 @@ class OwnersReportController extends Controller
         $date = \DateTime::createFromFormat('Y-m-d', $value);
 
         return $date && $date->format('Y-m-d') === $value ? $value : '';
+    }
+
+    private function operationOwnedOwnerIds(): ?array
+    {
+        $requiredTables = [
+            'property_operations',
+            'property_operation_new_owner',
+            'property_operation_old_owner',
+            'owners',
+            'property_cards',
+        ];
+
+        foreach ($requiredTables as $table) {
+            if (! Schema::hasTable($table)) {
+                return null;
+            }
+        }
+
+        $requiredColumns = [
+            'property_operations' => ['id', 'property_card_id', 'transaction_unit', 'transaction_amount'],
+            'property_operation_new_owner' => ['property_operation_id', 'owner_id'],
+            'property_operation_old_owner' => ['property_operation_id', 'owner_id'],
+            'owners' => ['id'],
+            'property_cards' => ['id', 'card_total_area'],
+        ];
+
+        foreach ($requiredColumns as $table => $columns) {
+            foreach ($columns as $column) {
+                if (! Schema::hasColumn($table, $column)) {
+                    return null;
+                }
+            }
+        }
+
+        $ownersHasDeletedAt = Schema::hasColumn('owners', 'deleted_at');
+        $propertyCardsHasDeletedAt = Schema::hasColumn('property_cards', 'deleted_at');
+        $totalSharesReference = 2400;
+        $sharesExpression = "CASE WHEN po.transaction_unit = 'shares' THEN po.transaction_amount WHEN po.transaction_unit = 'percentage' THEN ({$totalSharesReference} * po.transaction_amount / 100) WHEN po.transaction_unit = 'square_meter' THEN (po.transaction_amount / NULLIF(pc.card_total_area, 0)) * {$totalSharesReference} ELSE 0 END";
+
+        $newOwnersQuery = DB::table('property_operation_new_owner as pono')
+            ->join('property_operations as po', 'po.id', '=', 'pono.property_operation_id')
+            ->join('property_cards as pc', 'pc.id', '=', 'po.property_card_id')
+            ->join('owners as o', 'o.id', '=', 'pono.owner_id')
+            ->selectRaw("po.property_card_id, pono.owner_id, {$sharesExpression} as shares_delta");
+
+        if ($propertyCardsHasDeletedAt) {
+            $newOwnersQuery->whereNull('pc.deleted_at');
+        }
+        if ($ownersHasDeletedAt) {
+            $newOwnersQuery->whereNull('o.deleted_at');
+        }
+
+        $oldOwnersQuery = DB::table('property_operation_old_owner as pooo')
+            ->join('property_operations as po', 'po.id', '=', 'pooo.property_operation_id')
+            ->join('property_cards as pc', 'pc.id', '=', 'po.property_card_id')
+            ->join('owners as o', 'o.id', '=', 'pooo.owner_id')
+            ->selectRaw("po.property_card_id, pooo.owner_id, (-1 * ({$sharesExpression})) as shares_delta");
+
+        if ($propertyCardsHasDeletedAt) {
+            $oldOwnersQuery->whereNull('pc.deleted_at');
+        }
+        if ($ownersHasDeletedAt) {
+            $oldOwnersQuery->whereNull('o.deleted_at');
+        }
+
+        $unionQuery = $newOwnersQuery->unionAll($oldOwnersQuery);
+
+        return DB::query()
+            ->fromSub($unionQuery, 'x')
+            ->selectRaw('x.owner_id')
+            ->groupBy('x.owner_id', 'x.property_card_id')
+            ->havingRaw('ROUND(SUM(x.shares_delta), 2) > 0')
+            ->pluck('x.owner_id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->filter(static fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
     }
 
 
