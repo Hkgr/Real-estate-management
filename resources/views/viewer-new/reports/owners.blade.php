@@ -207,7 +207,51 @@
                                     <div>{{ $owner['phone'] ?? '—' }}</div>
                                     <div class="vn-muted-value">{{ $owner['email'] ?? '—' }}</div>
                                 </td>
-                                <td data-column-key="properties_linked_count">{{ $owner['properties_linked_count'] ?? '—' }}</td>
+                                <td data-column-key="properties_linked_count">
+                                    <div>{{ $owner['properties_linked_count'] ?? '—' }}</div>
+                                    @php
+                                        $relatedProperties = $owner['related_properties'] ?? [];
+                                    @endphp
+                                    @if (count($relatedProperties) > 0)
+                                        <details>
+                                            <summary>عرض العقارات المرتبطة</summary>
+                                            <table class="vn-big-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>الاسم</th>
+                                                        <th>الدولة</th>
+                                                        <th>المحافظة</th>
+                                                        <th>المنطقة</th>
+                                                        <th>رقم المحضر</th>
+                                                        <th>رقم العقار</th>
+                                                        <th>الحصة</th>
+                                                        <th>الأسهم</th>
+                                                        <th>حالي</th>
+                                                        <th>آخر تحديث</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($relatedProperties as $property)
+                                                        <tr>
+                                                            <td>{{ $property['property_id'] ?? '—' }}</td>
+                                                            <td>{{ $property['property_name'] ?? '—' }}</td>
+                                                            <td>{{ $property['country'] ?? '—' }}</td>
+                                                            <td>{{ $property['governorate'] ?? '—' }}</td>
+                                                            <td>{{ $property['region'] ?? '—' }}</td>
+                                                            <td>{{ $property['record_number'] ?? '—' }}</td>
+                                                            <td>{{ $property['property_number'] ?? '—' }}</td>
+                                                            <td>{{ $property['ownership_percentage'] ?? '—' }}</td>
+                                                            <td>{{ $property['shares'] ?? '—' }}</td>
+                                                            <td>{{ $property['is_current'] ?? '—' }}</td>
+                                                            <td>{{ $property['updated_at'] ?? '—' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </details>
+                                    @endif
+                                </td>
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ $owner['ownership_percentage'] ?? '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ $owner['current_ownerships_count'] ?? '—' }}</td>
                                 <td data-column-key="last_update">{{ $owner['last_update'] ?? '—' }}</td>
