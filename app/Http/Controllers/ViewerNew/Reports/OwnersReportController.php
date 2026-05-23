@@ -131,16 +131,17 @@ class OwnersReportController extends Controller
         $ownersQuery->latest($ownerHas('updated_at') ? "{$ownersTable}.updated_at" : "{$ownersTable}.id");
 
         $owners = $ownersQuery->paginate(15)->withQueryString();
-        $relatedPropertiesByOwner = $this->buildRelatedPropertiesByOwner(
-            $owners->getCollection()
-                ->pluck('id')
-                ->filter()
-                ->map(static fn (mixed $id): int => (int) $id)
-                ->values()
-                ->all()
-        );
+        $currentOwnerIds = $owners->getCollection()
+            ->pluck('id')
+            ->filter()
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
 
-        $owners->setCollection($owners->getCollection()->map(function (Owner $owner) use ($ownerHas, $pivotHas, $hasCurrentColumn, $relatedPropertiesByOwner): array {
+        $relatedPropertiesByOwner = $this->buildRelatedPropertiesByOwner($currentOwnerIds);
+        $signalsByOwner = $this->buildSignalsByOwner($currentOwnerIds);
+
+        $owners->setCollection($owners->getCollection()->map(function (Owner $owner) use ($ownerHas, $pivotHas, $hasCurrentColumn, $relatedPropertiesByOwner, $signalsByOwner): array {
             $formatDate = static function (mixed $value, string $format): string {
                 if (blank($value)) {
                     return '—';
@@ -174,6 +175,7 @@ class OwnersReportController extends Controller
             }
 
             $ownerRelatedProperties = $relatedPropertiesByOwner[(int) $owner->id] ?? [];
+            $ownerSignals = $signalsByOwner[(int) $owner->id] ?? [];
 
             return [
                 'id' => $ownerHas('id') ? ($owner->getAttribute('id') ?? '—') : '—',
@@ -195,6 +197,10 @@ class OwnersReportController extends Controller
                     ? ($owner->notes ?: '—')
                     : ($ownerHas('is_active') ? ((bool) $owner->is_active ? 'نشط' : 'غير نشط') : '—'),
                 'related_properties' => $ownerRelatedProperties,
+                'signals' => $ownerSignals,
+                'signals_for_count' => count(array_filter($ownerSignals, static fn (array $signal): bool => ($signal['signal_direction'] ?? '') === 'له')),
+                'signals_against_count' => count(array_filter($ownerSignals, static fn (array $signal): bool => ($signal['signal_direction'] ?? '') === 'عليه')),
+                'signals_total_count' => count($ownerSignals),
             ];
         }));
 
@@ -318,6 +324,123 @@ class OwnersReportController extends Controller
             ->all();
     }
 
+
+
+    private function buildSignalsByOwner(array $ownerIds): array
+    {
+        $ownerIds = array_values(array_unique(array_filter(array_map('intval', $ownerIds), static fn (int $id): bool => $id > 0)));
+        if ($ownerIds === []) {
+            return [];
+        }
+
+        if (! Schema::hasTable('owners') || ! Schema::hasTable('signals') || ! Schema::hasColumn('owners', 'id') || ! Schema::hasColumn('signals', 'id')) {
+            return [];
+        }
+
+        $ownersHasDeletedAt = Schema::hasColumn('owners', 'deleted_at');
+        $ownersHasFullName = Schema::hasColumn('owners', 'full_name');
+        $ownersHasCompanyName = Schema::hasColumn('owners', 'company_name');
+        $ownersHasOwnerType = Schema::hasColumn('owners', 'owner_type');
+        $signalsHasDeletedAt = Schema::hasColumn('signals', 'deleted_at');
+
+        $signalColumnMap = [
+            'signal_number' => Schema::hasColumn('signals', 'signal_id') ? 'signal_id' : null,
+            'signal_date' => Schema::hasColumn('signals', 'signal_date') ? 'signal_date' : null,
+            'signal_type' => Schema::hasColumn('signals', 'type') ? 'type' : null,
+            'signal_owner' => Schema::hasColumn('signals', 'signal_owner') ? 'signal_owner' : null,
+            'signal_owners' => Schema::hasColumn('signals', 'signal_owners') ? 'signal_owners' : null,
+            'signal_victim' => Schema::hasColumn('signals', 'signal_victim') ? 'signal_victim' : null,
+            'signal_victims' => Schema::hasColumn('signals', 'signal_victims') ? 'signal_victims' : null,
+            'signal_source' => Schema::hasColumn('signals', 'signal_source') ? 'signal_source' : null,
+            'signal_sources' => Schema::hasColumn('signals', 'signal_sources') ? 'signal_sources' : null,
+            'signal_source_number' => Schema::hasColumn('signals', 'signal_source_number') ? 'signal_source_number' : null,
+            'signal_source_date' => Schema::hasColumn('signals', 'signal_source_date') ? 'signal_source_date' : null,
+            'signal_notes' => Schema::hasColumn('signals', 'signal_notes') ? 'signal_notes' : null,
+            'created_at' => Schema::hasColumn('signals', 'created_at') ? 'created_at' : null,
+            'updated_at' => Schema::hasColumn('signals', 'updated_at') ? 'updated_at' : null,
+        ];
+
+        $selects = ['o.id as owner_id', 's.id as signal_db_id'];
+        foreach ($signalColumnMap as $alias => $column) {
+            $selects[] = $column !== null ? "s.{$column} as {$alias}" : DB::raw("'—' as {$alias}");
+        }
+
+        $query = DB::table('owners as o')->crossJoin('signals as s')->select($selects)->whereIn('o.id', $ownerIds);
+
+        if ($ownersHasDeletedAt) {
+            $query->whereNull('o.deleted_at');
+        }
+        if ($signalsHasDeletedAt) {
+            $query->whereNull('s.deleted_at');
+        }
+
+        $fullNameExpr = $ownersHasFullName ? "NULLIF(TRIM(o.full_name), '')" : 'NULL';
+        $companyNameExpr = $ownersHasCompanyName ? "NULLIF(TRIM(o.company_name), '')" : 'NULL';
+        $displayNameExpr = $ownersHasOwnerType && $ownersHasCompanyName && $ownersHasFullName
+            ? "CASE WHEN o.owner_type = 'company' THEN COALESCE({$companyNameExpr}, {$fullNameExpr}) ELSE {$fullNameExpr} END"
+            : "COALESCE({$fullNameExpr}, {$companyNameExpr})";
+
+        $query->whereRaw("{$displayNameExpr} IS NOT NULL");
+
+        $forClauses = [];
+        $againstClauses = [];
+        foreach (['signal_owner', 'signal_owners'] as $field) {
+            if ($signalColumnMap[$field] !== null) {
+                $forClauses[] = "s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$fullNameExpr}, '%')";
+                $forClauses[] = "{$companyNameExpr} IS NOT NULL AND s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$companyNameExpr}, '%')";
+            }
+        }
+        foreach (['signal_victim', 'signal_victims'] as $field) {
+            if ($signalColumnMap[$field] !== null) {
+                $againstClauses[] = "s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$fullNameExpr}, '%')";
+                $againstClauses[] = "{$companyNameExpr} IS NOT NULL AND s.{$signalColumnMap[$field]} COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', {$companyNameExpr}, '%')";
+            }
+        }
+
+        if ($forClauses === [] && $againstClauses === []) {
+            return [];
+        }
+
+        $directionCase = 'CASE';
+        if ($forClauses !== []) {
+            $directionCase .= " WHEN (" . implode(' OR ', $forClauses) . ") THEN 'له'";
+        }
+        if ($againstClauses !== []) {
+            $directionCase .= " WHEN (" . implode(' OR ', $againstClauses) . ") THEN 'عليه'";
+        }
+        $directionCase .= " ELSE NULL END";
+
+        $rows = $query->selectRaw("{$directionCase} as signal_direction")
+            ->havingRaw('signal_direction IS NOT NULL')
+            ->get();
+
+        $format = static fn (mixed $v): string => blank($v) ? '—' : trim((string) $v);
+        $grouped = [];
+        foreach ($rows as $row) {
+            $ownerId = (int) ($row->owner_id ?? 0);
+            if ($ownerId <= 0) { continue; }
+            $grouped[$ownerId][] = [
+                'signal_db_id' => (int) ($row->signal_db_id ?? 0),
+                'signal_number' => $format($row->signal_number ?? null),
+                'signal_date' => $format($row->signal_date ?? null),
+                'signal_type' => $format($row->signal_type ?? null),
+                'signal_direction' => $format($row->signal_direction ?? null),
+                'signal_owner' => $format($row->signal_owner ?? null),
+                'signal_owners' => $format($row->signal_owners ?? null),
+                'signal_victim' => $format($row->signal_victim ?? null),
+                'signal_victims' => $format($row->signal_victims ?? null),
+                'signal_source' => $format($row->signal_source ?? null),
+                'signal_sources' => $format($row->signal_sources ?? null),
+                'signal_source_number' => $format($row->signal_source_number ?? null),
+                'signal_source_date' => $format($row->signal_source_date ?? null),
+                'signal_notes' => $format($row->signal_notes ?? null),
+                'created_at' => $format($row->created_at ?? null),
+                'updated_at' => $format($row->updated_at ?? null),
+            ];
+        }
+
+        return $grouped;
+    }
 
     private function buildRelatedPropertiesByOwner(array $ownerIds): array
     {
