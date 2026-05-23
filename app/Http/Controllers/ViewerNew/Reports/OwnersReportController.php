@@ -128,7 +128,7 @@ class OwnersReportController extends Controller
                 ->all()
         );
 
-        $owners->setCollection($owners->getCollection()->map(function (Owner $owner) use ($ownerHas, $pivotHas, $hasCurrentColumn): array {
+        $owners->setCollection($owners->getCollection()->map(function (Owner $owner) use ($ownerHas, $pivotHas, $hasCurrentColumn, $relatedPropertiesByOwner): array {
             $formatDate = static function (mixed $value, string $format): string {
                 if (blank($value)) {
                     return '—';
@@ -237,19 +237,20 @@ class OwnersReportController extends Controller
         $propertyCardsTable = (new \App\Models\PropertyCard())->getTable();
         $propertiesTable = (new \App\Models\Property())->getTable();
 
-        if (! Schema::hasTable($pivotTable) || ! Schema::hasTable($propertyCardsTable)) {
+        if (! Schema::hasTable($pivotTable)) {
             return [];
         }
 
         $pivotColumns = Schema::getColumnListing($pivotTable);
-        $propertyCardColumns = Schema::getColumnListing($propertyCardsTable);
-
         $pivotHas = static fn (string $column): bool => in_array($column, $pivotColumns, true);
-        $propertyCardHas = static fn (string $column): bool => in_array($column, $propertyCardColumns, true);
 
         if (! $pivotHas('owner_id')) {
             return [];
         }
+
+        $canJoinPropertyCards = $pivotHas('property_card_id') && Schema::hasTable($propertyCardsTable);
+        $propertyCardColumns = $canJoinPropertyCards ? Schema::getColumnListing($propertyCardsTable) : [];
+        $propertyCardHas = static fn (string $column): bool => in_array($column, $propertyCardColumns, true);
 
         $hasPropertiesTable = Schema::hasTable($propertiesTable);
         $propertyColumns = $hasPropertiesTable ? Schema::getColumnListing($propertiesTable) : [];
@@ -257,11 +258,12 @@ class OwnersReportController extends Controller
 
         $query = DB::table($pivotTable . ' as opc')->whereIn('opc.owner_id', $ownerIds);
 
-        if ($pivotHas('property_card_id')) {
+        if ($canJoinPropertyCards) {
             $query->leftJoin($propertyCardsTable . ' as pc', 'pc.id', '=', 'opc.property_card_id');
         }
 
-        if ($hasPropertiesTable && $propertyCardHas('property_id')) {
+        $canJoinProperties = $canJoinPropertyCards && $hasPropertiesTable && $propertyCardHas('property_id');
+        if ($canJoinProperties) {
             $query->leftJoin($propertiesTable . ' as p', function (JoinClause $join) use ($propertyHas): void {
                 $join->on('p.id', '=', 'pc.property_id');
                 if ($propertyHas('deleted_at')) {
@@ -273,12 +275,12 @@ class OwnersReportController extends Controller
         $rows = $query->select([
             'opc.owner_id',
             DB::raw($pivotHas('property_card_id') ? 'opc.property_card_id as property_id' : 'NULL as property_id'),
-            DB::raw($hasPropertiesTable && $propertyHas('property_name') ? 'p.property_name as property_name' : 'NULL as property_name'),
-            DB::raw($hasPropertiesTable && $propertyHas('property_country') ? 'p.property_country as country' : 'NULL as country'),
-            DB::raw($propertyCardHas('card_governorate') ? 'pc.card_governorate as governorate' : 'NULL as governorate'),
-            DB::raw($propertyCardHas('card_region_name') ? 'pc.card_region_name as region' : 'NULL as region'),
-            DB::raw($propertyCardHas('card_record_number') ? 'pc.card_record_number as record_number' : 'NULL as record_number'),
-            DB::raw($propertyCardHas('card_property_number') ? 'pc.card_property_number as property_number' : 'NULL as property_number'),
+            DB::raw($canJoinProperties && $propertyHas('property_name') ? 'p.property_name as property_name' : 'NULL as property_name'),
+            DB::raw($canJoinProperties && $propertyHas('property_country') ? 'p.property_country as country' : 'NULL as country'),
+            DB::raw($canJoinPropertyCards && $propertyCardHas('card_governorate') ? 'pc.card_governorate as governorate' : 'NULL as governorate'),
+            DB::raw($canJoinPropertyCards && $propertyCardHas('card_region_name') ? 'pc.card_region_name as region' : 'NULL as region'),
+            DB::raw($canJoinPropertyCards && $propertyCardHas('card_record_number') ? 'pc.card_record_number as record_number' : 'NULL as record_number'),
+            DB::raw($canJoinPropertyCards && $propertyCardHas('card_property_number') ? 'pc.card_property_number as property_number' : 'NULL as property_number'),
             DB::raw($pivotHas('ownership_percentage') ? 'opc.ownership_percentage as ownership_percentage' : 'NULL as ownership_percentage'),
             DB::raw($pivotHas('ownership_metric') ? 'opc.ownership_metric as shares' : 'NULL as shares'),
             DB::raw($pivotHas('is_current') ? 'opc.is_current as is_current' : 'NULL as is_current'),
