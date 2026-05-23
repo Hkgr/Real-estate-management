@@ -17,13 +17,23 @@
         $currentCount = $hasPaginator ? $paginator->count() : 0;
 
         $ownerTableColumnKeys = [
+            'id',
             'name',
+            'owner_type',
+            'father_name',
             'phone',
+            'email',
+            'national_id',
+            'commercial_register_number',
+            'real_estate_registry_number',
+            'birth_date',
             'properties_linked_count',
-            'signals_count',
+            'signals_for_count',
+            'signals_against_count',
             'ownership_percentage',
             'current_ownerships_count',
             'last_update',
+            'created_at',
             'status_or_notes',
         ];
 
@@ -147,13 +157,23 @@
                 <div class="vn-report-generator__columns" data-column-picker>
                     @php
                         $columnOptions = [
+                            'id' => 'ID',
                             'name' => 'المالك',
+                            'owner_type' => 'نوع المالك',
+                            'father_name' => 'اسم الأب',
                             'phone' => 'رقم الهاتف',
-                            'properties_linked_count' => 'عدد العقارات المرتبطة',
-                            'signals_count' => 'الإشارات',
+                            'email' => 'البريد الإلكتروني',
+                            'national_id' => 'الرقم الوطني',
+                            'commercial_register_number' => 'السجل التجاري',
+                            'real_estate_registry_number' => 'السجل العقاري',
+                            'birth_date' => 'تاريخ الميلاد',
+                            'properties_linked_count' => 'العقارات المرتبطة',
+                            'signals_for_count' => 'إشارات له',
+                            'signals_against_count' => 'إشارات عليه',
                             'ownership_percentage' => 'الحصة',
                             'current_ownerships_count' => 'الملكيات الحالية',
                             'last_update' => 'آخر تحديث',
+                            'created_at' => 'تاريخ الإنشاء',
                             'status_or_notes' => 'الحالة / الملاحظات',
                         ];
                     @endphp
@@ -198,28 +218,39 @@
                         <table id="vn-owners-table" class="vn-big-table">
                     <thead>
                         <tr>
+                            <th data-column-key="id"><div class="vn-th-inner">ID</div></th>
                             <th data-column-key="name"><div class="vn-th-inner">المالك</div></th>
+                            <th data-column-key="owner_type"><div class="vn-th-inner">نوع المالك</div></th>
+                            <th data-column-key="father_name"><div class="vn-th-inner">اسم الأب</div></th>
                             <th data-column-key="phone"><div class="vn-th-inner">رقم الهاتف</div></th>
+                            <th data-column-key="email"><div class="vn-th-inner">البريد الإلكتروني</div></th>
+                            <th data-column-key="national_id"><div class="vn-th-inner">الرقم الوطني</div></th>
+                            <th data-column-key="commercial_register_number"><div class="vn-th-inner">السجل التجاري</div></th>
+                            <th data-column-key="real_estate_registry_number"><div class="vn-th-inner">السجل العقاري</div></th>
+                            <th data-column-key="birth_date"><div class="vn-th-inner">تاريخ الميلاد</div></th>
                             <th data-column-key="properties_linked_count"><div class="vn-th-inner">عدد العقارات المرتبطة</div></th>
-                            <th data-column-key="signals_count"><div class="vn-th-inner">الإشارات</div></th>
+                            <th data-column-key="signals_for_count"><div class="vn-th-inner">إشارات له</div></th>
+                            <th data-column-key="signals_against_count"><div class="vn-th-inner">إشارات عليه</div></th>
                             <th data-column-key="ownership_percentage"><div class="vn-th-inner">الحصة</div></th>
                             <th data-column-key="current_ownerships_count"><div class="vn-th-inner">الملكيات الحالية</div></th>
                             <th data-column-key="last_update"><div class="vn-th-inner">آخر تحديث</div></th>
+                            <th data-column-key="created_at"><div class="vn-th-inner">تاريخ الإنشاء</div></th>
                             <th data-column-key="status_or_notes"><div class="vn-th-inner">الحالة / الملاحظات</div></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($owners as $owner)
                             <tr>
-                                <td data-column-key="name" class="vn-table-text-long">
-                                    <div>{{ $owner['name'] ?? '—' }}</div>
-                                    <div class="vn-muted-value">النوع: {{ $owner['owner_type'] ?? '—' }}</div>
-                                    <div class="vn-muted-value">اسم الأب: {{ $owner['father_name'] ?? '—' }}</div>
-                                </td>
-                                <td data-column-key="phone">
-                                    <div>{{ $owner['phone'] ?? '—' }}</div>
-                                    <div class="vn-muted-value">{{ $owner['email'] ?? '—' }}</div>
-                                </td>
+                                <td data-column-key="id">{{ $owner['id'] ?? '—' }}</td>
+                                <td data-column-key="name" class="vn-table-text-long">{{ $owner['name'] ?? '—' }}</td>
+                                <td data-column-key="owner_type">{{ $owner['owner_type'] ?? '—' }}</td>
+                                <td data-column-key="father_name">{{ $owner['father_name'] ?? '—' }}</td>
+                                <td data-column-key="phone">{{ $owner['phone'] ?? '—' }}</td>
+                                <td data-column-key="email">{{ $owner['email'] ?? '—' }}</td>
+                                <td data-column-key="national_id">{{ $owner['national_id'] ?? '—' }}</td>
+                                <td data-column-key="commercial_register_number">{{ $owner['commercial_register_number'] ?? '—' }}</td>
+                                <td data-column-key="real_estate_registry_number">{{ $owner['real_estate_registry_number'] ?? '—' }}</td>
+                                <td data-column-key="birth_date">{{ $owner['birth_date'] ?? '—' }}</td>
                                 <td data-column-key="properties_linked_count">
                                     @php
                                         $relatedProperties = $owner['related_properties'] ?? [];
@@ -267,10 +298,9 @@
                                         </details>
                                     @endif
                                 </td>
-                                <td data-column-key="signals_count">
+                                <td data-column-key="signals_for_count">
                                     <div class="vn-related-inline">
-                                        <span class="vn-related-inline__count">له: {{ $owner['signals_for_count'] ?? 0 }}</span>
-                                        <span class="vn-related-inline__count">عليه: {{ $owner['signals_against_count'] ?? 0 }}</span>
+                                        <span class="vn-related-inline__count">{{ $owner['signals_for_count'] ?? 0 }}</span>
                                     </div>
                                     @php
                                         $signals = $owner['signals'] ?? [];
@@ -313,18 +343,13 @@
                                         </details>
                                     @endif
                                 </td>
+                                <td data-column-key="signals_against_count">{{ $owner['signals_against_count'] ?? 0 }}</td>
 
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ $owner['ownership_percentage'] ?? '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ $owner['current_ownerships_count'] ?? '—' }}</td>
                                 <td data-column-key="last_update">{{ $owner['last_update'] ?? '—' }}</td>
-                                <td data-column-key="status_or_notes" class="vn-muted-value vn-table-text-long">
-                                    <div>{{ $owner['status_or_notes'] ?? '—' }}</div>
-                                    <div>الرقم الوطني: {{ $owner['national_id'] ?? '—' }}</div>
-                                    <div>السجل التجاري: {{ $owner['commercial_register_number'] ?? '—' }}</div>
-                                    <div>السجل العقاري: {{ $owner['real_estate_registry_number'] ?? '—' }}</div>
-                                    <div>تاريخ الميلاد: {{ $owner['birth_date'] ?? '—' }}</div>
-                                    <div>تاريخ الإنشاء: {{ $owner['created_at'] ?? '—' }}</div>
-                                </td>
+                                <td data-column-key="created_at">{{ $owner['created_at'] ?? '—' }}</td>
+                                <td data-column-key="status_or_notes" class="vn-muted-value vn-table-text-long">{{ $owner['status_or_notes'] ?? '—' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
