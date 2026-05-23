@@ -12,6 +12,8 @@
         $hasPaginator = $paginator && method_exists($paginator, 'total');
 
         $totalResults = $hasPaginator ? $paginator->total() : 0;
+        $currentPage = $hasPaginator ? $paginator->currentPage() : 1;
+        $lastPage = $hasPaginator ? $paginator->lastPage() : 1;
         $currentCount = $hasPaginator ? $paginator->count() : 0;
 
         $ownerTableColumnKeys = [
@@ -77,6 +79,7 @@
                         <a href="{{ route('viewer-new.reports') }}" class="vn-report-hero__back">العودة إلى بوابة التقارير</a>
                         <div class="selection-main-value">{{ $metrics['total_owners'] ?? '—' }}</div>
                         <div class="selection-subvalue">إجمالي النتائج: {{ number_format((int) $totalResults) }}</div>
+                        <div class="selection-bar" aria-hidden="true"><div class="selection-bar-fill" style="width:{{ $totalResults > 0 ? '100' : '0' }}%"></div></div>
                         <div class="selection-meta">
                             <span>روابط الملكية: {{ $metrics['total_ownership_links'] ?? '—' }}</span>
                             <span>{{ number_format((int) $currentCount) }} معروض</span>
@@ -93,6 +96,8 @@
                     <input id="filter-q" class="search-input" type="text" name="q" form="vn-owners-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="ابحث بالاسم أو الهاتف أو البريد..." @if (! $fieldAvailability['filters_q']) disabled @endif />
                 </div>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--primary active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-owners-generator-panel">مولد تقارير</button>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير ▾</button>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="غير متاح حالياً">⛶ ملء الشاشة</button>
             </div>
         </section>
 
@@ -168,40 +173,45 @@
             </form>
         </section>
 
-        @if ($activeFilters !== [])
-            <section class="vn-active-filter-chips" aria-label="الفلاتر المفعلة">
-                @foreach ($activeFilters as $filter)
-                    <span class="vn-active-filter-chip">{{ $filter['label'] }}: {{ $filter['value'] }}</span>
+        <section class="vn-active-filter-chips" aria-label="الفلاتر المفعلة">
+            @if (count($activeFilters) > 0)
+                @foreach ($activeFilters as $activeFilter)
+                    <span class="vn-active-filter-chip">{{ $activeFilter['label'] }}: {{ $activeFilter['value'] }}</span>
                 @endforeach
-            </section>
-        @endif
+                <a href="{{ route('viewer-new.reports.owners') }}">إعادة تعيين</a>
+            @else
+                <p>لا توجد فلاتر مفعّلة حالياً.</p>
+            @endif
+        </section>
 
-        <section class="vn-results-summary" aria-live="polite">
-            <strong>النتائج:</strong>
-            <span>{{ number_format((int) $totalResults) }} إجمالي</span>
-            <span>• {{ number_format((int) $currentCount) }} في الصفحة الحالية</span>
-            <span>• آخر تحديث: {{ $metrics['last_update'] ?? '—' }}</span>
+        <section class="vn-results-summary">
+            <span>عدد النتائج الكلي: {{ number_format((int) $totalResults) }}</span>
+            <span>الصفحة الحالية: {{ $currentPage }}</span>
+            <span>آخر صفحة: {{ $lastPage }}</span>
+            <span>عدد السجلات المعروضة: {{ $currentCount }}</span>
         </section>
 
         @if (($owners ?? collect())->count() > 0)
-            <div class="vn-table-responsive vn-owners-table">
-                <table class="vn-big-table">
+            <div class="vn-table-card vn-property-table-card">
+                <div class="vn-table-with-scroll">
+                    <div class="vn-table-responsive vn-owners-table" id="vn-owners-overflow">
+                        <table id="vn-owners-table" class="vn-big-table">
                     <thead>
                         <tr>
-                            <th data-column-key="name">المالك</th>
-                            <th data-column-key="phone">رقم الهاتف</th>
-                            <th data-column-key="properties_linked_count">عدد العقارات المرتبطة</th>
-                            <th data-column-key="signals_count">الإشارات</th>
-                            <th data-column-key="ownership_percentage">الحصة</th>
-                            <th data-column-key="current_ownerships_count">الملكيات الحالية</th>
-                            <th data-column-key="last_update">آخر تحديث</th>
-                            <th data-column-key="status_or_notes">الحالة / الملاحظات</th>
+                            <th data-column-key="name"><div class="vn-th-inner">المالك</div></th>
+                            <th data-column-key="phone"><div class="vn-th-inner">رقم الهاتف</div></th>
+                            <th data-column-key="properties_linked_count"><div class="vn-th-inner">عدد العقارات المرتبطة</div></th>
+                            <th data-column-key="signals_count"><div class="vn-th-inner">الإشارات</div></th>
+                            <th data-column-key="ownership_percentage"><div class="vn-th-inner">الحصة</div></th>
+                            <th data-column-key="current_ownerships_count"><div class="vn-th-inner">الملكيات الحالية</div></th>
+                            <th data-column-key="last_update"><div class="vn-th-inner">آخر تحديث</div></th>
+                            <th data-column-key="status_or_notes"><div class="vn-th-inner">الحالة / الملاحظات</div></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($owners as $owner)
                             <tr>
-                                <td data-column-key="name">
+                                <td data-column-key="name" class="vn-table-text-long">
                                     <div>{{ $owner['name'] ?? '—' }}</div>
                                     <div class="vn-muted-value">النوع: {{ $owner['owner_type'] ?? '—' }}</div>
                                     <div class="vn-muted-value">اسم الأب: {{ $owner['father_name'] ?? '—' }}</div>
@@ -211,10 +221,12 @@
                                     <div class="vn-muted-value">{{ $owner['email'] ?? '—' }}</div>
                                 </td>
                                 <td data-column-key="properties_linked_count">
-                                    <div>{{ $owner['properties_linked_count'] ?? '—' }}</div>
                                     @php
                                         $relatedProperties = $owner['related_properties'] ?? [];
                                     @endphp
+                                    <div class="vn-related-inline">
+                                        <span class="vn-related-inline__count">{{ $owner['properties_linked_count'] ?? '—' }}</span>
+                                    </div>
                                     @if (count($relatedProperties) > 0)
                                         <details>
                                             <summary>عرض العقارات المرتبطة</summary>
@@ -256,8 +268,10 @@
                                     @endif
                                 </td>
                                 <td data-column-key="signals_count">
-                                    <div>له: {{ $owner['signals_for_count'] ?? 0 }}</div>
-                                    <div>عليه: {{ $owner['signals_against_count'] ?? 0 }}</div>
+                                    <div class="vn-related-inline">
+                                        <span class="vn-related-inline__count">له: {{ $owner['signals_for_count'] ?? 0 }}</span>
+                                        <span class="vn-related-inline__count">عليه: {{ $owner['signals_against_count'] ?? 0 }}</span>
+                                    </div>
                                     @php
                                         $signals = $owner['signals'] ?? [];
                                     @endphp
@@ -303,7 +317,7 @@
                                 <td data-column-key="ownership_percentage" class="vn-muted-value">{{ $owner['ownership_percentage'] ?? '—' }}</td>
                                 <td data-column-key="current_ownerships_count">{{ $owner['current_ownerships_count'] ?? '—' }}</td>
                                 <td data-column-key="last_update">{{ $owner['last_update'] ?? '—' }}</td>
-                                <td data-column-key="status_or_notes" class="vn-muted-value">
+                                <td data-column-key="status_or_notes" class="vn-muted-value vn-table-text-long">
                                     <div>{{ $owner['status_or_notes'] ?? '—' }}</div>
                                     <div>الرقم الوطني: {{ $owner['national_id'] ?? '—' }}</div>
                                     <div>السجل التجاري: {{ $owner['commercial_register_number'] ?? '—' }}</div>
@@ -315,6 +329,8 @@
                         @endforeach
                     </tbody>
                 </table>
+                    </div>
+                </div>
             </div>
 
             <div class="vn-pagination-wrap">
