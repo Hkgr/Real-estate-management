@@ -163,13 +163,13 @@
                     <input id="filter-q" class="search-input" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
                     <button type="button" class="toolbar-search-close vn-report-toolbar-button" data-properties-clear-search aria-label="مسح البحث">✕</button>
                 </div>
-                <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--primary active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-properties-generator-panel" id="toolbar-main-reports">مولد تقارير</button>
+                <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-report-generator-toggle aria-expanded="false" aria-controls="vn-properties-generator-panel" id="toolbar-main-reports">مولد تقارير</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير ▾</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-properties-fullscreen id="properties-fullscreen-btn">⛶ ملء الشاشة</button>
             </div>
         </section>
 
-        <section id="vn-properties-generator-panel" class="toolbar-mode-panel vn-report-generator is-open" data-report-generator-panel>
+        <section id="vn-properties-generator-panel" class="toolbar-mode-panel vn-report-generator" data-report-generator-panel>
             <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form class="vn-report-generator__form">
                 <div class="vn-report-generator__body">
                 <div class="vn-report-generator__filters vn-report-generator__filters--compact">
