@@ -52,7 +52,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 0;
   position: sticky;
   top: 64px;
   z-index: 25;
@@ -262,7 +262,7 @@
   display: grid;
   grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
   gap: 10px 12px;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .vn-properties-report .vn-report-generator__filters--compact {
@@ -331,7 +331,7 @@
   display: grid;
   grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
   gap: 5px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   padding: 10px;
   background: rgba(212,175,55,.03);
   border: 1px dashed rgba(212,175,55,.15);
@@ -435,7 +435,6 @@
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 14px;
   padding: 6px 0;
   font-family: var(--font-ui, 'Noto Naskh Arabic', serif);
   font-size: calc(11px * var(--fs-scale, 1));
@@ -495,7 +494,6 @@
   gap: 0;
   flex-wrap: wrap;
   padding: 8px 14px;
-  margin-bottom: 16px;
   background: rgba(212,175,55,.04);
   border: 1px solid rgba(212,175,55,.14);
   border-radius: var(--r-md, 8px);
@@ -1398,4 +1396,113 @@
 
 .vn-properties-report .search-input::placeholder { color: var(--text-muted); }
 .vn-properties-report .search-input:focus { border-color: rgba(212,175,55,.4); }
+
+/* ═══════════════════════════════════════════════════════════════
+   FIT-TO-SCREEN LAYOUT  (properties report only)
+   Locks the page to 100dvh so only the data table scrolls.
+
+   IMPORTANT: intermediate containers use overflow:clip (not hidden).
+   overflow:hidden creates a scroll container that intercepts
+   position:sticky, breaking column pinning and sticky thead.
+   overflow:clip visually clips content without becoming a scroll
+   container, so sticky sees straight through to .table-overflow.
+═══════════════════════════════════════════════════════════════ */
+
+/* 1. Shell: hard viewport lock — overflow:hidden is intentional here
+   (outermost boundary, no sticky elements are direct children) */
+body:has(.vn-properties-report) .viewer-new__shell {
+  height: 100dvh;
+  min-height: unset;
+  overflow: hidden;
+}
+
+/* 2–4. Intermediate flex containers: clip without creating scroll context */
+body:has(.vn-properties-report) .viewer-new__content-wrap {
+  min-height: 0;
+  overflow: clip;
+}
+
+.viewer-new .viewer-new__main:has(.vn-properties-report) {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer-new .vn-properties-report {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 5. Hero: drop the bottom margin — flex gap handles spacing */
+.viewer-new .vn-properties-report .vn-report-hero {
+  margin-bottom: 0;
+}
+
+/* 6. Toolbar: no longer sticky since the page itself doesn't scroll */
+.viewer-new .vn-properties-report .vn-report-toolbar {
+  position: relative;
+  top: auto;
+}
+
+/* 7. Focus target fills everything below the hero */
+.viewer-new .vn-properties-report > .report-focus-target {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 8. Table card expands to fill remaining focus-target height */
+.viewer-new .vn-properties-report .report-focus-target > :is(.vn-table-card, .vn-property-table-card) {
+  flex: 1 1 0 !important;
+  min-height: 120px;
+  overflow: clip !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 9. Scroll container fills the card — position:relative makes it the anchor
+   for the absolutely-positioned nav pill */
+.viewer-new .vn-properties-report .vn-table-card .vn-table-with-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* 10. Only the table scrolls — both axes.
+   This is the sole scroll container; sticky thead and pinned columns
+   anchor here because all ancestors above use overflow:clip. */
+.viewer-new .vn-properties-report .vn-table-card .vn-table-responsive,
+.viewer-new .vn-properties-report .vn-table-card .table-overflow {
+  flex: 1 1 0 !important;
+  min-height: 0;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+/* 11. Nav pill: switch from position:sticky (needs to be inside the scroll
+   container) to position:absolute anchored to .vn-table-with-scroll.
+   margin-top:-48px was the sticky overlap trick — not needed with absolute. */
+body:has(.vn-properties-report) .viewer-new .vn-properties-report .vn-tbl-nav-pill {
+  position: absolute !important;
+  bottom: 18px !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  margin-top: 0 !important;
+  padding-bottom: 0 !important;
+  z-index: 60;
+  pointer-events: none;
+}
 
