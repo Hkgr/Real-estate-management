@@ -26,8 +26,20 @@
             $activeFilters[] = ['label' => 'نوع الإشارة', 'value' => $filters['type']];
         }
 
-        if (($filters['status'] ?? '') !== '') {
-            $activeFilters[] = ['label' => 'الحالة', 'value' => $filters['status']];
+        if (($filters['signal_date_from'] ?? '') !== '') {
+            $activeFilters[] = ['label' => 'تاريخ الإشارة من', 'value' => $filters['signal_date_from']];
+        }
+
+        if (($filters['signal_date_to'] ?? '') !== '') {
+            $activeFilters[] = ['label' => 'تاريخ الإشارة إلى', 'value' => $filters['signal_date_to']];
+        }
+
+        if (($filters['source_date_from'] ?? '') !== '') {
+            $activeFilters[] = ['label' => 'تاريخ مصدر الإشارة من', 'value' => $filters['source_date_from']];
+        }
+
+        if (($filters['source_date_to'] ?? '') !== '') {
+            $activeFilters[] = ['label' => 'تاريخ مصدر الإشارة إلى', 'value' => $filters['source_date_to']];
         }
     @endphp
 
@@ -37,7 +49,7 @@
                 <div class="vn-report-hero__content">
                     <div class="page-eyebrow">تقرير الإشارات التشغيلي</div>
                     <h1 class="page-title">تقرير <em>الإشارات</em></h1>
-                    <p class="page-subtitle">متابعة الإشارات المرتبطة بالعقارات والمالكين مع عرض الحالة والتحديثات والملاحظات.</p>
+                    <p class="page-subtitle">متابعة الإشارات المرتبطة بالعقارات مع عرض الأطراف والمصادر والتواريخ والملاحظات.</p>
                 </div>
                 <div class="vn-report-hero__meta-wrap">
                     <div class="selection-card vn-report-hero__meta">
@@ -47,8 +59,9 @@
                         <div class="selection-subvalue">إجمالي النتائج: {{ number_format((int) $totalResults) }}</div>
                         <div class="selection-bar" aria-hidden="true"><div class="selection-bar-fill" style="width:{{ $totalResults > 0 ? '100' : '0' }}%"></div></div>
                         <div class="selection-meta">
-                            <span>إشارات نشطة: {{ $metrics['active_signals'] ?? 'غير متوفر' }}</span>
-                            <span>{{ number_format((int) $currentCount) }} معروض</span>
+                            <span>بطاقات مرتبطة: {{ $metrics['linked_property_cards'] ?? 'غير متوفر' }}</span>
+                            <span>عقارات مرتبطة: {{ $metrics['linked_properties'] ?? 'غير متوفر' }}</span>
+                            <span>آخر تحديث: {{ $metrics['last_update'] ?? '—' }}</span>
                         </div>
                     </div>
                 </div>
@@ -59,7 +72,7 @@
             <div class="toolbar-main-actions vn-report-toolbar__main">
                 <div class="toolbar-inline-search vn-report-toolbar__search active" id="vn-toolbar-inline-search-signals">
                     <label for="filter-q" class="vn-report-toolbar__search-label filter-label">بحث شامل</label>
-                    <input id="filter-q" class="search-input" type="text" name="q" form="vn-signals-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="ابحث في نوع/حالة/ملاحظات الإشارة..." />
+                    <input id="filter-q" class="search-input" type="text" name="q" form="vn-signals-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="ابحث في رقم/نوع/ملاحظات/أطراف الإشارة..." />
                 </div>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--primary active" data-report-generator-toggle aria-expanded="true" aria-controls="vn-signals-generator-panel">مولد تقارير</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير ▾</button>
@@ -82,17 +95,25 @@
                         </div>
                     @endif
 
-                    @if (($fieldAvailability['status'] ?? false) && !empty($statusOptions))
-                        <div class="vn-report-generator__field">
-                            <label for="filter-status">الحالة</label>
-                            <select id="filter-status" name="status">
-                                <option value="">كل الحالات</option>
-                                @foreach ($statusOptions as $statusOption)
-                                    <option value="{{ $statusOption }}" @selected(($filters['status'] ?? '') === $statusOption)>{{ $statusOption }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endif
+                    <div class="vn-report-generator__field">
+                        <label for="filter-signal-date-from">تاريخ الإشارة من</label>
+                        <input id="filter-signal-date-from" type="date" name="signal_date_from" value="{{ $filters['signal_date_from'] ?? '' }}">
+                    </div>
+
+                    <div class="vn-report-generator__field">
+                        <label for="filter-signal-date-to">تاريخ الإشارة إلى</label>
+                        <input id="filter-signal-date-to" type="date" name="signal_date_to" value="{{ $filters['signal_date_to'] ?? '' }}">
+                    </div>
+
+                    <div class="vn-report-generator__field">
+                        <label for="filter-source-date-from">تاريخ مصدر الإشارة من</label>
+                        <input id="filter-source-date-from" type="date" name="source_date_from" value="{{ $filters['source_date_from'] ?? '' }}">
+                    </div>
+
+                    <div class="vn-report-generator__field">
+                        <label for="filter-source-date-to">تاريخ مصدر الإشارة إلى</label>
+                        <input id="filter-source-date-to" type="date" name="source_date_to" value="{{ $filters['source_date_to'] ?? '' }}">
+                    </div>
                 </div>
 
                 <div class="vn-report-generator__actions">
@@ -127,25 +148,35 @@
                         <table class="vn-big-table">
                             <thead>
                                 <tr>
-                                    <th><div class="vn-th-inner">نوع الإشارة</div></th>
-                                    <th><div class="vn-th-inner">العقار المرتبط</div></th>
-                                    <th><div class="vn-th-inner">المالك المرتبط</div></th>
-                                    <th><div class="vn-th-inner">التاريخ</div></th>
-                                    <th><div class="vn-th-inner">الحالة</div></th>
-                                    <th><div class="vn-th-inner">آخر تحديث</div></th>
-                                    <th><div class="vn-th-inner">ملاحظات</div></th>
+                                    <th data-column-key="id"><div class="vn-th-inner">ID</div></th>
+                                    <th data-column-key="signal_id"><div class="vn-th-inner">رقم الإشارة</div></th>
+                                    <th data-column-key="signal_type"><div class="vn-th-inner">نوع الإشارة</div></th>
+                                    <th data-column-key="property_label"><div class="vn-th-inner">العقار المرتبط</div></th>
+                                    <th data-column-key="owners_label"><div class="vn-th-inner">أصحاب الإشارة</div></th>
+                                    <th data-column-key="victims_label"><div class="vn-th-inner">المتضررون</div></th>
+                                    <th data-column-key="sources_label"><div class="vn-th-inner">مصادر الإشارة</div></th>
+                                    <th data-column-key="signal_date"><div class="vn-th-inner">تاريخ الإشارة</div></th>
+                                    <th data-column-key="signal_source_date"><div class="vn-th-inner">تاريخ مصدر الإشارة</div></th>
+                                    <th data-column-key="created_at"><div class="vn-th-inner">تاريخ الإنشاء</div></th>
+                                    <th data-column-key="last_update"><div class="vn-th-inner">آخر تحديث</div></th>
+                                    <th data-column-key="notes"><div class="vn-th-inner">ملاحظات</div></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($signals as $signal)
                                     <tr>
-                                        <td>{{ $signal['signal_type'] ?? '—' }}</td>
-                                        <td>{{ $signal['property_label'] ?? '—' }}</td>
-                                        <td>{{ $signal['owner_label'] ?? '—' }}</td>
-                                        <td>{{ $signal['signal_date'] ?? '—' }}</td>
-                                        <td>{{ $signal['status'] ?? '—' }}</td>
-                                        <td>{{ $signal['last_update'] ?? '—' }}</td>
-                                        <td class="vn-muted-value">{{ $signal['notes'] ?? '—' }}</td>
+                                        <td data-column-key="id">{{ $signal['id'] ?? '—' }}</td>
+                                        <td data-column-key="signal_id">{{ $signal['signal_id'] ?? '—' }}</td>
+                                        <td data-column-key="signal_type">{{ $signal['signal_type'] ?? '—' }}</td>
+                                        <td data-column-key="property_label">{{ $signal['property_label'] ?? '—' }}</td>
+                                        <td data-column-key="owners_label">{{ $signal['owners_label'] ?? '—' }}</td>
+                                        <td data-column-key="victims_label">{{ $signal['victims_label'] ?? '—' }}</td>
+                                        <td data-column-key="sources_label">{{ $signal['sources_label'] ?? '—' }}</td>
+                                        <td data-column-key="signal_date">{{ $signal['signal_date'] ?? '—' }}</td>
+                                        <td data-column-key="signal_source_date">{{ $signal['signal_source_date'] ?? '—' }}</td>
+                                        <td data-column-key="created_at">{{ $signal['created_at'] ?? '—' }}</td>
+                                        <td data-column-key="last_update">{{ $signal['last_update'] ?? '—' }}</td>
+                                        <td data-column-key="notes" class="vn-muted-value">{{ $signal['notes'] ?? '—' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
