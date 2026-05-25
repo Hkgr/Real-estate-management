@@ -325,115 +325,65 @@
             const scope = document.querySelector('.vn-signals-report');
             if (!scope) return;
 
-            const mainTable = scope.querySelector('[data-signals-main-table]');
-            if (!mainTable) return;
+            const signalsTable = document.getElementById('vn-signals-table');
+            if (!signalsTable) return;
 
-            const storageKey = 'viewer-new.signals-report.visible-columns';
             const mandatoryColumn = 'signal_number';
-            const columnKeys = @json($signalTableColumnKeys);
-            const defaultVisibleColumns = columnKeys.slice();
-            const columnToggles = Array.from(scope.querySelectorAll('[data-signals-column-toggle]'));
+            const columnToggles = Array.from(scope.querySelectorAll('[data-column-toggle]'));
             const resetColumnsButton = scope.querySelector('[data-reset-columns]');
 
-            const normalizeVisibleColumns = function (columns, options) {
-                const config = options || {};
-                const allowOnlyMandatory = config.allowOnlyMandatory === true;
-                const seen = new Set();
-                const normalized = [];
+            function getSignalColumnIndex(key) {
+                if (!signalsTable) return -1;
+                const header = signalsTable.querySelector('thead th[data-column-key="' + key + '"]');
+                if (!header || !header.parentElement) return -1;
+                return Array.from(header.parentElement.children).indexOf(header);
+            }
 
-                (Array.isArray(columns) ? columns : []).forEach(function (key) {
-                    if (!columnKeys.includes(key) || seen.has(key)) return;
-                    seen.add(key);
-                    normalized.push(key);
+            function getVisibleSignalColumnCount() {
+                if (!signalsTable) return 1;
+
+                const headers = Array.from(signalsTable.querySelectorAll('thead th[data-column-key]'));
+                const visibleCount = headers.filter(function (header) {
+                    return header.style.display !== 'none';
+                }).length;
+
+                return Math.max(visibleCount, 1);
+            }
+
+            function updateSignalChildColspan() {
+                if (!signalsTable) return;
+
+                const colspan = getVisibleSignalColumnCount();
+
+                signalsTable.querySelectorAll('tbody > tr.vn-signal-child-row > td[colspan]').forEach(function (cell) {
+                    cell.setAttribute('colspan', String(colspan));
                 });
+            }
 
-                if (!seen.has(mandatoryColumn)) {
-                    normalized.unshift(mandatoryColumn);
-                    seen.add(mandatoryColumn);
+            function setSignalColumnVisibility(key, visible) {
+                if (!signalsTable) return;
+
+                if (key === 'signal_number') {
+                    visible = true;
                 }
 
-                if (!allowOnlyMandatory && normalized.length === 1 && normalized[0] === mandatoryColumn) {
-                    return defaultVisibleColumns.slice();
+                const columnIndex = getSignalColumnIndex(key);
+                if (columnIndex < 0) return;
+
+                const header = signalsTable.querySelector('thead th[data-column-key="' + key + '"]');
+                if (header) {
+                    header.style.display = visible ? '' : 'none';
                 }
 
-                return normalized;
-            };
-
-            const setChildRowsColspan = function (visibleColumns) {
-                const visibleColumnsCount = Math.max(visibleColumns.length, 1);
-                scope.querySelectorAll('.vn-signal-child-row > td[colspan]').forEach(function (cell) {
-                    cell.setAttribute('colspan', String(visibleColumnsCount));
-                });
-            };
-
-            const applyColumnVisibility = function (visibleColumns) {
-                const normalizedVisibleColumns = normalizeVisibleColumns(visibleColumns, { allowOnlyMandatory: true });
-                const visibleSet = new Set(normalizedVisibleColumns);
-
-                columnKeys.forEach(function (key) {
-                    const shouldShow = visibleSet.has(key) || key === mandatoryColumn;
-                    mainTable
-                        .querySelectorAll(':scope > thead [data-column-key="' + key + '"], :scope > tbody > tr:not(.vn-signal-child-row) > [data-column-key="' + key + '"]')
-                        .forEach(function (cell) {
-                            cell.style.display = shouldShow ? '' : 'none';
-                        });
-                });
-
-                setChildRowsColspan(normalizedVisibleColumns);
-                return normalizedVisibleColumns;
-            };
-
-            const persistColumnSelection = function (visibleColumns) {
-                try {
-                    localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
-                } catch (error) {}
-            };
-
-            const getSelectedColumnsFromToggles = function () {
-                return columnToggles
-                    .filter(function (toggle) {
-                        return toggle.checked;
-                    })
-                    .map(function (toggle) {
-                        return toggle.value;
-                    });
-            };
-
-            const syncTogglesFromColumns = function (visibleColumns) {
-                const visibleSet = new Set(visibleColumns);
-                columnToggles.forEach(function (toggle) {
-                    if (toggle.value === mandatoryColumn) {
-                        toggle.checked = true;
-                        toggle.disabled = true;
-                        return;
+                signalsTable.querySelectorAll('tbody > tr:not(.vn-signal-child-row)').forEach(function (row) {
+                    const cell = row.children[columnIndex];
+                    if (cell) {
+                        cell.style.display = visible ? '' : 'none';
                     }
-
-                    toggle.checked = visibleSet.has(toggle.value);
                 });
-            };
 
-            const parseStoredColumns = function () {
-                try {
-                    const rawValue = localStorage.getItem(storageKey);
-                    if (!rawValue) return null;
-
-                    const parsedValue = JSON.parse(rawValue);
-                    if (!Array.isArray(parsedValue)) return null;
-
-                    return normalizeVisibleColumns(parsedValue, { allowOnlyMandatory: false });
-                } catch (error) {
-                    return null;
-                }
-            };
-
-            const storedVisibleColumns = parseStoredColumns();
-            const initialVisibleColumns = storedVisibleColumns && storedVisibleColumns.length > 0
-                ? storedVisibleColumns
-                : defaultVisibleColumns.slice();
-
-            syncTogglesFromColumns(initialVisibleColumns);
-            const appliedInitialColumns = applyColumnVisibility(initialVisibleColumns);
-            persistColumnSelection(appliedInitialColumns);
+                updateSignalChildColspan();
+            }
 
             scope.querySelectorAll('[data-signal-child-toggle]').forEach(function (btn) {
                 btn.addEventListener('click', function () {
@@ -454,25 +404,45 @@
             });
 
             columnToggles.forEach(function (toggle) {
+                if (toggle.value === mandatoryColumn) {
+                    toggle.checked = true;
+                    toggle.disabled = true;
+                    setSignalColumnVisibility(mandatoryColumn, true);
+                    return;
+                }
+
+                toggle.checked = true;
+                toggle.disabled = false;
+                setSignalColumnVisibility(toggle.value, true);
+            });
+            updateSignalChildColspan();
+
+            columnToggles.forEach(function (toggle) {
                 toggle.addEventListener('change', function () {
-                    const selectedColumns = getSelectedColumnsFromToggles();
-                    const normalizedColumns = normalizeVisibleColumns(selectedColumns, { allowOnlyMandatory: true });
-                    syncTogglesFromColumns(normalizedColumns);
-                    const appliedColumns = applyColumnVisibility(normalizedColumns);
-                    persistColumnSelection(appliedColumns);
+                    if (toggle.value === mandatoryColumn) {
+                        toggle.checked = true;
+                        setSignalColumnVisibility(mandatoryColumn, true);
+                        return;
+                    }
+
+                    setSignalColumnVisibility(toggle.value, toggle.checked);
                 });
             });
 
             if (resetColumnsButton) {
                 resetColumnsButton.addEventListener('click', function () {
-                    try {
-                        localStorage.removeItem(storageKey);
-                    } catch (error) {}
+                    columnToggles.forEach(function (toggle) {
+                        if (toggle.value === mandatoryColumn) {
+                            toggle.checked = true;
+                            toggle.disabled = true;
+                        } else {
+                            toggle.checked = true;
+                            toggle.disabled = false;
+                        }
 
-                    const resetColumns = defaultVisibleColumns.slice();
-                    syncTogglesFromColumns(resetColumns);
-                    const appliedColumns = applyColumnVisibility(resetColumns);
-                    persistColumnSelection(appliedColumns);
+                        setSignalColumnVisibility(toggle.value, true);
+                    });
+                    updateSignalChildColspan();
                 });
             }
         });
