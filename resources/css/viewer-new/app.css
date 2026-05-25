@@ -1333,3 +1333,99 @@ body.vn-report-fullscreen-active .viewer-new__main{padding:0}
   .viewer-new .vn-properties-report .vn-report-toolbar-button::after{display:none}
   .viewer-new .vn-properties-report .vn-report-toolbar-button--active::before{animation:none}
 }
+/* ===== viewport containment fixes (viewer-new only) ===== */
+html:has(body.viewer-new),
+body.viewer-new {
+  height: 100%;
+}
+
+body.viewer-new {
+  margin: 0;
+  overflow: hidden;
+}
+
+body.viewer-new .viewer-new__shell {
+  display: flex;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+body.viewer-new .vn-sidebar,
+body.viewer-new .viewer-new__content-wrap,
+body.viewer-new .viewer-new__main {
+  min-height: 0;
+  min-width: 0;
+}
+
+body.viewer-new .vn-sidebar {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body.viewer-new .viewer-new__content-wrap {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+body.viewer-new .viewer-new__main {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+body.viewer-new .viewer-new__main > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.viewer-new .vn-quick-settings {
+  max-width: min(280px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  z-index: 60;
+}
+
+body.viewer-new .vn-table-card,
+body.viewer-new .vn-report-detail,
+body.viewer-new .vn-properties-report,
+body.viewer-new .vn-report-toolbar,
+body.viewer-new .vn-report-toolbar__main,
+body.viewer-new .vn-report-generator,
+body.viewer-new .vn-report-content,
+body.viewer-new .vn-report-metrics,
+body.viewer-new .vn-generator-sections,
+body.viewer-new .vn-admin-recent-grid,
+body.viewer-new .vn-stat-distribution-grid,
+body.viewer-new .vn-generator-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.viewer-new .vn-table-responsive,
+body.viewer-new .vn-properties-table,
+body.viewer-new .vn-mini-table,
+body.viewer-new .vn-recent-table,
+body.viewer-new .vn-financial-top-table,
+body.viewer-new .vn-admin-mini-table {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+body.viewer-new .viewer-hub,
+body.viewer-new .viewer-hub * {
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  body.viewer-new .viewer-new__shell {
+    min-width: 0;
+  }
+}
