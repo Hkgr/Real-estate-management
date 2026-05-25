@@ -216,17 +216,45 @@
                                                 <div class="vn-child-panel__header"><h4 class="vn-child-panel__title">العقارات المرتبطة بالإشارة {{ $signal['signal_number'] ?? '—' }}</h4><span class="vn-child-panel__meta">{{ number_format((int) ($signal['properties_count'] ?? 0)) }} عقارات</span></div>
                                                 <div class="vn-child-panel__table-wrap">
                                                     <table class="vn-child-table">
-                                                        <thead><tr><th>رقم البطاقة</th><th>المحافظة</th><th>المنطقة</th><th>المقاطعة</th><th>المساحة</th><th>الحالة</th><th>آخر تحديث</th></tr></thead>
+                                                        <thead><tr><th>رقم البطاقة</th><th>المحافظة</th><th>المنطقة</th><th>المقسم / المقاطعة</th><th>المساحة</th><th>وحدة المساحة</th><th>حالة العقار</th><th>نوع الاستثمار</th><th>طريقة الشراء</th><th>القيمة الكلية بالدولار</th><th>قيمة الحصة بالدولار</th><th>الرصيد النهائي</th><th>تاريخ الإنشاء</th><th>آخر تحديث</th></tr></thead>
                                                         <tbody>
                                                         @foreach (($signal['related_properties'] ?? []) as $property)
+                                                            @php
+                                                                $recordNumber = trim((string) ($property['record_number'] ?? ''));
+                                                                $propertyCardId = trim((string) ($property['property_card_id'] ?? ''));
+                                                                $propertyCardNumber = $recordNumber !== ''
+                                                                    ? $recordNumber
+                                                                    : ($propertyCardId !== '' ? $propertyCardId : '—');
+
+                                                                $totalPropertyValueRaw = $property['total_property_value_usd'] ?? null;
+                                                                $ownedPropertyValueRaw = $property['owned_property_value_usd'] ?? null;
+                                                                $finalBalanceRaw = $property['final_balance'] ?? null;
+
+                                                                $totalPropertyValue = is_numeric($totalPropertyValueRaw)
+                                                                    ? number_format((float) $totalPropertyValueRaw, 2) . ' USD'
+                                                                    : '—';
+                                                                $ownedPropertyValue = is_numeric($ownedPropertyValueRaw)
+                                                                    ? number_format((float) $ownedPropertyValueRaw, 2) . ' USD'
+                                                                    : '—';
+                                                                $finalBalance = is_numeric($finalBalanceRaw)
+                                                                    ? number_format((float) $finalBalanceRaw, 2) . ' USD'
+                                                                    : '—';
+                                                            @endphp
                                                             <tr>
-                                                                <td>{{ $property['record_number'] ?? ($property['property_card_id'] ?? '—') }}</td>
-                                                                <td>{{ $property['governorate'] ?? '—' }}</td>
-                                                                <td>{{ $property['region_name'] ?? '—' }}</td>
-                                                                <td>{{ $property['subdivision'] ?? '—' }}</td>
-                                                                <td>{{ ($property['total_area_m2'] ?? '—') }} {{ $property['card_area_unit'] ?? '' }}</td>
-                                                                <td>{{ $property['card_status'] ?? '—' }}</td>
-                                                                <td>{{ $property['updated_at'] ?? '—' }}</td>
+                                                                <td>{{ $propertyCardNumber }}</td>
+                                                                <td>{{ ($property['governorate'] ?? '') !== '' ? $property['governorate'] : '—' }}</td>
+                                                                <td>{{ ($property['region_name'] ?? '') !== '' ? $property['region_name'] : '—' }}</td>
+                                                                <td>{{ ($property['subdivision'] ?? '') !== '' ? $property['subdivision'] : '—' }}</td>
+                                                                <td>{{ ($property['total_area_m2'] ?? '') !== '' ? $property['total_area_m2'] : '—' }}</td>
+                                                                <td>{{ ($property['card_area_unit'] ?? '') !== '' ? $property['card_area_unit'] : '—' }}</td>
+                                                                <td>{{ ($property['card_status'] ?? '') !== '' ? $property['card_status'] : '—' }}</td>
+                                                                <td>{{ ($property['card_investment_type'] ?? '') !== '' ? $property['card_investment_type'] : '—' }}</td>
+                                                                <td>{{ ($property['card_purchase_method'] ?? '') !== '' ? $property['card_purchase_method'] : '—' }}</td>
+                                                                <td>{{ $totalPropertyValue }}</td>
+                                                                <td>{{ $ownedPropertyValue }}</td>
+                                                                <td>{{ $finalBalance }}</td>
+                                                                <td>{{ ($property['created_at'] ?? '') !== '' ? $property['created_at'] : '—' }}</td>
+                                                                <td>{{ ($property['updated_at'] ?? '') !== '' ? $property['updated_at'] : '—' }}</td>
                                                             </tr>
                                                         @endforeach
                                                         </tbody>
