@@ -188,8 +188,13 @@ class SignalsReportController extends Controller
 
     private function buildRelatedProperties(Collection $rows, bool $hasPropertyCardsTable, callable $hasPropertyCardColumn): Collection
     {
-        $properties = $rows->map(function (Signal $row) {
+        $properties = $rows->map(function (Signal $row) use ($hasPropertyCardsTable, $hasPropertyCardColumn) {
             $pc = $row->propertyCard;
+
+            if ($pc && $hasPropertyCardsTable && $hasPropertyCardColumn('deleted_at') && ! blank($pc->deleted_at)) {
+                return null;
+            }
+
             return [
                 'property_card_id' => $pc->id ?? $row->property_card_id,
                 'record_number' => $pc->card_record_number ?? '—',
@@ -207,7 +212,9 @@ class SignalsReportController extends Controller
                 'created_at' => $this->formatDateValue($pc->created_at ?? null, 'Y-m-d H:i'),
                 'updated_at' => $this->formatDateValue($pc->updated_at ?? null, 'Y-m-d H:i'),
             ];
-        })->filter(fn ($item) => !blank($item['property_card_id']))->unique('property_card_id')->values();
+        })->filter(fn ($item) => is_array($item) && ! blank($item['property_card_id']))
+            ->unique('property_card_id')
+            ->values();
 
         return $properties;
     }

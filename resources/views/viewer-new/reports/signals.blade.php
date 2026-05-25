@@ -246,23 +246,22 @@
             @include('viewer-new.partials.empty-state', ['title' => 'لا توجد إشارات مطابقة', 'message' => 'جرّب تغيير معايير البحث أو إزالة الفلاتر الحالية.'])
         @endif
     </section>
-@endsection
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const scope = document.querySelector('.vn-signals-report');
+            if (!scope) return;
 
+            scope.querySelectorAll('[data-signal-child-toggle]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const target = btn.getAttribute('data-target');
+                    if (!target) return;
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const scope = document.querySelector('.vn-signals-report');
-    if (!scope) return;
-    scope.querySelectorAll('[data-signal-child-toggle]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const target = btn.getAttribute('data-target');
-            if (!target) return;
-            const row = scope.querySelector('[data-signal-child-row="' + target + '"]');
-            if (!row) return;
-            row.hidden = !row.hidden;
+                    const row = scope.querySelector('[data-signal-child-row="' + target + '"]');
+                    if (!row) return;
+
+                    row.hidden = !row.hidden;
+                });
+            });
         });
-    });
-});
-</script>
-@endpush
+    </script>
+@endsection
