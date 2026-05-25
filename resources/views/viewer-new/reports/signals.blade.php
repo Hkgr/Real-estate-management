@@ -175,7 +175,7 @@
                                             <div class="vn-related-inline">
                                                 <span class="vn-related-inline__count">{{ number_format((int) ($signal['properties_count'] ?? 0)) }} عقارات</span>
                                                 @if (($signal['properties_count'] ?? 0) > 0)
-                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $propertiesTarget }}">عرض</button>
+                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $propertiesTarget }}" aria-expanded="false" aria-controls="{{ $propertiesTarget }}" data-show-label="▾" data-hide-label="▴">▾</button>
                                                 @endif
                                             </div>
                                         </td>
@@ -183,7 +183,7 @@
                                             <div class="vn-related-inline">
                                                 <span class="vn-related-inline__count">{{ $signal['owners_summary'] ?? '—' }}</span>
                                                 @if ((($signal['owners_count'] ?? 0) > 1) || (($signal['owners_count'] ?? 0) > 0))
-                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $detailsTarget }}">تفاصيل</button>
+                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $detailsTarget }}" aria-expanded="false" aria-controls="{{ $detailsTarget }}" data-show-label="▾" data-hide-label="▴">▾</button>
                                                 @endif
                                             </div>
                                         </td>
@@ -193,7 +193,7 @@
                                         <td data-column-key="last_update">{{ $signal['last_update'] ?? '—' }}</td>
                                         <td data-column-key="notes_summary" class="vn-table-text-long vn-muted-value">{{ $signal['notes_summary'] ?? '—' }}</td>
                                     </tr>
-                                    <tr class="vn-signal-child-row" data-signal-child-row="{{ $propertiesTarget }}" hidden>
+                                    <tr id="{{ $propertiesTarget }}" class="vn-signal-child-row" data-signal-child-row="{{ $propertiesTarget }}" hidden>
                                         <td colspan="10">
                                             <div class="vn-child-panel">
                                                 <div class="vn-child-panel__header"><h4 class="vn-child-panel__title">العقارات المرتبطة بالإشارة {{ $signal['signal_number'] ?? '—' }}</h4><span class="vn-child-panel__meta">{{ number_format((int) ($signal['properties_count'] ?? 0)) }} عقارات</span></div>
@@ -218,7 +218,7 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr class="vn-signal-child-row" data-signal-child-row="{{ $detailsTarget }}" hidden>
+                                    <tr id="{{ $detailsTarget }}" class="vn-signal-child-row" data-signal-child-row="{{ $detailsTarget }}" hidden>
                                         <td colspan="10">
                                             <div class="vn-child-panel">
                                                 <div class="vn-child-panel__header"><h4 class="vn-child-panel__title">تفاصيل الأطراف والمصادر</h4></div>
@@ -259,7 +259,13 @@
                     const row = scope.querySelector('[data-signal-child-row="' + target + '"]');
                     if (!row) return;
 
-                    row.hidden = !row.hidden;
+                    const willOpen = row.hidden;
+                    row.hidden = !willOpen;
+
+                    btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                    btn.textContent = willOpen
+                        ? (btn.getAttribute('data-hide-label') || '▴')
+                        : (btn.getAttribute('data-show-label') || '▾');
                 });
             });
         });
