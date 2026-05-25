@@ -1176,7 +1176,7 @@
 .viewer-new .vn-properties-report .vn-table-card .vn-table-responsive.vn-properties-table,
 .viewer-new .vn-properties-report .table-overflow {
   overflow-x: auto !important;
-  overflow-y: visible !important;
+  overflow-y: hidden !important;
   max-width: none !important;
   width: 100%;
   min-width: 100%;
@@ -1396,79 +1396,3 @@
 
 .vn-properties-report .search-input::placeholder { color: var(--text-muted); }
 .vn-properties-report .search-input:focus { border-color: rgba(212,175,55,.4); }
-
-/* ═══════════════════════════════════════════════════════════════
-   PROPERTIES REPORT CONTAINMENT  (horizontal-only)
-═══════════════════════════════════════════════════════════════ */
-
-body.viewer-new:has(.vn-properties-report),
-body.viewer-new.vn-properties-report-page {
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-}
-
-body.viewer-new:has(.vn-properties-report) .viewer-new__shell,
-body.viewer-new.vn-properties-report-page .viewer-new__shell {
-  width: 100% !important;
-  max-width: 100vw !important;
-  min-height: 100dvh !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
-}
-
-body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap,
-body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
-body.viewer-new:has(.vn-properties-report) .viewer-new__main,
-body.viewer-new.vn-properties-report-page .viewer-new__main,
-body.viewer-new:has(.vn-properties-report) .vn-properties-report,
-body.viewer-new.vn-properties-report-page .vn-properties-report,
-body.viewer-new:has(.vn-properties-report) .report-focus-target,
-body.viewer-new.vn-properties-report-page .report-focus-target,
-body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
-body.viewer-new.vn-properties-report-page .vn-property-table-card,
-body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
-body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
-}
-
-body.viewer-new:has(.vn-properties-report) .viewer-new__main,
-body.viewer-new.vn-properties-report-page .viewer-new__main {
-  display: block !important;
-}
-
-body.viewer-new:has(.vn-properties-report) .vn-properties-report,
-body.viewer-new.vn-properties-report-page .vn-properties-report,
-body.viewer-new:has(.vn-properties-report) .report-focus-target,
-body.viewer-new.vn-properties-report-page .report-focus-target,
-body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
-body.viewer-new.vn-properties-report-page .vn-property-table-card,
-body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
-body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
-  display: block !important;
-}
-
-body.viewer-new:has(.vn-properties-report) #vn-properties-overflow,
-body.viewer-new.vn-properties-report-page #vn-properties-overflow,
-body.viewer-new:has(.vn-properties-report) .vn-table-responsive.vn-properties-table,
-body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
-body.viewer-new:has(.vn-properties-report) .table-overflow,
-body.viewer-new.vn-properties-report-page .table-overflow {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  overflow-x: auto !important;
-  overflow-y: visible !important;
-}
-
-body.viewer-new:has(.vn-properties-report) #vn-properties-table,
-body.viewer-new.vn-properties-report-page #vn-properties-table {
-  max-width: none !important;
-}
