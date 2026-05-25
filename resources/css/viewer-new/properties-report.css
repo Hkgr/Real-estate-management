@@ -1416,16 +1416,18 @@ body:has(.vn-properties-report) .viewer-new__shell {
   overflow: hidden;
 }
 
-/* 2–4. Intermediate flex containers: clip without creating scroll context */
+/* 2–4. Intermediate flex containers: hidden keeps them from generating scroll
+   bars (content is flex-sized to fit exactly) while NOT triggering Chrome's
+   overflow:clip + position:sticky interaction bug. */
 body:has(.vn-properties-report) .viewer-new__content-wrap {
   min-height: 0;
-  overflow: clip;
+  overflow: hidden;
 }
 
 .viewer-new .viewer-new__main:has(.vn-properties-report) {
   flex: 1 1 0;
   min-height: 0;
-  overflow: clip;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1433,7 +1435,7 @@ body:has(.vn-properties-report) .viewer-new__content-wrap {
 .viewer-new .vn-properties-report {
   flex: 1 1 0;
   min-height: 0;
-  overflow: clip;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1447,22 +1449,30 @@ body:has(.vn-properties-report) .viewer-new__content-wrap {
 .viewer-new .vn-properties-report .vn-report-toolbar {
   position: relative;
   top: auto;
+  flex-shrink: 0;
 }
 
 /* 7. Focus target fills everything below the hero */
 .viewer-new .vn-properties-report > .report-focus-target {
   flex: 1 1 0;
   min-height: 0;
-  overflow: clip;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+/* 7b. Non-table children (toolbar, generator, chips, summary, pagination) never
+   shrink — only the table card absorbs leftover height. */
+.viewer-new .vn-properties-report > .report-focus-target > :not(.vn-table-card):not(.vn-property-table-card) {
+  flex-shrink: 0;
 }
 
 /* 8. Table card expands to fill remaining focus-target height */
 .viewer-new .vn-properties-report .report-focus-target > :is(.vn-table-card, .vn-property-table-card) {
   flex: 1 1 0 !important;
   min-height: 120px;
-  overflow: clip !important;
+  overflow: hidden !important;
   display: flex;
   flex-direction: column;
 }
@@ -1474,15 +1484,15 @@ body:has(.vn-properties-report) .viewer-new__content-wrap {
   min-height: 0;
   width: 100%;
   min-width: 0;
-  overflow: clip;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
 /* 10. Only the table scrolls — both axes.
-   This is the sole scroll container; sticky thead and pinned columns
-   anchor here because all ancestors above use overflow:clip. */
+   Sticky thead and pinned columns anchor here; all ancestors above use
+   overflow:hidden (flex-sized to exact height, so no visual clipping occurs). */
 .viewer-new .vn-properties-report .vn-table-card .vn-table-responsive,
 .viewer-new .vn-properties-report .vn-table-card .table-overflow {
   flex: 1 1 0 !important;

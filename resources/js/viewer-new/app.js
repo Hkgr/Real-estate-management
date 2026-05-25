@@ -78,7 +78,7 @@ const setupPropertiesColumnPinning = ({
         let offset = 0;
 
         const pinCells = (colKey, rightPx, { anchor: isAnchor = false } = {}) => {
-            tableEl.querySelectorAll(`th.${propertiesColClass(colKey)}, td.${propertiesColClass(colKey)}`).forEach((el) => {
+            tableEl.querySelectorAll(`th[data-column-key="${colKey}"], td[data-column-key="${colKey}"]`).forEach((el) => {
                 if (getComputedStyle(el).display === 'none') return;
                 el.classList.add('vn-col-pinned', 'col-pinned');
                 if (isAnchor) el.classList.add('vn-col-anchor', 'col-anchor');
@@ -115,7 +115,7 @@ const setupPropertiesColumnPinning = ({
 
         const orderedPinned = sortPropertiesPinnedByDomOrder(tableEl, pinned);
         const lastKey = orderedPinned[orderedPinned.length - 1];
-        tableEl.querySelectorAll(`th.${propertiesColClass(lastKey)}, td.${propertiesColClass(lastKey)}`).forEach((el) => {
+        tableEl.querySelectorAll(`th[data-column-key="${lastKey}"], td[data-column-key="${lastKey}"]`).forEach((el) => {
             if (el.classList.contains('vn-col-pinned')) {
                 el.classList.add('vn-col-pin-edge', 'col-pin-edge');
             }
@@ -842,9 +842,9 @@ const setupPropertiesColumnPinning = ({
 
         setPanelOpen(initialOpen, false);
         updateStickyOffset();
-        updateTblNavPill();
         requestFloatingHeadSync();
         syncFullscreenUi();
+        requestAnimationFrame(() => updateTblNavPill());
 
         window.__vnPropertiesReportReady = true;
     };
