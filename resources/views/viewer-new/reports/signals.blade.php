@@ -41,6 +41,20 @@
         if (($filters['source_date_to'] ?? '') !== '') {
             $activeFilters[] = ['label' => 'تاريخ مصدر الإشارة إلى', 'value' => $filters['source_date_to']];
         }
+
+        $signalTableColumnLabels = [
+            'signal_number' => 'رقم الإشارة',
+            'signal_type_label' => 'نوع الإشارة',
+            'signal_date_label' => 'تاريخ الإشارة',
+            'properties_count' => 'العقارات المرتبطة',
+            'owners_summary' => 'أصحاب الإشارة',
+            'victims_summary' => 'المتضررون',
+            'sources_summary' => 'مصادر الإشارة',
+            'source_date_label' => 'تاريخ مصدر الإشارة',
+            'last_update' => 'آخر تحديث',
+            'notes_summary' => 'ملاحظات',
+        ];
+        $signalTableColumnKeys = array_keys($signalTableColumnLabels);
     @endphp
 
     <section class="vn-properties-report vn-signals-report" id="page-signals">
@@ -116,9 +130,24 @@
                     </div>
                 </div>
 
+                <div class="vn-report-generator__columns" data-column-picker>
+                    @foreach ($signalTableColumnLabels as $columnKey => $columnLabel)
+                        @php
+                            $isMandatoryColumn = $columnKey === 'signal_number';
+                        @endphp
+                        <label class="vn-report-column-option" @if($isMandatoryColumn) title="عمود إلزامي لا يمكن إخفاؤه" @endif>
+                            <span class="vn-report-column-option-card">
+                                <input type="checkbox" data-column-toggle value="{{ $columnKey }}" @checked(true) @disabled($isMandatoryColumn)>
+                                <span>{{ $columnLabel }}</span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+
                 <div class="vn-report-generator__actions">
                     <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
                     <a href="{{ route('viewer-new.reports.signals') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
+                    <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الأعمدة الافتراضية</button>
                 </div>
             </form>
         </section>
@@ -295,6 +324,98 @@
         document.addEventListener('DOMContentLoaded', function () {
             const scope = document.querySelector('.vn-signals-report');
             if (!scope) return;
+            const storageKey = 'viewer-new.signals-report.visible-columns';
+            const mandatoryColumn = 'signal_number';
+            const columnKeys = @json($signalTableColumnKeys);
+            const columnToggles = Array.from(scope.querySelectorAll('[data-column-toggle]'));
+            const resetColumnsButton = scope.querySelector('[data-reset-columns]');
+
+            const getVisibleColumns = function () {
+                return columnKeys.filter(function (key) {
+                    const cells = scope.querySelectorAll('[data-column-key="' + key + '"]');
+                    if (!cells.length) return false;
+
+                    return Array.from(cells).some(function (cell) {
+                        return !cell.hidden;
+                    });
+                });
+            };
+
+            const setChildRowsColspan = function () {
+                const visibleColumnsCount = Math.max(getVisibleColumns().length, 1);
+                scope.querySelectorAll('.vn-signal-child-row > td[colspan]').forEach(function (cell) {
+                    cell.setAttribute('colspan', String(visibleColumnsCount));
+                });
+            };
+
+            const applyColumnVisibility = function (visibleColumns) {
+                const normalizedVisibleColumns = visibleColumns.includes(mandatoryColumn)
+                    ? visibleColumns
+                    : [mandatoryColumn].concat(visibleColumns);
+                const visibleSet = new Set(normalizedVisibleColumns);
+
+                columnKeys.forEach(function (key) {
+                    const shouldShow = visibleSet.has(key) || key === mandatoryColumn;
+                    scope.querySelectorAll('[data-column-key="' + key + '"]').forEach(function (cell) {
+                        cell.hidden = !shouldShow;
+                    });
+                });
+
+                setChildRowsColspan();
+            };
+
+            const persistColumnSelection = function (visibleColumns) {
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
+                } catch (error) {}
+            };
+
+            const getSelectedColumnsFromToggles = function () {
+                return columnToggles
+                    .filter(function (toggle) {
+                        return toggle.checked;
+                    })
+                    .map(function (toggle) {
+                        return toggle.value;
+                    });
+            };
+
+            const syncTogglesFromColumns = function (visibleColumns) {
+                const visibleSet = new Set(visibleColumns);
+                columnToggles.forEach(function (toggle) {
+                    if (toggle.value === mandatoryColumn) {
+                        toggle.checked = true;
+                        return;
+                    }
+
+                    toggle.checked = visibleSet.has(toggle.value);
+                });
+            };
+
+            const parseStoredColumns = function () {
+                try {
+                    const rawValue = localStorage.getItem(storageKey);
+                    if (!rawValue) return null;
+
+                    const parsedValue = JSON.parse(rawValue);
+                    if (!Array.isArray(parsedValue)) return null;
+
+                    return parsedValue.filter(function (key) {
+                        return columnKeys.includes(key);
+                    });
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const defaultVisibleColumns = columnKeys.slice();
+            const storedVisibleColumns = parseStoredColumns();
+            const initialVisibleColumns = storedVisibleColumns && storedVisibleColumns.length > 0
+                ? storedVisibleColumns
+                : defaultVisibleColumns;
+
+            syncTogglesFromColumns(initialVisibleColumns);
+            applyColumnVisibility(initialVisibleColumns);
 
             scope.querySelectorAll('[data-signal-child-toggle]').forEach(function (btn) {
                 btn.addEventListener('click', function () {
@@ -313,6 +434,29 @@
                         : (btn.getAttribute('data-show-label') || '▾');
                 });
             });
+
+            columnToggles.forEach(function (toggle) {
+                toggle.addEventListener('change', function () {
+                    const selectedColumns = getSelectedColumnsFromToggles();
+                    if (!selectedColumns.includes(mandatoryColumn)) {
+                        selectedColumns.push(mandatoryColumn);
+                    }
+
+                    applyColumnVisibility(selectedColumns);
+                    persistColumnSelection(selectedColumns);
+                });
+            });
+
+            if (resetColumnsButton) {
+                resetColumnsButton.addEventListener('click', function () {
+                    try {
+                        localStorage.removeItem(storageKey);
+                    } catch (error) {}
+
+                    syncTogglesFromColumns(defaultVisibleColumns);
+                    applyColumnVisibility(defaultVisibleColumns);
+                });
+            }
         });
     </script>
 @endsection
