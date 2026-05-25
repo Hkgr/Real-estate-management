@@ -1398,111 +1398,77 @@
 .vn-properties-report .search-input:focus { border-color: rgba(212,175,55,.4); }
 
 /* ═══════════════════════════════════════════════════════════════
-   FIT-TO-SCREEN LAYOUT  (properties report only)
-   Locks the page to 100dvh so only the data table scrolls.
-
-   IMPORTANT: intermediate containers use overflow:clip (not hidden).
-   overflow:hidden creates a scroll container that intercepts
-   position:sticky, breaking column pinning and sticky thead.
-   overflow:clip visually clips content without becoming a scroll
-   container, so sticky sees straight through to .table-overflow.
+   PROPERTIES REPORT CONTAINMENT  (horizontal-only)
 ═══════════════════════════════════════════════════════════════ */
 
-/* 1. Shell: hard viewport lock — overflow:hidden is intentional here
-   (outermost boundary, no sticky elements are direct children) */
-body:has(.vn-properties-report) .viewer-new__shell {
-  height: 100dvh;
-  min-height: unset;
-  overflow: hidden;
-}
-
-/* 2–4. Intermediate flex containers: clip without creating scroll context */
-body:has(.vn-properties-report) .viewer-new__content-wrap {
-  min-height: 0;
-  overflow: clip;
-}
-
-.viewer-new .viewer-new__main:has(.vn-properties-report) {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: clip;
-  display: flex;
-  flex-direction: column;
-}
-
-.viewer-new .vn-properties-report {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: clip;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 5. Hero: drop the bottom margin — flex gap handles spacing */
-.viewer-new .vn-properties-report .vn-report-hero {
-  margin-bottom: 0;
-}
-
-/* 6. Toolbar: no longer sticky since the page itself doesn't scroll */
-.viewer-new .vn-properties-report .vn-report-toolbar {
-  position: relative;
-  top: auto;
-}
-
-/* 7. Focus target fills everything below the hero */
-.viewer-new .vn-properties-report > .report-focus-target {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: clip;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 8. Table card expands to fill remaining focus-target height */
-.viewer-new .vn-properties-report .report-focus-target > :is(.vn-table-card, .vn-property-table-card) {
-  flex: 1 1 0 !important;
-  min-height: 120px;
-  overflow: clip !important;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 9. Scroll container fills the card — position:relative makes it the anchor
-   for the absolutely-positioned nav pill */
-.viewer-new .vn-properties-report .vn-table-card .vn-table-with-scroll {
-  flex: 1 1 0;
-  min-height: 0;
-  width: 100%;
-  min-width: 0;
-  overflow: clip;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* 10. Only the table scrolls — both axes.
-   This is the sole scroll container; sticky thead and pinned columns
-   anchor here because all ancestors above use overflow:clip. */
-.viewer-new .vn-properties-report .vn-table-card .vn-table-responsive,
-.viewer-new .vn-properties-report .vn-table-card .table-overflow {
-  flex: 1 1 0 !important;
-  min-height: 0;
-  overflow-x: auto !important;
+body.viewer-new:has(.vn-properties-report),
+body.viewer-new.vn-properties-report-page {
+  overflow-x: hidden !important;
   overflow-y: auto !important;
 }
 
-/* 11. Nav pill: switch from position:sticky (needs to be inside the scroll
-   container) to position:absolute anchored to .vn-table-with-scroll.
-   margin-top:-48px was the sticky overlap trick — not needed with absolute. */
-body:has(.vn-properties-report) .viewer-new .vn-properties-report .vn-tbl-nav-pill {
-  position: absolute !important;
-  bottom: 18px !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-  margin-top: 0 !important;
-  padding-bottom: 0 !important;
-  z-index: 60;
-  pointer-events: none;
+body.viewer-new:has(.vn-properties-report) .viewer-new__shell,
+body.viewer-new.vn-properties-report-page .viewer-new__shell {
+  width: 100% !important;
+  max-width: 100vw !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
 }
 
+body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap,
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+body.viewer-new:has(.vn-properties-report) .viewer-new__main,
+body.viewer-new.vn-properties-report-page .viewer-new__main,
+body.viewer-new:has(.vn-properties-report) .vn-properties-report,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
+body.viewer-new:has(.vn-properties-report) .report-focus-target,
+body.viewer-new.vn-properties-report-page .report-focus-target,
+body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .viewer-new__main,
+body.viewer-new.vn-properties-report-page .viewer-new__main {
+  display: block !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .vn-properties-report,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
+body.viewer-new:has(.vn-properties-report) .report-focus-target,
+body.viewer-new.vn-properties-report-page .report-focus-target,
+body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+  display: block !important;
+}
+
+body.viewer-new:has(.vn-properties-report) #vn-properties-overflow,
+body.viewer-new.vn-properties-report-page #vn-properties-overflow,
+body.viewer-new:has(.vn-properties-report) .vn-table-responsive.vn-properties-table,
+body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
+body.viewer-new:has(.vn-properties-report) .table-overflow,
+body.viewer-new.vn-properties-report-page .table-overflow {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+body.viewer-new:has(.vn-properties-report) #vn-properties-table,
+body.viewer-new.vn-properties-report-page #vn-properties-table {
+  max-width: none !important;
+}
