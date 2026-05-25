@@ -166,6 +166,9 @@
                                         $rowKey = 'signal-' . preg_replace('/[^A-Za-z0-9\-_]/', '-', (string) ($signal['signal_number'] ?? 'unknown'));
                                         $propertiesTarget = $rowKey . '-properties';
                                         $detailsTarget = $rowKey . '-details';
+                                        $hasPartyDetails = (($signal['owners_count'] ?? 0) > 0)
+                                            || (($signal['victims_count'] ?? 0) > 0)
+                                            || (($signal['sources_count'] ?? 0) > 0);
                                     @endphp
                                     <tr>
                                         <td data-column-key="signal_number">{{ $signal['signal_number'] ?? '—' }}</td>
@@ -182,13 +185,27 @@
                                         <td data-column-key="owners_summary">
                                             <div class="vn-related-inline">
                                                 <span class="vn-related-inline__count">{{ $signal['owners_summary'] ?? '—' }}</span>
-                                                @if ((($signal['owners_count'] ?? 0) > 1) || (($signal['owners_count'] ?? 0) > 0))
+                                                @if ($hasPartyDetails)
                                                     <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $detailsTarget }}" aria-expanded="false" aria-controls="{{ $detailsTarget }}" data-show-label="▾" data-hide-label="▴">▾</button>
                                                 @endif
                                             </div>
                                         </td>
-                                        <td data-column-key="victims_summary">{{ $signal['victims_summary'] ?? '—' }}</td>
-                                        <td data-column-key="sources_summary">{{ $signal['sources_summary'] ?? '—' }}</td>
+                                        <td data-column-key="victims_summary">
+                                            <div class="vn-related-inline">
+                                                <span class="vn-related-inline__count">{{ $signal['victims_summary'] ?? '—' }}</span>
+                                                @if ($hasPartyDetails && (($signal['owners_count'] ?? 0) === 0))
+                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $detailsTarget }}" aria-expanded="false" aria-controls="{{ $detailsTarget }}" data-show-label="▾" data-hide-label="▴">▾</button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td data-column-key="sources_summary">
+                                            <div class="vn-related-inline">
+                                                <span class="vn-related-inline__count">{{ $signal['sources_summary'] ?? '—' }}</span>
+                                                @if ($hasPartyDetails && (($signal['owners_count'] ?? 0) === 0) && (($signal['victims_count'] ?? 0) === 0))
+                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $detailsTarget }}" aria-expanded="false" aria-controls="{{ $detailsTarget }}" data-show-label="▾" data-hide-label="▴">▾</button>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td data-column-key="source_date_label">{{ $signal['source_date_label'] ?? '—' }}</td>
                                         <td data-column-key="last_update">{{ $signal['last_update'] ?? '—' }}</td>
                                         <td data-column-key="notes_summary" class="vn-table-text-long vn-muted-value">{{ $signal['notes_summary'] ?? '—' }}</td>
