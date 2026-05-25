@@ -20,30 +20,39 @@ class SignalsReportController extends Controller
         $has = fn (string $column): bool => in_array($column, $columns, true);
 
         $fieldAvailability = [
+            'id' => $has('id'),
             'signal_id' => $has('signal_id'),
-            'type' => $has('type'),
             'signal_date' => $has('signal_date'),
-            'signal_notes' => $has('signal_notes'),
-            'signal_owner' => $has('signal_owner'),
+            'type' => $has('type'),
             'signal_owners' => $has('signal_owners'),
+            'signal_sources' => $has('signal_sources'),
+            'signal_notes' => $has('signal_notes'),
+            'signal_source_date' => $has('signal_source_date'),
+            'signal_victims' => $has('signal_victims'),
+            'property_id' => $has('property_id'),
             'property_card_id' => $has('property_card_id'),
+            'created_at' => $has('created_at'),
             'updated_at' => $has('updated_at'),
-            'status' => $has('status'),
         ];
 
         $filters = [
             'q' => trim((string) $request->query('q', '')),
-            'status' => trim((string) $request->query('status', '')),
             'type' => trim((string) $request->query('type', '')),
+            'signal_date_from' => $this->normalizeDateFilter($request->query('signal_date_from')),
+            'signal_date_to' => $this->normalizeDateFilter($request->query('signal_date_to')),
+            'source_date_from' => $this->normalizeDateFilter($request->query('source_date_from')),
+            'source_date_to' => $this->normalizeDateFilter($request->query('source_date_to')),
         ];
 
-        $query = Signal::query()->with(['propertyCard', 'owners']);
+        $query = Signal::query()->with(['propertyCard']);
 
         $searchableColumns = array_values(array_filter([
             $fieldAvailability['signal_id'] ? 'signal_id' : null,
             $fieldAvailability['type'] ? 'type' : null,
             $fieldAvailability['signal_notes'] ? 'signal_notes' : null,
-            $fieldAvailability['signal_owner'] ? 'signal_owner' : null,
+            $fieldAvailability['signal_owners'] ? 'signal_owners' : null,
+            $fieldAvailability['signal_sources'] ? 'signal_sources' : null,
+            $fieldAvailability['signal_victims'] ? 'signal_victims' : null,
         ]));
 
         if ($filters['q'] !== '' && $searchableColumns !== []) {
@@ -53,23 +62,6 @@ class SignalsReportController extends Controller
                     $builder->{$index === 0 ? 'where' : 'orWhere'}($column, 'like', "%{$term}%");
                 }
             });
-        }
-
-        $statusOptions = [];
-        if ($fieldAvailability['status']) {
-            $statusOptions = Signal::query()
-                ->select('status')
-                ->whereNotNull('status')
-                ->distinct()
-                ->orderBy('status')
-                ->pluck('status')
-                ->filter()
-                ->values()
-                ->all();
-
-            if ($filters['status'] !== '' && in_array($filters['status'], $statusOptions, true)) {
-                $query->where('status', $filters['status']);
-            }
         }
 
         $typeOptions = [];
@@ -89,58 +81,157 @@ class SignalsReportController extends Controller
             }
         }
 
+        if ($fieldAvailability['signal_date']) {
+            if ($filters['signal_date_from'] !== '') {
+                $query->whereDate('signal_date', '>=', $filters['signal_date_from']);
+            }
+
+            if ($filters['signal_date_to'] !== '') {
+                $query->whereDate('signal_date', '<=', $filters['signal_date_to']);
+            }
+        }
+
+        if ($fieldAvailability['signal_source_date']) {
+            if ($filters['source_date_from'] !== '') {
+                $query->whereDate('signal_source_date', '>=', $filters['source_date_from']);
+            }
+
+            if ($filters['source_date_to'] !== '') {
+                $query->whereDate('signal_source_date', '<=', $filters['source_date_to']);
+            }
+        }
+
         $signals = $query
             ->latest($fieldAvailability['updated_at'] ? 'updated_at' : 'id')
             ->paginate(15)
             ->withQueryString();
 
         $signals->setCollection($signals->getCollection()->map(function (Signal $signal) use ($fieldAvailability): array {
-            $ownersLabel = $signal->owners->pluck('display_name')->filter()->implode('، ');
-            if ($ownersLabel === '' && $fieldAvailability['signal_owners']) {
-                $ownersLabel = $signal->signal_owners_label;
-            }
-
             return [
-                'signal_type' => $fieldAvailability['type'] ? ($signal->type ?: '—') : '—',
-                'property_label' => $signal->propertyCard?->card_record_number ?: '—',
-                'owner_label' => $ownersLabel !== '' ? $ownersLabel : ($fieldAvailability['signal_owner'] ? ($signal->signal_owner ?: '—') : '—'),
-                'signal_date' => $fieldAvailability['signal_date'] ? ($signal->signal_date?->format('Y-m-d') ?: '—') : '—',
-                'status' => $fieldAvailability['status'] ? ($signal->status ?: '—') : '—',
-                'last_update' => $fieldAvailability['updated_at'] ? ($signal->updated_at?->format('Y-m-d H:i') ?: '—') : '—',
-                'notes' => $fieldAvailability['signal_notes'] ? ($signal->signal_notes ?: '—') : '—',
+                'id' => $fieldAvailability['id'] ? ($signal->getAttribute('id') ?? '—') : '—',
+                'signal_id' => $fieldAvailability['signal_id'] ? (trim((string) ($signal->signal_id ?? '')) ?: '—') : '—',
+                'signal_type' => $fieldAvailability['type'] ? (trim((string) ($signal->type ?? '')) ?: '—') : '—',
+                'property_label' => $this->resolvePropertyLabel($signal, $fieldAvailability),
+                'owners_label' => $this->decodeJsonLabel($fieldAvailability['signal_owners'] ? $signal->getAttribute('signal_owners') : null),
+                'victims_label' => $this->decodeJsonLabel($fieldAvailability['signal_victims'] ? $signal->getAttribute('signal_victims') : null),
+                'sources_label' => $this->decodeJsonLabel($fieldAvailability['signal_sources'] ? $signal->getAttribute('signal_sources') : null),
+                'signal_date' => $fieldAvailability['signal_date'] ? $this->formatDateValue($signal->getAttribute('signal_date'), 'Y-m-d') : '—',
+                'signal_source_date' => $fieldAvailability['signal_source_date'] ? $this->formatDateValue($signal->getAttribute('signal_source_date'), 'Y-m-d') : '—',
+                'created_at' => $fieldAvailability['created_at'] ? $this->formatDateValue($signal->getAttribute('created_at'), 'Y-m-d H:i') : '—',
+                'last_update' => $fieldAvailability['updated_at'] ? $this->formatDateValue($signal->getAttribute('updated_at'), 'Y-m-d H:i') : '—',
+                'notes' => $fieldAvailability['signal_notes'] ? (trim((string) ($signal->signal_notes ?? '')) ?: '—') : '—',
             ];
         }));
 
         $metrics = [
             'total_signals' => $hasTable ? number_format((int) Signal::query()->count()) : 'غير متوفر',
-            'active_signals' => $this->resolveActiveSignals($fieldAvailability),
-            'closed_signals' => $this->resolveClosedSignals($fieldAvailability),
-            'linked_properties' => $fieldAvailability['property_card_id']
+            'linked_property_cards' => $fieldAvailability['property_card_id']
                 ? number_format((int) Signal::query()->whereNotNull('property_card_id')->count())
+                : 'غير متوفر',
+            'linked_properties' => $fieldAvailability['property_id']
+                ? number_format((int) Signal::query()->whereNotNull('property_id')->count())
                 : 'غير متوفر',
             'last_update' => $fieldAvailability['updated_at']
                 ? (Signal::query()->latest('updated_at')->value('updated_at')?->format('Y-m-d H:i') ?? '—')
                 : 'غير متوفر',
         ];
 
-        return view('viewer-new.reports.signals', compact('metrics', 'signals', 'filters', 'statusOptions', 'typeOptions', 'fieldAvailability'));
+        return view('viewer-new.reports.signals', compact('metrics', 'signals', 'filters', 'typeOptions', 'fieldAvailability'));
     }
 
-    private function resolveActiveSignals(array $fieldAvailability): string
+    private function normalizeDateFilter(mixed $value): string
     {
-        if ($fieldAvailability['status']) {
-            return (string) Signal::query()->whereIn('status', ['active', 'نشط', 'مفتوح'])->count();
+        if (! is_string($value)) {
+            return '';
         }
 
-        return 'غير متوفر';
+        $value = trim($value);
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return '';
+        }
+
+        $date = \DateTime::createFromFormat('Y-m-d', $value);
+
+        return $date && $date->format('Y-m-d') === $value ? $value : '';
     }
 
-    private function resolveClosedSignals(array $fieldAvailability): string
+    private function decodeJsonLabel(mixed $value): string
     {
-        if ($fieldAvailability['status']) {
-            return (string) Signal::query()->whereIn('status', ['closed', 'منتهي', 'مغلق'])->count();
+        if (is_array($value)) {
+            $items = $value;
+        } elseif (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $items = is_array($decoded) ? $decoded : [];
+        } else {
+            $items = [];
         }
 
-        return 'غير متوفر';
+        $flat = $this->flattenJsonItems($items);
+
+        return $flat !== [] ? implode('، ', $flat) : '—';
+    }
+
+    private function flattenJsonItems(array $items): array
+    {
+        $flat = [];
+
+        array_walk_recursive($items, function ($item) use (&$flat): void {
+            if (is_scalar($item)) {
+                $value = trim((string) $item);
+                if ($value !== '') {
+                    $flat[] = $value;
+                }
+            }
+        });
+
+        return array_values(array_unique($flat));
+    }
+
+    private function resolvePropertyLabel(Signal $signal, array $fieldAvailability): string
+    {
+        if ($signal->propertyCard) {
+            $cardLabel = trim((string) (
+                $signal->propertyCard->card_record_number
+                ?? $signal->propertyCard->property_number
+                ?? $signal->propertyCard->id
+                ?? ''
+            ));
+
+            if ($cardLabel !== '') {
+                return $cardLabel;
+            }
+        }
+
+        if ($fieldAvailability['property_card_id']) {
+            $propertyCardId = trim((string) ($signal->getAttribute('property_card_id') ?? ''));
+            if ($propertyCardId !== '') {
+                return $propertyCardId;
+            }
+        }
+
+        if ($fieldAvailability['property_id']) {
+            $propertyId = trim((string) ($signal->getAttribute('property_id') ?? ''));
+            if ($propertyId !== '') {
+                return $propertyId;
+            }
+        }
+
+        return '—';
+    }
+
+    private function formatDateValue(mixed $value, string $format): string
+    {
+        if (blank($value)) {
+            return '—';
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format($format);
+        }
+
+        $timestamp = strtotime((string) $value);
+
+        return $timestamp !== false ? date($format, $timestamp) : '—';
     }
 }
