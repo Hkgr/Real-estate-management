@@ -55,12 +55,12 @@
                     <div class="selection-card vn-report-hero__meta">
                         <div class="selection-title">ملخص النتائج الحالية</div>
                         <a href="{{ route('viewer-new.reports') }}" class="vn-report-hero__back">العودة إلى بوابة التقارير</a>
-                        <div class="selection-main-value">{{ $metrics['total_signals'] ?? '—' }}</div>
+                        <div class="selection-main-value">{{ $metrics['total_unique_signals'] ?? '—' }}</div>
                         <div class="selection-subvalue">إجمالي النتائج: {{ number_format((int) $totalResults) }}</div>
                         <div class="selection-bar" aria-hidden="true"><div class="selection-bar-fill" style="width:{{ $totalResults > 0 ? '100' : '0' }}%"></div></div>
                         <div class="selection-meta">
+                            <span>إجمالي السجلات الخام: {{ $metrics['total_raw_signal_rows'] ?? 'غير متوفر' }}</span>
                             <span>بطاقات مرتبطة: {{ $metrics['linked_property_cards'] ?? 'غير متوفر' }}</span>
-                            <span>عقارات مرتبطة: {{ $metrics['linked_properties'] ?? 'غير متوفر' }}</span>
                             <span>آخر تحديث: {{ $metrics['last_update'] ?? '—' }}</span>
                         </div>
                     </div>
@@ -148,35 +148,89 @@
                         <table class="vn-big-table">
                             <thead>
                                 <tr>
-                                    <th data-column-key="id"><div class="vn-th-inner">ID</div></th>
-                                    <th data-column-key="signal_id"><div class="vn-th-inner">رقم الإشارة</div></th>
-                                    <th data-column-key="signal_type"><div class="vn-th-inner">نوع الإشارة</div></th>
-                                    <th data-column-key="property_label"><div class="vn-th-inner">العقار المرتبط</div></th>
-                                    <th data-column-key="owners_label"><div class="vn-th-inner">أصحاب الإشارة</div></th>
-                                    <th data-column-key="victims_label"><div class="vn-th-inner">المتضررون</div></th>
-                                    <th data-column-key="sources_label"><div class="vn-th-inner">مصادر الإشارة</div></th>
-                                    <th data-column-key="signal_date"><div class="vn-th-inner">تاريخ الإشارة</div></th>
-                                    <th data-column-key="signal_source_date"><div class="vn-th-inner">تاريخ مصدر الإشارة</div></th>
-                                    <th data-column-key="created_at"><div class="vn-th-inner">تاريخ الإنشاء</div></th>
+                                    <th data-column-key="signal_number"><div class="vn-th-inner">رقم الإشارة</div></th>
+                                    <th data-column-key="signal_type_label"><div class="vn-th-inner">نوع الإشارة</div></th>
+                                    <th data-column-key="signal_date_label"><div class="vn-th-inner">تاريخ الإشارة</div></th>
+                                    <th data-column-key="properties_count"><div class="vn-th-inner">العقارات المرتبطة</div></th>
+                                    <th data-column-key="owners_summary"><div class="vn-th-inner">أصحاب الإشارة</div></th>
+                                    <th data-column-key="victims_summary"><div class="vn-th-inner">المتضررون</div></th>
+                                    <th data-column-key="sources_summary"><div class="vn-th-inner">مصادر الإشارة</div></th>
+                                    <th data-column-key="source_date_label"><div class="vn-th-inner">تاريخ مصدر الإشارة</div></th>
                                     <th data-column-key="last_update"><div class="vn-th-inner">آخر تحديث</div></th>
-                                    <th data-column-key="notes"><div class="vn-th-inner">ملاحظات</div></th>
+                                    <th data-column-key="notes_summary"><div class="vn-th-inner">ملاحظات</div></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($signals as $signal)
+                                    @php
+                                        $rowKey = 'signal-' . preg_replace('/[^A-Za-z0-9\-_]/', '-', (string) ($signal['signal_number'] ?? 'unknown'));
+                                        $propertiesTarget = $rowKey . '-properties';
+                                        $detailsTarget = $rowKey . '-details';
+                                    @endphp
                                     <tr>
-                                        <td data-column-key="id">{{ $signal['id'] ?? '—' }}</td>
-                                        <td data-column-key="signal_id">{{ $signal['signal_id'] ?? '—' }}</td>
-                                        <td data-column-key="signal_type">{{ $signal['signal_type'] ?? '—' }}</td>
-                                        <td data-column-key="property_label">{{ $signal['property_label'] ?? '—' }}</td>
-                                        <td data-column-key="owners_label">{{ $signal['owners_label'] ?? '—' }}</td>
-                                        <td data-column-key="victims_label">{{ $signal['victims_label'] ?? '—' }}</td>
-                                        <td data-column-key="sources_label">{{ $signal['sources_label'] ?? '—' }}</td>
-                                        <td data-column-key="signal_date">{{ $signal['signal_date'] ?? '—' }}</td>
-                                        <td data-column-key="signal_source_date">{{ $signal['signal_source_date'] ?? '—' }}</td>
-                                        <td data-column-key="created_at">{{ $signal['created_at'] ?? '—' }}</td>
+                                        <td data-column-key="signal_number">{{ $signal['signal_number'] ?? '—' }}</td>
+                                        <td data-column-key="signal_type_label">{{ $signal['signal_type_label'] ?? '—' }}</td>
+                                        <td data-column-key="signal_date_label">{{ $signal['signal_date_label'] ?? '—' }}</td>
+                                        <td data-column-key="properties_count">
+                                            <div class="vn-related-inline">
+                                                <span class="vn-related-inline__count">{{ number_format((int) ($signal['properties_count'] ?? 0)) }} عقارات</span>
+                                                @if (($signal['properties_count'] ?? 0) > 0)
+                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $propertiesTarget }}">عرض</button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td data-column-key="owners_summary">
+                                            <div class="vn-related-inline">
+                                                <span class="vn-related-inline__count">{{ $signal['owners_summary'] ?? '—' }}</span>
+                                                @if ((($signal['owners_count'] ?? 0) > 1) || (($signal['owners_count'] ?? 0) > 0))
+                                                    <button type="button" class="vn-related-inline__toggle" data-signal-child-toggle data-target="{{ $detailsTarget }}">تفاصيل</button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td data-column-key="victims_summary">{{ $signal['victims_summary'] ?? '—' }}</td>
+                                        <td data-column-key="sources_summary">{{ $signal['sources_summary'] ?? '—' }}</td>
+                                        <td data-column-key="source_date_label">{{ $signal['source_date_label'] ?? '—' }}</td>
                                         <td data-column-key="last_update">{{ $signal['last_update'] ?? '—' }}</td>
-                                        <td data-column-key="notes" class="vn-muted-value">{{ $signal['notes'] ?? '—' }}</td>
+                                        <td data-column-key="notes_summary" class="vn-table-text-long vn-muted-value">{{ $signal['notes_summary'] ?? '—' }}</td>
+                                    </tr>
+                                    <tr class="vn-signal-child-row" data-signal-child-row="{{ $propertiesTarget }}" hidden>
+                                        <td colspan="10">
+                                            <div class="vn-child-panel">
+                                                <div class="vn-child-panel__header"><h4 class="vn-child-panel__title">العقارات المرتبطة بالإشارة {{ $signal['signal_number'] ?? '—' }}</h4><span class="vn-child-panel__meta">{{ number_format((int) ($signal['properties_count'] ?? 0)) }} عقارات</span></div>
+                                                <div class="vn-child-panel__table-wrap">
+                                                    <table class="vn-child-table">
+                                                        <thead><tr><th>رقم البطاقة</th><th>المحافظة</th><th>المنطقة</th><th>المقاطعة</th><th>المساحة</th><th>الحالة</th><th>آخر تحديث</th></tr></thead>
+                                                        <tbody>
+                                                        @foreach (($signal['related_properties'] ?? []) as $property)
+                                                            <tr>
+                                                                <td>{{ $property['record_number'] ?? ($property['property_card_id'] ?? '—') }}</td>
+                                                                <td>{{ $property['governorate'] ?? '—' }}</td>
+                                                                <td>{{ $property['region_name'] ?? '—' }}</td>
+                                                                <td>{{ $property['subdivision'] ?? '—' }}</td>
+                                                                <td>{{ ($property['total_area_m2'] ?? '—') }} {{ $property['card_area_unit'] ?? '' }}</td>
+                                                                <td>{{ $property['card_status'] ?? '—' }}</td>
+                                                                <td>{{ $property['updated_at'] ?? '—' }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="vn-signal-child-row" data-signal-child-row="{{ $detailsTarget }}" hidden>
+                                        <td colspan="10">
+                                            <div class="vn-child-panel">
+                                                <div class="vn-child-panel__header"><h4 class="vn-child-panel__title">تفاصيل الأطراف والمصادر</h4></div>
+                                                <div class="vn-child-panel__table-wrap">
+                                                    <table class="vn-child-table"><tbody>
+                                                        <tr><th>أصحاب الإشارة</th><td>{{ implode('، ', $signal['related_owners'] ?? []) ?: '—' }}</td></tr>
+                                                        <tr><th>المتضررون</th><td>{{ implode('، ', $signal['related_victims'] ?? []) ?: '—' }}</td></tr>
+                                                        <tr><th>مصادر الإشارة</th><td>{{ implode('، ', $signal['related_sources'] ?? []) ?: '—' }}</td></tr>
+                                                    </tbody></table>
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -193,3 +247,22 @@
         @endif
     </section>
 @endsection
+
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const scope = document.querySelector('.vn-signals-report');
+    if (!scope) return;
+    scope.querySelectorAll('[data-signal-child-toggle]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const target = btn.getAttribute('data-target');
+            if (!target) return;
+            const row = scope.querySelector('[data-signal-child-row="' + target + '"]');
+            if (!row) return;
+            row.hidden = !row.hidden;
+        });
+    });
+});
+</script>
+@endpush
