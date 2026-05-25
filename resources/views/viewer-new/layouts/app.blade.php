@@ -45,7 +45,7 @@
 
     </style>
 </head>
-<body class="viewer-new" dir="rtl">
+<body class="viewer-new {{ request()->routeIs('viewer-new.reports.properties') ? 'vn-properties-report-page' : '' }}" dir="rtl">
     <div class="viewer-new__shell" data-sidebar-state="expanded">
         @include('viewer-new.partials.sidebar', ['active' => trim($__env->yieldContent('active')) ?: 'hub'])
 

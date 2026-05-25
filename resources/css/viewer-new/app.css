@@ -1431,29 +1431,29 @@ body.viewer-new .viewer-hub * {
 }
 
 /* viewer-new properties report normal-mode viewport containment */
-body.viewer-new:has(.vn-properties-report),
-body.viewer-new.vn-properties-report-page {
-  overflow: hidden;
+body.viewer-new.vn-properties-report-page,
+body.viewer-new:has(.vn-properties-report) {
+  overflow: hidden !important;
 }
 
-body.viewer-new:has(.vn-properties-report) .viewer-new__shell,
-body.viewer-new.vn-properties-report-page .viewer-new__shell {
-  width: 100%;
-  max-width: 100vw;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
+body.viewer-new.vn-properties-report-page .viewer-new__shell,
+body.viewer-new:has(.vn-properties-report) .viewer-new__shell {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
 }
 
-body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap,
-body.viewer-new.vn-properties-report-page .viewer-new__content-wrap {
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap {
   min-width: 0 !important;
   min-height: 0 !important;
   overflow: hidden !important;
 }
 
-body.viewer-new:has(.vn-properties-report) .viewer-new__main,
-body.viewer-new.vn-properties-report-page .viewer-new__main {
+body.viewer-new.vn-properties-report-page .viewer-new__main,
+body.viewer-new:has(.vn-properties-report) .viewer-new__main {
   flex: 1 1 auto !important;
   min-width: 0 !important;
   min-height: 0 !important;
@@ -1463,45 +1463,41 @@ body.viewer-new.vn-properties-report-page .viewer-new__main {
   overscroll-behavior: contain;
 }
 
-body.viewer-new:has(.vn-properties-report) .vn-properties-report,
-body.viewer-new.vn-properties-report-page .vn-properties-report {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: auto !important;
-  min-height: auto !important;
-  display: block !important;
-  overflow: visible !important;
-  margin: 0 !important;
-}
-
-body.viewer-new:has(.vn-properties-report) .report-focus-target,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
 body.viewer-new.vn-properties-report-page .report-focus-target,
-body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
 body.viewer-new.vn-properties-report-page .vn-property-table-card,
-body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
-body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll,
+body.viewer-new:has(.vn-properties-report) .vn-properties-report,
+body.viewer-new:has(.vn-properties-report) .report-focus-target,
+body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
+body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   height: auto !important;
   min-height: auto !important;
+  max-height: none !important;
   display: block !important;
   overflow: visible !important;
 }
 
+body.viewer-new.vn-properties-report-page #vn-properties-overflow,
 body.viewer-new:has(.vn-properties-report) #vn-properties-overflow,
-body.viewer-new.vn-properties-report-page #vn-properties-overflow {
+body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
+body.viewer-new:has(.vn-properties-report) .vn-table-responsive.vn-properties-table,
+body.viewer-new.vn-properties-report-page .table-overflow,
+body.viewer-new:has(.vn-properties-report) .table-overflow {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   height: auto !important;
   min-height: auto !important;
-  display: block !important;
+  max-height: none !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
 }
 
-body.viewer-new:has(.vn-properties-report) #vn-properties-table,
-body.viewer-new.vn-properties-report-page #vn-properties-table {
+body.viewer-new.vn-properties-report-page #vn-properties-table,
+body.viewer-new:has(.vn-properties-report) #vn-properties-table {
   max-width: none !important;
 }
