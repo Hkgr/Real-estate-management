@@ -1429,3 +1429,101 @@ body.viewer-new .viewer-hub * {
     min-width: 0;
   }
 }
+
+/* viewer-new properties report normal-mode viewport containment */
+body.viewer-new:has(.vn-properties-report),
+body.viewer-new.vn-properties-report-page {
+  overflow: hidden;
+}
+
+body.viewer-new:has(.vn-properties-report) .viewer-new__shell,
+body.viewer-new.vn-properties-report-page .viewer-new__shell {
+  width: 100%;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap,
+body.viewer-new:has(.vn-properties-report) .viewer-new__main,
+body.viewer-new:has(.vn-properties-report) .vn-properties-report,
+body.viewer-new:has(.vn-properties-report) .report-focus-target,
+body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
+body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+body.viewer-new.vn-properties-report-page .viewer-new__main,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
+body.viewer-new.vn-properties-report-page .report-focus-target,
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap,
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap {
+  overflow: hidden !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .viewer-new__main,
+body.viewer-new.vn-properties-report-page .viewer-new__main {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .vn-properties-report,
+body.viewer-new.vn-properties-report-page .vn-properties-report {
+  flex: 1 1 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .report-focus-target,
+body.viewer-new.vn-properties-report-page .report-focus-target {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+body.viewer-new:has(.vn-properties-report) #vn-properties-overflow,
+body.viewer-new.vn-properties-report-page #vn-properties-overflow {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+body.viewer-new:has(.vn-properties-report) #vn-properties-table,
+body.viewer-new.vn-properties-report-page #vn-properties-table,
+body.viewer-new:has(.vn-properties-report) #vn-properties-overflow table,
+body.viewer-new.vn-properties-report-page #vn-properties-overflow table {
+  max-width: none !important;
+}
