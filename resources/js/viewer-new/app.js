@@ -84,10 +84,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
     };
 
     const bindPropertiesReportInteractions = () => {
-        const reportRoot = document.querySelector('.vn-properties-report');
+        const reportRoot = document.querySelector('#page-properties.vn-properties-report');
         if (!reportRoot) return;
 
-        document.body.classList.add('vn-properties-report-page');
+        if (!document.body.classList.contains('vn-properties-report-page')) {
+            document.body.classList.add('vn-properties-report-page');
+        }
 
         reportRoot.querySelectorAll(':is(.stats-grid,.vn-report-kpi-grid,.vn-report-metrics)').forEach((el) => {
             if (!el.closest('.vn-report-hero')) el.remove();
