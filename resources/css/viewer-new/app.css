@@ -1532,3 +1532,32 @@ body.viewer-new.vn-properties-report-page.vn-report-fullscreen-active .viewer-ne
   padding: 0 !important;
   overflow: hidden !important;
 }
+/* Properties report normal-mode block-flow reset.
+   Duplicated in the always-loaded Viewer-New bundle so the report remains
+   scrollable even if the page-specific CSS asset is stale or not loaded. */
+body.viewer-new:not(.vn-report-fullscreen-active) .viewer-new__main:has(#page-properties.vn-properties-report) {
+  display: block !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report,
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-property-table-card,
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-table-with-scroll {
+  display: block !important;
+  flex: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report #vn-properties-overflow {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
