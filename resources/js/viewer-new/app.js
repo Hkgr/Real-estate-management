@@ -138,6 +138,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
         const tableEl = reportRoot.querySelector('.vn-properties-table table');
         const tableScroller = reportRoot.querySelector('.vn-properties-table');
+        const pageScroller = document.querySelector('.viewer-new__main');
         const toolbarEl = reportRoot.querySelector('.vn-report-toolbar');
         const fullscreenBtn = reportRoot.querySelector('[data-properties-fullscreen]');
 
@@ -558,6 +559,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         document.addEventListener('webkitfullscreenchange', syncFullscreenUi);
 
         window.addEventListener('scroll', requestFloatingHeadSync, { passive: true });
+        pageScroller?.addEventListener('scroll', requestFloatingHeadSync, { passive: true });
         window.addEventListener('resize', () => {
             updateStickyOffset();
             updateTblNavPill();
