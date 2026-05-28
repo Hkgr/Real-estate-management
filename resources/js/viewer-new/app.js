@@ -570,7 +570,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             onLayoutChange: () => {
                 requestFloatingHeadSync();
                 updateTblNavPill();
-                tableAdvancedApi?.syncTopScrollWidth();
+                tableAdvancedApi?.syncTableScrollState?.();
             },
         });
 

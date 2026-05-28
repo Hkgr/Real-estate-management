@@ -307,7 +307,6 @@
         @if ($currentCount > 0)
             <div class="vn-table-card vn-property-table-card">
             <div class="vn-table-with-scroll">
-            <div class="vn-tbl-top-scroll" id="vn-properties-top-scroll" aria-hidden="true"><div class="vn-tbl-top-scroll-inner"></div></div>
             <div class="vn-table-responsive vn-properties-table table-overflow" id="vn-properties-overflow">
                 <table id="vn-properties-table" class="vn-big-table big-table" data-property-table-colspan="{{ $propertyTableColspan }}">
                     <colgroup id="vn-properties-colgroup">

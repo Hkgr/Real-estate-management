@@ -1,5 +1,5 @@
-{{-- Table pin/resize/top-scroll — always loaded (Vite bundle may lag). Matches FRONT/index.html. --}}
-@php $propertiesTableMechanicsVersion = '9'; @endphp
+{{-- Table pin/resize — always loaded (Vite bundle may lag). Matches FRONT/index.html. --}}
+@php $propertiesTableMechanicsVersion = '10'; @endphp
 <script>
 (function () {
     if (window.__vnPropertiesTableMechanics === '{{ $propertiesTableMechanicsVersion }}') return;
@@ -185,33 +185,17 @@
         });
     });
 
-    let top = scroller.parentElement?.querySelector('.vn-tbl-top-scroll');
-    if (!top) {
-        top = document.createElement('div');
-        top.className = 'vn-tbl-top-scroll';
-        top.setAttribute('aria-hidden', 'true');
-        top.innerHTML = '<div class="vn-tbl-top-scroll-inner"></div>';
-        scroller.parentElement?.insertBefore(top, scroller);
-    }
-    const syncTop = () => {
-        const inner = top.querySelector('.vn-tbl-top-scroll-inner');
-        if (inner) inner.style.width = table.scrollWidth + 'px';
-        top.classList.toggle('is-visible', scroller.scrollWidth > scroller.clientWidth + 4);
-    };
-    if (top.dataset.wired !== '1') {
-        top.dataset.wired = '1';
-        top.addEventListener('scroll', () => { scroller.scrollLeft = top.scrollLeft; applyPin(); }, { passive: true });
-        scroller.addEventListener('scroll', () => { top.scrollLeft = scroller.scrollLeft; syncTop(); applyPin(); }, { passive: true });
+    if (scroller.dataset.legacyPinScrollBound !== '1') {
+        scroller.dataset.legacyPinScrollBound = '1';
+        scroller.addEventListener('scroll', applyPin, { passive: true });
     }
 
     applyPin();
-    syncTop();
-    window.addEventListener('resize', () => { applyPin(); syncTop(); });
+    window.addEventListener('resize', applyPin);
 
     window.__vnPropertiesTableMechanicsApi = {
         applyPin,
         applyPinLegacy,
-        syncTop,
         restoreWidths,
     };
 })();

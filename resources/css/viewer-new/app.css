@@ -911,24 +911,6 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
 }
 .viewer-new .vn-properties-report .vn-col-pin-count{font-size:calc(11px * var(--vn-pr-fs-scale));color:var(--vn-pr-muted)}
 
-/* top scroll mirror */
-.viewer-new .vn-properties-report .vn-tbl-top-scroll{
-  overflow-x:auto;
-  overflow-y:hidden;
-  height:12px;
-  border-radius:4px 4px 0 0;
-  background:rgba(255,255,255,.03);
-  scrollbar-width:thin;
-  scrollbar-color:rgba(212,175,55,.4) transparent;
-  display:none;
-}
-.viewer-new .vn-properties-report .vn-tbl-top-scroll.is-visible{display:block}
-.viewer-new .vn-properties-report .vn-tbl-top-scroll::-webkit-scrollbar{height:6px}
-.viewer-new .vn-properties-report .vn-tbl-top-scroll::-webkit-scrollbar-thumb{
-  background:rgba(212,175,55,.4);
-  border-radius:3px;
-}
-.viewer-new .vn-properties-report .vn-tbl-top-scroll-inner{height:1px}
 .viewer-new .vn-properties-report .vn-properties-table td,
 .viewer-new .vn-properties-report .vn-big-table tbody tr:not(.vn-detail-row) td{
   padding:.45rem .65rem;
