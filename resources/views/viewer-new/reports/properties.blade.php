@@ -155,7 +155,6 @@
             </div>
         </header>
 
-        <div id="vn-properties-focus-target" class="report-focus-target" data-properties-focus-target>
         <section class="table-toolbar vn-report-toolbar" aria-label="شريط أدوات تقرير العقارات">
             <div class="toolbar-main-actions vn-report-toolbar__main">
                 <div class="toolbar-inline-search vn-report-toolbar__search active" id="vn-toolbar-inline-search">
