@@ -526,15 +526,15 @@
   background: var(--table-surface, var(--bg-card, #1A1A1A));
   border: 1px solid var(--table-border, var(--border, #2A2A2A));
   border-radius: 16px;
-  overflow: visible;
+  overflow: hidden;
   box-shadow:
     0 2px 0 rgba(212,175,55,.08),
     0 8px 32px rgba(0,0,0,.45),
     inset 0 1px 0 rgba(255,255,255,.04);
   position: relative;
   width: 100%;
-  min-width: 100%;
-  max-width: none;
+  min-width: 0;
+  max-width: 100%;
 }
 
 [data-theme="light"] .vn-properties-report .vn-table-card {
@@ -1158,31 +1158,48 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MAIN TABLE — full width, no inner horizontal scroll
+   MAIN TABLE — page-contained card with internal horizontal scroll
 ═══════════════════════════════════════════════════════════════ */
 
-.viewer-new .vn-properties-report .vn-table-card {
-  overflow: visible !important;
-  max-width: none !important;
+body.viewer-new.vn-properties-report-page,
+html:has(body.viewer-new.vn-properties-report-page) {
+  overflow-x: hidden !important;
 }
 
-.viewer-new .vn-properties-report .vn-table-with-scroll {
-  width: 100%;
-  min-width: 100%;
-  max-width: none;
-  overflow: visible;
+body.viewer-new.vn-properties-report-page .viewer-new__shell,
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+body.viewer-new.vn-properties-report-page .viewer-new__main,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
+body.viewer-new.vn-properties-report-page .report-focus-target,
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
 }
 
-.viewer-new .vn-properties-report .vn-table-card .vn-table-responsive.vn-properties-table,
-.viewer-new .vn-properties-report .table-overflow {
+body.viewer-new.vn-properties-report-page .viewer-new__main {
+  overflow-y: auto !important;
+}
+
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+  display: block !important;
+}
+
+body.viewer-new.vn-properties-report-page #vn-properties-overflow,
+body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
+body.viewer-new.vn-properties-report-page .table-overflow {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  max-width: none !important;
-  width: 100%;
-  min-width: 100%;
   border: 0;
   box-shadow: none;
   background: transparent;
+  -webkit-overflow-scrolling: touch;
 }
 
 .viewer-new .vn-properties-report .vn-big-table,
@@ -1204,9 +1221,6 @@
   text-overflow: clip;
 }
 
-.viewer-new .vn-properties-report .vn-tbl-top-scroll {
-  display: none !important;
-}
 
 /* ═══════════════════════════════════════════════════════════════
    RESPONSIVE

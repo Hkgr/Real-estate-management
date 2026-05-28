@@ -1,6 +1,6 @@
 /**
  * Advanced properties table mechanics (FRONT/index.html parity).
- * Column pin, resize, top scroll mirror, col visibility sync.
+ * Column pin, resize, and column visibility sync.
  */
 
 const VN_TABLE_ID = 'vn-properties-table';
@@ -320,28 +320,6 @@ export function initPropertiesTableAdvanced(options) {
         }
     };
 
-    const ensureTopScrollMirror = () => {
-        const wrap = tableScroller.closest('.vn-table-with-scroll') || tableScroller.parentElement;
-        if (!wrap) return null;
-        let topScroll = wrap.querySelector('.vn-tbl-top-scroll');
-        if (!topScroll) {
-            topScroll = document.createElement('div');
-            topScroll.className = 'vn-tbl-top-scroll';
-            topScroll.setAttribute('aria-hidden', 'true');
-            topScroll.innerHTML = '<div class="vn-tbl-top-scroll-inner"></div>';
-            wrap.insertBefore(topScroll, tableScroller);
-        }
-        return topScroll;
-    };
-
-    const syncTopScrollWidth = () => {
-        const topScroll = ensureTopScrollMirror();
-        if (!topScroll) return;
-        const inner = topScroll.querySelector('.vn-tbl-top-scroll-inner');
-        if (inner) inner.style.width = `${tableEl.scrollWidth}px`;
-        topScroll.classList.toggle('is-visible', tableScroller.scrollWidth > tableScroller.clientWidth + 4);
-    };
-
     let pinScrollRaf = 0;
     const schedulePinSync = () => {
         if (pinScrollRaf) return;
@@ -351,19 +329,14 @@ export function initPropertiesTableAdvanced(options) {
         });
     };
 
-    const wireTopScrollSync = () => {
-        const topScroll = ensureTopScrollMirror();
-        if (!topScroll || topScroll.dataset.wired === '1') return;
-        topScroll.dataset.wired = '1';
-        topScroll.addEventListener('scroll', () => {
-            tableScroller.scrollLeft = topScroll.scrollLeft;
-            schedulePinSync();
-            notifyLayout();
-        }, { passive: true });
-        tableScroller.addEventListener('scroll', () => {
-            if (topScroll) topScroll.scrollLeft = tableScroller.scrollLeft;
-            schedulePinSync();
-        }, { passive: true });
+    const syncTableScrollState = () => {
+        tableScroller.classList.toggle('is-horizontally-scrollable', tableScroller.scrollWidth > tableScroller.clientWidth + 4);
+    };
+
+    const wireTableScrollSync = () => {
+        if (tableScroller.dataset.pinScrollBound === '1') return;
+        tableScroller.dataset.pinScrollBound = '1';
+        tableScroller.addEventListener('scroll', schedulePinSync, { passive: true });
     };
 
     unpinAllBtn?.addEventListener('click', (e) => {
@@ -380,12 +353,12 @@ export function initPropertiesTableAdvanced(options) {
     injectPinButtons();
     ensureColumnResizers();
     bindColumnResizeHandlers();
-    wireTopScrollSync();
-    syncTopScrollWidth();
+    wireTableScrollSync();
+    syncTableScrollState();
     applyColumnPinning();
 
     const onResize = () => {
-        syncTopScrollWidth();
+        syncTableScrollState();
         applyColumnPinning();
         notifyLayout();
     };
@@ -393,7 +366,7 @@ export function initPropertiesTableAdvanced(options) {
 
     return {
         applyColumnPinning,
-        syncTopScrollWidth,
+        syncTableScrollState,
         onColumnsVisibilityChange: (visibleKeys) => {
             if (!colgroupEl) return;
             const selected = new Set(visibleKeys);
@@ -401,7 +374,7 @@ export function initPropertiesTableAdvanced(options) {
                 const key = col.getAttribute('data-column-key');
                 col.style.display = key && selected.has(key) ? '' : 'none';
             });
-            syncTopScrollWidth();
+            syncTableScrollState();
             applyColumnPinning();
             notifyLayout();
         },
