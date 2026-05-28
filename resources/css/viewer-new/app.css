@@ -1480,16 +1480,29 @@ body.viewer-new:has(.vn-properties-report) .viewer-new__main {
 }
 
 body.viewer-new.vn-properties-report-page .vn-properties-report,
-body.viewer-new.vn-properties-report-page .report-focus-target,
 body.viewer-new.vn-properties-report-page .vn-property-table-card,
 body.viewer-new.vn-properties-report-page .vn-table-with-scroll,
 body.viewer-new:has(.vn-properties-report) .vn-properties-report,
-body.viewer-new:has(.vn-properties-report) .report-focus-target,
 body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
 body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+}
+
+body.viewer-new.vn-properties-report-page #page-properties,
+body.viewer-new:has(#page-properties) #page-properties,
+body.viewer-new.vn-properties-report-page .report-focus-target,
+body.viewer-new:has(#page-properties) .report-focus-target {
+  display: block !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.viewer-new.vn-properties-report-page #page-properties > * + *,
+body.viewer-new:has(#page-properties) #page-properties > * + * {
+  margin-top: 1.125rem;
 }
 
 body.viewer-new.vn-properties-report-page .vn-table-with-scroll,
