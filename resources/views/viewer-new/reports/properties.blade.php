@@ -10,6 +10,9 @@
 @section('back_label', 'العودة إلى بوابة التقارير')
 
 @section('content')
+    <script>
+        var updateTblNavPill = window.updateTblNavPill = window.updateTblNavPill || function () {};
+    </script>
     @php
         $paginator = $properties ?? null;
         $hasPaginator = $paginator && method_exists($paginator, 'total');
@@ -306,7 +309,6 @@
         @if ($currentCount > 0)
             <div class="vn-table-card vn-property-table-card">
             <div class="vn-table-with-scroll">
-            <div class="vn-tbl-top-scroll" id="vn-properties-top-scroll" aria-hidden="true"><div class="vn-tbl-top-scroll-inner"></div></div>
             <div class="vn-table-responsive vn-properties-table table-overflow" id="vn-properties-overflow">
                 <table id="vn-properties-table" class="vn-big-table big-table" data-property-table-colspan="{{ $propertyTableColspan }}">
                     <colgroup id="vn-properties-colgroup">
@@ -700,6 +702,5 @@
         @endif
     </section>
 
-    @include('viewer-new.partials.properties-table-mechanics')
     @vite(['resources/js/viewer-new/properties-report.js'])
 @endsection

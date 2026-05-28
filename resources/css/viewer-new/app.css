@@ -1430,37 +1430,30 @@ body.viewer-new .viewer-hub * {
   }
 }
 
-/*! NORMAL MODE DOCUMENT-FLOW RESET */
-body.viewer-new.vn-properties-report-page,
-html:has(body.viewer-new.vn-properties-report-page) {
-  --vn-normal-mode-document-flow-reset: "NORMAL MODE DOCUMENT-FLOW RESET";
-  height: auto !important;
-  min-height: 100% !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-}
-
-body.viewer-new.vn-properties-report-page .viewer-new__shell {
-  height: auto !important;
-  min-height: 100vh !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-
-body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
-body.viewer-new.vn-properties-report-page .viewer-new__main {
+/*! ═══════════════════════════════════════════════════════════════
+   PROPERTIES REPORT SHELL SCROLL MODEL
+   Keep Viewer-New's dashboard shell intact: .viewer-new__main owns vertical scroll,
+   while the report/table internals stay un-clipped and the table overflow remains
+   horizontal-only.
+═══════════════════════════════════════════════════════════════ */
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) .viewer-new__main {
   display: block !important;
-  height: auto !important;
+  flex: 1 1 auto !important;
   min-height: 0 !important;
-  max-height: none !important;
-  overflow-y: visible !important;
+  overflow-y: auto !important;
   overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
 }
 
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report,
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report .vn-property-table-card,
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report .vn-table-card,
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report .vn-table-with-scroll {
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) .viewer-new__content-wrap {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report,
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-property-table-card,
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-table-card,
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-table-with-scroll {
   display: block !important;
   flex: none !important;
   height: auto !important;
@@ -1469,7 +1462,7 @@ body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report 
   overflow: visible !important;
 }
 
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report #vn-properties-overflow {
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report #vn-properties-overflow {
   display: block !important;
   height: auto !important;
   min-height: 0 !important;
@@ -1478,19 +1471,19 @@ body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report 
   overflow-y: hidden !important;
 }
 
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report,
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report .vn-property-table-card,
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report .vn-table-with-scroll {
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report,
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-property-table-card,
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-table-with-scroll {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
 }
 
-body.viewer-new.vn-properties-report-page #page-properties.vn-properties-report > * + * {
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report > * + * {
   margin-top: 1.125rem;
 }
 
-body.viewer-new.vn-properties-report-page #vn-properties-table {
+body.viewer-new.vn-properties-report-page:not(.vn-report-fullscreen-active) #vn-properties-table {
   max-width: none !important;
 }
 

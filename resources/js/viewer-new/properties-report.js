@@ -14,6 +14,11 @@
 (function () {
   'use strict';
 
+
+  if (typeof window.updateTblNavPill !== 'function') {
+    window.updateTblNavPill = function () {};
+  }
+
   function qs(sel, ctx) { return (ctx || document).querySelector(sel); }
   function qsa(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
 
