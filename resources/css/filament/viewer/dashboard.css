@@ -427,7 +427,7 @@ body.sidebar-collapsed .sidebar::after{
   transition: opacity .22s ease;
 }
 
-.viewer-dashboard /* Hide toggle buttons on desktop — hover controls the sidebar */
+/* Hide toggle buttons on desktop — hover controls the sidebar */
 @media (min-width: 769px){
   .sidebar-toggle-top,
   .sidebar-toggle-inside {
@@ -918,7 +918,7 @@ body:not(.sidebar-collapsed) .sidebar-toggle-inside{
 .viewer-dashboard .qs-span2{ grid-column: 1 / -1; }
 .viewer-dashboard .qs-tpill-disabled{ opacity: .45; cursor: not-allowed; font-style: italic; letter-spacing: .3px; }
 
-.viewer-dashboard /* At 1300px and below, .viewer-dashboard hide extra topbar clutter to avoid overflow (scoped to header only) */
+/* At 1300px and below, .viewer-dashboard hide extra topbar clutter to avoid overflow (scoped to header only) */
 @media (max-width: 1300px){
   .topbar .topbar-datetime { display: none; }
   .topbar .topbar-btn:not(.logout) { display: none; }
@@ -1157,7 +1157,7 @@ body:not(.sidebar-collapsed) .sidebar-toggle-inside{
 .viewer-dashboard /* On desktop, .viewer-dashboard keep the topbar-title-desktop visible; hide mobile nav */
 .topbar-title-desktop{ display: block; }
 
-.viewer-dashboard /* ── Mobile breakpoint: sidebar hidden, .viewer-dashboard bottom nav takes over ── */
+/* ── Mobile breakpoint: sidebar hidden, .viewer-dashboard bottom nav takes over ── */
 @media (max-width: 1024px){
   .sidebar { display: none !important; }
   .sidebar-overlay { display: none !important; }
@@ -4777,7 +4777,7 @@ input[type="date"].search-input{
   margin-bottom: 8px;
 }
 
-.viewer-dashboard /* ═══ RESPONSIVE ═══ */
+/* ═══ RESPONSIVE ═══ */
 @media (max-width: 1200px){
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .charts-row { grid-template-columns: 1fr 1fr; }
@@ -4876,7 +4876,7 @@ input[type="date"].search-input{
 .viewer-dashboard /* Tablet portrait vertical-table toggle: hidden by default */
 .mobile-table-view-toggle{ display: none; }
 
-.viewer-dashboard /* ═══════════════════════════════════════
+/* ═══════════════════════════════════════
    BREAKPOINT: ≤ 1024px  (tablets + phones)
 ═══════════════════════════════════════ */
 @media (max-width: 1024px){
@@ -4948,12 +4948,12 @@ input[type="date"].search-input{
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-.viewer-dashboard /* Show vertical toggle hint on portrait tablets */
+/* Show vertical toggle hint on portrait tablets */
 @media (max-width: 1024px) and (orientation: portrait) and (min-width: 601px){
   .mobile-table-view-toggle { display: inline-flex; }
 }
 
-.viewer-dashboard /* ═══════════════════════════════════════
+/* ═══════════════════════════════════════
    BREAKPOINT: ≤ 600px  (phones)
    Strategy: horizontal scroll table —
    keeps all columns, .viewer-dashboard user swipes to see all.
@@ -5084,7 +5084,7 @@ input[type="date"].search-input{
   .page-btn { width: 30px; height: 30px; font-size: calc(12px * var(--fs-scale)); }
 }
 
-.viewer-dashboard /* Registry Export PDF — print table area only on main SPA (detail-card windows skip this body class). */
+/* Registry Export PDF — print table area only on main SPA (detail-card windows skip this body class). */
 @media print{
   body.print-registry-table-only {
     background: #fff !important;
@@ -5148,7 +5148,7 @@ input[type="date"].search-input{
   }
 }
 
-.viewer-dashboard /* ═══════════════════════════════════════
+/* ═══════════════════════════════════════
    TABLET PORTRAIT vertical table (opt-in toggle)
    Only applies when user taps the toggle button
 ═══════════════════════════════════════ */
@@ -5444,7 +5444,7 @@ input[type="date"].search-input{
   letter-spacing: .05em;
 }
 
-.viewer-dashboard /* Add bottom padding to page content so it doesn't hide under nav */
+/* Add bottom padding to page content so it doesn't hide under nav */
 @media (max-width: 1024px){
   .mob-nav-bar { display: flex; flex-direction: column-reverse; }
   .page { padding-bottom: 80px !important; }

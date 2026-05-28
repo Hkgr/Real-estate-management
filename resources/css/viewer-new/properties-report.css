@@ -1397,13 +1397,14 @@
 .vn-properties-report .search-input::placeholder { color: var(--text-muted); }
 .vn-properties-report .search-input:focus { border-color: rgba(212,175,55,.4); }
 
-/* ═══════════════════════════════════════════════════════════════
+/*! ═══════════════════════════════════════════════════════════════
    NORMAL MODE DOCUMENT-FLOW RESET
    Keep the properties report in the browser/page vertical scroll model.
    The table overflow element remains horizontal-only.
 ═══════════════════════════════════════════════════════════════ */
 body.viewer-new.vn-properties-report-page,
 html:has(body.viewer-new.vn-properties-report-page) {
+  --vn-normal-mode-document-flow-reset: "NORMAL MODE DOCUMENT-FLOW RESET";
   height: auto !important;
   min-height: 100% !important;
   overflow-x: hidden !important;
