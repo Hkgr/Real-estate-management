@@ -246,11 +246,11 @@
 
 /* Properties report — FRONT/index.html parity (scoped .vn-properties-report only) */
 
-.viewer-new .viewer-new__main:has(#page-properties.vn-properties-report){
+body.viewer-new.vn-properties-report-page .viewer-new__main{
   position:relative;
   background:radial-gradient(circle at top right,rgba(196,154,42,.05),transparent 65%),#090a0c;
 }
-.viewer-new .viewer-new__main:has(#page-properties.vn-properties-report)::before{
+body.viewer-new.vn-properties-report-page .viewer-new__main::before{
   content:'';
   position:absolute;
   bottom:-150px;
@@ -1430,9 +1430,10 @@ body.viewer-new .viewer-hub * {
   }
 }
 
-/* viewer-new properties report normal-mode document-flow reset */
+/*! NORMAL MODE DOCUMENT-FLOW RESET */
 body.viewer-new.vn-properties-report-page,
 html:has(body.viewer-new.vn-properties-report-page) {
+  --vn-normal-mode-document-flow-reset: "NORMAL MODE DOCUMENT-FLOW RESET";
   height: auto !important;
   min-height: 100% !important;
   overflow-x: hidden !important;
