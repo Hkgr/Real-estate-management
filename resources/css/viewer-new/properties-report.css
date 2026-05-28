@@ -1396,3 +1396,36 @@
 
 .vn-properties-report .search-input::placeholder { color: var(--text-muted); }
 .vn-properties-report .search-input:focus { border-color: rgba(212,175,55,.4); }
+
+/* ═══════════════════════════════════════════════════════════════
+   NORMAL MODE BLOCK-FLOW RESET
+   Keep the properties report in the dashboard's native vertical
+   scroll model.  The table overflow element is horizontal-only.
+═══════════════════════════════════════════════════════════════ */
+
+body.viewer-new:not(.vn-report-fullscreen-active) .viewer-new__main:has(#page-properties.vn-properties-report) {
+  display: block !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report,
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-property-table-card,
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report .vn-table-with-scroll {
+  display: block !important;
+  flex: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.viewer-new:not(.vn-report-fullscreen-active) #page-properties.vn-properties-report #vn-properties-overflow {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
