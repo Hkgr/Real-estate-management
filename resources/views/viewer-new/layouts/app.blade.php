@@ -98,9 +98,9 @@
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: 0 !important;
-                height: auto !important;
-                block-size: auto !important;
-                min-height: 0 !important;
+                height: max-content !important;
+                block-size: max-content !important;
+                min-height: max-content !important;
                 max-height: none !important;
                 max-block-size: none !important;
                 overflow-x: auto !important;
