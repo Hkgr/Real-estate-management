@@ -99,7 +99,23 @@
                 overflow-y: visible !important;
             }
             body.viewer-new.vn-properties-report-page .vn-property-table-card,
+            body.viewer-new.vn-properties-report-page .vn-table-card {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
             body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+                display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: 0 !important;
