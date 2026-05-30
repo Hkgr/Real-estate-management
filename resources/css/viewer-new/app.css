@@ -1455,6 +1455,7 @@ body.viewer-new .viewer-hub * {
 
 /* viewer-new properties report normal-mode page flow */
 html:has(body.viewer-new.vn-properties-report-page) {
+  overflow-x: clip !important;
   overflow-y: auto !important;
   height: auto !important;
   min-height: 100% !important;
@@ -1463,7 +1464,8 @@ html:has(body.viewer-new.vn-properties-report-page) {
 body.viewer-new.vn-properties-report-page {
   height: auto !important;
   min-height: 100dvh !important;
-  overflow: visible !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
 }
 
 body.viewer-new.vn-properties-report-page .viewer-new__shell {
@@ -1523,6 +1525,23 @@ body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
   overflow: visible !important;
   contain: none !important;
   content-visibility: visible !important;
+}
+
+
+body.viewer-new.vn-properties-report-page .viewer-new__shell,
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+body.viewer-new.vn-properties-report-page .viewer-new__main,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
+body.viewer-new.vn-properties-report-page .report-focus-target {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
+  max-width: calc(100vw - 16px) !important;
+  max-inline-size: calc(100vw - 16px) !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
 }
 
 body.viewer-new.vn-properties-report-page #vn-properties-overflow,

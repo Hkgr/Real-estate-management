@@ -45,11 +45,18 @@
 
         @if (request()->routeIs('viewer-new.reports.properties'))
             html:has(body.viewer-new.vn-properties-report-page) {
+                overflow-x: clip !important;
                 overflow-y: auto !important;
                 height: auto !important;
                 min-height: 100% !important;
             }
-            body.viewer-new.vn-properties-report-page,
+            body.viewer-new.vn-properties-report-page {
+                height: auto !important;
+                max-height: none !important;
+                min-height: 100dvh !important;
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+            }
             body.viewer-new.vn-properties-report-page .viewer-new__shell,
             body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
             body.viewer-new.vn-properties-report-page .viewer-new__main,
@@ -76,6 +83,20 @@
             body.viewer-new.vn-properties-report-page .viewer-new__main,
             body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
                 max-width: 100% !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__shell,
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page .vn-properties-report,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
+                max-width: calc(100vw - 16px) !important;
+                max-inline-size: calc(100vw - 16px) !important;
+                overflow-x: clip !important;
+                overflow-y: visible !important;
             }
             body.viewer-new.vn-properties-report-page .vn-property-table-card,
             body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
