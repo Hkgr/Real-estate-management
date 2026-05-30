@@ -1333,25 +1333,52 @@ body.vn-report-fullscreen-active .viewer-new__main{padding:0}
   .viewer-new .vn-properties-report .vn-report-toolbar-button::after{display:none}
   .viewer-new .vn-properties-report .vn-report-toolbar-button--active::before{animation:none}
 }
-/* ===== viewport containment fixes (viewer-new only) ===== */
-html:has(body.viewer-new),
-body.viewer-new {
-  height: 100%;
+/* ===== document scrolling fixes (viewer-new only) ===== */
+html:has(body.viewer-new) {
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,175,55,.45) rgba(16,17,22,.95);
 }
 
 body.viewer-new {
+  min-height: 100dvh;
+  height: auto;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,175,55,.45) rgba(16,17,22,.95);
+}
+
+html:has(body.viewer-new)::-webkit-scrollbar,
+body.viewer-new::-webkit-scrollbar {
+  width: 11px;
+}
+
+html:has(body.viewer-new)::-webkit-scrollbar-track,
+body.viewer-new::-webkit-scrollbar-track {
+  background: rgba(16,17,22,.95);
+}
+
+html:has(body.viewer-new)::-webkit-scrollbar-thumb,
+body.viewer-new::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,rgba(212,175,55,.62),rgba(196,154,42,.52));
+  border-radius: 999px;
+  border: 2px solid rgba(16,17,22,.95);
 }
 
 body.viewer-new .viewer-new__shell {
   display: flex;
-  height: 100dvh;
   min-height: 100dvh;
-  max-height: 100dvh;
+  height: auto;
+  max-height: none;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   isolation: isolate;
 }
 
@@ -1363,20 +1390,19 @@ body.viewer-new .viewer-new__main {
 }
 
 body.viewer-new .vn-sidebar {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 body.viewer-new .viewer-new__content-wrap {
   flex: 1 1 auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 body.viewer-new .viewer-new__main {
   flex: 1 1 auto;
-  overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overflow-y: visible;
+  overscroll-behavior: auto;
 }
 
 body.viewer-new .viewer-new__main > * {
