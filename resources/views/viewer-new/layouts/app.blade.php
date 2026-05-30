@@ -43,6 +43,95 @@
         .viewer-new__shell.is-collapsed .vn-nav-link{justify-content:center}
         .viewer-new__shell.is-collapsed .vn-sidebar__toggle{display:inline-flex}
 
+        @if (request()->routeIs('viewer-new.reports.properties'))
+            html:has(body.viewer-new.vn-properties-report-page) {
+                overflow-x: clip !important;
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100% !important;
+            }
+            body.viewer-new.vn-properties-report-page {
+                height: auto !important;
+                max-height: none !important;
+                min-height: 100dvh !important;
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__shell,
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page .vn-properties-report,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page,
+            body.viewer-new.vn-properties-report-page .viewer-new__shell {
+                min-height: 100dvh !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page .vn-properties-report,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                min-height: 0 !important;
+                min-width: 0 !important;
+                width: 100% !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__shell,
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                max-width: 100% !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__shell,
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page .vn-properties-report,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
+                max-width: calc(100vw - 16px) !important;
+                max-inline-size: calc(100vw - 16px) !important;
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page .vn-property-table-card,
+            body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow: visible !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page #vn-properties-overflow,
+            body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
+            body.viewer-new.vn-properties-report-page .table-overflow {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: max-content !important;
+                block-size: max-content !important;
+                min-height: max-content !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
+        @endif
+
+
     </style>
 </head>
 <body class="viewer-new {{ request()->routeIs('viewer-new.reports.properties') ? 'vn-properties-report-page' : '' }}" dir="rtl">

@@ -478,8 +478,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             }
 
             const toolbarRect = toolbarEl?.getBoundingClientRect() || boxRect;
-            const hostLeft = Math.round(Math.min(boxRect.left, toolbarRect.left));
-            const hostRight = Math.round(Math.max(boxRect.right, toolbarRect.right));
+            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
+            const safeInset = 8;
+            const rawHostLeft = Math.min(boxRect.left, toolbarRect.left);
+            const rawHostRight = Math.max(boxRect.right, toolbarRect.right);
+            const hostLeft = Math.round(Math.max(safeInset, rawHostLeft));
+            const hostRight = Math.round(Math.min(Math.max(hostLeft + 30, rawHostRight), Math.max(hostLeft + 30, viewportWidth - safeInset)));
             const hostWidth = Math.max(30, hostRight - hostLeft);
             const offsetInside = Math.round(boxRect.left - hostLeft);
 

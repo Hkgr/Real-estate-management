@@ -717,7 +717,7 @@
 .viewer-new .vn-properties-report .vn-table-responsive.vn-properties-table{
   position:relative;
   overflow-x:auto;
-  overflow-y:visible;
+  overflow-y:hidden;
   isolation:isolate;
   -webkit-overflow-scrolling:touch;
   border:1px solid var(--vn-pr-border);
@@ -755,7 +755,7 @@
   border-radius:var(--vn-pr-r-lg);
   background:var(--vn-pr-surface);
   box-shadow:var(--vn-pr-shadow-card);
-  overflow:hidden;
+  overflow:visible;
 }
 .viewer-new .vn-properties-report .vn-table-with-scroll{position:relative}
 .viewer-new .vn-properties-report .vn-properties-table table,
@@ -1347,8 +1347,7 @@ body.viewer-new {
   min-height: 100dvh;
   height: auto;
   margin: 0;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   scrollbar-width: thin;
   scrollbar-color: rgba(212,175,55,.45) rgba(16,17,22,.95);
 }
@@ -1377,8 +1376,7 @@ body.viewer-new .viewer-new__shell {
   max-height: none;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   isolation: isolate;
 }
 
@@ -1400,8 +1398,7 @@ body.viewer-new .viewer-new__content-wrap {
 
 body.viewer-new .viewer-new__main {
   flex: 1 1 auto;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   overscroll-behavior: auto;
 }
 
@@ -1458,20 +1455,20 @@ body.viewer-new .viewer-hub * {
 
 /* viewer-new properties report normal-mode page flow */
 html:has(body.viewer-new.vn-properties-report-page) {
+  overflow-x: clip !important;
   overflow-y: auto !important;
   height: auto !important;
   min-height: 100% !important;
 }
 
-body.viewer-new.vn-properties-report-page,
-body.viewer-new:has(.vn-properties-report) {
+body.viewer-new.vn-properties-report-page {
   height: auto !important;
   min-height: 100dvh !important;
+  overflow-x: clip !important;
   overflow-y: visible !important;
 }
 
-body.viewer-new.vn-properties-report-page .viewer-new__shell,
-body.viewer-new:has(.vn-properties-report) .viewer-new__shell {
+body.viewer-new.vn-properties-report-page .viewer-new__shell {
   width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
@@ -1480,8 +1477,7 @@ body.viewer-new:has(.vn-properties-report) .viewer-new__shell {
   overflow: visible !important;
 }
 
-body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
-body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap {
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap {
   display: flex !important;
   flex: 1 1 auto !important;
   flex-direction: column !important;
@@ -1494,8 +1490,7 @@ body.viewer-new:has(.vn-properties-report) .viewer-new__content-wrap {
   overflow: visible !important;
 }
 
-body.viewer-new.vn-properties-report-page .viewer-new__main,
-body.viewer-new:has(.vn-properties-report) .viewer-new__main {
+body.viewer-new.vn-properties-report-page .viewer-new__main {
   flex: 1 1 auto !important;
   min-width: 0 !important;
   width: 100% !important;
@@ -1507,16 +1502,8 @@ body.viewer-new:has(.vn-properties-report) .viewer-new__main {
   padding-bottom: max(2rem, env(safe-area-inset-bottom)) !important;
 }
 
-body.viewer-new.vn-properties-report-page .vn-properties-report,
-body.viewer-new.vn-properties-report-page .report-focus-target,
-body.viewer-new.vn-properties-report-page .vn-property-table-card,
-body.viewer-new.vn-properties-report-page .vn-table-with-scroll,
-body.viewer-new:has(.vn-properties-report) .vn-properties-report,
-body.viewer-new:has(.vn-properties-report) .report-focus-target,
-body.viewer-new:has(.vn-properties-report) .vn-property-table-card,
-body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll {
+body.viewer-new.vn-properties-report-page .vn-properties-report {
   width: 100% !important;
-  max-width: 100% !important;
   min-width: 0 !important;
   height: auto !important;
   min-height: 0 !important;
@@ -1524,23 +1511,61 @@ body.viewer-new:has(.vn-properties-report) .vn-table-with-scroll {
   overflow: visible !important;
 }
 
-body.viewer-new.vn-properties-report-page #vn-properties-overflow,
-body.viewer-new:has(.vn-properties-report) #vn-properties-overflow,
-body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
-body.viewer-new:has(.vn-properties-report) .vn-table-responsive.vn-properties-table,
-body.viewer-new.vn-properties-report-page .table-overflow,
-body.viewer-new:has(.vn-properties-report) .table-overflow {
+body.viewer-new.vn-properties-report-page .report-focus-target,
+body.viewer-new.vn-properties-report-page .vn-property-table-card,
+body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   height: auto !important;
+  block-size: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
+  max-block-size: none !important;
+  overflow: visible !important;
+  contain: none !important;
+  content-visibility: visible !important;
 }
 
-body.viewer-new.vn-properties-report-page #vn-properties-table,
-body.viewer-new:has(.vn-properties-report) #vn-properties-table {
+
+body.viewer-new.vn-properties-report-page .viewer-new__shell,
+body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+body.viewer-new.vn-properties-report-page .viewer-new__main,
+body.viewer-new.vn-properties-report-page .vn-properties-report,
+body.viewer-new.vn-properties-report-page .report-focus-target {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
+  max-width: calc(100vw - 16px) !important;
+  max-inline-size: calc(100vw - 16px) !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+body.viewer-new.vn-properties-report-page #vn-properties-overflow,
+body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
+body.viewer-new.vn-properties-report-page .table-overflow {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: max-content !important;
+  block-size: max-content !important;
+  min-height: max-content !important;
+  max-height: none !important;
+  max-block-size: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  contain: none !important;
+  content-visibility: visible !important;
+}
+
+body.viewer-new.vn-properties-report-page #vn-properties-table {
+  width: max-content !important;
+  min-width: var(--vn-pr-table-min-width, 3200px) !important;
   max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
 }
