@@ -98,8 +98,43 @@
                 overflow-x: clip !important;
                 overflow-y: visible !important;
             }
+            body.viewer-new.vn-properties-report-page .vn-properties-report .report-focus-target > :is(.vn-table-card, .vn-property-table-card) {
+                display: flow-root !important;
+                position: relative !important;
+                float: none !important;
+                clear: both !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow: visible !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
             body.viewer-new.vn-properties-report-page .vn-property-table-card,
+            body.viewer-new.vn-properties-report-page .vn-table-card {
+                display: flow-root !important;
+                position: relative !important;
+                float: none !important;
+                clear: both !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow: visible !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
             body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+                display: block !important;
+                position: static !important;
+                float: none !important;
+                clear: both !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: 0 !important;

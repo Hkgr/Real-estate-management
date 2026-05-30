@@ -1,5 +1,5 @@
 {{-- Table pin/resize/top-scroll — always loaded (Vite bundle may lag). Matches FRONT/index.html. --}}
-@php $propertiesTableMechanicsVersion = '9'; @endphp
+@php $propertiesTableMechanicsVersion = '11'; @endphp
 <script>
 (function () {
     if (window.__vnPropertiesTableMechanics === '{{ $propertiesTableMechanicsVersion }}') return;
@@ -129,13 +129,16 @@
         if (cnt) cnt.textContent = visible.length + ' مثبت';
     };
 
+    let isApplyingPin = false;
     const applyPin = () => {
-        const apiApply = window.__vnPropertiesTableMechanicsApi?.applyPin;
-        if (typeof apiApply === 'function' && apiApply !== applyPinLegacy) {
-            apiApply();
-            return;
+        if (isApplyingPin) return;
+
+        isApplyingPin = true;
+        try {
+            applyPinLegacy();
+        } finally {
+            isApplyingPin = false;
         }
-        applyPinLegacy();
     };
 
     table.querySelectorAll('[data-column-key]').forEach((el) => {
@@ -185,18 +188,48 @@
         });
     });
 
-    let top = scroller.parentElement?.querySelector('.vn-tbl-top-scroll');
+    const wrapper = scroller.closest('.vn-table-with-scroll') || scroller.parentElement;
+    const card = wrapper?.closest('.vn-property-table-card, .vn-table-card');
+
+    const syncCardFlowHeight = () => {
+        if (!card || !wrapper) return;
+
+        const wrapperHeight = wrapper.getBoundingClientRect().height;
+        if (!Number.isFinite(wrapperHeight) || wrapperHeight <= 0) return;
+
+        const styles = getComputedStyle(card);
+        const verticalExtras = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
+            .reduce((sum, key) => sum + (parseFloat(styles[key]) || 0), 0);
+        const minHeight = Math.ceil(wrapperHeight + verticalExtras);
+
+        card.style.setProperty('height', 'auto', 'important');
+        card.style.setProperty('min-height', minHeight + 'px', 'important');
+        card.style.setProperty('max-height', 'none', 'important');
+        card.style.setProperty('overflow', 'visible', 'important');
+    };
+
+    let cardFlowRaf = 0;
+    const requestCardFlowHeightSync = () => {
+        if (cardFlowRaf) window.cancelAnimationFrame(cardFlowRaf);
+        cardFlowRaf = window.requestAnimationFrame(() => {
+            cardFlowRaf = 0;
+            syncCardFlowHeight();
+        });
+    };
+
+    let top = wrapper?.querySelector('.vn-tbl-top-scroll');
     if (!top) {
         top = document.createElement('div');
         top.className = 'vn-tbl-top-scroll';
         top.setAttribute('aria-hidden', 'true');
         top.innerHTML = '<div class="vn-tbl-top-scroll-inner"></div>';
-        scroller.parentElement?.insertBefore(top, scroller);
+        wrapper?.insertBefore(top, scroller);
     }
     const syncTop = () => {
         const inner = top.querySelector('.vn-tbl-top-scroll-inner');
         if (inner) inner.style.width = table.scrollWidth + 'px';
         top.classList.toggle('is-visible', scroller.scrollWidth > scroller.clientWidth + 4);
+        requestCardFlowHeightSync();
     };
     if (top.dataset.wired !== '1') {
         top.dataset.wired = '1';
@@ -206,12 +239,22 @@
 
     applyPin();
     syncTop();
-    window.addEventListener('resize', () => { applyPin(); syncTop(); });
+    requestCardFlowHeightSync();
+
+    if ('ResizeObserver' in window && wrapper && card) {
+        const cardFlowObserver = new ResizeObserver(requestCardFlowHeightSync);
+        cardFlowObserver.observe(wrapper);
+        cardFlowObserver.observe(scroller);
+        cardFlowObserver.observe(table);
+    }
+
+    window.addEventListener('resize', () => { applyPin(); syncTop(); requestCardFlowHeightSync(); });
 
     window.__vnPropertiesTableMechanicsApi = {
         applyPin,
         applyPinLegacy,
         syncTop,
+        syncCardFlowHeight,
         restoreWidths,
     };
 })();
