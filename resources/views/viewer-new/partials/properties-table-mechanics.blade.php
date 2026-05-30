@@ -1,5 +1,5 @@
 {{-- Table pin/resize/top-scroll — always loaded (Vite bundle may lag). Matches FRONT/index.html. --}}
-@php $propertiesTableMechanicsVersion = '9'; @endphp
+@php $propertiesTableMechanicsVersion = '10'; @endphp
 <script>
 (function () {
     if (window.__vnPropertiesTableMechanics === '{{ $propertiesTableMechanicsVersion }}') return;
@@ -129,13 +129,16 @@
         if (cnt) cnt.textContent = visible.length + ' مثبت';
     };
 
+    let isApplyingPin = false;
     const applyPin = () => {
-        const apiApply = window.__vnPropertiesTableMechanicsApi?.applyPin;
-        if (typeof apiApply === 'function' && apiApply !== applyPinLegacy) {
-            apiApply();
-            return;
+        if (isApplyingPin) return;
+
+        isApplyingPin = true;
+        try {
+            applyPinLegacy();
+        } finally {
+            isApplyingPin = false;
         }
-        applyPinLegacy();
     };
 
     table.querySelectorAll('[data-column-key]').forEach((el) => {
