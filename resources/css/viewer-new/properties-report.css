@@ -1188,7 +1188,10 @@
 }
 
 body.viewer-new.vn-properties-report-page .vn-properties-report .report-focus-target > :is(.vn-table-card, .vn-property-table-card) {
-  display: block !important;
+  display: flow-root !important;
+  position: relative !important;
+  float: none !important;
+  clear: both !important;
   height: auto !important;
   block-size: auto !important;
   min-height: 0 !important;
@@ -1201,7 +1204,10 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .report-focus-ta
 
 body.viewer-new.vn-properties-report-page .vn-properties-report .vn-property-table-card,
 body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-card {
-  display: block !important;
+  display: flow-root !important;
+  position: relative !important;
+  float: none !important;
+  clear: both !important;
   height: auto !important;
   block-size: auto !important;
   min-height: 0 !important;
@@ -1212,6 +1218,9 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-card {
 
 body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-scroll {
   display: block !important;
+  position: static !important;
+  float: none !important;
+  clear: both !important;
   height: auto !important;
   block-size: auto !important;
   min-height: 0 !important;
