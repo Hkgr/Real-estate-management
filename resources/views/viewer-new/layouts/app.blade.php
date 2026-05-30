@@ -98,6 +98,17 @@
                 overflow-x: clip !important;
                 overflow-y: visible !important;
             }
+            body.viewer-new.vn-properties-report-page .vn-properties-report .report-focus-target > :is(.vn-table-card, .vn-property-table-card) {
+                display: block !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow: visible !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
             body.viewer-new.vn-properties-report-page .vn-property-table-card,
             body.viewer-new.vn-properties-report-page .vn-table-card {
                 display: block !important;
