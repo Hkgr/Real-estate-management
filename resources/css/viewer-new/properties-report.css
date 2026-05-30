@@ -526,7 +526,7 @@
   background: var(--table-surface, var(--bg-card, #1A1A1A));
   border: 1px solid var(--table-border, var(--border, #2A2A2A));
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow:
     0 2px 0 rgba(212,175,55,.08),
     0 8px 32px rgba(0,0,0,.45),
@@ -1166,7 +1166,14 @@
    MAIN TABLE — contained horizontal scroll, natural vertical flow
 ═══════════════════════════════════════════════════════════════ */
 
-.viewer-new .vn-properties-report,
+.viewer-new .vn-properties-report {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
 .viewer-new .vn-properties-report #vn-properties-focus-target,
 .viewer-new .vn-properties-report .vn-table-card,
 .viewer-new .vn-properties-report .vn-table-with-scroll {
@@ -1180,8 +1187,7 @@
 
 .viewer-new .vn-properties-report .vn-table-card,
 .viewer-new .vn-properties-report .vn-table-with-scroll {
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
+  overflow: visible !important;
 }
 
 .viewer-new .vn-properties-report .vn-table-card .vn-table-responsive.vn-properties-table,
