@@ -43,6 +43,43 @@
         .viewer-new__shell.is-collapsed .vn-nav-link{justify-content:center}
         .viewer-new__shell.is-collapsed .vn-sidebar__toggle{display:inline-flex}
 
+        @if (request()->routeIs('viewer-new.reports.properties'))
+            html:has(body.viewer-new.vn-properties-report-page) {
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100% !important;
+            }
+            body.viewer-new.vn-properties-report-page,
+            body.viewer-new.vn-properties-report-page .viewer-new__shell,
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page .vn-properties-report,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page,
+            body.viewer-new.vn-properties-report-page .viewer-new__shell {
+                min-height: 100dvh !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page .vn-properties-report,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                min-height: 0 !important;
+                min-width: 0 !important;
+                width: 100% !important;
+            }
+            body.viewer-new.vn-properties-report-page .viewer-new__shell,
+            body.viewer-new.vn-properties-report-page .viewer-new__content-wrap,
+            body.viewer-new.vn-properties-report-page .viewer-new__main,
+            body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
+                max-width: 100% !important;
+            }
+        @endif
+
+
     </style>
 </head>
 <body class="viewer-new {{ request()->routeIs('viewer-new.reports.properties') ? 'vn-properties-report-page' : '' }}" dir="rtl">

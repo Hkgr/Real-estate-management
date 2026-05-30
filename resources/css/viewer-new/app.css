@@ -1347,8 +1347,7 @@ body.viewer-new {
   min-height: 100dvh;
   height: auto;
   margin: 0;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   scrollbar-width: thin;
   scrollbar-color: rgba(212,175,55,.45) rgba(16,17,22,.95);
 }
@@ -1377,8 +1376,7 @@ body.viewer-new .viewer-new__shell {
   max-height: none;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   isolation: isolate;
 }
 
@@ -1400,8 +1398,7 @@ body.viewer-new .viewer-new__content-wrap {
 
 body.viewer-new .viewer-new__main {
   flex: 1 1 auto;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   overscroll-behavior: auto;
 }
 
