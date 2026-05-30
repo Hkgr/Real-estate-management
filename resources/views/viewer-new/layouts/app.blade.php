@@ -77,6 +77,37 @@
             body.viewer-new.vn-properties-report-page #vn-properties-focus-target {
                 max-width: 100% !important;
             }
+            body.viewer-new.vn-properties-report-page .vn-property-table-card,
+            body.viewer-new.vn-properties-report-page .vn-table-with-scroll {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow: visible !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
+            body.viewer-new.vn-properties-report-page #vn-properties-overflow,
+            body.viewer-new.vn-properties-report-page .vn-table-responsive.vn-properties-table,
+            body.viewer-new.vn-properties-report-page .table-overflow {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                block-size: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                max-block-size: none !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                contain: none !important;
+                content-visibility: visible !important;
+            }
         @endif
 
 
