@@ -103,8 +103,8 @@
    TOOLBAR
 ═══════════════════════════════════════════════════════════════ */
 
-.viewer-new .vn-properties-report {
-  --vn-properties-sticky-head-top: 0px;
+body.viewer-new.vn-properties-report-page .vn-properties-report {
+  --vn-properties-sticky-head-top: max(var(--viewer-topbar-offset, 64px), 64px);
 }
 
 .viewer-new .vn-properties-report .vn-report-toolbar {
@@ -1496,7 +1496,7 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   z-index: 20;
 }
 
-.viewer-new .vn-properties-report #vn-properties-table thead th {
+body.viewer-new.vn-properties-report-page #vn-properties-table thead th {
   position: sticky !important;
   top: var(--vn-properties-sticky-head-top) !important;
   z-index: 40 !important;
@@ -1514,13 +1514,13 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   -webkit-backdrop-filter: blur(8px);
 }
 
-.viewer-new .vn-properties-report #vn-properties-table thead th:hover {
+body.viewer-new.vn-properties-report-page #vn-properties-table thead th:hover {
   background:
     linear-gradient(180deg, rgba(31,29,22,.99), rgba(12,11,9,.97)),
     var(--table-head-bg, var(--vn-pr-surface, #1A1A1A));
 }
 
-.viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned {
+body.viewer-new.vn-properties-report-page #vn-properties-table thead th.vn-col-pinned {
   top: var(--vn-properties-sticky-head-top) !important;
   z-index: 45 !important;
   background:
@@ -1538,7 +1538,7 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   position: absolute;
 }
 
-[data-theme="light"] .viewer-new .vn-properties-report #vn-properties-table thead th {
+[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th {
   background:
     linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,244,238,.96)),
     var(--table-head-bg, #fff);
@@ -1548,8 +1548,8 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
     0 8px 16px rgba(110,83,28,.12);
 }
 
-[data-theme="light"] .viewer-new .vn-properties-report #vn-properties-table thead th:hover,
-[data-theme="light"] .viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned {
+[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th:hover,
+[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th.vn-col-pinned {
   background:
     linear-gradient(180deg, rgba(255,255,255,.99), rgba(244,238,225,.97)),
     var(--table-head-bg, #fff) !important;
