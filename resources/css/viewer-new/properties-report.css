@@ -1423,6 +1423,93 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MAIN TABLE — sticky report header
+═══════════════════════════════════════════════════════════════ */
+
+.viewer-new .vn-properties-report {
+  --vn-properties-sticky-head-top: 0px;
+}
+
+.viewer-new .vn-properties-report .vn-table-responsive,
+.viewer-new .vn-properties-report .vn-properties-table {
+  position: relative;
+}
+
+.viewer-new .vn-properties-report #vn-properties-overflow,
+.viewer-new .vn-properties-report .vn-table-card .vn-table-responsive.vn-properties-table {
+  overflow-x: auto !important;
+  overflow-y: clip !important;
+}
+
+.viewer-new .vn-properties-report #vn-properties-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.viewer-new .vn-properties-report #vn-properties-table thead {
+  position: relative;
+  z-index: 20;
+}
+
+.viewer-new .vn-properties-report #vn-properties-table thead th {
+  position: sticky !important;
+  top: var(--vn-properties-sticky-head-top, 0px) !important;
+  z-index: 30;
+  overflow: visible;
+  text-overflow: clip;
+  background:
+    linear-gradient(180deg, rgba(26,26,26,.98), rgba(10,10,10,.96)),
+    var(--table-head-bg, var(--vn-pr-surface, #1A1A1A));
+  border-bottom: 1px solid rgba(212,175,55,.55);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.06) inset,
+    0 10px 18px rgba(0,0,0,.28),
+    0 0 16px rgba(212,175,55,.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.viewer-new .vn-properties-report #vn-properties-table thead th:hover {
+  background:
+    linear-gradient(180deg, rgba(31,29,22,.99), rgba(12,11,9,.97)),
+    var(--table-head-bg, var(--vn-pr-surface, #1A1A1A));
+}
+
+.viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned {
+  z-index: 42 !important;
+  background:
+    linear-gradient(180deg, rgba(32,29,18,.99), rgba(13,12,8,.97)),
+    var(--table-head-bg, var(--vn-pr-surface, #1A1A1A)) !important;
+}
+
+.viewer-new .vn-properties-report #vn-properties-table .vn-col-pin-btn,
+.viewer-new .vn-properties-report #vn-properties-table .vn-col-resize-handle {
+  position: relative;
+  z-index: 45;
+}
+
+.viewer-new .vn-properties-report #vn-properties-table .vn-col-resize-handle {
+  position: absolute;
+}
+
+[data-theme="light"] .viewer-new .vn-properties-report #vn-properties-table thead th {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,244,238,.96)),
+    var(--table-head-bg, #fff);
+  border-bottom-color: rgba(167,144,103,.55);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.75) inset,
+    0 8px 16px rgba(110,83,28,.12);
+}
+
+[data-theme="light"] .viewer-new .vn-properties-report #vn-properties-table thead th:hover,
+[data-theme="light"] .viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.99), rgba(244,238,225,.97)),
+    var(--table-head-bg, #fff) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════════════════════ */
 
