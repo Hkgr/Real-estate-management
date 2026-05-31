@@ -132,6 +132,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
         const form = reportRoot.querySelector('[data-report-generator-form]');
         const clearSearchBtn = reportRoot.querySelector('[data-properties-clear-search]');
+        const searchToggleBtn = reportRoot.querySelector('[data-properties-search-toggle]');
+        const searchWrapper = reportRoot.querySelector('[data-properties-search-wrapper]');
         const searchInput = reportRoot.querySelector('#filter-q');
         const genBtn = reportRoot.querySelector('[data-generate-report]');
         const resetBtn = reportRoot.querySelector('[data-reset-columns]');
@@ -222,6 +224,29 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         syncCheckboxes(visibleFromStorage); applyColumns(visibleFromStorage);
 
         const initialOpen = safeGet(GEN_KEY) === '1' || (hasActiveFilters && safeGet(GEN_KEY) === null);
+        const initialSearchOpen = toolbarEl?.classList.contains('vn-report-toolbar--search-open') || (searchInput?.value || '').trim() !== '';
+
+        const setSearchOpen = (open, focus = false) => {
+            if (!toolbarEl || !searchInput) return;
+            const isOpen = !!open;
+            toolbarEl.classList.toggle('vn-report-toolbar--search-open', isOpen);
+            searchWrapper?.classList.toggle('active', isOpen);
+            searchToggleBtn?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            searchInput.disabled = !isOpen;
+            if (focus && isOpen) {
+                window.requestAnimationFrame(() => {
+                    searchInput.focus({ preventScroll: true });
+                    searchInput.select();
+                });
+            }
+        };
+
+        setSearchOpen(initialSearchOpen, false);
+
+        searchToggleBtn?.addEventListener('click', () => {
+            const isOpen = toolbarEl?.classList.contains('vn-report-toolbar--search-open');
+            setSearchOpen(!isOpen, true);
+        });
 
         toggleBtn?.addEventListener('click', () => {
             setPanelOpen(!panel?.classList.contains('is-open'));
@@ -245,10 +270,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             syncCheckboxes(defaultColumns); applyColumns(defaultColumns); safeSet(COL_KEY, JSON.stringify(defaultColumns));
         });
 
-        clearSearchBtn?.addEventListener('click', () => {
-            if (!searchInput || !form) return;
+        const clearAndCloseSearch = (submitWhenPersisted = true) => {
+            if (!searchInput) return;
             const qHadValue = (searchInput.value || '').trim() !== '';
+            const urlHasQuery = new URLSearchParams(window.location.search).has('q');
             searchInput.value = '';
+            filterTableRowsClient('');
+            setSearchOpen(false);
+
+            if (!form || !submitWhenPersisted) return;
+
             const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
             let hasOtherFilters = false;
             fields.forEach((field) => {
@@ -261,16 +292,19 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 if ((field.value || '').trim() !== '') hasOtherFilters = true;
             });
 
-            if (hasOtherFilters) {
+            if (hasOtherFilters && (qHadValue || urlHasQuery)) {
                 form.submit();
                 return;
             }
 
-            if (qHadValue) {
+            if (urlHasQuery) {
                 const actionUrl = form.getAttribute('action') || window.location.pathname;
                 window.location.assign(actionUrl);
             }
-            filterTableRowsClient('');
+        };
+
+        clearSearchBtn?.addEventListener('click', () => {
+            clearAndCloseSearch(true);
         });
 
         const getMainDataRows = () => {
@@ -310,8 +344,22 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             searchDebounce = window.setTimeout(() => filterTableRowsClient(searchInput.value), 120);
         });
         searchInput?.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                if ((searchInput.value || '').trim() !== '') {
+                    searchInput.value = '';
+                    filterTableRowsClient('');
+                    return;
+                }
+                setSearchOpen(false);
+                searchToggleBtn?.focus({ preventScroll: true });
+                return;
+            }
+
             if (event.key === 'Enter' && form) {
                 event.preventDefault();
+                searchInput.disabled = false;
                 form.submit();
             }
         });
@@ -323,7 +371,9 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
             const activeEl = document.activeElement;
+            if (activeEl === searchInput) return;
             if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLSelectElement || activeEl instanceof HTMLTextAreaElement) { activeEl.blur(); return; }
+            if (toolbarEl?.classList.contains('vn-report-toolbar--search-open') && (searchInput?.value || '').trim() === '') { setSearchOpen(false); return; }
             if (panel?.classList.contains('is-open')) setPanelOpen(false);
         });
 
