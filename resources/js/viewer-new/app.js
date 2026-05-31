@@ -499,7 +499,6 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             const headerH = Math.max(28, Math.ceil(headRect.height || 32));
             const hostLeft = Math.round(scrollerRect.left);
             const hostWidth = Math.round(Math.min(scrollerRect.width, Math.max(0, viewportWidth - hostLeft)));
-            const tableOffsetInsideScroller = Math.round(rect.left - scrollerRect.left);
             const scrollerVisible = scrollerRect.right > 0
                 && scrollerRect.left < viewportWidth
                 && scrollerRect.bottom > stickyTop + headerH
@@ -517,6 +516,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             ensureFloatingHost();
 
             const headClone = thead.cloneNode(true);
+            headClone.style.visibility = 'visible';
+            headClone.style.opacity = '1';
+            headClone.querySelectorAll('*').forEach((el) => {
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+            });
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
             headClone.querySelectorAll('input, button, select, textarea, a').forEach((el) => {
                 el.setAttribute('tabindex', '-1');
@@ -555,7 +560,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingHost.style.boxSizing = 'border-box';
             floatingTable.style.width = `${Math.round(tableEl.scrollWidth)}px`;
             floatingTable.style.minWidth = `${Math.round(tableEl.scrollWidth)}px`;
-            floatingTable.style.transform = `translateX(${tableOffsetInsideScroller}px)`;
+            floatingTable.style.transform = '';
+
+            const floatingTableRect = floatingTable.getBoundingClientRect();
+            const realTableRect = tableEl.getBoundingClientRect();
+            const deltaX = Math.round(realTableRect.left - floatingTableRect.left);
+            floatingTable.style.transform = `translateX(${deltaX}px)`;
         };
 
         const updateStickyOffset = () => {
