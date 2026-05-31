@@ -272,21 +272,26 @@
                 @endforeach
 
                 </div>
-                <div class="vn-report-generator__columns vn-report-generator__columns--compact" data-column-picker>
-                    @foreach ($propertyTableColumnLabels as $key => $label)
-                        <label class="vn-report-column-option vn-report-column-option-card">
-                            <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
-                            <span>{{ $label }}</span>
-                        </label>
-                    @endforeach
-                </div>
-                <div class="vn-col-pin-bar" data-properties-pin-bar>
-                    <button type="button" class="vn-col-unpin-all" data-properties-unpin-all>إلغاء تثبيت الكل</button>
-                    <span class="vn-col-pin-count" data-properties-pin-count></span>
-                </div>
                 <div class="vn-report-generator__actions">
                     <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
                     <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
+                    <div class="vn-report-columns-menu" data-report-columns-menu>
+                        <button type="button" class="vn-report-toolbar-button" data-report-columns-toggle aria-expanded="false" aria-controls="vn-report-columns-popover">تحديد الأعمدة</button>
+                        <div id="vn-report-columns-popover" class="vn-report-columns-popover" data-report-columns-popover>
+                            <div class="vn-col-pin-bar" data-properties-pin-bar>
+                                <button type="button" class="vn-col-unpin-all" data-properties-unpin-all>إلغاء تثبيت الكل</button>
+                                <span class="vn-col-pin-count" data-properties-pin-count></span>
+                            </div>
+                            <div class="vn-report-generator__columns vn-report-generator__columns--compact" data-column-picker>
+                                @foreach ($propertyTableColumnLabels as $key => $label)
+                                    <label class="vn-report-column-option vn-report-column-option-card">
+                                        <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
+                                        <span>{{ $label }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                     <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
                     <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد تقرير</button>
                 </div>

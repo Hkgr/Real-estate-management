@@ -137,6 +137,9 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const searchInput = reportRoot.querySelector('#filter-q');
         const genBtn = reportRoot.querySelector('[data-generate-report]');
         const resetBtn = reportRoot.querySelector('[data-reset-columns]');
+        const columnsMenu = reportRoot.querySelector('[data-report-columns-menu]');
+        const columnsToggleBtn = reportRoot.querySelector('[data-report-columns-toggle]');
+        const columnsPopover = reportRoot.querySelector('[data-report-columns-popover]');
         const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
         const tableEl = reportRoot.querySelector('.vn-properties-table table');
         const tableScroller = reportRoot.querySelector('.vn-properties-table');
@@ -166,6 +169,17 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             return Number.isFinite(resolvedTop) ? Math.max(0, resolvedTop) : 64;
         };
 
+        const setColumnsPopoverOpen = (open) => {
+            if (!columnsPopover || !columnsToggleBtn) return;
+            const isOpen = !!open;
+            columnsPopover.classList.toggle('vn-report-columns-popover--open', isOpen);
+            columnsMenu?.classList.toggle('vn-report-columns-menu--open', isOpen);
+            panel?.classList.toggle('vn-report-generator--columns-open', isOpen);
+            columnsToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        };
+
+        const isColumnsPopoverOpen = () => columnsPopover?.classList.contains('vn-report-columns-popover--open') === true;
+
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
             toggleBtn?.classList.toggle('vn-report-toolbar-button--primary', !!open);
@@ -174,6 +188,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const setPanelOpen = (open, persist = true) => {
             if (!panel) return;
             panel.classList.toggle('is-open', !!open);
+            if (!open) setColumnsPopoverOpen(false);
             toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
             syncToolbarActiveState(open);
             if (persist) safeSet(GEN_KEY, open ? '1' : '0');
@@ -251,6 +266,9 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         toggleBtn?.addEventListener('click', () => {
             setPanelOpen(!panel?.classList.contains('is-open'));
         });
+        columnsToggleBtn?.addEventListener('click', () => {
+            setColumnsPopoverOpen(!isColumnsPopoverOpen());
+        });
         genBtn?.addEventListener('click', () => {
             let cols = normalizeColumns(getChecked());
             syncCheckboxes(cols);
@@ -268,6 +286,14 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         });
         resetBtn?.addEventListener('click', () => {
             syncCheckboxes(defaultColumns); applyColumns(defaultColumns); safeSet(COL_KEY, JSON.stringify(defaultColumns));
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!isColumnsPopoverOpen()) return;
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            if (columnsMenu?.contains(target) || columnsPopover?.contains(target)) return;
+            setColumnsPopoverOpen(false);
         });
 
         const clearAndCloseSearch = (submitWhenPersisted = true) => {
@@ -371,6 +397,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
             const activeEl = document.activeElement;
+            if (isColumnsPopoverOpen()) { setColumnsPopoverOpen(false); columnsToggleBtn?.focus({ preventScroll: true }); return; }
             if (activeEl === searchInput) return;
             if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLSelectElement || activeEl instanceof HTMLTextAreaElement) { activeEl.blur(); return; }
             if (toolbarEl?.classList.contains('vn-report-toolbar--search-open') && (searchInput?.value || '').trim() === '') { setSearchOpen(false); return; }
