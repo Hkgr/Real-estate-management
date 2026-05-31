@@ -438,15 +438,24 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
 
 .viewer-new .vn-properties-report .vn-report-generator {
   display: none; /* toggled by JS */
-  width: fit-content;
-  max-width: min(1280px, 100%);
-  min-width: min(100%, calc(var(--vn-pr-filter-cols, 6) * var(--vn-pr-filter-field-width, 132px) + (var(--vn-pr-filter-cols, 6) - 1) * 12px + 32px));
-  align-self: flex-start;
+  width: 100%;
+  inline-size: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-self: stretch;
   background: rgba(255,255,255,.015);
   border: 1px solid var(--border, #2A2A2A);
   border-radius: var(--r-lg, 16px);
   padding: 14px 16px;
   animation: vn-panel-slide-in .22s ease;
+  box-sizing: border-box;
+}
+
+.vn-properties-report .vn-report-generator__form,
+.vn-properties-report .vn-report-generator__body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -464,16 +473,19 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
   border-color: #dfd5c6;
 }
 
-/* Filter fields grid — 6 filters per row (matches --vn-pr-filter-cols in app.css) */
+/* Filter fields grid — fills the full-width generator panel without forcing page overflow. */
 .vn-properties-report .vn-report-generator__filters {
   display: grid;
-  grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 10px 12px;
   margin-bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .vn-properties-report .vn-report-generator__filters--compact {
-  grid-template-columns: repeat(var(--vn-pr-filter-cols, 6), var(--vn-pr-filter-col, 132px));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
 }
 
 .vn-properties-report .vn-report-generator__field {
@@ -533,22 +545,26 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
   filter: none; opacity: .55;
 }
 
-/* Column picker — 6 options per row */
+/* Column picker — fills the available panel width. */
 .vn-properties-report .vn-report-generator__columns {
   display: grid;
-  grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
-  gap: 5px;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 6px;
   margin-bottom: 0;
   padding: 10px;
   background: rgba(212,175,55,.03);
   border: 1px dashed rgba(212,175,55,.15);
   border-radius: var(--r-md, 8px);
-  max-height: 200px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .vn-properties-report .vn-report-generator__columns--compact {
-  grid-template-columns: repeat(var(--vn-pr-filter-cols, 6), var(--vn-pr-filter-col, 132px));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
 }
 
 .vn-properties-report .vn-report-column-option {
