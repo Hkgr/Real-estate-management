@@ -474,7 +474,6 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 floatingTable.style.width = '';
                 floatingTable.style.minWidth = '';
                 floatingTable.style.transform = '';
-                floatingTable.innerHTML = '';
             }
         };
 
@@ -538,8 +537,14 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 th.style.top = 'auto';
             });
 
+            const colgroupClone = tableEl.querySelector('colgroup')?.cloneNode(true) || null;
+            colgroupClone?.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+            colgroupClone?.removeAttribute('id');
+
             floatingTable.className = tableEl.className;
-            floatingTable.innerHTML = `<thead>${headClone.innerHTML}</thead>`;
+            floatingTable.innerHTML = '';
+            if (colgroupClone) floatingTable.appendChild(colgroupClone);
+            floatingTable.appendChild(headClone);
             thead.style.visibility = 'hidden';
             floatingHost.style.display = 'block';
             floatingHost.style.top = `${stickyTop}px`;
