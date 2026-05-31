@@ -104,8 +104,7 @@
 ═══════════════════════════════════════════════════════════════ */
 
 .viewer-new .vn-properties-report {
-  --vn-report-toolbar-top: var(--viewer-topbar-offset, 64px);
-  --vn-properties-sticky-head-top: var(--vn-pr-table-sticky-offset, calc(var(--vn-report-toolbar-top) + var(--vn-report-toolbar-height, 58px) + 8px));
+  --vn-properties-sticky-head-top: 0px;
 }
 
 .viewer-new .vn-properties-report .vn-report-toolbar {
@@ -114,9 +113,9 @@
   align-items: stretch;
   gap: 12px;
   margin: 0 0 14px 0;
-  position: sticky;
-  top: var(--vn-report-toolbar-top);
-  z-index: 60;
+  position: relative;
+  top: auto;
+  z-index: 20;
   width: 100%;
   max-width: 100%;
   background: transparent;
@@ -700,6 +699,42 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+}
+
+
+.viewer-new .vn-properties-report .vn-tbl-nav-pill,
+.viewer-new .vn-properties-report .vn-table-nav-pill,
+.viewer-new .vn-properties-report [data-table-nav-pill] {
+  position: relative;
+  inset: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  z-index: 35;
+  justify-content: flex-start;
+  pointer-events: none;
+  margin: 10px 0 0;
+  padding: 0;
+  transform: none;
+}
+
+.viewer-new .vn-properties-report .vn-tbl-nav-pill-inner {
+  max-width: 100%;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+@media (max-width: 640px) {
+  .viewer-new .vn-properties-report .vn-tbl-nav-pill,
+  .viewer-new .vn-properties-report .vn-table-nav-pill,
+  .viewer-new .vn-properties-report [data-table-nav-pill] {
+    justify-content: stretch;
+  }
+
+  .viewer-new .vn-properties-report .vn-tbl-nav-pill-inner {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1423,21 +1458,9 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   text-overflow: clip !important;
 }
 
-.viewer-new .vn-properties-report #vn-properties-table thead th {
-  position: sticky;
-  top: var(--vn-properties-sticky-head-top);
-  z-index: 40;
-}
-
 .viewer-new .vn-properties-report .vn-properties-table thead th {
   overflow: visible;
   text-overflow: clip;
-}
-
-.viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned,
-.viewer-new .vn-properties-report .vn-big-table thead th.vn-col-pinned {
-  top: var(--vn-properties-sticky-head-top) !important;
-  z-index: 45 !important;
 }
 
 .viewer-new .vn-properties-report .vn-big-table tbody td.vn-col-pinned {
@@ -1445,16 +1468,12 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
 }
 
 .viewer-new .vn-pr-floating-table-head {
-  z-index: 45;
+  z-index: 55;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN TABLE — sticky report header
 ═══════════════════════════════════════════════════════════════ */
-
-.viewer-new .vn-properties-report {
-  --vn-properties-sticky-head-top: 0px;
-}
 
 .viewer-new .vn-properties-report .vn-table-responsive,
 .viewer-new .vn-properties-report .vn-properties-table {
@@ -1479,8 +1498,8 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
 
 .viewer-new .vn-properties-report #vn-properties-table thead th {
   position: sticky !important;
-  top: var(--vn-properties-sticky-head-top, 0px) !important;
-  z-index: 30;
+  top: var(--vn-properties-sticky-head-top) !important;
+  z-index: 40 !important;
   overflow: visible;
   text-overflow: clip;
   background:
@@ -1502,7 +1521,8 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
 }
 
 .viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned {
-  z-index: 42 !important;
+  top: var(--vn-properties-sticky-head-top) !important;
+  z-index: 45 !important;
   background:
     linear-gradient(180deg, rgba(32,29,18,.99), rgba(13,12,8,.97)),
     var(--table-head-bg, var(--vn-pr-surface, #1A1A1A)) !important;
@@ -1511,7 +1531,7 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
 .viewer-new .vn-properties-report #vn-properties-table .vn-col-pin-btn,
 .viewer-new .vn-properties-report #vn-properties-table .vn-col-resize-handle {
   position: relative;
-  z-index: 45;
+  z-index: 50;
 }
 
 .viewer-new .vn-properties-report #vn-properties-table .vn-col-resize-handle {

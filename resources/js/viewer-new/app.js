@@ -420,7 +420,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 wrap.appendChild(tableScroller);
             }
             tblNavPill = document.createElement('div');
-            tblNavPill.className = 'vn-tbl-nav-pill';
+            tblNavPill.className = 'vn-tbl-nav-pill vn-table-nav-pill';
+            tblNavPill.setAttribute('data-table-nav-pill', '');
             tblNavPill.setAttribute('role', 'navigation');
             tblNavPill.setAttribute('aria-label', 'التنقل في الجدول');
             tblNavPill.innerHTML = '<div class="vn-tbl-nav-pill-inner"><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="start">⟪ بداية الجدول</button><div class="vn-tbl-nav-pill-sep"></div><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="end">نهاية الجدول ⟫</button></div>';
@@ -447,10 +448,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         };
 
         const hideFloatingHead = () => {
+            tableEl?.querySelector('thead')?.style.removeProperty('visibility');
             if (!floatingHost) return;
             floatingHost.style.display = 'none';
             floatingHost.style.width = '';
             floatingHost.style.left = '';
+            floatingHost.style.top = '';
             if (floatingTable) {
                 floatingTable.style.transform = '';
                 floatingTable.innerHTML = '';
@@ -469,17 +472,14 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 return;
             }
 
-            const firstHeaderCell = thead.querySelector('th');
-            if (firstHeaderCell && getComputedStyle(firstHeaderCell).position === 'sticky') {
-                hideFloatingHead();
-                return;
-            }
-
-            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-pr-table-sticky-offset')) || 96;
+            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-properties-sticky-head-top')) || 0;
             const rect = tableEl.getBoundingClientRect();
             const headRect = thead.getBoundingClientRect();
             const headerH = Math.max(28, Math.ceil(headRect.height || 32));
-            const shouldPin = headRect.top <= stickyTop - 18 && rect.bottom > stickyTop + headerH + 2;
+            const naturalHeadBottom = rect.top + headerH;
+            const shouldPin = rect.top < stickyTop
+                && rect.bottom > stickyTop + headerH + 2
+                && naturalHeadBottom < stickyTop + 4;
 
             if (!shouldPin || document.fullscreenElement === reportRoot) {
                 hideFloatingHead();
@@ -526,6 +526,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
             floatingTable.className = tableEl.className;
             floatingTable.innerHTML = `<thead>${headClone.innerHTML}</thead>`;
+            thead.style.visibility = 'hidden';
             floatingHost.style.display = 'block';
             floatingHost.style.top = `${stickyTop}px`;
             floatingHost.style.left = `${hostLeft}px`;
@@ -536,21 +537,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         };
 
         const updateStickyOffset = () => {
-            const header = document.querySelector('.vn-app-header');
-            const breadcrumb = document.querySelector('.vn-app-breadcrumb-row');
-            let pin = 72;
-            if (header) pin = Math.max(pin, Math.ceil(header.getBoundingClientRect().height) + 6);
-            if (breadcrumb) pin += Math.ceil(breadcrumb.getBoundingClientRect().height);
-
-            if (toolbarEl) {
-                const cs = getComputedStyle(toolbarEl);
-                if (cs.display !== 'none' && cs.visibility !== 'hidden') {
-                    const tTop = Number.isFinite(parseFloat(cs.top)) ? parseFloat(cs.top) : 0;
-                    pin = Math.max(pin, Math.ceil(tTop + toolbarEl.getBoundingClientRect().height + 8));
-                }
-            }
-
-            reportRoot.style.setProperty('--vn-pr-table-sticky-offset', `${pin}px`);
+            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-properties-sticky-head-top')) || 0;
+            reportRoot.style.setProperty('--vn-pr-table-sticky-offset', `${stickyTop}px`);
             requestFloatingHeadSync();
         };
 
@@ -594,6 +582,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             },
         });
 
+        ensureFloatingHost();
+        hideFloatingHead();
         setPanelOpen(initialOpen, false);
         updateStickyOffset();
         updateTblNavPill();
