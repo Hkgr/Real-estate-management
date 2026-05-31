@@ -420,7 +420,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 wrap.appendChild(tableScroller);
             }
             tblNavPill = document.createElement('div');
-            tblNavPill.className = 'vn-tbl-nav-pill';
+            tblNavPill.className = 'vn-tbl-nav-pill vn-table-nav-pill';
+            tblNavPill.setAttribute('data-table-nav-pill', '');
             tblNavPill.setAttribute('role', 'navigation');
             tblNavPill.setAttribute('aria-label', 'التنقل في الجدول');
             tblNavPill.innerHTML = '<div class="vn-tbl-nav-pill-inner"><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="start">⟪ بداية الجدول</button><div class="vn-tbl-nav-pill-sep"></div><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="end">نهاية الجدول ⟫</button></div>';

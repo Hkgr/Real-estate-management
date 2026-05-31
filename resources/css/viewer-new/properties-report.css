@@ -104,8 +104,7 @@
 ═══════════════════════════════════════════════════════════════ */
 
 .viewer-new .vn-properties-report {
-  --vn-report-toolbar-top: var(--viewer-topbar-offset, 64px);
-  --vn-properties-sticky-head-top: var(--vn-pr-table-sticky-offset, var(--vn-report-toolbar-top));
+  --vn-properties-sticky-head-top: 0px;
 }
 
 .viewer-new .vn-properties-report .vn-report-toolbar {
@@ -700,6 +699,42 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+}
+
+
+.viewer-new .vn-properties-report .vn-tbl-nav-pill,
+.viewer-new .vn-properties-report .vn-table-nav-pill,
+.viewer-new .vn-properties-report [data-table-nav-pill] {
+  position: relative;
+  inset: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  z-index: 35;
+  justify-content: flex-start;
+  pointer-events: none;
+  margin: 10px 0 0;
+  padding: 0;
+  transform: none;
+}
+
+.viewer-new .vn-properties-report .vn-tbl-nav-pill-inner {
+  max-width: 100%;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+@media (max-width: 640px) {
+  .viewer-new .vn-properties-report .vn-tbl-nav-pill,
+  .viewer-new .vn-properties-report .vn-table-nav-pill,
+  .viewer-new .vn-properties-report [data-table-nav-pill] {
+    justify-content: stretch;
+  }
+
+  .viewer-new .vn-properties-report .vn-tbl-nav-pill-inner {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
