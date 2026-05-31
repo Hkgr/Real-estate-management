@@ -549,22 +549,28 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             });
 
             const sourceThs = [...thead.querySelectorAll('th')];
+            const pinnedColumns = tableAdvancedApi?.getPinnedColumns?.() || [];
             [...headClone.querySelectorAll('th')].forEach((th, i) => {
                 const src = sourceThs[i];
                 if (!src) return;
+                const key = src.getAttribute('data-column-key') || '';
+                const isPinned = pinnedColumns.includes(key);
                 const w = Math.ceil(src.getBoundingClientRect().width);
                 th.style.display = getComputedStyle(src).display === 'none' ? 'none' : '';
                 th.style.width = `${w}px`;
                 th.style.minWidth = `${w}px`;
                 th.style.maxWidth = `${w}px`;
-                th.style.position = th.classList.contains('vn-col-pinned') ? 'sticky' : 'static';
+                th.classList.toggle('vn-col-pinned', isPinned);
+                th.classList.toggle('vn-col-pin-edge', isPinned && src.classList.contains('vn-col-pin-edge'));
+                th.style.position = isPinned ? 'sticky' : 'static';
+                th.style.right = isPinned ? src.style.right : '';
                 th.style.top = 'auto';
-                const key = src.getAttribute('data-column-key') || '';
                 th.querySelectorAll('.vn-col-pin-btn').forEach((btn) => {
                     btn.dataset.colPin = key;
-                    btn.setAttribute('aria-label', th.classList.contains('vn-col-pinned') ? 'إلغاء تثبيت العمود' : 'تثبيت العمود');
-                    btn.title = th.classList.contains('vn-col-pinned') ? 'إلغاء التثبيت' : 'تثبيت العمود';
-                    btn.setAttribute('aria-pressed', th.classList.contains('vn-col-pinned') ? 'true' : 'false');
+                    btn.classList.toggle('active', isPinned);
+                    btn.setAttribute('aria-label', isPinned ? 'إلغاء تثبيت العمود' : 'تثبيت العمود');
+                    btn.title = isPinned ? 'إلغاء التثبيت' : 'تثبيت العمود';
+                    btn.setAttribute('aria-pressed', isPinned ? 'true' : 'false');
                 });
             });
 
