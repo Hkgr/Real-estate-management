@@ -150,6 +150,19 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         let floatingRaf = 0;
         let tblNavPill = null;
         let tableAdvancedApi = null;
+        let stickyTopProbe = null;
+
+        const getStickyHeadTop = () => {
+            if (!stickyTopProbe) {
+                stickyTopProbe = document.createElement('span');
+                stickyTopProbe.setAttribute('aria-hidden', 'true');
+                stickyTopProbe.style.cssText = 'position:fixed;top:var(--vn-properties-sticky-head-top);width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none;';
+                reportRoot.appendChild(stickyTopProbe);
+            }
+
+            const resolvedTop = Number.parseFloat(getComputedStyle(stickyTopProbe).top);
+            return Number.isFinite(resolvedTop) ? Math.max(0, resolvedTop) : 64;
+        };
 
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
@@ -444,6 +457,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingHost.setAttribute('aria-hidden', 'true');
             floatingTable = document.createElement('table');
             floatingHost.appendChild(floatingTable);
+            floatingHost.addEventListener('click', (e) => {
+                const pinBtn = e.target?.closest?.('.vn-col-pin-btn');
+                if (!pinBtn || !floatingHost.contains(pinBtn)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const key = pinBtn.getAttribute('data-col-pin') || pinBtn.closest('th[data-column-key]')?.getAttribute('data-column-key');
+                if (!key) return;
+                tableAdvancedApi?.togglePinColumn?.(key);
+                requestFloatingHeadSync();
+            });
             document.body.appendChild(floatingHost);
         };
 
@@ -452,11 +475,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             if (!floatingHost) return;
             floatingHost.style.display = 'none';
             floatingHost.style.width = '';
+            floatingHost.style.maxWidth = '';
             floatingHost.style.left = '';
+            floatingHost.style.right = '';
             floatingHost.style.top = '';
+            floatingHost.style.boxSizing = '';
+            floatingHost.setAttribute('aria-hidden', 'true');
             if (floatingTable) {
+                floatingTable.style.width = '';
+                floatingTable.style.minWidth = '';
                 floatingTable.style.transform = '';
-                floatingTable.innerHTML = '';
             }
         };
 
@@ -472,14 +500,24 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 return;
             }
 
-            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-properties-sticky-head-top')) || 0;
+            const stickyTop = getStickyHeadTop();
             const rect = tableEl.getBoundingClientRect();
             const headRect = thead.getBoundingClientRect();
+            const bodyRect = (tableEl.querySelector('tbody') || tableEl).getBoundingClientRect();
+            const scrollerRect = tableScroller.getBoundingClientRect();
+            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
+            const viewportHeight = document.documentElement.clientHeight || window.innerHeight || 0;
             const headerH = Math.max(28, Math.ceil(headRect.height || 32));
-            const naturalHeadBottom = rect.top + headerH;
-            const shouldPin = rect.top < stickyTop
-                && rect.bottom > stickyTop + headerH + 2
-                && naturalHeadBottom < stickyTop + 4;
+            const hostLeft = Math.round(scrollerRect.left);
+            const hostWidth = Math.round(Math.min(scrollerRect.width, Math.max(0, viewportWidth - hostLeft)));
+            const scrollerVisible = scrollerRect.right > 0
+                && scrollerRect.left < viewportWidth
+                && scrollerRect.bottom > stickyTop + headerH
+                && scrollerRect.top < viewportHeight;
+            const shouldPin = headRect.top <= stickyTop
+                && bodyRect.bottom > stickyTop + headerH + 2
+                && scrollerVisible
+                && hostWidth >= 30;
 
             if (!shouldPin || document.fullscreenElement === reportRoot) {
                 hideFloatingHead();
@@ -487,57 +525,84 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             }
 
             ensureFloatingHost();
-            const boxRect = tableScroller.getBoundingClientRect();
-            if (boxRect.width < 30) {
-                hideFloatingHead();
-                return;
-            }
-
-            const toolbarRect = toolbarEl?.getBoundingClientRect() || boxRect;
-            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
-            const safeInset = 8;
-            const rawHostLeft = Math.min(boxRect.left, toolbarRect.left);
-            const rawHostRight = Math.max(boxRect.right, toolbarRect.right);
-            const hostLeft = Math.round(Math.max(safeInset, rawHostLeft));
-            const hostRight = Math.round(Math.min(Math.max(hostLeft + 30, rawHostRight), Math.max(hostLeft + 30, viewportWidth - safeInset)));
-            const hostWidth = Math.max(30, hostRight - hostLeft);
-            const offsetInside = Math.round(boxRect.left - hostLeft);
 
             const headClone = thead.cloneNode(true);
+            headClone.style.visibility = 'visible';
+            headClone.style.opacity = '1';
+            headClone.querySelectorAll('.vn-col-resize-handle').forEach((el) => el.remove());
+            headClone.querySelectorAll('*').forEach((el) => {
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+            });
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
             headClone.querySelectorAll('input, button, select, textarea, a').forEach((el) => {
+                const pinBtn = el.closest?.('.vn-col-pin-btn');
+                if (pinBtn) {
+                    el.removeAttribute('tabindex');
+                    el.setAttribute('aria-hidden', 'false');
+                    if ('disabled' in el) el.disabled = false;
+                    return;
+                }
                 el.setAttribute('tabindex', '-1');
                 el.setAttribute('aria-hidden', 'true');
                 if ('disabled' in el) el.disabled = true;
             });
 
             const sourceThs = [...thead.querySelectorAll('th')];
+            const pinnedColumns = tableAdvancedApi?.getPinnedColumns?.() || [];
             [...headClone.querySelectorAll('th')].forEach((th, i) => {
                 const src = sourceThs[i];
                 if (!src) return;
+                const key = src.getAttribute('data-column-key') || '';
+                const isPinned = pinnedColumns.includes(key);
                 const w = Math.ceil(src.getBoundingClientRect().width);
                 th.style.display = getComputedStyle(src).display === 'none' ? 'none' : '';
                 th.style.width = `${w}px`;
                 th.style.minWidth = `${w}px`;
                 th.style.maxWidth = `${w}px`;
-                th.style.position = 'static';
+                th.classList.toggle('vn-col-pinned', isPinned);
+                th.classList.toggle('vn-col-pin-edge', isPinned && src.classList.contains('vn-col-pin-edge'));
+                th.style.position = isPinned ? 'sticky' : 'static';
+                th.style.right = isPinned ? src.style.right : '';
                 th.style.top = 'auto';
+                th.querySelectorAll('.vn-col-pin-btn').forEach((btn) => {
+                    btn.dataset.colPin = key;
+                    btn.classList.toggle('active', isPinned);
+                    btn.setAttribute('aria-label', isPinned ? 'إلغاء تثبيت العمود' : 'تثبيت العمود');
+                    btn.title = isPinned ? 'إلغاء التثبيت' : 'تثبيت العمود';
+                    btn.setAttribute('aria-pressed', isPinned ? 'true' : 'false');
+                });
             });
 
+            const colgroupClone = tableEl.querySelector('colgroup')?.cloneNode(true) || null;
+            colgroupClone?.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+            colgroupClone?.removeAttribute('id');
+
             floatingTable.className = tableEl.className;
-            floatingTable.innerHTML = `<thead>${headClone.innerHTML}</thead>`;
+            floatingTable.innerHTML = '';
+            if (colgroupClone) floatingTable.appendChild(colgroupClone);
+            floatingTable.appendChild(headClone);
             thead.style.visibility = 'hidden';
             floatingHost.style.display = 'block';
+            floatingHost.setAttribute('aria-hidden', 'false');
             floatingHost.style.top = `${stickyTop}px`;
             floatingHost.style.left = `${hostLeft}px`;
+            floatingHost.style.right = 'auto';
             floatingHost.style.width = `${hostWidth}px`;
+            floatingHost.style.maxWidth = 'none';
+            floatingHost.style.boxSizing = 'border-box';
             floatingTable.style.width = `${Math.round(tableEl.scrollWidth)}px`;
             floatingTable.style.minWidth = `${Math.round(tableEl.scrollWidth)}px`;
-            floatingTable.style.transform = `translateX(${offsetInside - tableScroller.scrollLeft}px)`;
+            floatingTable.style.transform = '';
+
+            const floatingTableRect = floatingTable.getBoundingClientRect();
+            const realTableRect = tableEl.getBoundingClientRect();
+            const deltaX = Math.round(realTableRect.left - floatingTableRect.left);
+            floatingTable.style.transform = `translateX(${deltaX}px)`;
         };
 
         const updateStickyOffset = () => {
-            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-properties-sticky-head-top')) || 0;
+            const stickyTop = getStickyHeadTop();
             reportRoot.style.setProperty('--vn-pr-table-sticky-offset', `${stickyTop}px`);
             requestFloatingHeadSync();
         };

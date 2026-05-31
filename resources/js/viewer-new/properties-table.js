@@ -227,6 +227,7 @@ export function initPropertiesTableAdvanced(options) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'vn-col-pin-btn';
+            btn.dataset.colPin = th.getAttribute('data-column-key') || '';
             btn.setAttribute('aria-label', 'تثبيت العمود');
             btn.title = 'تثبيت العمود';
             btn.innerHTML = VN_PIN_SVG;
@@ -371,6 +372,18 @@ export function initPropertiesTableAdvanced(options) {
         unpinAllColumns();
     });
 
+    if (tableEl.dataset.pinDelegationBound !== '1') {
+        tableEl.dataset.pinDelegationBound = '1';
+        tableEl.addEventListener('click', (e) => {
+            const btn = e.target?.closest?.('.vn-col-pin-btn, [data-col-pin]');
+            if (!btn || !tableEl.contains(btn)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const key = btn.getAttribute('data-col-pin') || btn.closest('th[data-column-key]')?.getAttribute('data-column-key');
+            if (key) togglePinColumn(key);
+        });
+    }
+
     tableScroller.classList.add('vn-table-scrollport');
 
     ensureThInners();
@@ -394,6 +407,8 @@ export function initPropertiesTableAdvanced(options) {
     return {
         applyColumnPinning,
         syncTopScrollWidth,
+        togglePinColumn,
+        getPinnedColumns: () => [...pinnedCols],
         onColumnsVisibilityChange: (visibleKeys) => {
             if (!colgroupEl) return;
             const selected = new Set(visibleKeys);
