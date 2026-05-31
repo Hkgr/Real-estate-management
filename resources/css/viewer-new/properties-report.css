@@ -103,6 +103,11 @@
    TOOLBAR
 ═══════════════════════════════════════════════════════════════ */
 
+.viewer-new .vn-properties-report {
+  --vn-report-toolbar-top: var(--viewer-topbar-offset, 64px);
+  --vn-properties-sticky-head-top: var(--vn-pr-table-sticky-offset, calc(var(--vn-report-toolbar-top) + var(--vn-report-toolbar-height, 58px) + 8px));
+}
+
 .viewer-new .vn-properties-report .vn-report-toolbar {
   display: flex;
   flex-direction: column;
@@ -110,14 +115,15 @@
   gap: 12px;
   margin: 0 0 14px 0;
   position: sticky;
-  top: 64px;
-  z-index: 25;
+  top: var(--vn-report-toolbar-top);
+  z-index: 60;
   width: 100%;
   max-width: 100%;
   background: transparent;
   padding: 0;
   direction: rtl;
   box-sizing: border-box;
+  isolation: isolate;
 }
 
 [data-theme="light"] .vn-properties-report .vn-report-toolbar {
@@ -1417,9 +1423,29 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   text-overflow: clip !important;
 }
 
+.viewer-new .vn-properties-report #vn-properties-table thead th {
+  position: sticky;
+  top: var(--vn-properties-sticky-head-top);
+  z-index: 40;
+}
+
 .viewer-new .vn-properties-report .vn-properties-table thead th {
   overflow: visible;
   text-overflow: clip;
+}
+
+.viewer-new .vn-properties-report #vn-properties-table thead th.vn-col-pinned,
+.viewer-new .vn-properties-report .vn-big-table thead th.vn-col-pinned {
+  top: var(--vn-properties-sticky-head-top) !important;
+  z-index: 45 !important;
+}
+
+.viewer-new .vn-properties-report .vn-big-table tbody td.vn-col-pinned {
+  z-index: 20 !important;
+}
+
+.viewer-new .vn-pr-floating-table-head {
+  z-index: 45;
 }
 
 /* ═══════════════════════════════════════════════════════════════

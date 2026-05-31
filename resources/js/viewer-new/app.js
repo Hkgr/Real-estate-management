@@ -272,6 +272,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             ));
         };
 
+        const updateTblNavPill = () => {
+            if (!tblNavPill || !tableScroller) return;
+
+            const canScroll = tableScroller.scrollWidth > tableScroller.clientWidth + 2;
+            const hasVisibleRows = getMainDataRows().some((row) => !row.classList.contains('vn-row-hidden'));
+            tblNavPill.classList.toggle('is-visible', canScroll && hasVisibleRows);
+        };
+
+        window.updateTblNavPill = updateTblNavPill;
+
         const filterTableRowsClient = (query) => {
             const q = (query || '').trim().toLowerCase();
             getMainDataRows().forEach((row) => {
@@ -455,6 +465,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
             const thead = tableEl.querySelector('thead');
             if (!thead) {
+                hideFloatingHead();
+                return;
+            }
+
+            const firstHeaderCell = thead.querySelector('th');
+            if (firstHeaderCell && getComputedStyle(firstHeaderCell).position === 'sticky') {
                 hideFloatingHead();
                 return;
             }
