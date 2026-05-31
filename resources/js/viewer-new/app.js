@@ -150,6 +150,19 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         let floatingRaf = 0;
         let tblNavPill = null;
         let tableAdvancedApi = null;
+        let stickyTopProbe = null;
+
+        const getStickyHeadTop = () => {
+            if (!stickyTopProbe) {
+                stickyTopProbe = document.createElement('span');
+                stickyTopProbe.setAttribute('aria-hidden', 'true');
+                stickyTopProbe.style.cssText = 'position:fixed;top:var(--vn-properties-sticky-head-top);width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none;';
+                reportRoot.appendChild(stickyTopProbe);
+            }
+
+            const resolvedTop = Number.parseFloat(getComputedStyle(stickyTopProbe).top);
+            return Number.isFinite(resolvedTop) ? Math.max(0, resolvedTop) : 64;
+        };
 
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
@@ -452,8 +465,11 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             if (!floatingHost) return;
             floatingHost.style.display = 'none';
             floatingHost.style.width = '';
+            floatingHost.style.maxWidth = '';
             floatingHost.style.left = '';
+            floatingHost.style.right = '';
             floatingHost.style.top = '';
+            floatingHost.style.boxSizing = '';
             if (floatingTable) {
                 floatingTable.style.transform = '';
                 floatingTable.innerHTML = '';
@@ -472,7 +488,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 return;
             }
 
-            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-properties-sticky-head-top')) || 0;
+            const stickyTop = getStickyHeadTop();
             const rect = tableEl.getBoundingClientRect();
             const headRect = thead.getBoundingClientRect();
             const headerH = Math.max(28, Math.ceil(headRect.height || 32));
@@ -487,21 +503,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             }
 
             ensureFloatingHost();
-            const boxRect = tableScroller.getBoundingClientRect();
-            if (boxRect.width < 30) {
+            const scrollerRect = tableScroller.getBoundingClientRect();
+            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
+            const hostLeft = Math.round(scrollerRect.left);
+            const hostWidth = Math.round(Math.min(scrollerRect.width, Math.max(0, viewportWidth - hostLeft)));
+            const tableOffsetInsideScroller = Math.round(rect.left - scrollerRect.left);
+
+            if (hostWidth < 30 || scrollerRect.right <= 0 || scrollerRect.left >= viewportWidth) {
                 hideFloatingHead();
                 return;
             }
-
-            const toolbarRect = toolbarEl?.getBoundingClientRect() || boxRect;
-            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
-            const safeInset = 8;
-            const rawHostLeft = Math.min(boxRect.left, toolbarRect.left);
-            const rawHostRight = Math.max(boxRect.right, toolbarRect.right);
-            const hostLeft = Math.round(Math.max(safeInset, rawHostLeft));
-            const hostRight = Math.round(Math.min(Math.max(hostLeft + 30, rawHostRight), Math.max(hostLeft + 30, viewportWidth - safeInset)));
-            const hostWidth = Math.max(30, hostRight - hostLeft);
-            const offsetInside = Math.round(boxRect.left - hostLeft);
 
             const headClone = thead.cloneNode(true);
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
@@ -530,14 +541,17 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingHost.style.display = 'block';
             floatingHost.style.top = `${stickyTop}px`;
             floatingHost.style.left = `${hostLeft}px`;
+            floatingHost.style.right = 'auto';
             floatingHost.style.width = `${hostWidth}px`;
+            floatingHost.style.maxWidth = 'none';
+            floatingHost.style.boxSizing = 'border-box';
             floatingTable.style.width = `${Math.round(tableEl.scrollWidth)}px`;
             floatingTable.style.minWidth = `${Math.round(tableEl.scrollWidth)}px`;
-            floatingTable.style.transform = `translateX(${offsetInside - tableScroller.scrollLeft}px)`;
+            floatingTable.style.transform = `translateX(${tableOffsetInsideScroller}px)`;
         };
 
         const updateStickyOffset = () => {
-            const stickyTop = parseFloat(getComputedStyle(reportRoot).getPropertyValue('--vn-properties-sticky-head-top')) || 0;
+            const stickyTop = getStickyHeadTop();
             reportRoot.style.setProperty('--vn-pr-table-sticky-offset', `${stickyTop}px`);
             requestFloatingHeadSync();
         };

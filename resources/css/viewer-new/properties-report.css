@@ -1471,6 +1471,13 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   z-index: 55;
 }
 
+body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
+  box-sizing: border-box;
+  max-width: none !important;
+  max-inline-size: none !important;
+  right: auto !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MAIN TABLE — sticky report header
 ═══════════════════════════════════════════════════════════════ */
