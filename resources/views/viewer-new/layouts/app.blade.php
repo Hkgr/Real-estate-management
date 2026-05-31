@@ -160,7 +160,7 @@
                 max-height: none !important;
                 max-block-size: none !important;
                 overflow-x: auto !important;
-                overflow-y: hidden !important;
+                overflow-y: clip !important;
                 contain: none !important;
                 content-visibility: visible !important;
             }
