@@ -1496,10 +1496,15 @@ body.viewer-new.vn-properties-report-page .vn-properties-report .vn-table-with-s
   z-index: 20;
 }
 
+/*
+ * The properties report uses the JS-managed .vn-pr-floating-table-head for
+ * vertical fixation. Keep the real thead in normal table flow so native sticky
+ * cells do not compete with the cloned header or slice through body rows.
+ */
 body.viewer-new.vn-properties-report-page #vn-properties-table thead th {
-  position: sticky !important;
-  top: var(--vn-properties-sticky-head-top) !important;
-  z-index: 40 !important;
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
   overflow: visible;
   text-overflow: clip;
   background:
@@ -1521,7 +1526,8 @@ body.viewer-new.vn-properties-report-page #vn-properties-table thead th:hover {
 }
 
 body.viewer-new.vn-properties-report-page #vn-properties-table thead th.vn-col-pinned {
-  top: var(--vn-properties-sticky-head-top) !important;
+  position: sticky !important;
+  top: auto !important;
   z-index: 45 !important;
   background:
     linear-gradient(180deg, rgba(32,29,18,.99), rgba(13,12,8,.97)),
