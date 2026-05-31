@@ -471,6 +471,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingHost.style.top = '';
             floatingHost.style.boxSizing = '';
             if (floatingTable) {
+                floatingTable.style.width = '';
+                floatingTable.style.minWidth = '';
                 floatingTable.style.transform = '';
                 floatingTable.innerHTML = '';
             }
@@ -491,11 +493,22 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             const stickyTop = getStickyHeadTop();
             const rect = tableEl.getBoundingClientRect();
             const headRect = thead.getBoundingClientRect();
+            const bodyRect = (tableEl.querySelector('tbody') || tableEl).getBoundingClientRect();
+            const scrollerRect = tableScroller.getBoundingClientRect();
+            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
+            const viewportHeight = document.documentElement.clientHeight || window.innerHeight || 0;
             const headerH = Math.max(28, Math.ceil(headRect.height || 32));
-            const naturalHeadBottom = rect.top + headerH;
-            const shouldPin = rect.top < stickyTop
-                && rect.bottom > stickyTop + headerH + 2
-                && naturalHeadBottom < stickyTop + 4;
+            const hostLeft = Math.round(scrollerRect.left);
+            const hostWidth = Math.round(Math.min(scrollerRect.width, Math.max(0, viewportWidth - hostLeft)));
+            const tableOffsetInsideScroller = Math.round(rect.left - scrollerRect.left);
+            const scrollerVisible = scrollerRect.right > 0
+                && scrollerRect.left < viewportWidth
+                && scrollerRect.bottom > stickyTop + headerH
+                && scrollerRect.top < viewportHeight;
+            const shouldPin = headRect.top <= stickyTop
+                && bodyRect.bottom > stickyTop + headerH + 2
+                && scrollerVisible
+                && hostWidth >= 30;
 
             if (!shouldPin || document.fullscreenElement === reportRoot) {
                 hideFloatingHead();
@@ -503,16 +516,6 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             }
 
             ensureFloatingHost();
-            const scrollerRect = tableScroller.getBoundingClientRect();
-            const viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
-            const hostLeft = Math.round(scrollerRect.left);
-            const hostWidth = Math.round(Math.min(scrollerRect.width, Math.max(0, viewportWidth - hostLeft)));
-            const tableOffsetInsideScroller = Math.round(rect.left - scrollerRect.left);
-
-            if (hostWidth < 30 || scrollerRect.right <= 0 || scrollerRect.left >= viewportWidth) {
-                hideFloatingHead();
-                return;
-            }
 
             const headClone = thead.cloneNode(true);
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
