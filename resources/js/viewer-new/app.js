@@ -457,6 +457,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingHost.setAttribute('aria-hidden', 'true');
             floatingTable = document.createElement('table');
             floatingHost.appendChild(floatingTable);
+            floatingHost.addEventListener('click', (e) => {
+                const pinBtn = e.target?.closest?.('.vn-col-pin-btn');
+                if (!pinBtn || !floatingHost.contains(pinBtn)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const key = pinBtn.getAttribute('data-col-pin') || pinBtn.closest('th[data-column-key]')?.getAttribute('data-column-key');
+                if (!key) return;
+                tableAdvancedApi?.togglePinColumn?.(key);
+                requestFloatingHeadSync();
+            });
             document.body.appendChild(floatingHost);
         };
 
@@ -470,6 +480,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingHost.style.right = '';
             floatingHost.style.top = '';
             floatingHost.style.boxSizing = '';
+            floatingHost.setAttribute('aria-hidden', 'true');
             if (floatingTable) {
                 floatingTable.style.width = '';
                 floatingTable.style.minWidth = '';
@@ -518,12 +529,20 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             const headClone = thead.cloneNode(true);
             headClone.style.visibility = 'visible';
             headClone.style.opacity = '1';
+            headClone.querySelectorAll('.vn-col-resize-handle').forEach((el) => el.remove());
             headClone.querySelectorAll('*').forEach((el) => {
                 el.style.visibility = 'visible';
                 el.style.opacity = '1';
             });
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
             headClone.querySelectorAll('input, button, select, textarea, a').forEach((el) => {
+                const pinBtn = el.closest?.('.vn-col-pin-btn');
+                if (pinBtn) {
+                    el.removeAttribute('tabindex');
+                    el.setAttribute('aria-hidden', 'false');
+                    if ('disabled' in el) el.disabled = false;
+                    return;
+                }
                 el.setAttribute('tabindex', '-1');
                 el.setAttribute('aria-hidden', 'true');
                 if ('disabled' in el) el.disabled = true;
@@ -538,8 +557,15 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 th.style.width = `${w}px`;
                 th.style.minWidth = `${w}px`;
                 th.style.maxWidth = `${w}px`;
-                th.style.position = 'static';
+                th.style.position = th.classList.contains('vn-col-pinned') ? 'sticky' : 'static';
                 th.style.top = 'auto';
+                const key = src.getAttribute('data-column-key') || '';
+                th.querySelectorAll('.vn-col-pin-btn').forEach((btn) => {
+                    btn.dataset.colPin = key;
+                    btn.setAttribute('aria-label', th.classList.contains('vn-col-pinned') ? 'إلغاء تثبيت العمود' : 'تثبيت العمود');
+                    btn.title = th.classList.contains('vn-col-pinned') ? 'إلغاء التثبيت' : 'تثبيت العمود';
+                    btn.setAttribute('aria-pressed', th.classList.contains('vn-col-pinned') ? 'true' : 'false');
+                });
             });
 
             const colgroupClone = tableEl.querySelector('colgroup')?.cloneNode(true) || null;
@@ -552,6 +578,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingTable.appendChild(headClone);
             thead.style.visibility = 'hidden';
             floatingHost.style.display = 'block';
+            floatingHost.setAttribute('aria-hidden', 'false');
             floatingHost.style.top = `${stickyTop}px`;
             floatingHost.style.left = `${hostLeft}px`;
             floatingHost.style.right = 'auto';
