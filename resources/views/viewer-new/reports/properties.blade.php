@@ -132,7 +132,7 @@
         }
     @endphp
 
-    <section class="vn-properties-report" id="page-properties" data-excel-export-url="{{ route('viewer-new.reports.properties.export.excel') }}" style="--vn-pr-table-min-width: {{ $propertyTableColTotal }}px">
+    <section class="vn-properties-report" id="page-properties" style="--vn-pr-table-min-width: {{ $propertyTableColTotal }}px">
         <header class="page-header vn-report-hero">
             <div class="page-header-row vn-report-hero__row">
                 <div class="vn-report-hero__content">

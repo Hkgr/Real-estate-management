@@ -49,7 +49,6 @@ Route::middleware(['auth', 'viewer.access'])->group(function (): void {
     Route::get('/viewer-new/statistics/administrative', AdministrativeStatisticsController::class)->name('viewer-new.statistics.administrative');
     Route::get('/viewer-new/statistics/generator', StatisticsGeneratorController::class)->name('viewer-new.statistics.generator');
     Route::get('/viewer-new/reports/properties', PropertiesReportController::class)->name('viewer-new.reports.properties');
-    Route::post('/viewer-new/reports/properties/export/excel', [PropertiesReportController::class, 'exportExcel'])->name('viewer-new.reports.properties.export.excel');
     Route::get('/viewer-new/reports/owners', OwnersReportController::class)->name('viewer-new.reports.owners');
     Route::get('/viewer-new/reports/signals', SignalsReportController::class)->name('viewer-new.reports.signals');
     Route::get('/viewer-new/reports/attachments', AttachmentsReportController::class)->name('viewer-new.reports.attachments');

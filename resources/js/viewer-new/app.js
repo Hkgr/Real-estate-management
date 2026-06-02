@@ -190,14 +190,11 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isExportMenuOpen = () => exportMenu?.hidden === false;
 
-        const getExportFilename = (response) => {
-            const fallback = `properties-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
-            const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
-            const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-            if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1].replace(/["']/g, ''));
-            const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
-            return filenameMatch?.[1] || fallback;
-        };
+        const normalizeExcelText = (value) => String(value ?? '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+            .trim();
+
+        const getClientExportFilename = () => `properties-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
         const downloadBlob = (blob, filename) => {
             const url = URL.createObjectURL(blob);
@@ -210,39 +207,107 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
         };
 
+        const estimateExcelColumnWidth = (header, values) => {
+            const textLengths = [header, ...values].map((value) => normalizeExcelText(value).length);
+            const maxLength = Math.max(8, ...textLengths);
+            return Math.min(44, Math.max(12, Math.ceil(maxLength * 1.15) + 2));
+        };
+
+        const loadExcelJs = async () => {
+            const ExcelJSModule = await import('exceljs');
+            return ExcelJSModule.default || ExcelJSModule;
+        };
+
         const downloadExcelXlsx = async (exportData) => {
-            const exportUrl = reportRoot.dataset.excelExportUrl || '/viewer-new/reports/properties/export/excel';
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const filename = getClientExportFilename();
+            const headerRowNumber = 5;
+            const firstDataRowNumber = headerRowNumber + 1;
+            const columnCount = exportData.columns.length;
+            const generatedAt = new Date();
+            const thinBorder = { style: 'thin', color: { argb: 'FFE5E7EB' } };
+            const headerBorder = { style: 'thin', color: { argb: 'FFD6B85A' } };
 
             try {
-                const response = await fetch(exportUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: JSON.stringify(exportData),
-                    credentials: 'same-origin',
-                });
+                const ExcelJS = await loadExcelJs();
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'Viewer New Properties Report';
+                workbook.created = generatedAt;
+                workbook.modified = generatedAt;
 
-                if (!response.ok) {
-                    let message = 'تعذر إنشاء ملف Excel. يرجى المحاولة مرة أخرى.';
-                    try {
-                        const errorPayload = await response.clone().json();
-                        message = errorPayload?.message || message;
-                    } catch (_) {}
-                    throw new Error(message);
+                const worksheet = workbook.addWorksheet('تقرير العقارات', {
+                    views: [{ rightToLeft: true, state: 'frozen', ySplit: headerRowNumber }],
+                    properties: { defaultRowHeight: 24 },
+                });
+                worksheet.views = [{ rightToLeft: true, state: 'frozen', ySplit: headerRowNumber }];
+
+                if (columnCount > 1) {
+                    worksheet.mergeCells(1, 1, 1, columnCount);
+                    worksheet.mergeCells(2, 1, 2, columnCount);
+                    worksheet.mergeCells(3, 1, 3, columnCount);
                 }
 
-                const blob = await response.blob();
-                const filename = getExportFilename(response);
+                worksheet.getCell(1, 1).value = 'تقرير العقارات';
+                worksheet.getCell(2, 1).value = `تاريخ الإنشاء: ${generatedAt.toLocaleString('ar')}`;
+                worksheet.getCell(3, 1).value = `عدد الصفوف: ${exportData.rows.length}`;
+
+                [1, 2, 3, 4].forEach((rowNumber) => {
+                    const row = worksheet.getRow(rowNumber);
+                    row.height = rowNumber === 1 ? 30 : 24;
+                    for (let columnIndex = 1; columnIndex <= columnCount; columnIndex += 1) {
+                        const cell = row.getCell(columnIndex);
+                        cell.font = { name: 'Arial', bold: rowNumber === 1, size: rowNumber === 1 ? 16 : 11, color: { argb: rowNumber === 1 ? 'FF1F2937' : 'FF4B5563' } };
+                        cell.alignment = { vertical: 'middle', horizontal: rowNumber === 1 ? 'center' : 'right', readingOrder: 'rtl', wrapText: true };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowNumber === 1 ? 'FFF8E7B0' : 'FFFFFBEB' } };
+                        cell.numFmt = '@';
+                    }
+                });
+
+                const headerRow = worksheet.getRow(headerRowNumber);
+                headerRow.height = 30;
+                exportData.columns.forEach(({ header }, index) => {
+                    const cell = headerRow.getCell(index + 1);
+                    cell.value = normalizeExcelText(header);
+                    cell.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF7C5A12' } };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center', readingOrder: 'rtl', wrapText: true };
+                    cell.border = { top: headerBorder, right: headerBorder, bottom: headerBorder, left: headerBorder };
+                    cell.numFmt = '@';
+                });
+
+                exportData.rows.forEach((exportRow, rowIndex) => {
+                    const worksheetRow = worksheet.getRow(firstDataRowNumber + rowIndex);
+                    worksheetRow.height = 24;
+                    exportData.columns.forEach((_, columnIndex) => {
+                        const cell = worksheetRow.getCell(columnIndex + 1);
+                        cell.value = normalizeExcelText(exportRow.values[columnIndex]);
+                        cell.font = { name: 'Arial', color: { argb: 'FF111827' } };
+                        cell.alignment = { vertical: 'middle', horizontal: 'right', readingOrder: 'rtl', wrapText: true };
+                        cell.border = { top: thinBorder, right: thinBorder, bottom: thinBorder, left: thinBorder };
+                        cell.numFmt = '@';
+                        if (rowIndex % 2 === 1) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8E1' } };
+                        }
+                    });
+                    worksheetRow.commit?.();
+                });
+
+                exportData.columns.forEach(({ header }, columnIndex) => {
+                    const values = exportData.rows.map((row) => row.values[columnIndex]);
+                    worksheet.getColumn(columnIndex + 1).width = estimateExcelColumnWidth(header, values);
+                });
+
+                worksheet.autoFilter = {
+                    from: { row: headerRowNumber, column: 1 },
+                    to: { row: headerRowNumber, column: columnCount },
+                };
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 downloadBlob(blob, filename);
                 console.info('[viewer-new properties export]', {
                     filename,
-                    format: 'xlsx',
-                    mimeType: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    format: 'xlsx-client',
+                    mimeType: blob.type,
                     mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
                     selectedOnly: exportData.selectedOnly,
                     selectedRowIds: exportData.selectedRowIds,
@@ -250,8 +315,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                     rowCount: exportData.rows.length,
                 });
             } catch (error) {
-                console.error('[viewer-new properties export] فشل تصدير Excel', error);
-                window.alert(error?.message || 'تعذر إنشاء ملف Excel. يرجى المحاولة مرة أخرى.');
+                console.error('[viewer-new properties export] فشل إنشاء ملف Excel داخل المتصفح', error);
+                window.alert('تعذر إنشاء ملف Excel داخل المتصفح. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
             }
         };
 
@@ -933,7 +998,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             getVisibleColumnKeys: () => tableAdvancedApi?.getVisibleColumnKeys?.() || [],
             getExportRows: () => tableAdvancedApi?.getExportRows?.() || null,
             exportExcel: exportPropertiesExcel,
-            getExportFormat: () => ({ extension: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+            getExportFormat: () => ({ extension: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', format: 'xlsx-client' }),
             openMenu: () => setExportMenuOpen(true),
             closeMenu: () => setExportMenuOpen(false),
         };
