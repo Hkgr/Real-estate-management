@@ -8,6 +8,7 @@ const VN_COLGROUP_ID = 'vn-properties-colgroup';
 const VN_PIN_KEY = 'viewer_new_properties_pinned_cols';
 const VN_WIDTH_KEY = 'viewer_new_properties_col_widths';
 const LOCKED_RESIZE_KEYS = new Set(['id']);
+const EXPORT_EXCLUDED_COLUMN_KEYS = new Set(['actions']);
 const DEFAULT_COL_MIN_WIDTHS = {
     id: 96,
     property_name: 200,
@@ -110,6 +111,59 @@ export function initPropertiesTableAdvanced(options) {
     };
 
     const getVisibleMainRows = () => getMainRows().filter(isRowVisible);
+
+    const cleanExportText = (node) => {
+        if (!node) return '';
+        const clone = node.cloneNode(true);
+        clone.querySelectorAll([
+            'button',
+            'input',
+            'select',
+            'textarea',
+            'script',
+            'style',
+            '.vn-col-pin-btn',
+            '.vn-col-reorder-grip',
+            '.vn-col-resize-handle',
+            '.vn-row-selection-cell',
+            '[aria-hidden="true"]',
+        ].join(',')).forEach((el) => el.remove());
+        return (clone.textContent || '')
+            .replace(/\u00a0/g, ' ')
+            .replace(/[ \t\r\f\v]+/g, ' ')
+            .replace(/\n\s*/g, ' ')
+            .trim();
+    };
+
+    const getVisibleColumnDefinitions = () => [...tableEl.querySelectorAll('thead th[data-column-key]')]
+        .filter((th) => {
+            const key = th.getAttribute('data-column-key') || '';
+            return key && !EXPORT_EXCLUDED_COLUMN_KEYS.has(key) && getComputedStyle(th).display !== 'none';
+        })
+        .map((th) => {
+            const key = th.getAttribute('data-column-key') || '';
+            const label = cleanExportText(th.querySelector('.vn-th-label')) || cleanExportText(th) || key;
+            return { key, header: label };
+        });
+
+    const getExportRows = () => {
+        const columns = getVisibleColumnDefinitions();
+        const allRows = getMainRows();
+        const selectedOnly = selectedRowIds.size > 0;
+        const rowsToExport = selectedOnly
+            ? allRows.filter((row, index) => selectedRowIds.has(getRowId(row, index)))
+            : getVisibleMainRows();
+
+        return {
+            selectedOnly,
+            selectedRowIds: [...selectedRowIds],
+            columns,
+            rows: rowsToExport.map((row, index) => ({
+                id: getRowId(row, index),
+                values: columns.map(({ key }) => cleanExportText(row.querySelector(`:scope > td[data-column-key="${key}"]`))),
+            })),
+        };
+    };
 
     const syncDetailRowColspans = (includeSelectionColumn) => {
         tableEl.querySelectorAll('tbody tr').forEach((row) => {
@@ -840,6 +894,8 @@ export function initPropertiesTableAdvanced(options) {
         startColumnReorderDrag,
         enableRowSelectionMode,
         getSelectedRowIds: () => [...selectedRowIds],
+        getVisibleColumnKeys: () => getVisibleColumnDefinitions().map(({ key }) => key),
+        getExportRows,
         clearSelectedRows,
         syncRowSelectionHeaderState,
         setAllVisibleRowsSelected,
