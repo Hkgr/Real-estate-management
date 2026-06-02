@@ -150,6 +150,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const tableScroller = reportRoot.querySelector('.vn-properties-table');
         const toolbarEl = reportRoot.querySelector('.vn-report-toolbar');
         const fullscreenBtn = reportRoot.querySelector('[data-properties-fullscreen]');
+        const exportMenuRoot = reportRoot.querySelector('[data-export-menu-root]');
+        const exportToggleBtn = reportRoot.querySelector('[data-export-toggle]');
+        const exportMenu = reportRoot.querySelector('[data-export-menu]');
+        const exportExcelBtn = reportRoot.querySelector('[data-export-excel]');
 
         const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
         const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
@@ -172,6 +176,66 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
             const resolvedTop = Number.parseFloat(getComputedStyle(stickyTopProbe).top);
             return Number.isFinite(resolvedTop) ? Math.max(0, resolvedTop) : 64;
+        };
+
+        const setExportMenuOpen = (open) => {
+            if (!exportMenu || !exportToggleBtn || !exportMenuRoot) return;
+            const isOpen = !!open;
+            exportMenu.hidden = !isOpen;
+            exportMenu.classList.toggle('is-open', isOpen);
+            exportMenuRoot.classList.toggle('vn-report-export-menu--open', isOpen);
+            exportToggleBtn.classList.toggle('vn-report-toolbar-button--active', isOpen);
+            exportToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        };
+
+        const isExportMenuOpen = () => exportMenu?.hidden === false;
+
+        const normalizeCsvValue = (value) => {
+            const text = String(value ?? '')
+                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+                .replace(/\r?\n|\r/g, ' ')
+                .replace(/\t/g, ' ')
+                .trim();
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+
+        const downloadExcelCsv = (exportData) => {
+            const today = new Date().toISOString().slice(0, 10);
+            const filename = `properties-report-${today}.csv`;
+            const rows = [
+                exportData.columns.map(({ header }) => normalizeCsvValue(header)).join('\t'),
+                ...exportData.rows.map((row) => row.values.map(normalizeCsvValue).join('\t')),
+            ];
+            const content = `\ufeff${rows.join('\r\n')}`;
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            console.info('[viewer-new properties export]', {
+                filename,
+                format: 'csv',
+                delimiter: 'tab',
+                mimeType: 'text/csv;charset=utf-8;',
+                mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
+                selectedRowIds: exportData.selectedRowIds,
+                visibleColumnKeys: exportData.columns.map(({ key }) => key),
+                rowCount: exportData.rows.length,
+            });
+        };
+
+        const exportPropertiesExcel = () => {
+            const exportData = tableAdvancedApi?.getExportRows?.();
+            if (!exportData || exportData.rows.length === 0 || exportData.columns.length === 0) {
+                window.alert('لا توجد صفوف قابلة للتصدير');
+                console.info('[viewer-new properties export] لا توجد صفوف قابلة للتصدير', exportData || null);
+                return;
+            }
+            downloadExcelCsv(exportData);
         };
 
         const setColumnsPopoverOpen = (open) => {
@@ -330,9 +394,20 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         toggleBtn?.addEventListener('click', () => {
             setPanelOpen(!panel?.classList.contains('is-open'));
         });
+        exportToggleBtn?.addEventListener('click', () => {
+            setExportMenuOpen(!isExportMenuOpen());
+            setColumnsPopoverOpen(false);
+        });
+        exportExcelBtn?.addEventListener('click', () => {
+            setExportMenuOpen(false);
+            exportPropertiesExcel();
+        });
         columnsToggleBtn?.addEventListener('click', () => {
             setColumnsPopoverOpen(!isColumnsPopoverOpen());
-            if (isColumnsPopoverOpen()) setColumnReorderMode(false);
+            if (isColumnsPopoverOpen()) {
+                setColumnReorderMode(false);
+                setExportMenuOpen(false);
+            }
         });
         columnOrderToggleBtn?.addEventListener('click', () => {
             setColumnReorderMode(!isColumnReorderMode());
@@ -363,9 +438,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         });
 
         document.addEventListener('click', (event) => {
-            if (!isColumnsPopoverOpen()) return;
             const target = event.target;
             if (!(target instanceof Element)) return;
+            if (isExportMenuOpen() && !exportMenuRoot?.contains(target)) setExportMenuOpen(false);
+            if (!isColumnsPopoverOpen()) return;
             if (columnsMenu?.contains(target) || columnsPopover?.contains(target)) return;
             setColumnsPopoverOpen(false);
         });
@@ -472,6 +548,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
             const activeEl = document.activeElement;
+            if (isExportMenuOpen()) { setExportMenuOpen(false); exportToggleBtn?.focus({ preventScroll: true }); return; }
             if (isColumnsPopoverOpen()) { setColumnsPopoverOpen(false); columnsToggleBtn?.focus({ preventScroll: true }); return; }
             if (activeEl === searchInput) return;
             if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLSelectElement || activeEl instanceof HTMLTextAreaElement) { activeEl.blur(); return; }
@@ -823,6 +900,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         });
 
         applyColumnOrder(orderFromStorage, false);
+
+        window.vnPropertiesReportExport = {
+            getSelectedRowIds: () => tableAdvancedApi?.getSelectedRowIds?.() || [],
+            getVisibleColumnKeys: () => tableAdvancedApi?.getVisibleColumnKeys?.() || [],
+            getExportRows: () => tableAdvancedApi?.getExportRows?.() || null,
+            exportExcel: exportPropertiesExcel,
+            getExportFormat: () => ({ extension: 'csv', mimeType: 'text/csv;charset=utf-8;', delimiter: 'tab' }),
+            openMenu: () => setExportMenuOpen(true),
+            closeMenu: () => setExportMenuOpen(false),
+        };
 
         ensureFloatingHost();
         hideFloatingHead();
