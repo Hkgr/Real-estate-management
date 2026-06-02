@@ -154,6 +154,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const exportToggleBtn = reportRoot.querySelector('[data-export-toggle]');
         const exportMenu = reportRoot.querySelector('[data-export-menu]');
         const exportExcelBtn = reportRoot.querySelector('[data-export-excel]');
+        const exportPdfBtn = reportRoot.querySelector('[data-export-pdf]');
 
         const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
         const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
@@ -190,24 +191,13 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isExportMenuOpen = () => exportMenu?.hidden === false;
 
-        const normalizeCsvValue = (value) => {
-            const text = String(value ?? '')
-                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
-                .replace(/\r?\n|\r/g, ' ')
-                .replace(/\t/g, ' ')
-                .trim();
-            return `"${text.replace(/"/g, '""')}"`;
-        };
+        const normalizeExcelText = (value) => String(value ?? '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+            .trim();
 
-        const downloadExcelCsv = (exportData) => {
-            const today = new Date().toISOString().slice(0, 10);
-            const filename = `properties-report-${today}.csv`;
-            const rows = [
-                exportData.columns.map(({ header }) => normalizeCsvValue(header)).join('\t'),
-                ...exportData.rows.map((row) => row.values.map(normalizeCsvValue).join('\t')),
-            ];
-            const content = `\ufeff${rows.join('\r\n')}`;
-            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const getClientExportFilename = () => `properties-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        const downloadBlob = (blob, filename) => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -216,12 +206,218 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             link.click();
             link.remove();
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+
+        const estimateExcelColumnWidth = (header, values) => {
+            const textLengths = [header, ...values].map((value) => normalizeExcelText(value).length);
+            const maxLength = Math.max(8, ...textLengths);
+            return Math.min(44, Math.max(12, Math.ceil(maxLength * 1.15) + 2));
+        };
+
+        const loadExcelJs = async () => {
+            const ExcelJSModule = await import('exceljs');
+            return ExcelJSModule.default || ExcelJSModule;
+        };
+
+        const downloadExcelXlsx = async (exportData) => {
+            const filename = getClientExportFilename();
+            const headerRowNumber = 5;
+            const firstDataRowNumber = headerRowNumber + 1;
+            const columnCount = exportData.columns.length;
+            const generatedAt = new Date();
+            const thinBorder = { style: 'thin', color: { argb: 'FFE5E7EB' } };
+            const headerBorder = { style: 'thin', color: { argb: 'FFD6B85A' } };
+
+            try {
+                const ExcelJS = await loadExcelJs();
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'Viewer New Properties Report';
+                workbook.created = generatedAt;
+                workbook.modified = generatedAt;
+
+                const worksheet = workbook.addWorksheet('تقرير العقارات', {
+                    views: [{ rightToLeft: true, state: 'frozen', ySplit: headerRowNumber }],
+                    properties: { defaultRowHeight: 24 },
+                });
+                worksheet.views = [{ rightToLeft: true, state: 'frozen', ySplit: headerRowNumber }];
+
+                if (columnCount > 1) {
+                    worksheet.mergeCells(1, 1, 1, columnCount);
+                    worksheet.mergeCells(2, 1, 2, columnCount);
+                    worksheet.mergeCells(3, 1, 3, columnCount);
+                }
+
+                worksheet.getCell(1, 1).value = 'تقرير العقارات';
+                worksheet.getCell(2, 1).value = `تاريخ الإنشاء: ${generatedAt.toLocaleString('ar')}`;
+                worksheet.getCell(3, 1).value = `عدد الصفوف: ${exportData.rows.length}`;
+
+                [1, 2, 3, 4].forEach((rowNumber) => {
+                    const row = worksheet.getRow(rowNumber);
+                    row.height = rowNumber === 1 ? 30 : 24;
+                    for (let columnIndex = 1; columnIndex <= columnCount; columnIndex += 1) {
+                        const cell = row.getCell(columnIndex);
+                        cell.font = { name: 'Arial', bold: rowNumber === 1, size: rowNumber === 1 ? 16 : 11, color: { argb: rowNumber === 1 ? 'FF1F2937' : 'FF4B5563' } };
+                        cell.alignment = { vertical: 'middle', horizontal: rowNumber === 1 ? 'center' : 'right', readingOrder: 'rtl', wrapText: true };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowNumber === 1 ? 'FFF8E7B0' : 'FFFFFBEB' } };
+                        cell.numFmt = '@';
+                    }
+                });
+
+                const headerRow = worksheet.getRow(headerRowNumber);
+                headerRow.height = 30;
+                exportData.columns.forEach(({ header }, index) => {
+                    const cell = headerRow.getCell(index + 1);
+                    cell.value = normalizeExcelText(header);
+                    cell.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF7C5A12' } };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center', readingOrder: 'rtl', wrapText: true };
+                    cell.border = { top: headerBorder, right: headerBorder, bottom: headerBorder, left: headerBorder };
+                    cell.numFmt = '@';
+                });
+
+                exportData.rows.forEach((exportRow, rowIndex) => {
+                    const worksheetRow = worksheet.getRow(firstDataRowNumber + rowIndex);
+                    worksheetRow.height = 24;
+                    exportData.columns.forEach((_, columnIndex) => {
+                        const cell = worksheetRow.getCell(columnIndex + 1);
+                        cell.value = normalizeExcelText(exportRow.values[columnIndex]);
+                        cell.font = { name: 'Arial', color: { argb: 'FF111827' } };
+                        cell.alignment = { vertical: 'middle', horizontal: 'right', readingOrder: 'rtl', wrapText: true };
+                        cell.border = { top: thinBorder, right: thinBorder, bottom: thinBorder, left: thinBorder };
+                        cell.numFmt = '@';
+                        if (rowIndex % 2 === 1) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8E1' } };
+                        }
+                    });
+                    worksheetRow.commit?.();
+                });
+
+                exportData.columns.forEach(({ header }, columnIndex) => {
+                    const values = exportData.rows.map((row) => row.values[columnIndex]);
+                    worksheet.getColumn(columnIndex + 1).width = estimateExcelColumnWidth(header, values);
+                });
+
+                worksheet.autoFilter = {
+                    from: { row: headerRowNumber, column: 1 },
+                    to: { row: headerRowNumber, column: columnCount },
+                };
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                downloadBlob(blob, filename);
+                console.info('[viewer-new properties export]', {
+                    filename,
+                    format: 'xlsx-client',
+                    mimeType: blob.type,
+                    mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
+                    selectedOnly: exportData.selectedOnly,
+                    selectedRowIds: exportData.selectedRowIds,
+                    visibleColumnKeys: exportData.columns.map(({ key }) => key),
+                    rowCount: exportData.rows.length,
+                });
+            } catch (error) {
+                console.error('[viewer-new properties export] فشل إنشاء ملف Excel داخل المتصفح', error);
+                window.alert('تعذر إنشاء ملف Excel داخل المتصفح. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+            }
+        };
+
+        const escapeHtml = (value) => normalizeExcelText(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        const buildPropertiesPdfHtml = (exportData) => {
+            const generatedAt = new Date();
+            const exportMode = exportData.selectedOnly ? 'الصفوف المحددة' : 'الصفوف الظاهرة';
+            const headerCells = exportData.columns
+                .map(({ header }) => `<th scope="col">${escapeHtml(header)}</th>`)
+                .join('');
+            const bodyRows = exportData.rows
+                .map((row) => `<tr>${exportData.columns.map((_, index) => `<td>${escapeHtml(row.values[index])}</td>`).join('')}</tr>`)
+                .join('');
+
+            return `<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير العقارات</title>
+<style>
+@page { size: A4 landscape; margin: 12mm; }
+* { box-sizing: border-box; }
+html, body { direction: rtl; background: #fff; color: #111827; font-family: Arial, Tahoma, sans-serif; }
+body { margin: 0; font-size: 12px; line-height: 1.55; }
+.report-shell { width: 100%; }
+.report-header { border-bottom: 3px solid #7C5A12; margin-bottom: 14px; padding-bottom: 10px; }
+h1 { margin: 0 0 8px; color: #1f2937; font-size: 24px; font-weight: 800; }
+.report-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; color: #374151; }
+.report-meta li { border: 1px solid #ead89b; background: #fffbeb; border-radius: 8px; padding: 5px 9px; }
+.table-wrap { width: 100%; overflow: visible; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th, td { border: 1px solid #d6d6d6; padding: 6px 8px; text-align: right; vertical-align: top; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+thead th { background: #7C5A12; color: #fff; font-weight: 700; text-align: center; vertical-align: middle; }
+tbody tr:nth-child(even) td { background: #fff8e1; }
+tbody tr:nth-child(odd) td { background: #fff; }
+.print-hint { margin-top: 12px; color: #6b7280; font-size: 10px; }
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-header { break-after: avoid; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  .print-hint { display: none; }
+}
+</style>
+</head>
+<body>
+  <main class="report-shell">
+    <header class="report-header">
+      <h1>تقرير العقارات</h1>
+      <ul class="report-meta">
+        <li>تاريخ الإنشاء: ${escapeHtml(generatedAt.toLocaleString('ar'))}</li>
+        <li>عدد الصفوف: ${escapeHtml(exportData.rows.length)}</li>
+        <li>نطاق التصدير: ${escapeHtml(exportMode)}</li>
+      </ul>
+    </header>
+    <section class="table-wrap" aria-label="تقرير العقارات">
+      <table>
+        <thead><tr>${headerCells}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </section>
+    <p class="print-hint">يمكن حفظ هذا التقرير كملف PDF من نافذة الطباعة في المتصفح.</p>
+  </main>
+</body>
+</html>`;
+        };
+
+        const printPropertiesPdf = (exportData) => {
+            const printWindow = window.open('', '_blank', 'width=1280,height=900,scrollbars=yes,resizable=yes');
+            if (!printWindow) {
+                window.alert('تعذر فتح نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة ثم المحاولة مرة أخرى.');
+                return;
+            }
+
+            const html = buildPropertiesPdfHtml(exportData);
+            printWindow.document.open();
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            window.setTimeout(() => {
+                try {
+                    printWindow.focus();
+                    printWindow.print();
+                } catch (error) {
+                    console.error('[viewer-new properties export] فشل فتح نافذة طباعة PDF', error);
+                    window.alert('تعذر فتح نافذة الطباعة. يرجى المحاولة مرة أخرى.');
+                }
+            }, 350);
+
             console.info('[viewer-new properties export]', {
-                filename,
-                format: 'csv',
-                delimiter: 'tab',
-                mimeType: 'text/csv;charset=utf-8;',
+                format: 'pdf-print-client',
                 mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
+                selectedOnly: exportData.selectedOnly,
                 selectedRowIds: exportData.selectedRowIds,
                 visibleColumnKeys: exportData.columns.map(({ key }) => key),
                 rowCount: exportData.rows.length,
@@ -235,7 +431,17 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 console.info('[viewer-new properties export] لا توجد صفوف قابلة للتصدير', exportData || null);
                 return;
             }
-            downloadExcelCsv(exportData);
+            downloadExcelXlsx(exportData);
+        };
+
+        const exportPropertiesPdf = () => {
+            const exportData = tableAdvancedApi?.getExportRows?.();
+            if (!exportData || exportData.rows.length === 0 || exportData.columns.length === 0) {
+                window.alert('لا توجد صفوف قابلة للتصدير');
+                console.info('[viewer-new properties export] لا توجد صفوف قابلة للتصدير', exportData || null);
+                return;
+            }
+            printPropertiesPdf(exportData);
         };
 
         const setColumnsPopoverOpen = (open) => {
@@ -401,6 +607,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         exportExcelBtn?.addEventListener('click', () => {
             setExportMenuOpen(false);
             exportPropertiesExcel();
+        });
+        exportPdfBtn?.addEventListener('click', () => {
+            setExportMenuOpen(false);
+            exportPropertiesPdf();
         });
         columnsToggleBtn?.addEventListener('click', () => {
             setColumnsPopoverOpen(!isColumnsPopoverOpen());
@@ -906,7 +1116,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             getVisibleColumnKeys: () => tableAdvancedApi?.getVisibleColumnKeys?.() || [],
             getExportRows: () => tableAdvancedApi?.getExportRows?.() || null,
             exportExcel: exportPropertiesExcel,
-            getExportFormat: () => ({ extension: 'csv', mimeType: 'text/csv;charset=utf-8;', delimiter: 'tab' }),
+            exportPdf: exportPropertiesPdf,
+            getExportFormat: () => ({ extension: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', format: 'xlsx-client' }),
             openMenu: () => setExportMenuOpen(true),
             closeMenu: () => setExportMenuOpen(false),
         };

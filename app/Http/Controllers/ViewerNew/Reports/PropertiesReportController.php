@@ -63,6 +63,7 @@ class PropertiesReportController extends Controller
     }
 
 
+
     private function buildOperationsForProperties(array $propertyIds): array
     {
         if ($propertyIds === [] || ! $this->canLoadOperations()) {
