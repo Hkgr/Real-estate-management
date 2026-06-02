@@ -273,5 +273,7 @@
 
         @include('viewer-new.partials.quick-settings')
     </div>
+    @yield('extra_scripts')
+    @stack('scripts')
 </body>
 </html>

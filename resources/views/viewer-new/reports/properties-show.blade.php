@@ -4,6 +4,9 @@
 @section('extra_styles')
     @vite(['resources/css/viewer-new/property-show.css'])
 @endsection
+@section('extra_scripts')
+    @vite(['resources/js/viewer-new/property-show.js'])
+@endsection
 @section('topbar_title', 'بطاقة العقار')
 @section('active', 'reports')
 @section('back_url', route('viewer-new.reports.properties'))
@@ -79,10 +82,13 @@
         ];
     @endphp
 
-    <section class="vn-property-show" aria-labelledby="vn-property-show-title">
+    <section class="vn-property-show" aria-labelledby="vn-property-show-title" data-property-print-root data-property-id="{{ $property->id ?? '' }}" data-property-record-number="{{ $recordNumber }}">
         <header class="vn-property-show__hero">
             <div>
-                <a href="{{ route('viewer-new.reports.properties') }}" class="vn-property-show__back">← العودة إلى تقرير العقارات</a>
+                <div class="vn-property-show__actions" data-print-exclude>
+                    <a href="{{ route('viewer-new.reports.properties') }}" class="vn-property-show__back">← العودة إلى تقرير العقارات</a>
+                    <button type="button" class="vn-property-show__pdf-button" data-property-pdf-export aria-label="تصدير بطاقة العقار بصيغة PDF">تصدير PDF</button>
+                </div>
                 <p class="vn-property-show__eyebrow">بطاقة عقار مستقلة</p>
                 <h1 id="vn-property-show-title">بطاقة العقار</h1>
                 <p class="vn-property-show__record">رقم المحضر: <strong>{{ $recordNumber }}</strong></p>
@@ -286,7 +292,7 @@
                                 <th>اسم الملف</th>
                                 <th>النوع</th>
                                 <th>تاريخ الإصدار</th>
-                                <th>إجراء</th>
+                                <th data-print-exclude>إجراء</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -295,7 +301,7 @@
                                     <td>{{ $valueOrEmpty($file->file_name ?? null) }}</td>
                                     <td>{{ filled($file->mime_type ?? null) ? $file->mime_type : 'ملف' }}</td>
                                     <td>{{ $formatDate($file->issued_at ?? null) }}</td>
-                                    <td>
+                                    <td data-print-exclude>
                                         @if ($canDownloadPropertyFiles)
                                             <a class="vn-property-show-table__action" href="{{ route('property-card-files.download', $file) }}" aria-label="تحميل المرفق {{ $valueOrEmpty($file->file_name ?? null) }}">تحميل</a>
                                         @else
