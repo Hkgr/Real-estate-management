@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers\ViewerNew\Reports;
 
+use App\Exports\ViewerNew\PropertiesReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\PropertyCard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use App\Models\PropertyOperation;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PropertiesReportController extends Controller
 {
@@ -60,6 +64,76 @@ class PropertiesReportController extends Controller
             'filesByProperty' => $filesByProperty,
             'installmentsByProperty' => $installmentsByProperty,
         ]);
+    }
+
+
+    public function exportExcel(Request $request): BinaryFileResponse
+    {
+        $validated = $request->validate([
+            'columns' => ['required', 'array', 'min:1', 'max:80'],
+            'columns.*.key' => ['required', 'string', 'max:120'],
+            'columns.*.header' => ['required', 'string', 'max:255'],
+            'rows' => ['present', 'array', 'max:5000'],
+            'rows.*.id' => ['nullable'],
+            'rows.*.values' => ['required', 'array', 'max:80'],
+            'rows.*.values.*' => ['nullable'],
+            'selectedOnly' => ['nullable', 'boolean'],
+            'selectedRowIds' => ['nullable', 'array', 'max:5000'],
+            'selectedRowIds.*' => ['nullable'],
+        ]);
+
+        $columns = collect($validated['columns'])
+            ->map(fn (array $column): array => [
+                'key' => trim((string) $column['key']),
+                'header' => $this->normalizeExcelCellValue($column['header']),
+            ])
+            ->filter(fn (array $column): bool => $column['key'] !== '' && $column['header'] !== '')
+            ->values()
+            ->all();
+
+        abort_if($columns === [], 422, 'لا توجد أعمدة قابلة للتصدير.');
+
+        $columnCount = count($columns);
+        $rows = collect($validated['rows'])
+            ->map(function (array $row) use ($columnCount): array {
+                $values = array_values($row['values'] ?? []);
+
+                return array_map(
+                    fn ($value): string => $this->normalizeExcelCellValue($value),
+                    array_pad(array_slice($values, 0, $columnCount), $columnCount, '')
+                );
+            })
+            ->values()
+            ->all();
+
+        $generatedAt = Carbon::now(config('app.timezone'));
+        $filename = 'properties-report-'.$generatedAt->format('Y-m-d').'.xlsx';
+
+        return Excel::download(
+            new PropertiesReportExport($columns, $rows, $generatedAt),
+            $filename,
+            \Maatwebsite\Excel\Excel::XLSX,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]
+        );
+    }
+
+    private function normalizeExcelCellValue(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'نعم' : 'لا';
+        }
+
+        if (is_scalar($value)) {
+            return trim((string) $value);
+        }
+
+        return trim(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
     }
 
 

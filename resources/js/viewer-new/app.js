@@ -190,24 +190,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isExportMenuOpen = () => exportMenu?.hidden === false;
 
-        const normalizeCsvValue = (value) => {
-            const text = String(value ?? '')
-                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
-                .replace(/\r?\n|\r/g, ' ')
-                .replace(/\t/g, ' ')
-                .trim();
-            return `"${text.replace(/"/g, '""')}"`;
+        const getExportFilename = (response) => {
+            const fallback = `properties-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
+            const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1].replace(/["']/g, ''));
+            const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+            return filenameMatch?.[1] || fallback;
         };
 
-        const downloadExcelCsv = (exportData) => {
-            const today = new Date().toISOString().slice(0, 10);
-            const filename = `properties-report-${today}.csv`;
-            const rows = [
-                exportData.columns.map(({ header }) => normalizeCsvValue(header)).join('\t'),
-                ...exportData.rows.map((row) => row.values.map(normalizeCsvValue).join('\t')),
-            ];
-            const content = `\ufeff${rows.join('\r\n')}`;
-            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const downloadBlob = (blob, filename) => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -216,16 +208,51 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             link.click();
             link.remove();
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-            console.info('[viewer-new properties export]', {
-                filename,
-                format: 'csv',
-                delimiter: 'tab',
-                mimeType: 'text/csv;charset=utf-8;',
-                mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
-                selectedRowIds: exportData.selectedRowIds,
-                visibleColumnKeys: exportData.columns.map(({ key }) => key),
-                rowCount: exportData.rows.length,
-            });
+        };
+
+        const downloadExcelXlsx = async (exportData) => {
+            const exportUrl = reportRoot.dataset.excelExportUrl || '/viewer-new/reports/properties/export/excel';
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            try {
+                const response = await fetch(exportUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify(exportData),
+                    credentials: 'same-origin',
+                });
+
+                if (!response.ok) {
+                    let message = 'تعذر إنشاء ملف Excel. يرجى المحاولة مرة أخرى.';
+                    try {
+                        const errorPayload = await response.clone().json();
+                        message = errorPayload?.message || message;
+                    } catch (_) {}
+                    throw new Error(message);
+                }
+
+                const blob = await response.blob();
+                const filename = getExportFilename(response);
+                downloadBlob(blob, filename);
+                console.info('[viewer-new properties export]', {
+                    filename,
+                    format: 'xlsx',
+                    mimeType: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
+                    selectedOnly: exportData.selectedOnly,
+                    selectedRowIds: exportData.selectedRowIds,
+                    visibleColumnKeys: exportData.columns.map(({ key }) => key),
+                    rowCount: exportData.rows.length,
+                });
+            } catch (error) {
+                console.error('[viewer-new properties export] فشل تصدير Excel', error);
+                window.alert(error?.message || 'تعذر إنشاء ملف Excel. يرجى المحاولة مرة أخرى.');
+            }
         };
 
         const exportPropertiesExcel = () => {
@@ -235,7 +262,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 console.info('[viewer-new properties export] لا توجد صفوف قابلة للتصدير', exportData || null);
                 return;
             }
-            downloadExcelCsv(exportData);
+            downloadExcelXlsx(exportData);
         };
 
         const setColumnsPopoverOpen = (open) => {
@@ -906,7 +933,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             getVisibleColumnKeys: () => tableAdvancedApi?.getVisibleColumnKeys?.() || [],
             getExportRows: () => tableAdvancedApi?.getExportRows?.() || null,
             exportExcel: exportPropertiesExcel,
-            getExportFormat: () => ({ extension: 'csv', mimeType: 'text/csv;charset=utf-8;', delimiter: 'tab' }),
+            getExportFormat: () => ({ extension: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
             openMenu: () => setExportMenuOpen(true),
             closeMenu: () => setExportMenuOpen(false),
         };
