@@ -37,7 +37,7 @@ const DEFAULT_COL_MIN_WIDTHS = {
     installments_count: 96,
     updated_at: 120,
     card_property_details: 92,
-    actions: 88,
+    actions: 112,
 };
 const VN_PIN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
   <line x1="12" y1="17" x2="12" y2="22"/>
