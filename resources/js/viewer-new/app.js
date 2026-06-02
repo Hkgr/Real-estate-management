@@ -273,38 +273,44 @@ const setupPropertiesColumnPinning = ({
 
         reportRoot.classList.add('vn-report-focus-target');
 
-        const GEN_KEY = 'viewer_new_properties_generator_open';
-        const COL_KEY = 'viewer_new_properties_visible_columns';
-        const defaultColumns = [
-            'id',
-            'property_name',
-            'property_country',
-            'card_governorate',
-            'card_region_name',
-            'card_subdivision',
-            'card_record_number',
-            'card_property_number',
-            'card_total_area',
-            'card_area_unit',
-            'total_property_value_usd',
-            'owned_property_value_usd',
-            'actual_price_usd',
-            'estimated_price_usd',
-            'card_status',
-            'card_investment_type',
-            'card_purchase_method',
-            'card_sale_date',
-            'final_balance',
-            'card_google_maps_url',
-            'owners_count',
-            'operations_count',
-            'signals_count',
-            'files_count',
-            'installments_count',
-            'updated_at',
-            'card_property_details',
-            'actions',
-        ];
+        const GEN_KEY = reportRoot.dataset.reportGenKey || 'viewer_new_properties_generator_open';
+        const COL_KEY = reportRoot.dataset.reportColKey || 'viewer_new_properties_visible_columns';
+        const defaultColumns = (() => {
+            try {
+                const raw = reportRoot.dataset.reportDefaultCols;
+                if (raw) return JSON.parse(raw);
+            } catch (_) {}
+            return [
+                'id',
+                'property_name',
+                'property_country',
+                'card_governorate',
+                'card_region_name',
+                'card_subdivision',
+                'card_record_number',
+                'card_property_number',
+                'card_total_area',
+                'card_area_unit',
+                'total_property_value_usd',
+                'owned_property_value_usd',
+                'actual_price_usd',
+                'estimated_price_usd',
+                'card_status',
+                'card_investment_type',
+                'card_purchase_method',
+                'card_sale_date',
+                'final_balance',
+                'card_google_maps_url',
+                'owners_count',
+                'operations_count',
+                'signals_count',
+                'files_count',
+                'installments_count',
+                'updated_at',
+                'card_property_details',
+                'actions',
+            ];
+        })();
         const validColumnKeys = [...defaultColumns];
         const panel = reportRoot.querySelector('[data-report-generator-panel]');
         const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
