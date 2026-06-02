@@ -2359,3 +2359,22 @@ body.viewer-new.vn-properties-report-page .vn-report-export-menu {
 body.viewer-new.vn-properties-report-page .vn-report-export-menu__panel {
   z-index: 3011 !important;
 }
+
+.vn-properties-report .vn-property-record-link {
+  color: var(--gold-light, #E8C96A);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212, 175, 55, .42);
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.vn-properties-report .vn-property-record-link:hover,
+.vn-properties-report .vn-property-record-link:focus-visible {
+  color: var(--gold-bright, #D4AF37);
+  border-bottom-color: currentColor;
+  background: rgba(212, 175, 55, .08);
+  outline: none;
+}
+
+.vn-properties-report .vn-property-record-link__empty {
+  color: rgba(229, 231, 235, .62);
+}

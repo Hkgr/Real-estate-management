@@ -85,7 +85,7 @@
             'installments_count' => 96,
             'updated_at' => 120,
             'card_property_details' => 92,
-            'actions' => 88,
+            'actions' => 112,
         ];
         $propertyTableColTotal = max(1, (int) array_sum($propertyTableColWidths));
 
@@ -393,6 +393,14 @@
                                         $mapUrl = $candidateMapUrl;
                                     }
                                 }
+
+                                $propertyShowUrl = route('viewer-new.reports.properties.show', $property);
+                                $recordNumberText = ($columns['card_record_number'] ?? false) && filled($property->card_record_number)
+                                    ? (string) $property->card_record_number
+                                    : '—';
+                                $propertyCardAriaLabel = $recordNumberText !== '—'
+                                    ? 'عرض بطاقة العقار رقم ' . $recordNumberText
+                                    : 'عرض بطاقة العقار رقم ' . ($property->id ?? 'غير محدد');
                                                         @endphp
                             <tr data-property-row data-property-id="{{ $property->id }}">
                                <td data-column-key="id" class="vn-table-number">{{ $property->id ?? '—' }}</td>
@@ -401,7 +409,13 @@
                                 <td data-column-key="card_governorate">{{ ($columns['card_governorate'] ?? false) ? ($property->card_governorate ?: '—') : '—' }}</td>
                                 <td data-column-key="card_region_name">{{ ($columns['card_region_name'] ?? false) ? ($property->card_region_name ?: '—') : '—' }}</td>
                                 <td data-column-key="card_subdivision">{{ ($columns['card_subdivision'] ?? false) ? ($property->card_subdivision ?: '—') : '—' }}</td>
-                                <td data-column-key="card_record_number">{{ ($columns['card_record_number'] ?? false) ? ($property->card_record_number ?: '—') : '—' }}</td>
+                                <td data-column-key="card_record_number">
+                                    @if ($recordNumberText !== '—')
+                                        <a href="{{ $propertyShowUrl }}" class="vn-property-record-link" data-property-card-link title="{{ $propertyCardAriaLabel }}" aria-label="{{ $propertyCardAriaLabel }}">{{ $recordNumberText }}</a>
+                                    @else
+                                        <span class="vn-property-record-link__empty">—</span>
+                                    @endif
+                                </td>
                                 <td data-column-key="card_property_number">{{ ($columns['card_property_number'] ?? false) ? ($property->card_property_number ?: '—') : '—' }}</td>
                                 <td data-column-key="card_total_area" class="vn-table-number">{{ ($columns['card_total_area'] ?? false) && filled($property->card_total_area) ? number_format((float) $property->card_total_area, 2) : '—' }}</td>
                                 <td data-column-key="card_area_unit">{{ ($columns['card_area_unit'] ?? false) ? $areaUnit : '—' }}</td>
@@ -529,8 +543,7 @@
                                 </td>
                                 <td data-column-key="actions">
                                     <div class="vn-row-actions">
-                                        {{-- TODO: Connect this action when a viewer-new single property route is available. --}}
-                                        <span class="vn-row-action vn-row-action--disabled" aria-disabled="true">استعراض</span>
+                                        <a href="{{ $propertyShowUrl }}" class="vn-row-action" data-property-card-action title="{{ $propertyCardAriaLabel }}" aria-label="{{ $propertyCardAriaLabel }}">عرض البطاقة</a>
                                     </div>
                                 </td>
                             </tr>

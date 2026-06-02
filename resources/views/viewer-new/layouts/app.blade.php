@@ -192,6 +192,12 @@
                         ['label' => 'التقارير', 'url' => route('viewer-new.reports')],
                         ['label' => 'تقرير العقارات', 'url' => null],
                     ],
+                    'viewer-new.reports.properties.show' => [
+                        ['label' => 'الرئيسية', 'url' => route('viewer-new.hub')],
+                        ['label' => 'التقارير', 'url' => route('viewer-new.reports')],
+                        ['label' => 'تقرير العقارات', 'url' => route('viewer-new.reports.properties')],
+                        ['label' => 'بطاقة العقار', 'url' => null],
+                    ],
                     'viewer-new.reports.owners' => [
                         ['label' => 'الرئيسية', 'url' => route('viewer-new.hub')],
                         ['label' => 'التقارير', 'url' => route('viewer-new.reports')],

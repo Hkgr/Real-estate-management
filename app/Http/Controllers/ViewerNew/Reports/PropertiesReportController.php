@@ -15,6 +15,21 @@ class PropertiesReportController extends Controller
 {
     private const TOTAL_SHARES_REFERENCE = 2400;
 
+
+    public function show(PropertyCard $property): View
+    {
+        $property->load([
+            'owners' => fn ($query) => $query->orderBy('owners.id'),
+            'signals' => fn ($query) => $query->with('owners')->latest('id'),
+            'files' => fn ($query) => $query->latest('id'),
+            'operations' => fn ($query) => $query->with(['oldOwners', 'newOwners'])->latest('id'),
+        ]);
+
+        return view('viewer-new.reports.properties-show', [
+            'property' => $property,
+        ]);
+    }
+
     public function __invoke(Request $request): View
     {
         $property = new PropertyCard();

@@ -1,0 +1,256 @@
+.viewer-new .vn-property-show {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  direction: rtl;
+  overflow-x: clip;
+}
+
+.viewer-new .vn-property-show__hero {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+  border: 1px solid rgba(212, 175, 55, .32);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(212, 175, 55, .18), transparent 42%),
+    linear-gradient(135deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .02)),
+    #111216;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+.viewer-new .vn-property-show__back,
+.viewer-new .vn-property-show-card__map,
+.viewer-new .vn-property-show-attachment {
+  color: var(--gold, #d4af37);
+  text-decoration: none;
+}
+
+.viewer-new .vn-property-show__back:hover,
+.viewer-new .vn-property-show-card__map:hover,
+.viewer-new .vn-property-show-attachment:hover {
+  color: #e8c96a;
+}
+
+.viewer-new .vn-property-show__eyebrow {
+  margin: 12px 0 4px;
+  color: var(--gold-soft, #c49a2a);
+  font-size: .78rem;
+  letter-spacing: .08em;
+}
+
+.viewer-new .vn-property-show h1 {
+  margin: 0;
+  color: #f7f2e8;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.15;
+}
+
+.viewer-new .vn-property-show__subtitle {
+  margin: 8px 0 0;
+  color: var(--muted, #a3a6ad);
+  font-size: 1rem;
+}
+
+.viewer-new .vn-property-show__summary {
+  min-width: min(260px, 100%);
+  padding: 16px;
+  border: 1px solid rgba(212, 175, 55, .25);
+  border-radius: 18px;
+  background: rgba(0, 0, 0, .22);
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.viewer-new .vn-property-show__summary span:first-child,
+.viewer-new .vn-property-show-field span,
+.viewer-new .vn-property-show-list-item dt,
+.viewer-new .vn-property-show-attachment small {
+  color: var(--muted, #a3a6ad);
+  font-size: .82rem;
+}
+
+.viewer-new .vn-property-show__summary strong {
+  color: #fff8dc;
+  font-size: 1.45rem;
+}
+
+.viewer-new .vn-property-show-status {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .06);
+  color: #d7dce4;
+}
+
+.viewer-new .vn-property-show-status--success { color: #86efac; border-color: rgba(34, 197, 94, .35); background: rgba(34, 197, 94, .12); }
+.viewer-new .vn-property-show-status--warning { color: #e8c96a; border-color: rgba(212, 175, 55, .42); background: rgba(212, 175, 55, .12); }
+.viewer-new .vn-property-show-status--danger { color: #fda4af; border-color: rgba(244, 63, 94, .35); background: rgba(244, 63, 94, .12); }
+.viewer-new .vn-property-show-status--muted { color: #cbd5e1; }
+
+.viewer-new .vn-property-show-card {
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .02)), #15161a;
+  padding: clamp(16px, 2.6vw, 22px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .18);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.viewer-new .vn-property-show-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(212, 175, 55, .18);
+}
+
+.viewer-new .vn-property-show-card h2 {
+  margin: 0;
+  color: var(--gold, #d4af37);
+  font-size: 1.08rem;
+}
+
+.viewer-new .vn-property-show-count,
+.viewer-new .vn-property-show-card__map {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, .25);
+  background: rgba(212, 175, 55, .08);
+  font-size: .82rem;
+}
+
+.viewer-new .vn-property-show-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.viewer-new .vn-property-show-field {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, .18);
+  display: grid;
+  gap: 5px;
+}
+
+.viewer-new .vn-property-show-field strong {
+  color: #f4efe6;
+  font-size: .98rem;
+  overflow-wrap: anywhere;
+}
+
+.viewer-new .vn-property-show-grid--financial .vn-property-show-field {
+  border-color: rgba(212, 175, 55, .16);
+}
+
+.viewer-new .vn-property-show-list {
+  display: grid;
+  gap: 12px;
+}
+
+.viewer-new .vn-property-show-list-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, .16);
+  min-width: 0;
+}
+
+.viewer-new .vn-property-show-list-item h3 {
+  margin: 0;
+  color: #fff8dc;
+  font-size: 1rem;
+}
+
+.viewer-new .vn-property-show-list-item p {
+  margin: 4px 0 0;
+  color: var(--muted, #a3a6ad);
+}
+
+.viewer-new .vn-property-show-list-item dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.viewer-new .vn-property-show-list-item dl > div {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.viewer-new .vn-property-show-list-item dd {
+  margin: 3px 0 0;
+  color: #edf0f5;
+  overflow-wrap: anywhere;
+}
+
+.viewer-new .vn-property-show-note {
+  margin: 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, .16);
+  background: rgba(212, 175, 55, .06);
+  color: #e5e7eb;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.viewer-new .vn-property-show-note--main {
+  line-height: 1.9;
+}
+
+.viewer-new .vn-property-show-attachments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.viewer-new .vn-property-show-attachment {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(212, 175, 55, .18);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, .18);
+  min-width: 0;
+}
+
+.viewer-new .vn-property-show-attachment span {
+  color: #f7f2e8;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 780px) {
+  .viewer-new .vn-property-show__hero,
+  .viewer-new .vn-property-show-card__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .viewer-new .vn-property-show__summary {
+    min-width: 0;
+  }
+}
