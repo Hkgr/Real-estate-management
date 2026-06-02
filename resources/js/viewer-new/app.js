@@ -190,29 +190,24 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isExportMenuOpen = () => exportMenu?.hidden === false;
 
-        const escapeHtml = (value) => String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        const normalizeCsvValue = (value) => {
+            const text = String(value ?? '')
+                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+                .replace(/\r?\n|\r/g, ' ')
+                .replace(/\t/g, ' ')
+                .trim();
+            return `"${text.replace(/"/g, '""')}"`;
+        };
 
-        const downloadExcelCompatibleTable = (exportData) => {
+        const downloadExcelCsv = (exportData) => {
             const today = new Date().toISOString().slice(0, 10);
-            const filename = `properties-report-${today}.xls`;
-            const headCells = exportData.columns.map(({ header }) => `<th>${escapeHtml(header)}</th>`).join('');
-            const bodyRows = exportData.rows.map((row) => (`<tr>${row.values.map((value) => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`)).join('');
-            const html = `<!doctype html>
-<html dir="rtl" lang="ar">
-<head>
-<meta charset="UTF-8">
-<style>table{border-collapse:collapse;direction:rtl}th,td{border:1px solid #999;padding:6px;mso-number-format:\@;white-space:pre-wrap}th{font-weight:bold;background:#f4e7b6}</style>
-</head>
-<body>
-<table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>
-</body>
-</html>`;
-            const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const filename = `properties-report-${today}.csv`;
+            const rows = [
+                exportData.columns.map(({ header }) => normalizeCsvValue(header)).join('\t'),
+                ...exportData.rows.map((row) => row.values.map(normalizeCsvValue).join('\t')),
+            ];
+            const content = `\ufeff${rows.join('\r\n')}`;
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -223,6 +218,9 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
             console.info('[viewer-new properties export]', {
                 filename,
+                format: 'csv',
+                delimiter: 'tab',
+                mimeType: 'text/csv;charset=utf-8;',
                 mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
                 selectedRowIds: exportData.selectedRowIds,
                 visibleColumnKeys: exportData.columns.map(({ key }) => key),
@@ -237,7 +235,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 console.info('[viewer-new properties export] لا توجد صفوف قابلة للتصدير', exportData || null);
                 return;
             }
-            downloadExcelCompatibleTable(exportData);
+            downloadExcelCsv(exportData);
         };
 
         const setColumnsPopoverOpen = (open) => {
@@ -908,6 +906,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             getVisibleColumnKeys: () => tableAdvancedApi?.getVisibleColumnKeys?.() || [],
             getExportRows: () => tableAdvancedApi?.getExportRows?.() || null,
             exportExcel: exportPropertiesExcel,
+            getExportFormat: () => ({ extension: 'csv', mimeType: 'text/csv;charset=utf-8;', delimiter: 'tab' }),
             openMenu: () => setExportMenuOpen(true),
             closeMenu: () => setExportMenuOpen(false),
         };
