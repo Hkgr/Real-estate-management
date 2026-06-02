@@ -2338,3 +2338,24 @@ body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head .vn-row-sel
   cursor: pointer;
   vertical-align: middle;
 }
+
+/* Keep the export dropdown above sticky/floating report layers without touching table scrollports. */
+body.viewer-new.vn-properties-report-page .vn-report-toolbar,
+body.viewer-new.vn-properties-report-page .vn-report-toolbar__main,
+body.viewer-new.vn-properties-report-page .vn-report-toolbar__actions,
+body.viewer-new.vn-properties-report-page .vn-report-export-menu {
+  overflow: visible !important;
+}
+
+body.viewer-new.vn-properties-report-page .vn-report-toolbar {
+  z-index: 3000 !important;
+}
+
+body.viewer-new.vn-properties-report-page .vn-report-export-menu {
+  position: relative;
+  z-index: 3010 !important;
+}
+
+body.viewer-new.vn-properties-report-page .vn-report-export-menu__panel {
+  z-index: 3011 !important;
+}
