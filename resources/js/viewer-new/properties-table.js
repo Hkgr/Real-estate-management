@@ -62,6 +62,7 @@ export function initPropertiesTableAdvanced(options) {
         tableScroller,
         onLayoutChange,
         onColumnOrderChange,
+        onRowSelectionChange,
     } = options;
 
     if (!reportRoot || !tableEl || !tableScroller) return () => {};
@@ -83,6 +84,179 @@ export function initPropertiesTableAdvanced(options) {
         if (typeof onLayoutChange === 'function') onLayoutChange();
     };
 
+    let rowSelectionMode = false;
+    const selectedRowIds = new Set();
+
+    const notifyRowSelection = () => {
+        if (typeof onRowSelectionChange === 'function') {
+            onRowSelectionChange({ count: selectedRowIds.size, ids: [...selectedRowIds] });
+        }
+    };
+
+    const getMainRows = () => [...tableEl.querySelectorAll('tbody tr')]
+        .filter((row) => row.querySelector(':scope > td[data-column-key]'));
+
+    const getRowId = (row, index = 0) => {
+        const explicit = row?.getAttribute('data-property-id') || row?.dataset?.propertyId;
+        if (explicit) return String(explicit);
+        const idCellText = row?.querySelector(':scope > td[data-column-key="id"]')?.textContent?.trim();
+        return idCellText || `row-${index + 1}`;
+    };
+
+    const isRowVisible = (row) => {
+        if (!row || row.hidden) return false;
+        const style = getComputedStyle(row);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    };
+
+    const getVisibleMainRows = () => getMainRows().filter(isRowVisible);
+
+    const syncDetailRowColspans = (includeSelectionColumn) => {
+        tableEl.querySelectorAll('tbody tr').forEach((row) => {
+            if (row.querySelector(':scope > td[data-column-key]')) return;
+            row.querySelectorAll(':scope > td[colspan]').forEach((cell) => {
+                if (!cell.dataset.originalColspan) cell.dataset.originalColspan = cell.getAttribute('colspan') || '1';
+                const base = Math.max(1, parseInt(cell.dataset.originalColspan || '1', 10) || 1);
+                cell.setAttribute('colspan', String(includeSelectionColumn ? base + 1 : base));
+            });
+        });
+    };
+
+    const ensureRowSelectionColumn = () => {
+        if (!colgroupEl || colgroupEl.querySelector('.vn-row-selection-col')) {
+            syncDetailRowColspans(true);
+            return;
+        }
+
+        const col = document.createElement('col');
+        col.className = 'vn-row-selection-col';
+        col.style.width = '52px';
+        col.style.minWidth = '52px';
+        colgroupEl.insertBefore(col, colgroupEl.firstChild);
+
+        tableEl.querySelectorAll('thead tr').forEach((tr) => {
+            if (tr.querySelector(':scope > .vn-row-selection-cell')) return;
+            const th = document.createElement('th');
+            th.className = 'vn-row-selection-cell vn-row-selection-head';
+            th.scope = 'col';
+            th.innerHTML = '<input type="checkbox" class="vn-row-selection-checkbox vn-row-selection-select-all" aria-label="تحديد كل الصفوف الظاهرة">';
+            tr.insertBefore(th, tr.firstChild);
+        });
+
+        getMainRows().forEach((row, index) => {
+            const rowId = getRowId(row, index);
+            row.dataset.propertyId = rowId;
+            if (row.querySelector(':scope > .vn-row-selection-cell')) return;
+            const td = document.createElement('td');
+            td.className = 'vn-row-selection-cell vn-row-selection-body-cell';
+            td.innerHTML = `<input type="checkbox" class="vn-row-selection-checkbox vn-row-selection-row-checkbox" data-row-selection-id="${rowId.replace(/"/g, '&quot;')}" aria-label="تحديد العقار رقم ${rowId.replace(/"/g, '&quot;')}">`;
+            row.insertBefore(td, row.firstChild);
+        });
+        syncDetailRowColspans(true);
+    };
+
+    const removeRowSelectionColumn = () => {
+        colgroupEl?.querySelector('.vn-row-selection-col')?.remove();
+        tableEl.querySelectorAll('.vn-row-selection-cell').forEach((cell) => cell.remove());
+        document.querySelectorAll('.vn-pr-floating-table-head .vn-row-selection-cell').forEach((cell) => cell.remove());
+        syncDetailRowColspans(false);
+    };
+
+    const syncRowSelectionInputs = () => {
+        getMainRows().forEach((row, index) => {
+            const rowId = getRowId(row, index);
+            row.dataset.propertyId = rowId;
+            row.classList.toggle('vn-row-selected', selectedRowIds.has(rowId));
+            row.querySelectorAll('.vn-row-selection-row-checkbox').forEach((checkbox) => {
+                checkbox.checked = selectedRowIds.has(rowId);
+                checkbox.setAttribute('data-row-selection-id', rowId);
+                checkbox.setAttribute('aria-label', `تحديد العقار رقم ${rowId}`);
+            });
+        });
+    };
+
+    const syncRowSelectionHeaderState = () => {
+        const visibleRows = getVisibleMainRows();
+        const visibleIds = visibleRows.map((row, index) => getRowId(row, index));
+        const selectedVisible = visibleIds.filter((id) => selectedRowIds.has(id)).length;
+        const checked = visibleIds.length > 0 && selectedVisible === visibleIds.length;
+        const indeterminate = selectedVisible > 0 && selectedVisible < visibleIds.length;
+        document.querySelectorAll('#vn-properties-table .vn-row-selection-select-all, .vn-pr-floating-table-head .vn-row-selection-select-all').forEach((checkbox) => {
+            checkbox.checked = checked;
+            checkbox.indeterminate = indeterminate;
+            checkbox.disabled = visibleIds.length === 0;
+            checkbox.setAttribute('aria-label', 'تحديد كل الصفوف الظاهرة');
+        });
+    };
+
+    const syncRowSelectionUi = () => {
+        if (!rowSelectionMode) return;
+        ensureRowSelectionColumn();
+        syncRowSelectionInputs();
+        syncRowSelectionHeaderState();
+        syncTopScrollWidth();
+        applyColumnPinning();
+        notifyLayout();
+    };
+
+    const clearSelectedRows = () => {
+        selectedRowIds.clear();
+        syncRowSelectionInputs();
+        syncRowSelectionHeaderState();
+        notifyRowSelection();
+    };
+
+    const setAllVisibleRowsSelected = (selected) => {
+        getVisibleMainRows().forEach((row, index) => {
+            const rowId = getRowId(row, index);
+            if (selected) selectedRowIds.add(rowId);
+            else selectedRowIds.delete(rowId);
+        });
+        syncRowSelectionInputs();
+        syncRowSelectionHeaderState();
+        notifyRowSelection();
+    };
+
+    const enableRowSelectionMode = (enabled) => {
+        rowSelectionMode = !!enabled;
+        reportRoot.classList.toggle('vn-properties-report--row-selection', rowSelectionMode);
+        tableEl.classList.toggle('vn-table-row-selection-mode', rowSelectionMode);
+        if (rowSelectionMode) {
+            ensureRowSelectionColumn();
+            syncRowSelectionUi();
+            notifyRowSelection();
+        } else {
+            selectedRowIds.clear();
+            removeRowSelectionColumn();
+            notifyRowSelection();
+            syncTopScrollWidth();
+            applyColumnPinning();
+            notifyLayout();
+        }
+    };
+
+    const bindRowSelectionHandlers = () => {
+        if (tableEl.dataset.rowSelectionBound === '1') return;
+        tableEl.dataset.rowSelectionBound = '1';
+        tableEl.addEventListener('change', (e) => {
+            if (!rowSelectionMode) return;
+            const selectAll = e.target?.closest?.('.vn-row-selection-select-all');
+            if (selectAll && tableEl.contains(selectAll)) {
+                setAllVisibleRowsSelected(selectAll.checked);
+                return;
+            }
+            const rowCheckbox = e.target?.closest?.('.vn-row-selection-row-checkbox');
+            if (!rowCheckbox || !tableEl.contains(rowCheckbox)) return;
+            const row = rowCheckbox.closest('tr');
+            const rowId = rowCheckbox.getAttribute('data-row-selection-id') || getRowId(row);
+            if (rowCheckbox.checked) selectedRowIds.add(rowId);
+            else selectedRowIds.delete(rowId);
+            syncRowSelectionInputs();
+            syncRowSelectionHeaderState();
+            notifyRowSelection();
+        });
+    };
+
     const ensureThInners = () => {
         tableEl.querySelectorAll('thead th[data-column-key]').forEach((th) => {
             if (th.querySelector('.vn-th-inner')) return;
@@ -101,7 +275,8 @@ export function initPropertiesTableAdvanced(options) {
             if (!cell.classList.contains(cls)) cell.classList.add(cls);
         });
         if (colgroupEl) {
-            [...colgroupEl.children].forEach((col, i) => {
+            const keyedCols = [...colgroupEl.querySelectorAll('col[data-column-key]')];
+            keyedCols.forEach((col, i) => {
                 const th = tableEl.querySelectorAll('thead th[data-column-key]')[i];
                 const key = th?.getAttribute('data-column-key');
                 if (key && !col.classList.contains(colClassForKey(key))) {
@@ -387,6 +562,7 @@ export function initPropertiesTableAdvanced(options) {
         ensureColumnResizers();
         syncTopScrollWidth();
         applyColumnPinning();
+        syncRowSelectionUi();
         notifyLayout();
         return normalized;
     };
@@ -641,6 +817,7 @@ export function initPropertiesTableAdvanced(options) {
     ensureReorderGrips();
     bindColumnResizeHandlers();
     bindColumnReorderHandlers();
+    bindRowSelectionHandlers();
     wireTopScrollSync();
     syncTopScrollWidth();
     applyColumnPinning();
@@ -661,6 +838,11 @@ export function initPropertiesTableAdvanced(options) {
         getColumnOrder,
         enableColumnReorderMode,
         startColumnReorderDrag,
+        enableRowSelectionMode,
+        getSelectedRowIds: () => [...selectedRowIds],
+        clearSelectedRows,
+        syncRowSelectionHeaderState,
+        setAllVisibleRowsSelected,
         onColumnsVisibilityChange: (visibleKeys) => {
             if (!colgroupEl) return;
             const selected = new Set(visibleKeys);
@@ -670,6 +852,7 @@ export function initPropertiesTableAdvanced(options) {
             });
             syncTopScrollWidth();
             applyColumnPinning();
+            syncRowSelectionUi();
             notifyLayout();
         },
         destroy: () => {

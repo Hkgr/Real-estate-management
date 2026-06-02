@@ -143,6 +143,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const columnsPopover = reportRoot.querySelector('[data-report-columns-popover]');
         const columnOrderToggleBtn = reportRoot.querySelector('[data-column-order-toggle]');
         const columnReorderHint = reportRoot.querySelector('[data-column-reorder-hint]');
+        const rowSelectionToggleBtn = reportRoot.querySelector('[data-row-selection-toggle]');
+        const rowSelectionCountEl = reportRoot.querySelector('[data-row-selection-count]');
         const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
         const tableEl = reportRoot.querySelector('.vn-properties-table table');
         const tableScroller = reportRoot.querySelector('.vn-properties-table');
@@ -197,6 +199,24 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isColumnReorderMode = () => reportRoot.classList.contains('vn-properties-report--column-reorder');
 
+        const updateRowSelectionCount = (count = 0) => {
+            if (!rowSelectionCountEl) return;
+            rowSelectionCountEl.textContent = `المحدد: ${count}`;
+        };
+
+        const setRowSelectionMode = (enabled) => {
+            const active = !!enabled;
+            reportRoot.classList.toggle('vn-properties-report--row-selection', active);
+            rowSelectionToggleBtn?.classList.toggle('vn-report-toolbar-button--active', active);
+            rowSelectionToggleBtn?.setAttribute('aria-pressed', active ? 'true' : 'false');
+            if (rowSelectionCountEl) rowSelectionCountEl.hidden = !active;
+            tableAdvancedApi?.enableRowSelectionMode?.(active);
+            if (!active) updateRowSelectionCount(0);
+            requestAnimationFrame(updateStickyOffset);
+        };
+
+        const isRowSelectionMode = () => reportRoot.classList.contains('vn-properties-report--row-selection');
+
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
             toggleBtn?.classList.toggle('vn-report-toolbar-button--primary', !!open);
@@ -208,6 +228,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             if (!open) {
                 setColumnsPopoverOpen(false);
                 setColumnReorderMode(false);
+                setRowSelectionMode(false);
             }
             toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
             syncToolbarActiveState(open);
@@ -316,6 +337,9 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         columnOrderToggleBtn?.addEventListener('click', () => {
             setColumnReorderMode(!isColumnReorderMode());
         });
+        rowSelectionToggleBtn?.addEventListener('click', () => {
+            setRowSelectionMode(!isRowSelectionMode());
+        });
         genBtn?.addEventListener('click', () => {
             let cols = normalizeColumns(getChecked());
             syncCheckboxes(cols);
@@ -411,6 +435,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 const hay = (row.textContent || '').toLowerCase();
                 row.classList.toggle('vn-row-hidden', q !== '' && !hay.includes(q));
             });
+            tableAdvancedApi?.syncRowSelectionHeaderState?.();
             updateTblNavPill();
         };
 
@@ -600,6 +625,12 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 const key = e.target?.closest?.('th[data-column-key]')?.getAttribute('data-column-key');
                 if (key && tableAdvancedApi?.startColumnReorderDrag?.(key, e)) e.preventDefault();
             });
+            floatingHost.addEventListener('change', (e) => {
+                const selectAll = e.target?.closest?.('.vn-row-selection-select-all');
+                if (!selectAll || !floatingHost.contains(selectAll)) return;
+                tableAdvancedApi?.setAllVisibleRowsSelected?.(selectAll.checked);
+                requestFloatingHeadSync();
+            });
             document.body.appendChild(floatingHost);
         };
 
@@ -670,7 +701,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
             headClone.querySelectorAll('input, button, select, textarea, a').forEach((el) => {
                 const pinBtn = el.closest?.('.vn-col-pin-btn');
-                if (pinBtn) {
+                const rowSelectionControl = el.closest?.('.vn-row-selection-cell');
+                if (pinBtn || rowSelectionControl) {
                     el.removeAttribute('tabindex');
                     el.setAttribute('aria-hidden', 'false');
                     if ('disabled' in el) el.disabled = false;
@@ -715,6 +747,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingTable.innerHTML = '';
             if (colgroupClone) floatingTable.appendChild(colgroupClone);
             floatingTable.appendChild(headClone);
+            tableAdvancedApi?.syncRowSelectionHeaderState?.();
             thead.style.visibility = 'hidden';
             floatingHost.style.display = 'block';
             floatingHost.setAttribute('aria-hidden', 'false');
@@ -782,6 +815,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 safeSet(COL_ORDER_KEY, JSON.stringify(normalizeColumnOrder(order)));
                 requestFloatingHeadSync();
                 updateTblNavPill();
+            },
+            onRowSelectionChange: ({ count } = {}) => {
+                updateRowSelectionCount(count || 0);
+                requestFloatingHeadSync();
             },
         });
 
