@@ -61,6 +61,7 @@ export function initPropertiesTableAdvanced(options) {
         tableEl,
         tableScroller,
         onLayoutChange,
+        onColumnOrderChange,
     } = options;
 
     if (!reportRoot || !tableEl || !tableScroller) return () => {};
@@ -390,6 +391,213 @@ export function initPropertiesTableAdvanced(options) {
         return normalized;
     };
 
+    const getColumnOrder = () => [...tableEl.querySelectorAll('thead th[data-column-key]')]
+        .map((th) => th.getAttribute('data-column-key'))
+        .filter(Boolean);
+
+    let columnReorderMode = false;
+    let columnDrag = null;
+    let dropIndicator = null;
+
+    const getDocumentDirection = () => getComputedStyle(tableEl).direction || getComputedStyle(document.documentElement).direction || 'rtl';
+
+    const ensureReorderGrips = () => {
+        tableEl.querySelectorAll('thead th[data-column-key]').forEach((th) => {
+            const inner = th.querySelector('.vn-th-inner') || th;
+            if (inner.querySelector('.vn-col-reorder-grip')) return;
+            const grip = document.createElement('span');
+            grip.className = 'vn-col-reorder-grip';
+            grip.setAttribute('aria-hidden', 'true');
+            grip.textContent = '⋮⋮';
+            inner.insertBefore(grip, inner.firstChild);
+        });
+    };
+
+    const ensureDropIndicator = () => {
+        if (dropIndicator) return dropIndicator;
+        dropIndicator = document.createElement('div');
+        dropIndicator.className = 'vn-col-drop-indicator';
+        dropIndicator.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(dropIndicator);
+        return dropIndicator;
+    };
+
+    const hideDropIndicator = () => {
+        dropIndicator?.classList.remove('is-visible');
+    };
+
+    const clearDraggedColumnClasses = () => {
+        tableEl.querySelectorAll('.vn-col-dragging, .vn-col-drop-target').forEach((el) => {
+            el.classList.remove('vn-col-dragging', 'vn-col-drop-target');
+        });
+    };
+
+    const setDraggedColumnClasses = (key) => {
+        clearDraggedColumnClasses();
+        if (!key) return;
+        tableEl.querySelectorAll(`th.${colClassForKey(key)}, td.${colClassForKey(key)}`).forEach((el) => {
+            if (getComputedStyle(el).display !== 'none') el.classList.add('vn-col-dragging');
+        });
+    };
+
+    const getHeaderFromPoint = (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        const th = el?.closest?.('th[data-column-key]');
+        const key = th?.getAttribute('data-column-key');
+        const realTh = key ? tableEl.querySelector(`thead th[data-column-key="${key}"]`) : th;
+        return realTh && tableEl.contains(realTh) && getComputedStyle(realTh).display !== 'none' ? realTh : null;
+    };
+
+    const getDropPlacement = (targetTh, clientX) => {
+        const targetKey = targetTh?.getAttribute('data-column-key');
+        const sourceKey = columnDrag?.sourceKey;
+        const order = getColumnOrder();
+        const sourceIndex = order.indexOf(sourceKey);
+        const targetIndex = order.indexOf(targetKey);
+        if (!targetKey || !sourceKey || sourceIndex < 0 || targetIndex < 0) return null;
+
+        const rect = targetTh.getBoundingClientRect();
+        const isRtl = getDocumentDirection() === 'rtl';
+        const beforeTarget = isRtl ? clientX > rect.left + rect.width / 2 : clientX < rect.left + rect.width / 2;
+        const insertionIndex = beforeTarget ? targetIndex : targetIndex + 1;
+        let dropIndex = insertionIndex;
+        if (sourceIndex < insertionIndex) dropIndex -= 1;
+        dropIndex = Math.max(0, Math.min(order.length - 1, dropIndex));
+        const indicatorX = beforeTarget
+            ? (isRtl ? rect.right : rect.left)
+            : (isRtl ? rect.left : rect.right);
+
+        return { targetKey, order, sourceIndex, dropIndex, indicatorX, targetRect: rect };
+    };
+
+    const showDropIndicator = (placement) => {
+        const indicator = ensureDropIndicator();
+        const scrollerRect = tableScroller.getBoundingClientRect();
+        const tableRect = tableEl.getBoundingClientRect();
+        const top = Math.max(scrollerRect.top, placement.targetRect.top);
+        const bottom = Math.min(scrollerRect.bottom, tableRect.bottom, window.innerHeight);
+        indicator.style.left = `${Math.round(placement.indicatorX)}px`;
+        indicator.style.top = `${Math.round(top)}px`;
+        indicator.style.height = `${Math.max(placement.targetRect.height, bottom - top)}px`;
+        indicator.classList.add('is-visible');
+    };
+
+    const updateDropTarget = (placement) => {
+        tableEl.querySelectorAll('.vn-col-drop-target').forEach((el) => el.classList.remove('vn-col-drop-target'));
+        if (!placement?.targetKey) return;
+        tableEl.querySelectorAll(`th.${colClassForKey(placement.targetKey)}, td.${colClassForKey(placement.targetKey)}`).forEach((el) => {
+            if (getComputedStyle(el).display !== 'none') el.classList.add('vn-col-drop-target');
+        });
+    };
+
+    const finishColumnDrag = (commit) => {
+        if (!columnDrag) return;
+        const drag = columnDrag;
+        columnDrag = null;
+        window.removeEventListener('pointermove', onColumnReorderPointerMove);
+        window.removeEventListener('pointerup', onColumnReorderPointerUp);
+        window.removeEventListener('pointercancel', onColumnReorderPointerCancel);
+        document.body.classList.remove('vn-is-column-reordering');
+        hideDropIndicator();
+        clearDraggedColumnClasses();
+
+        if (commit && drag.active && drag.placement && drag.placement.dropIndex !== drag.placement.sourceIndex) {
+            const nextOrder = drag.placement.order.filter((key) => key !== drag.sourceKey);
+            nextOrder.splice(drag.placement.dropIndex, 0, drag.sourceKey);
+            const applied = applyColumnOrder(nextOrder);
+            if (typeof onColumnOrderChange === 'function') onColumnOrderChange(applied);
+        } else {
+            applyColumnPinning();
+            notifyLayout();
+        }
+    };
+
+    function onColumnReorderPointerMove(e) {
+        if (!columnDrag) return;
+        const moved = Math.abs(e.clientX - columnDrag.startX) > 5 || Math.abs(e.clientY - columnDrag.startY) > 5;
+        if (!columnDrag.active && !moved) return;
+        if (!columnDrag.active) {
+            columnDrag.active = true;
+            document.body.classList.add('vn-is-column-reordering');
+            setDraggedColumnClasses(columnDrag.sourceKey);
+        }
+        e.preventDefault();
+        const targetTh = getHeaderFromPoint(e.clientX, e.clientY) || columnDrag.sourceTh;
+        const placement = getDropPlacement(targetTh, e.clientX);
+        columnDrag.placement = placement;
+        if (placement) {
+            showDropIndicator(placement);
+            updateDropTarget(placement);
+        } else {
+            hideDropIndicator();
+            updateDropTarget(null);
+        }
+    }
+
+    function onColumnReorderPointerUp(e) {
+        if (columnDrag?.active) e.preventDefault();
+        finishColumnDrag(true);
+    }
+
+    function onColumnReorderPointerCancel() {
+        finishColumnDrag(false);
+    }
+
+    const shouldIgnoreReorderStart = (target) => !!target?.closest?.([
+        '.vn-col-pin-btn',
+        '.col-pin-btn',
+        '.vn-col-resize-handle',
+        '.col-resize-handle',
+        '[data-col-resize]',
+        'button',
+        'a',
+        'input',
+        'select',
+        'textarea',
+        '[role="button"]',
+    ].join(','));
+
+    const startColumnReorderDrag = (sourceKey, e) => {
+        if (!columnReorderMode || !sourceKey || !e || e.button !== 0 || (e.pointerType === 'touch' && e.isPrimary === false)) return false;
+        const sourceTh = tableEl.querySelector(`thead th[data-column-key="${sourceKey}"]`);
+        if (!sourceTh || getComputedStyle(sourceTh).display === 'none') return false;
+        if (columnDrag) finishColumnDrag(false);
+        columnDrag = {
+            sourceKey,
+            sourceTh,
+            startX: e.clientX,
+            startY: e.clientY,
+            active: false,
+            placement: null,
+        };
+        window.addEventListener('pointermove', onColumnReorderPointerMove, { passive: false });
+        window.addEventListener('pointerup', onColumnReorderPointerUp, { passive: false });
+        window.addEventListener('pointercancel', onColumnReorderPointerCancel, { passive: true });
+        return true;
+    };
+
+    const bindColumnReorderHandlers = () => {
+        if (tableEl.dataset.columnReorderBound === '1') return;
+        tableEl.dataset.columnReorderBound = '1';
+        tableEl.addEventListener('pointerdown', (e) => {
+            if (shouldIgnoreReorderStart(e.target)) return;
+            const th = e.target?.closest?.('th[data-column-key]');
+            if (!th || !tableEl.contains(th)) return;
+            const sourceKey = th.getAttribute('data-column-key');
+            if (startColumnReorderDrag(sourceKey, e)) e.preventDefault();
+        });
+    };
+
+    const enableColumnReorderMode = (enabled) => {
+        columnReorderMode = !!enabled;
+        reportRoot.classList.toggle('vn-properties-report--column-reorder', columnReorderMode);
+        tableEl.classList.toggle('vn-table-column-reorder-mode', columnReorderMode);
+        tableEl.querySelectorAll('thead th[data-column-key]').forEach((th) => {
+            th.toggleAttribute('data-column-reorder-draggable', columnReorderMode);
+        });
+        if (!columnReorderMode) finishColumnDrag(false);
+    };
+
     const wireTopScrollSync = () => {
         const topScroll = ensureTopScrollMirror();
         if (!topScroll || topScroll.dataset.wired === '1') return;
@@ -430,7 +638,9 @@ export function initPropertiesTableAdvanced(options) {
     restoreColWidths();
     injectPinButtons();
     ensureColumnResizers();
+    ensureReorderGrips();
     bindColumnResizeHandlers();
+    bindColumnReorderHandlers();
     wireTopScrollSync();
     syncTopScrollWidth();
     applyColumnPinning();
@@ -448,6 +658,9 @@ export function initPropertiesTableAdvanced(options) {
         togglePinColumn,
         getPinnedColumns: () => getVisualPinnedColumns(),
         applyColumnOrder,
+        getColumnOrder,
+        enableColumnReorderMode,
+        startColumnReorderDrag,
         onColumnsVisibilityChange: (visibleKeys) => {
             if (!colgroupEl) return;
             const selected = new Set(visibleKeys);
