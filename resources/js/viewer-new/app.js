@@ -97,6 +97,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const GEN_KEY = 'viewer_new_properties_generator_open';
         const COL_KEY = 'viewer_new_properties_visible_columns';
+        const COL_ORDER_KEY = 'viewer_new_properties_column_order';
         const defaultColumns = [
             'id',
             'property_name',
@@ -140,6 +141,9 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const columnsMenu = reportRoot.querySelector('[data-report-columns-menu]');
         const columnsToggleBtn = reportRoot.querySelector('[data-report-columns-toggle]');
         const columnsPopover = reportRoot.querySelector('[data-report-columns-popover]');
+        const columnOrderToggleBtn = reportRoot.querySelector('[data-column-order-toggle]');
+        const columnOrderPanel = reportRoot.querySelector('[data-column-order-panel]');
+        const columnOrderList = reportRoot.querySelector('[data-column-order-list]');
         const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
         const tableEl = reportRoot.querySelector('.vn-properties-table table');
         const tableScroller = reportRoot.querySelector('.vn-properties-table');
@@ -180,6 +184,19 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isColumnsPopoverOpen = () => columnsPopover?.classList.contains('vn-report-columns-popover--open') === true;
 
+        const setColumnOrderPanelOpen = (open) => {
+            if (!columnOrderPanel || !columnOrderToggleBtn) return;
+            const isOpen = !!open;
+            columnOrderPanel.hidden = !isOpen;
+            columnOrderPanel.classList.toggle('is-open', isOpen);
+            columnOrderToggleBtn.classList.toggle('vn-report-toolbar-button--active', isOpen);
+            columnOrderToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (isOpen) setColumnsPopoverOpen(false);
+            requestAnimationFrame(updateStickyOffset);
+        };
+
+        const isColumnOrderPanelOpen = () => columnOrderPanel?.hidden === false;
+
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
             toggleBtn?.classList.toggle('vn-report-toolbar-button--primary', !!open);
@@ -188,7 +205,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const setPanelOpen = (open, persist = true) => {
             if (!panel) return;
             panel.classList.toggle('is-open', !!open);
-            if (!open) setColumnsPopoverOpen(false);
+            if (!open) {
+                setColumnsPopoverOpen(false);
+                setColumnOrderPanelOpen(false);
+            }
             toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
             syncToolbarActiveState(open);
             if (persist) safeSet(GEN_KEY, open ? '1' : '0');
@@ -221,12 +241,55 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         };
 
         const getChecked = () => checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+        const normalizeColumnOrder = (columns) => {
+            const input = Array.isArray(columns) ? columns : [];
+            const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
+            defaultColumns.forEach((key) => { if (!filtered.includes(key)) filtered.push(key); });
+            return filtered;
+        };
+
+        const syncColumnOrderList = (columns) => {
+            if (!columnOrderList) return;
+            const order = normalizeColumnOrder(columns);
+            const byKey = new Map([...columnOrderList.querySelectorAll('[data-column-order-item]')].map((item) => [item.getAttribute('data-column-key'), item]));
+            order.forEach((key, index) => {
+                const item = byKey.get(key);
+                if (!item) return;
+                columnOrderList.appendChild(item);
+                item.setAttribute('data-column-order-position', String(index + 1));
+            });
+            const items = [...columnOrderList.querySelectorAll('[data-column-order-item]')];
+            items.forEach((item, index) => {
+                item.querySelector('[data-column-order-move="prev"]')?.toggleAttribute('disabled', index === 0);
+                item.querySelector('[data-column-order-move="next"]')?.toggleAttribute('disabled', index === items.length - 1);
+            });
+        };
+
+        const applyColumnOrder = (columns, persist = true) => {
+            const order = normalizeColumnOrder(columns);
+            const applied = tableAdvancedApi?.applyColumnOrder?.(order) || order;
+            syncColumnOrderList(applied);
+            if (persist) safeSet(COL_ORDER_KEY, JSON.stringify(applied));
+            requestFloatingHeadSync();
+            updateTblNavPill();
+            return applied;
+        };
+
         const normalizeColumns = (columns) => {
             const input = Array.isArray(columns) ? columns : [];
             const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
             const hasDataColumn = filtered.some((key) => key !== 'actions');
             return hasDataColumn ? filtered : defaultColumns;
         };
+
+        const orderFromStorage = (() => {
+            try {
+                return normalizeColumnOrder(JSON.parse(safeGet(COL_ORDER_KEY) || 'null'));
+            } catch (_) {
+                return defaultColumns;
+            }
+        })();
+        syncColumnOrderList(orderFromStorage);
 
         const visibleFromStorage = (() => {
             try {
@@ -268,6 +331,26 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         });
         columnsToggleBtn?.addEventListener('click', () => {
             setColumnsPopoverOpen(!isColumnsPopoverOpen());
+            if (isColumnsPopoverOpen()) setColumnOrderPanelOpen(false);
+        });
+        columnOrderToggleBtn?.addEventListener('click', () => {
+            setColumnOrderPanelOpen(!isColumnOrderPanelOpen());
+        });
+        columnOrderList?.addEventListener('click', (event) => {
+            const moveBtn = event.target instanceof Element ? event.target.closest('[data-column-order-move]') : null;
+            const item = moveBtn?.closest?.('[data-column-order-item]');
+            if (!moveBtn || !item || !columnOrderList) return;
+            event.preventDefault();
+            const items = [...columnOrderList.querySelectorAll('[data-column-order-item]')];
+            const from = items.indexOf(item);
+            if (from < 0) return;
+            const direction = moveBtn.getAttribute('data-column-order-move');
+            const to = direction === 'prev' ? from - 1 : from + 1;
+            if (to < 0 || to >= items.length) return;
+            const nextOrder = items.map((el) => el.getAttribute('data-column-key')).filter(Boolean);
+            const [moved] = nextOrder.splice(from, 1);
+            nextOrder.splice(to, 0, moved);
+            applyColumnOrder(nextOrder, true);
         });
         genBtn?.addEventListener('click', () => {
             let cols = normalizeColumns(getChecked());
@@ -285,7 +368,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             });
         });
         resetBtn?.addEventListener('click', () => {
-            syncCheckboxes(defaultColumns); applyColumns(defaultColumns); safeSet(COL_KEY, JSON.stringify(defaultColumns));
+            syncCheckboxes(defaultColumns);
+            applyColumns(defaultColumns);
+            safeSet(COL_KEY, JSON.stringify(defaultColumns));
+            applyColumnOrder(defaultColumns, true);
         });
 
         document.addEventListener('click', (event) => {
@@ -723,6 +809,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 tableAdvancedApi?.syncTopScrollWidth();
             },
         });
+
+        applyColumnOrder(orderFromStorage, false);
 
         ensureFloatingHost();
         hideFloatingHead();

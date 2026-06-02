@@ -154,11 +154,19 @@ export function initPropertiesTableAdvanced(options) {
         if (pinCountEl) pinCountEl.textContent = count > 0 ? `${count} مثبت` : '';
     };
 
+    const getVisualPinnedColumns = () => {
+        const visiblePinned = new Set(pinnedCols);
+        return [...tableEl.querySelectorAll('thead th[data-column-key]')]
+            .map((th) => th.getAttribute('data-column-key') || '')
+            .filter((key) => {
+                if (!key || !visiblePinned.has(key)) return false;
+                const th = tableEl.querySelector(`thead th[data-column-key="${key}"]`);
+                return th && getComputedStyle(th).display !== 'none';
+            });
+    };
+
     const applyColumnPinning = () => {
-        const pinned = pinnedCols.filter((key) => {
-            const th = tableEl.querySelector(`thead th[data-column-key="${key}"]`);
-            return th && getComputedStyle(th).display !== 'none';
-        });
+        const pinned = getVisualPinnedColumns();
 
         tableEl.classList.remove('vn-has-pinned-cols');
         tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge').forEach((el) => {
@@ -352,6 +360,36 @@ export function initPropertiesTableAdvanced(options) {
         });
     };
 
+    const reorderElementsByKey = (parent, selector, order) => {
+        if (!parent) return;
+        const byKey = new Map([...parent.querySelectorAll(selector)].map((el) => [el.getAttribute('data-column-key'), el]));
+        order.forEach((key) => {
+            const el = byKey.get(key);
+            if (el) parent.appendChild(el);
+        });
+    };
+
+    const applyColumnOrder = (order) => {
+        const requested = Array.isArray(order) ? order.filter((key) => typeof key === 'string') : [];
+        const existing = [...tableEl.querySelectorAll('thead th[data-column-key]')].map((th) => th.getAttribute('data-column-key')).filter(Boolean);
+        const existingSet = new Set(existing);
+        const normalized = [...new Set(requested.filter((key) => existingSet.has(key)))];
+        existing.forEach((key) => { if (!normalized.includes(key)) normalized.push(key); });
+        if (!normalized.length) return existing;
+
+        reorderElementsByKey(colgroupEl, ':scope > col[data-column-key]', normalized);
+        tableEl.querySelectorAll('thead tr').forEach((tr) => reorderElementsByKey(tr, ':scope > th[data-column-key]', normalized));
+        tableEl.querySelectorAll('tbody tr').forEach((tr) => reorderElementsByKey(tr, ':scope > td[data-column-key]', normalized));
+
+        syncColClasses();
+        restoreColWidths();
+        ensureColumnResizers();
+        syncTopScrollWidth();
+        applyColumnPinning();
+        notifyLayout();
+        return normalized;
+    };
+
     const wireTopScrollSync = () => {
         const topScroll = ensureTopScrollMirror();
         if (!topScroll || topScroll.dataset.wired === '1') return;
@@ -408,7 +446,8 @@ export function initPropertiesTableAdvanced(options) {
         applyColumnPinning,
         syncTopScrollWidth,
         togglePinColumn,
-        getPinnedColumns: () => [...pinnedCols],
+        getPinnedColumns: () => getVisualPinnedColumns(),
+        applyColumnOrder,
         onColumnsVisibilityChange: (visibleKeys) => {
             if (!colgroupEl) return;
             const selected = new Set(visibleKeys);

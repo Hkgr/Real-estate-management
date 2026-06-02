@@ -201,10 +201,32 @@
                         </div>
                         <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
                         <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
+                        <button type="button" class="vn-report-toolbar-button" data-column-order-toggle aria-expanded="false" aria-controls="vn-report-column-order-panel">ترتيب الأعمدة</button>
                     </div>
                     <div class="vn-report-generator__actions-submit">
                         <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد التقرير</button>
                     </div>
+                </div>
+                <div id="vn-report-column-order-panel" class="vn-report-column-order-panel" data-column-order-panel hidden>
+                    <div class="vn-report-column-order-panel__header">
+                        <div>
+                            <h3 class="vn-report-column-order-panel__title">ترتيب الأعمدة</h3>
+                            <p class="vn-report-column-order-panel__hint">استخدم أزرار التحريك لتغيير ترتيب الأعمدة الحالية في الجدول مباشرة.</p>
+                        </div>
+                        <span class="vn-report-column-order-panel__meta">يُحفظ الترتيب على هذا المتصفح فقط</span>
+                    </div>
+                    <ol class="vn-report-column-order-list" data-column-order-list aria-label="قائمة ترتيب أعمدة تقرير العقارات">
+                        @foreach ($propertyTableColumnLabels as $key => $label)
+                            <li class="vn-report-column-order-item" data-column-order-item data-column-key="{{ $key }}">
+                                <span class="vn-report-column-order-item__label">{{ $label }}</span>
+                                <span class="vn-report-column-order-item__key">{{ $key }}</span>
+                                <span class="vn-report-column-order-item__actions">
+                                    <button type="button" class="vn-report-column-order-move" data-column-order-move="prev" aria-label="تحريك {{ $label }} إلى السابق">السابق</button>
+                                    <button type="button" class="vn-report-column-order-move" data-column-order-move="next" aria-label="تحريك {{ $label }} إلى التالي">التالي</button>
+                                </span>
+                            </li>
+                        @endforeach
+                    </ol>
                 </div>
                 <div class="vn-report-generator__filters vn-report-generator__filters--compact">
 
