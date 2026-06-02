@@ -178,6 +178,16 @@
                 $viewerNewTitle = trim($__env->yieldContent('topbar_title')) ?: trim($__env->yieldContent('page_title')) ?: 'البوابة';
                 $viewerNewVersion = trim($__env->yieldContent('topbar_version')) ?: 'v0.2.1';
                 $viewerNewRouteName = request()->route()?->getName();
+                $viewerNewRouteProperty = request()->route('property');
+                $viewerNewPropertyRecordNumber = is_object($viewerNewRouteProperty)
+                    ? ($viewerNewRouteProperty->card_record_number ?? null)
+                    : null;
+                $viewerNewPropertyId = is_object($viewerNewRouteProperty)
+                    ? ($viewerNewRouteProperty->id ?? null)
+                    : $viewerNewRouteProperty;
+                $viewerNewPropertyBreadcrumbLabel = filled((string) ($viewerNewPropertyRecordNumber ?? ''))
+                    ? 'بطاقة العقار - محضر رقم ' . $viewerNewPropertyRecordNumber
+                    : 'بطاقة العقار - عقار رقم ' . ($viewerNewPropertyId ?: 'غير محدد');
 
                 $viewerNewBreadcrumbMap = [
                     'viewer-new.hub' => [
@@ -196,7 +206,7 @@
                         ['label' => 'الرئيسية', 'url' => route('viewer-new.hub')],
                         ['label' => 'التقارير', 'url' => route('viewer-new.reports')],
                         ['label' => 'تقرير العقارات', 'url' => route('viewer-new.reports.properties')],
-                        ['label' => 'بطاقة العقار', 'url' => null],
+                        ['label' => $viewerNewPropertyBreadcrumbLabel, 'url' => null],
                     ],
                     'viewer-new.reports.owners' => [
                         ['label' => 'الرئيسية', 'url' => route('viewer-new.hub')],

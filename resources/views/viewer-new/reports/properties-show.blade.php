@@ -85,7 +85,12 @@
                 <a href="{{ route('viewer-new.reports.properties') }}" class="vn-property-show__back">← العودة إلى تقرير العقارات</a>
                 <p class="vn-property-show__eyebrow">بطاقة عقار مستقلة</p>
                 <h1 id="vn-property-show-title">بطاقة العقار</h1>
-                <p class="vn-property-show__subtitle">{{ $propertyTitle !== '—' ? $propertyTitle : 'عقار رقم ' . ($property->id ?? '—') }}</p>
+                <p class="vn-property-show__record">رقم المحضر: <strong>{{ $recordNumber }}</strong></p>
+                @if ($propertyTitle !== '—')
+                    <p class="vn-property-show__subtitle">{{ $propertyTitle }}</p>
+                @else
+                    <p class="vn-property-show__subtitle">عقار رقم {{ $property->id ?? '—' }}</p>
+                @endif
             </div>
             <div class="vn-property-show__summary" aria-label="ملخص العقار">
                 <span>رقم المحضر</span>
@@ -131,27 +136,39 @@
                     <h2>الملاك وحصص الملكية</h2>
                     <span class="vn-property-show-count">{{ number_format($property->owners->count()) }} سجل</span>
                 </div>
-                <div class="vn-property-show-list">
-                    @foreach ($property->owners as $owner)
-                        @php
-                            $ownerName = filled((string) ($owner->display_name ?? '')) ? $owner->display_name : 'مالك #' . $owner->id;
-                            $pivot = $owner->pivot;
-                        @endphp
-                        <section class="vn-property-show-list-item">
-                            <div>
-                                <h3>{{ $ownerName }}</h3>
-                                <p>{{ $valueOrEmpty($owner->owner_type ?? null) }}</p>
-                            </div>
-                            <dl>
-                                <div><dt>نسبة الملكية</dt><dd>{{ $formatNumber($pivot->ownership_percentage ?? null) }}%</dd></div>
-                                <div><dt>مقياس الملكية</dt><dd>{{ $valueOrEmpty($pivot->ownership_metric ?? null) }}</dd></div>
-                                <div><dt>حالي</dt><dd>{{ ($pivot->is_current ?? false) ? 'نعم' : 'لا' }}</dd></div>
-                                <div><dt>طريقة الشراء</dt><dd>{{ $valueOrEmpty($pivot->purchase_method ?? null) }}</dd></div>
-                                <div><dt>تاريخ الشراء</dt><dd>{{ $formatDate($pivot->purchase_date ?? null) }}</dd></div>
-                                <div><dt>تاريخ البيع</dt><dd>{{ $formatDate($pivot->sale_date ?? null) }}</dd></div>
-                            </dl>
-                        </section>
-                    @endforeach
+                <div class="vn-property-show-table-wrap">
+                    <table class="vn-property-show-table">
+                        <thead>
+                            <tr>
+                                <th>المالك</th>
+                                <th>نوع المالك</th>
+                                <th>نسبة الملكية</th>
+                                <th>مقياس الملكية</th>
+                                <th>حالي</th>
+                                <th>طريقة الشراء</th>
+                                <th>تاريخ الشراء</th>
+                                <th>تاريخ البيع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($property->owners as $owner)
+                                @php
+                                    $ownerName = filled((string) ($owner->display_name ?? '')) ? $owner->display_name : 'مالك #' . ($owner->id ?? '—');
+                                    $pivot = $owner->pivot;
+                                @endphp
+                                <tr>
+                                    <td>{{ $ownerName }}</td>
+                                    <td>{{ $valueOrEmpty($owner->owner_type ?? null) }}</td>
+                                    <td>{{ $formatNumber($pivot->ownership_percentage ?? null) }}%</td>
+                                    <td>{{ $valueOrEmpty($pivot->ownership_metric ?? null) }}</td>
+                                    <td>{{ ($pivot->is_current ?? false) ? 'نعم' : 'لا' }}</td>
+                                    <td>{{ $valueOrEmpty($pivot->purchase_method ?? null) }}</td>
+                                    <td>{{ $formatDate($pivot->purchase_date ?? null) }}</td>
+                                    <td>{{ $formatDate($pivot->sale_date ?? null) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </article>
         @endif
@@ -162,28 +179,54 @@
                     <h2>العمليات المرتبطة</h2>
                     <span class="vn-property-show-count">{{ number_format($property->operations->count()) }} سجل</span>
                 </div>
-                <div class="vn-property-show-list">
-                    @foreach ($property->operations as $operation)
-                        <section class="vn-property-show-list-item">
-                            <div>
-                                <h3>{{ $valueOrEmpty($operation->operation_type ?? null) }}</h3>
-                                <p>{{ $valueOrEmpty($operation->operation_method ?? null) }}</p>
-                            </div>
-                            <dl>
-                                <div><dt>الكمية</dt><dd>{{ $formatNumber($operation->transaction_amount ?? null) }}</dd></div>
-                                <div><dt>الوحدة</dt><dd>{{ $valueOrEmpty($operation->transaction_unit ?? null) }}</dd></div>
-                                <div><dt>رقم الدعوى</dt><dd>{{ $valueOrEmpty($operation->case_number ?? null) }}</dd></div>
-                                <div><dt>رقم القرار</dt><dd>{{ $valueOrEmpty($operation->decision_number ?? null) }}</dd></div>
-                                <div><dt>الجهة</dt><dd>{{ $valueOrEmpty($operation->authority ?? null) }}</dd></div>
-                                <div><dt>تاريخ الحكم</dt><dd>{{ $formatDate($operation->judgment_date ?? null) }}</dd></div>
-                                <div><dt>الملاك السابقون</dt><dd>{{ $operation->oldOwners->map(fn ($owner) => $owner->display_name ?: ('مالك #' . $owner->id))->filter()->implode('، ') ?: '—' }}</dd></div>
-                                <div><dt>الملاك الجدد</dt><dd>{{ $operation->newOwners->map(fn ($owner) => $owner->display_name ?: ('مالك #' . $owner->id))->filter()->implode('، ') ?: '—' }}</dd></div>
-                            </dl>
-                            @if (filled($operation->judgment_notes) || filled($operation->contract_notes))
-                                <p class="vn-property-show-note">{{ filled($operation->judgment_notes) ? $operation->judgment_notes : $operation->contract_notes }}</p>
-                            @endif
-                        </section>
-                    @endforeach
+                <div class="vn-property-show-table-wrap">
+                    <table class="vn-property-show-table vn-property-show-table--wide">
+                        <thead>
+                            <tr>
+                                <th>نوع العملية</th>
+                                <th>طريقة العملية</th>
+                                <th>الكمية</th>
+                                <th>الوحدة</th>
+                                <th>رقم الدعوى</th>
+                                <th>رقم القرار</th>
+                                <th>الجهة</th>
+                                <th>تاريخ الحكم</th>
+                                <th>الملاك السابقون</th>
+                                <th>الملاك الجدد</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($property->operations as $operation)
+                                @php
+                                    $oldOwnersLabel = $operation->oldOwners
+                                        ->map(fn ($owner) => $owner->display_name ?: ('مالك #' . ($owner->id ?? '—')))
+                                        ->filter()
+                                        ->implode('، ');
+                                    $newOwnersLabel = $operation->newOwners
+                                        ->map(fn ($owner) => $owner->display_name ?: ('مالك #' . ($owner->id ?? '—')))
+                                        ->filter()
+                                        ->implode('، ');
+                                    $operationNotes = filled($operation->judgment_notes ?? null)
+                                        ? $operation->judgment_notes
+                                        : ($operation->contract_notes ?? null);
+                                @endphp
+                                <tr>
+                                    <td>{{ $valueOrEmpty($operation->operation_type ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($operation->operation_method ?? null) }}</td>
+                                    <td>{{ $formatNumber($operation->transaction_amount ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($operation->transaction_unit ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($operation->case_number ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($operation->decision_number ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($operation->authority ?? null) }}</td>
+                                    <td>{{ $formatDate($operation->judgment_date ?? null) }}</td>
+                                    <td>{{ $oldOwnersLabel ?: '—' }}</td>
+                                    <td>{{ $newOwnersLabel ?: '—' }}</td>
+                                    <td class="vn-property-show-table__notes">{{ $valueOrEmpty($operationNotes ?? null) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </article>
         @endif
@@ -194,43 +237,75 @@
                     <h2>الإشارات المرتبطة</h2>
                     <span class="vn-property-show-count">{{ number_format($property->signals->count()) }} سجل</span>
                 </div>
-                <div class="vn-property-show-list">
-                    @foreach ($property->signals as $signal)
-                        <section class="vn-property-show-list-item">
-                            <div>
-                                <h3>{{ $valueOrEmpty($signal->signal_id ?? null) }}</h3>
-                                <p>{{ $valueOrEmpty($signal->type ?? null) }}</p>
-                            </div>
-                            <dl>
-                                <div><dt>تاريخ الإشارة</dt><dd>{{ $formatDate($signal->signal_date ?? null) }}</dd></div>
-                                <div><dt>صاحب الإشارة</dt><dd>{{ $valueOrEmpty($signal->signal_owners_label ?? null) }}</dd></div>
-                                <div><dt>مصدر الإشارة</dt><dd>{{ $valueOrEmpty($signal->signal_source ?? null) }}</dd></div>
-                                <div><dt>رقم المصدر</dt><dd>{{ $valueOrEmpty($signal->signal_source_number ?? null) }}</dd></div>
-                                <div><dt>تاريخ المصدر</dt><dd>{{ $formatDate($signal->signal_source_date ?? null) }}</dd></div>
-                                <div><dt>المتضرر</dt><dd>{{ $valueOrEmpty($signal->signal_victims_label ?? null) }}</dd></div>
-                            </dl>
-                            @if (filled($signal->signal_notes))
-                                <p class="vn-property-show-note">{{ $signal->signal_notes }}</p>
-                            @endif
-                        </section>
-                    @endforeach
+                <div class="vn-property-show-table-wrap">
+                    <table class="vn-property-show-table vn-property-show-table--wide">
+                        <thead>
+                            <tr>
+                                <th>رقم الإشارة</th>
+                                <th>نوع الإشارة</th>
+                                <th>تاريخ الإشارة</th>
+                                <th>صاحب الإشارة</th>
+                                <th>المتضرر</th>
+                                <th>مصدر الإشارة</th>
+                                <th>رقم المصدر</th>
+                                <th>تاريخ المصدر</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($property->signals as $signal)
+                                <tr>
+                                    <td>{{ $valueOrEmpty($signal->signal_id ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($signal->type ?? null) }}</td>
+                                    <td>{{ $formatDate($signal->signal_date ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($signal->signal_owners_label ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($signal->signal_victims_label ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($signal->signal_source ?? null) }}</td>
+                                    <td>{{ $valueOrEmpty($signal->signal_source_number ?? null) }}</td>
+                                    <td>{{ $formatDate($signal->signal_source_date ?? null) }}</td>
+                                    <td class="vn-property-show-table__notes">{{ $valueOrEmpty($signal->signal_notes ?? null) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </article>
         @endif
 
         @if ($property->files->isNotEmpty())
+            @php $canDownloadPropertyFiles = \Illuminate\Support\Facades\Route::has('property-card-files.download'); @endphp
             <article class="vn-property-show-card" aria-label="المرفقات">
                 <div class="vn-property-show-card__head">
                     <h2>المرفقات</h2>
                     <span class="vn-property-show-count">{{ number_format($property->files->count()) }} ملف</span>
                 </div>
-                <div class="vn-property-show-attachments">
-                    @foreach ($property->files as $file)
-                        <a class="vn-property-show-attachment" href="{{ route('property-card-files.download', $file) }}" aria-label="تحميل المرفق {{ $file->file_name }}">
-                            <span>{{ $valueOrEmpty($file->file_name ?? null) }}</span>
-                            <small>{{ $formatDate($file->issued_at ?? null) }} · {{ filled($file->mime_type) ? $file->mime_type : 'ملف' }}</small>
-                        </a>
-                    @endforeach
+                <div class="vn-property-show-table-wrap">
+                    <table class="vn-property-show-table">
+                        <thead>
+                            <tr>
+                                <th>اسم الملف</th>
+                                <th>النوع</th>
+                                <th>تاريخ الإصدار</th>
+                                <th>إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($property->files as $file)
+                                <tr>
+                                    <td>{{ $valueOrEmpty($file->file_name ?? null) }}</td>
+                                    <td>{{ filled($file->mime_type ?? null) ? $file->mime_type : 'ملف' }}</td>
+                                    <td>{{ $formatDate($file->issued_at ?? null) }}</td>
+                                    <td>
+                                        @if ($canDownloadPropertyFiles)
+                                            <a class="vn-property-show-table__action" href="{{ route('property-card-files.download', $file) }}" aria-label="تحميل المرفق {{ $valueOrEmpty($file->file_name ?? null) }}">تحميل</a>
+                                        @else
+                                            <span class="vn-property-show-table__muted">غير متاح</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </article>
         @endif
