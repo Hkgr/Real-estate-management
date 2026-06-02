@@ -176,7 +176,7 @@
                     <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-export-toggle aria-expanded="false" aria-controls="vn-properties-export-menu">تصدير ▾</button>
                     <div id="vn-properties-export-menu" class="vn-report-export-menu__panel" data-export-menu hidden role="menu" aria-label="خيارات التصدير">
                         <button type="button" class="vn-report-export-menu__item" data-export-excel role="menuitem">تصدير Excel</button>
-                        <button type="button" class="vn-report-export-menu__item vn-report-export-menu__item--disabled" data-export-pdf role="menuitem" disabled aria-disabled="true" title="سيتم دعم تصدير PDF في المرحلة القادمة">تصدير PDF <span>قريباً</span></button>
+                        <button type="button" class="vn-report-export-menu__item" data-export-pdf role="menuitem">تصدير PDF</button>
                     </div>
                 </div>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-properties-fullscreen id="properties-fullscreen-btn">⛶ ملء الشاشة</button>

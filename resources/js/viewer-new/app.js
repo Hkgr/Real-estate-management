@@ -154,6 +154,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const exportToggleBtn = reportRoot.querySelector('[data-export-toggle]');
         const exportMenu = reportRoot.querySelector('[data-export-menu]');
         const exportExcelBtn = reportRoot.querySelector('[data-export-excel]');
+        const exportPdfBtn = reportRoot.querySelector('[data-export-pdf]');
 
         const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
         const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
@@ -320,6 +321,109 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             }
         };
 
+        const escapeHtml = (value) => normalizeExcelText(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        const buildPropertiesPdfHtml = (exportData) => {
+            const generatedAt = new Date();
+            const exportMode = exportData.selectedOnly ? 'الصفوف المحددة' : 'الصفوف الظاهرة';
+            const headerCells = exportData.columns
+                .map(({ header }) => `<th scope="col">${escapeHtml(header)}</th>`)
+                .join('');
+            const bodyRows = exportData.rows
+                .map((row) => `<tr>${exportData.columns.map((_, index) => `<td>${escapeHtml(row.values[index])}</td>`).join('')}</tr>`)
+                .join('');
+
+            return `<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير العقارات</title>
+<style>
+@page { size: A4 landscape; margin: 12mm; }
+* { box-sizing: border-box; }
+html, body { direction: rtl; background: #fff; color: #111827; font-family: Arial, Tahoma, sans-serif; }
+body { margin: 0; font-size: 12px; line-height: 1.55; }
+.report-shell { width: 100%; }
+.report-header { border-bottom: 3px solid #7C5A12; margin-bottom: 14px; padding-bottom: 10px; }
+h1 { margin: 0 0 8px; color: #1f2937; font-size: 24px; font-weight: 800; }
+.report-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; color: #374151; }
+.report-meta li { border: 1px solid #ead89b; background: #fffbeb; border-radius: 8px; padding: 5px 9px; }
+.table-wrap { width: 100%; overflow: visible; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th, td { border: 1px solid #d6d6d6; padding: 6px 8px; text-align: right; vertical-align: top; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+thead th { background: #7C5A12; color: #fff; font-weight: 700; text-align: center; vertical-align: middle; }
+tbody tr:nth-child(even) td { background: #fff8e1; }
+tbody tr:nth-child(odd) td { background: #fff; }
+.print-hint { margin-top: 12px; color: #6b7280; font-size: 10px; }
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-header { break-after: avoid; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  .print-hint { display: none; }
+}
+</style>
+</head>
+<body>
+  <main class="report-shell">
+    <header class="report-header">
+      <h1>تقرير العقارات</h1>
+      <ul class="report-meta">
+        <li>تاريخ الإنشاء: ${escapeHtml(generatedAt.toLocaleString('ar'))}</li>
+        <li>عدد الصفوف: ${escapeHtml(exportData.rows.length)}</li>
+        <li>نطاق التصدير: ${escapeHtml(exportMode)}</li>
+      </ul>
+    </header>
+    <section class="table-wrap" aria-label="تقرير العقارات">
+      <table>
+        <thead><tr>${headerCells}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </section>
+    <p class="print-hint">يمكن حفظ هذا التقرير كملف PDF من نافذة الطباعة في المتصفح.</p>
+  </main>
+</body>
+</html>`;
+        };
+
+        const printPropertiesPdf = (exportData) => {
+            const printWindow = window.open('', '_blank', 'width=1280,height=900,scrollbars=yes,resizable=yes');
+            if (!printWindow) {
+                window.alert('تعذر فتح نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة ثم المحاولة مرة أخرى.');
+                return;
+            }
+
+            const html = buildPropertiesPdfHtml(exportData);
+            printWindow.document.open();
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            window.setTimeout(() => {
+                try {
+                    printWindow.focus();
+                    printWindow.print();
+                } catch (error) {
+                    console.error('[viewer-new properties export] فشل فتح نافذة طباعة PDF', error);
+                    window.alert('تعذر فتح نافذة الطباعة. يرجى المحاولة مرة أخرى.');
+                }
+            }, 350);
+
+            console.info('[viewer-new properties export]', {
+                format: 'pdf-print-client',
+                mode: exportData.selectedOnly ? 'selected-rows' : 'visible-rows',
+                selectedOnly: exportData.selectedOnly,
+                selectedRowIds: exportData.selectedRowIds,
+                visibleColumnKeys: exportData.columns.map(({ key }) => key),
+                rowCount: exportData.rows.length,
+            });
+        };
+
         const exportPropertiesExcel = () => {
             const exportData = tableAdvancedApi?.getExportRows?.();
             if (!exportData || exportData.rows.length === 0 || exportData.columns.length === 0) {
@@ -328,6 +432,16 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 return;
             }
             downloadExcelXlsx(exportData);
+        };
+
+        const exportPropertiesPdf = () => {
+            const exportData = tableAdvancedApi?.getExportRows?.();
+            if (!exportData || exportData.rows.length === 0 || exportData.columns.length === 0) {
+                window.alert('لا توجد صفوف قابلة للتصدير');
+                console.info('[viewer-new properties export] لا توجد صفوف قابلة للتصدير', exportData || null);
+                return;
+            }
+            printPropertiesPdf(exportData);
         };
 
         const setColumnsPopoverOpen = (open) => {
@@ -493,6 +607,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         exportExcelBtn?.addEventListener('click', () => {
             setExportMenuOpen(false);
             exportPropertiesExcel();
+        });
+        exportPdfBtn?.addEventListener('click', () => {
+            setExportMenuOpen(false);
+            exportPropertiesPdf();
         });
         columnsToggleBtn?.addEventListener('click', () => {
             setColumnsPopoverOpen(!isColumnsPopoverOpen());
@@ -998,6 +1116,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             getVisibleColumnKeys: () => tableAdvancedApi?.getVisibleColumnKeys?.() || [],
             getExportRows: () => tableAdvancedApi?.getExportRows?.() || null,
             exportExcel: exportPropertiesExcel,
+            exportPdf: exportPropertiesPdf,
             getExportFormat: () => ({ extension: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', format: 'xlsx-client' }),
             openMenu: () => setExportMenuOpen(true),
             closeMenu: () => setExportMenuOpen(false),
