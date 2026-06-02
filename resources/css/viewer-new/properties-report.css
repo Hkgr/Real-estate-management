@@ -137,6 +137,7 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
   gap: 10px;
   flex-wrap: nowrap;
   overflow: visible;
+  min-width: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -170,10 +171,22 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
 .viewer-new .vn-properties-report .vn-report-toolbar__search {
   display: flex;
   align-items: center;
-  flex: 1 1 auto;
-  inline-size: auto;
+  flex: 0 1 0;
+  inline-size: 0;
   min-inline-size: 0;
-  max-inline-size: none;
+  max-inline-size: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: flex-basis .24s ease, max-inline-size .24s ease, opacity .18s ease;
+}
+
+.viewer-new .vn-properties-report .vn-report-toolbar.vn-report-toolbar--search-open .vn-report-toolbar__search {
+  flex: 1 1 320px;
+  inline-size: auto;
+  max-inline-size: 100%;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .vn-properties-report .vn-report-toolbar__search-label {
@@ -194,9 +207,15 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
   min-inline-size: 0;
   block-size: 38px;
   padding: 8px 14px;
-  border-color: rgba(212,175,55,.26);
+  border: 1px solid rgba(212,175,55,.26);
+  border-radius: var(--r-md, 8px);
+  color: var(--text-primary, #F2EAD7);
   background: rgba(10,10,10,.72);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.vn-properties-report .vn-report-toolbar__search .search-input::placeholder {
+  color: rgba(242,234,215,.58);
 }
 
 [data-theme="light"] .vn-properties-report .vn-report-toolbar__search .search-input {
@@ -238,18 +257,56 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
 }
 
 .viewer-new .vn-properties-report .toolbar-search-close.vn-report-toolbar-button,
+.viewer-new .vn-properties-report .toolbar-search-toggle.vn-report-toolbar-button,
 .viewer-new .vn-properties-report .toolbar-main-btn.vn-report-toolbar-button {
   flex: 0 0 auto;
 }
 
-.vn-properties-report .toolbar-search-close.vn-report-toolbar-button {
+.vn-properties-report .toolbar-search-toggle.vn-report-toolbar-button {
   inline-size: 38px;
   min-inline-size: 38px;
   padding: 0;
+  color: var(--gold-mid, #C49A2A);
+}
+
+.vn-properties-report .vn-report-toolbar-button__icon {
+  inline-size: 17px;
+  block-size: 17px;
+  display: block;
+}
+
+.vn-properties-report .toolbar-search-toggle .vn-report-toolbar-button__label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.vn-properties-report .toolbar-search-close.vn-report-toolbar-button {
+  inline-size: 0;
+  min-inline-size: 0;
+  padding: 0;
+  border-width: 0;
   border-radius: var(--r-md, 8px);
   color: var(--gold-mid, #C49A2A);
   background: rgba(212,175,55,.08);
   font-size: calc(15px * var(--fs-scale, 1));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(.92);
+}
+
+.vn-properties-report .vn-report-toolbar.vn-report-toolbar--search-open .toolbar-search-close.vn-report-toolbar-button {
+  inline-size: 38px;
+  min-inline-size: 38px;
+  border-width: 1px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: scale(1);
 }
 
 /* shimmer sweep */
@@ -350,11 +407,11 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
     flex-wrap: wrap;
   }
 
-  .viewer-new .vn-properties-report .vn-report-toolbar__search {
+  .viewer-new .vn-properties-report .vn-report-toolbar.vn-report-toolbar--search-open .vn-report-toolbar__search {
     flex: 1 1 220px;
     inline-size: auto;
     min-inline-size: 0;
-    max-inline-size: none;
+    max-inline-size: 100%;
   }
 }
 
@@ -364,7 +421,7 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
     padding: 8px;
   }
 
-  .viewer-new .vn-properties-report .vn-report-toolbar__search {
+  .viewer-new .vn-properties-report .vn-report-toolbar.vn-report-toolbar--search-open .vn-report-toolbar__search {
     flex: 1 1 100%;
     min-inline-size: 0;
   }
@@ -381,20 +438,42 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
 
 .viewer-new .vn-properties-report .vn-report-generator {
   display: none; /* toggled by JS */
-  width: fit-content;
-  max-width: min(1280px, 100%);
-  min-width: min(100%, calc(var(--vn-pr-filter-cols, 6) * var(--vn-pr-filter-field-width, 132px) + (var(--vn-pr-filter-cols, 6) - 1) * 12px + 32px));
-  align-self: flex-start;
+  width: 100%;
+  inline-size: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-self: stretch;
   background: rgba(255,255,255,.015);
   border: 1px solid var(--border, #2A2A2A);
   border-radius: var(--r-lg, 16px);
   padding: 14px 16px;
   animation: vn-panel-slide-in .22s ease;
   box-sizing: border-box;
+  position: relative;
+  z-index: 30;
+  overflow: visible;
+}
+
+.vn-properties-report .vn-report-generator__form,
+.vn-properties-report .vn-report-generator__body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.vn-properties-report .vn-report-generator__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .vn-properties-report .vn-report-generator.is-open {
   display: block;
+}
+
+.vn-properties-report .vn-report-generator.vn-report-generator--columns-open {
+  z-index: 80;
 }
 
 @keyframes vn-panel-slide-in {
@@ -407,16 +486,19 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
   border-color: #dfd5c6;
 }
 
-/* Filter fields grid — 6 filters per row (matches --vn-pr-filter-cols in app.css) */
+/* Filter fields grid — fills the full-width generator panel without forcing page overflow. */
 .vn-properties-report .vn-report-generator__filters {
   display: grid;
-  grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 10px 12px;
   margin-bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .vn-properties-report .vn-report-generator__filters--compact {
-  grid-template-columns: repeat(var(--vn-pr-filter-cols, 6), var(--vn-pr-filter-col, 132px));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
 }
 
 .vn-properties-report .vn-report-generator__field {
@@ -476,22 +558,77 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
   filter: none; opacity: .55;
 }
 
-/* Column picker — 6 options per row */
+.vn-properties-report .vn-report-columns-menu {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 var(--vn-pr-generator-btn-width, 9.5rem);
+  width: var(--vn-pr-generator-btn-width, 9.5rem);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.vn-properties-report .vn-report-columns-menu > .vn-report-toolbar-button {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vn-properties-report .vn-report-columns-popover {
+  position: absolute;
+  inset-block-start: calc(100% + 10px);
+  inset-inline-start: 0;
+  z-index: 90;
+  display: none;
+  inline-size: min(620px, calc(100vw - 32px));
+  max-inline-size: min(620px, calc(100vw - 32px));
+  min-inline-size: min(320px, calc(100vw - 32px));
+  padding: 12px;
+  background:
+    linear-gradient(145deg, rgba(212,175,55,.12), rgba(255,255,255,.025) 42%, rgba(10,10,10,.92)),
+    rgba(10,10,10,.96);
+  border: 1px solid rgba(212,175,55,.34);
+  border-radius: var(--r-lg, 16px);
+  box-shadow:
+    0 22px 45px rgba(0,0,0,.36),
+    0 0 0 1px rgba(212,175,55,.08),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  box-sizing: border-box;
+}
+
+.vn-properties-report .vn-report-columns-popover.vn-report-columns-popover--open {
+  display: block;
+}
+
+[data-theme="light"] .vn-properties-report .vn-report-columns-popover {
+  background:
+    linear-gradient(145deg, rgba(196,154,42,.14), rgba(255,255,255,.94)),
+    rgba(255,255,255,.96);
+  border-color: rgba(167,144,103,.4);
+  box-shadow: 0 18px 36px rgba(110,83,28,.16), inset 0 1px 0 rgba(255,255,255,.66);
+}
+
+/* Column picker inside the chooser popover. */
 .vn-properties-report .vn-report-generator__columns {
   display: grid;
-  grid-template-columns: repeat(6, var(--vn-pr-filter-col, 132px));
-  gap: 5px;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 6px;
   margin-bottom: 0;
   padding: 10px;
   background: rgba(212,175,55,.03);
   border: 1px dashed rgba(212,175,55,.15);
   border-radius: var(--r-md, 8px);
-  max-height: 200px;
-  overflow-y: auto;
+  max-block-size: min(360px, calc(100vh - 220px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .vn-properties-report .vn-report-generator__columns--compact {
-  grid-template-columns: repeat(var(--vn-pr-filter-cols, 6), var(--vn-pr-filter-col, 132px));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
 }
 
 .vn-properties-report .vn-report-column-option {
@@ -558,13 +695,38 @@ body.viewer-new.vn-properties-report-page .vn-properties-report {
 
 /* Generator actions row */
 .vn-properties-report .vn-report-generator__actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(212,175,55,.12);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.vn-properties-report .vn-report-generator__actions-main,
+.vn-properties-report .vn-report-generator__actions-submit {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding-top: 12px;
-  border-top: 1px solid rgba(212,175,55,.12);
-  margin-top: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vn-properties-report .vn-report-generator__actions-main {
+  flex: 1 1 auto;
+}
+
+.vn-properties-report .vn-report-generator__actions-submit {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 .vn-properties-report .vn-report-generator__actions .vn-report-toolbar-button {

@@ -156,13 +156,21 @@
         </header>
 
         <div id="vn-properties-focus-target" class="report-focus-target" data-properties-focus-target>
-        <section class="table-toolbar vn-report-toolbar" aria-label="شريط أدوات تقرير العقارات">
+        @php
+            $toolbarSearchValue = (string) ($filters['q'] ?? '');
+            $toolbarSearchOpen = trim($toolbarSearchValue) !== '';
+        @endphp
+        <section class="table-toolbar vn-report-toolbar{{ $toolbarSearchOpen ? ' vn-report-toolbar--search-open' : '' }}" aria-label="شريط أدوات تقرير العقارات" data-properties-toolbar>
             <div class="toolbar-main-actions vn-report-toolbar__main">
-                <div class="toolbar-inline-search vn-report-toolbar__search active" id="vn-toolbar-inline-search">
+                <button type="button" class="toolbar-main-btn toolbar-search-toggle vn-report-toolbar-button" data-properties-search-toggle aria-expanded="{{ $toolbarSearchOpen ? 'true' : 'false' }}" aria-controls="vn-toolbar-inline-search" aria-label="فتح البحث">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" class="vn-report-toolbar-button__icon"><path d="M10.75 4.5a6.25 6.25 0 1 1 0 12.5 6.25 6.25 0 0 1 0-12.5Zm0 1.8a4.45 4.45 0 1 0 0 8.9 4.45 4.45 0 0 0 0-8.9Zm4.55 9.02 4.2 4.18-1.27 1.28-4.2-4.19 1.27-1.27Z" fill="currentColor"/></svg>
+                    <span class="vn-report-toolbar-button__label">بحث</span>
+                </button>
+                <div class="toolbar-inline-search vn-report-toolbar__search" id="vn-toolbar-inline-search" data-properties-search-wrapper>
                     <label for="filter-q" class="vn-report-toolbar__search-label filter-label">بحث شامل</label>
-                    <input id="filter-q" class="search-input" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $filters['q'] ?? '' }}" placeholder="بحث برقم المحضر أو المنطقة أو الملاحظات" />
+                    <input id="filter-q" class="search-input" type="text" name="q" form="vn-properties-report-generator-form" value="{{ $toolbarSearchValue }}" placeholder="إبحث في جميع الحقول..." autocomplete="off" {{ $toolbarSearchOpen ? '' : 'disabled' }} />
                 </div>
-                <button type="button" class="toolbar-search-close vn-report-toolbar-button" data-properties-clear-search aria-label="مسح البحث">✕</button>
+                <button type="button" class="toolbar-search-close vn-report-toolbar-button" data-properties-clear-search aria-label="مسح وإغلاق البحث">✕</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-report-generator-toggle aria-expanded="false" aria-controls="vn-properties-generator-panel" id="toolbar-main-reports">مولد تقارير</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button vn-report-toolbar-button--disabled" disabled aria-disabled="true" title="سيتم دعم التصدير لاحقاً">تصدير ▾</button>
                 <button type="button" class="toolbar-main-btn vn-report-toolbar-button" data-properties-fullscreen id="properties-fullscreen-btn">⛶ ملء الشاشة</button>
@@ -172,6 +180,32 @@
         <section id="vn-properties-generator-panel" class="toolbar-mode-panel vn-report-generator" data-report-generator-panel>
             <form id="vn-properties-report-generator-form" method="GET" action="{{ route('viewer-new.reports.properties') }}" data-report-generator-form class="vn-report-generator__form">
                 <div class="vn-report-generator__body">
+                <div class="vn-report-generator__actions">
+                    <div class="vn-report-generator__actions-main">
+                        <div class="vn-report-columns-menu" data-report-columns-menu>
+                            <button type="button" class="vn-report-toolbar-button" data-report-columns-toggle aria-expanded="false" aria-controls="vn-report-columns-popover">تحديد الأعمدة</button>
+                            <div id="vn-report-columns-popover" class="vn-report-columns-popover" data-report-columns-popover>
+                                <div class="vn-col-pin-bar" data-properties-pin-bar>
+                                    <button type="button" class="vn-col-unpin-all" data-properties-unpin-all>إلغاء تثبيت الكل</button>
+                                    <span class="vn-col-pin-count" data-properties-pin-count></span>
+                                </div>
+                                <div class="vn-report-generator__columns vn-report-generator__columns--compact" data-column-picker>
+                                    @foreach ($propertyTableColumnLabels as $key => $label)
+                                        <label class="vn-report-column-option vn-report-column-option-card">
+                                            <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
+                                            <span>{{ $label }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
+                        <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
+                    </div>
+                    <div class="vn-report-generator__actions-submit">
+                        <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد التقرير</button>
+                    </div>
+                </div>
                 <div class="vn-report-generator__filters vn-report-generator__filters--compact">
 
                 <div class="vn-report-generator__field">
@@ -263,24 +297,6 @@
                     </div>
                 @endforeach
 
-                </div>
-                <div class="vn-report-generator__columns vn-report-generator__columns--compact" data-column-picker>
-                    @foreach ($propertyTableColumnLabels as $key => $label)
-                        <label class="vn-report-column-option vn-report-column-option-card">
-                            <input type="checkbox" data-column-toggle value="{{ $key }}" checked>
-                            <span>{{ $label }}</span>
-                        </label>
-                    @endforeach
-                </div>
-                <div class="vn-col-pin-bar" data-properties-pin-bar>
-                    <button type="button" class="vn-col-unpin-all" data-properties-unpin-all>إلغاء تثبيت الكل</button>
-                    <span class="vn-col-pin-count" data-properties-pin-count></span>
-                </div>
-                <div class="vn-report-generator__actions">
-                    <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
-                    <a href="{{ route('viewer-new.reports.properties') }}" class="vn-report-toolbar-button">إعادة تعيين</a>
-                    <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
-                    <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد تقرير</button>
                 </div>
                 </div>
             </form>
