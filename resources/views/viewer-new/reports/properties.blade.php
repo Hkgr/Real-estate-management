@@ -201,6 +201,9 @@
                         </div>
                         <button type="submit" class="vn-report-toolbar-button">تطبيق الفلاتر</button>
                         <button type="button" class="vn-report-toolbar-button" data-reset-columns>إعادة الافتراضي</button>
+                        <button type="button" class="vn-report-toolbar-button" data-column-order-toggle aria-pressed="false" aria-describedby="vn-column-reorder-hint">ترتيب الأعمدة</button>
+                        <button type="button" class="vn-report-toolbar-button" data-row-selection-toggle aria-pressed="false">تحديد الصفوف</button>
+                        <span class="vn-row-selection-count" data-row-selection-count hidden>المحدد: 0</span>
                     </div>
                     <div class="vn-report-generator__actions-submit">
                         <button type="button" class="vn-report-toolbar-button vn-report-toolbar-button--primary" data-generate-report>توليد التقرير</button>
@@ -321,6 +324,7 @@
         </section>
 
         @if ($currentCount > 0)
+            <div id="vn-column-reorder-hint" class="vn-column-reorder-hint" data-column-reorder-hint hidden>اسحب عنوان العمود لتغيير ترتيبه</div>
             <div class="vn-table-card vn-property-table-card">
             <div class="vn-table-with-scroll">
             <div class="vn-tbl-top-scroll" id="vn-properties-top-scroll" aria-hidden="true"><div class="vn-tbl-top-scroll-inner"></div></div>
@@ -384,7 +388,7 @@
                                     }
                                 }
                                                         @endphp
-                            <tr>
+                            <tr data-property-row data-property-id="{{ $property->id }}">
                                <td data-column-key="id" class="vn-table-number">{{ $property->id ?? '—' }}</td>
                                 <td data-column-key="property_name" class="vn-table-text-long">{{ ($columns['property_name'] ?? false) ? ($property->property_name ?: '—') : '—' }}</td>
                                 <td data-column-key="property_country">{{ ($columns['property_country'] ?? false) ? ($property->property_country ?: '—') : '—' }}</td>

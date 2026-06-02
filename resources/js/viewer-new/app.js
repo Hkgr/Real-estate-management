@@ -97,6 +97,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const GEN_KEY = 'viewer_new_properties_generator_open';
         const COL_KEY = 'viewer_new_properties_visible_columns';
+        const COL_ORDER_KEY = 'viewer_new_properties_column_order';
         const defaultColumns = [
             'id',
             'property_name',
@@ -140,6 +141,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const columnsMenu = reportRoot.querySelector('[data-report-columns-menu]');
         const columnsToggleBtn = reportRoot.querySelector('[data-report-columns-toggle]');
         const columnsPopover = reportRoot.querySelector('[data-report-columns-popover]');
+        const columnOrderToggleBtn = reportRoot.querySelector('[data-column-order-toggle]');
+        const columnReorderHint = reportRoot.querySelector('[data-column-reorder-hint]');
+        const rowSelectionToggleBtn = reportRoot.querySelector('[data-row-selection-toggle]');
+        const rowSelectionCountEl = reportRoot.querySelector('[data-row-selection-count]');
         const checkboxes = [...reportRoot.querySelectorAll('[data-column-toggle]')];
         const tableEl = reportRoot.querySelector('.vn-properties-table table');
         const tableScroller = reportRoot.querySelector('.vn-properties-table');
@@ -180,6 +185,38 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
 
         const isColumnsPopoverOpen = () => columnsPopover?.classList.contains('vn-report-columns-popover--open') === true;
 
+        const setColumnReorderMode = (enabled) => {
+            const active = !!enabled;
+            reportRoot.classList.toggle('vn-properties-report--column-reorder', active);
+            document.body.classList.toggle('vn-properties-report-column-reorder', active);
+            columnOrderToggleBtn?.classList.toggle('vn-report-toolbar-button--active', active);
+            columnOrderToggleBtn?.setAttribute('aria-pressed', active ? 'true' : 'false');
+            if (columnReorderHint) columnReorderHint.hidden = !active;
+            tableAdvancedApi?.enableColumnReorderMode?.(active);
+            if (active) setColumnsPopoverOpen(false);
+            requestAnimationFrame(updateStickyOffset);
+        };
+
+        const isColumnReorderMode = () => reportRoot.classList.contains('vn-properties-report--column-reorder');
+
+        const updateRowSelectionCount = (count = 0) => {
+            if (!rowSelectionCountEl) return;
+            rowSelectionCountEl.textContent = `المحدد: ${count}`;
+        };
+
+        const setRowSelectionMode = (enabled) => {
+            const active = !!enabled;
+            reportRoot.classList.toggle('vn-properties-report--row-selection', active);
+            rowSelectionToggleBtn?.classList.toggle('vn-report-toolbar-button--active', active);
+            rowSelectionToggleBtn?.setAttribute('aria-pressed', active ? 'true' : 'false');
+            if (rowSelectionCountEl) rowSelectionCountEl.hidden = !active;
+            tableAdvancedApi?.enableRowSelectionMode?.(active);
+            if (!active) updateRowSelectionCount(0);
+            requestAnimationFrame(updateStickyOffset);
+        };
+
+        const isRowSelectionMode = () => reportRoot.classList.contains('vn-properties-report--row-selection');
+
         const syncToolbarActiveState = (open) => {
             toggleBtn?.classList.toggle('vn-report-toolbar-button--active', !!open);
             toggleBtn?.classList.toggle('vn-report-toolbar-button--primary', !!open);
@@ -188,7 +225,11 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         const setPanelOpen = (open, persist = true) => {
             if (!panel) return;
             panel.classList.toggle('is-open', !!open);
-            if (!open) setColumnsPopoverOpen(false);
+            if (!open) {
+                setColumnsPopoverOpen(false);
+                setColumnReorderMode(false);
+                setRowSelectionMode(false);
+            }
             toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
             syncToolbarActiveState(open);
             if (persist) safeSet(GEN_KEY, open ? '1' : '0');
@@ -221,6 +262,22 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         };
 
         const getChecked = () => checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+        const normalizeColumnOrder = (columns) => {
+            const input = Array.isArray(columns) ? columns : [];
+            const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
+            defaultColumns.forEach((key) => { if (!filtered.includes(key)) filtered.push(key); });
+            return filtered;
+        };
+
+        const applyColumnOrder = (columns, persist = true) => {
+            const order = normalizeColumnOrder(columns);
+            const applied = tableAdvancedApi?.applyColumnOrder?.(order) || order;
+            if (persist) safeSet(COL_ORDER_KEY, JSON.stringify(applied));
+            requestFloatingHeadSync();
+            updateTblNavPill();
+            return applied;
+        };
+
         const normalizeColumns = (columns) => {
             const input = Array.isArray(columns) ? columns : [];
             const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
@@ -228,6 +285,13 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             return hasDataColumn ? filtered : defaultColumns;
         };
 
+        const orderFromStorage = (() => {
+            try {
+                return normalizeColumnOrder(JSON.parse(safeGet(COL_ORDER_KEY) || 'null'));
+            } catch (_) {
+                return defaultColumns;
+            }
+        })();
         const visibleFromStorage = (() => {
             try {
                 const parsed = JSON.parse(safeGet(COL_KEY) || 'null');
@@ -268,6 +332,13 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
         });
         columnsToggleBtn?.addEventListener('click', () => {
             setColumnsPopoverOpen(!isColumnsPopoverOpen());
+            if (isColumnsPopoverOpen()) setColumnReorderMode(false);
+        });
+        columnOrderToggleBtn?.addEventListener('click', () => {
+            setColumnReorderMode(!isColumnReorderMode());
+        });
+        rowSelectionToggleBtn?.addEventListener('click', () => {
+            setRowSelectionMode(!isRowSelectionMode());
         });
         genBtn?.addEventListener('click', () => {
             let cols = normalizeColumns(getChecked());
@@ -285,7 +356,10 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             });
         });
         resetBtn?.addEventListener('click', () => {
-            syncCheckboxes(defaultColumns); applyColumns(defaultColumns); safeSet(COL_KEY, JSON.stringify(defaultColumns));
+            syncCheckboxes(defaultColumns);
+            applyColumns(defaultColumns);
+            safeSet(COL_KEY, JSON.stringify(defaultColumns));
+            applyColumnOrder(defaultColumns, true);
         });
 
         document.addEventListener('click', (event) => {
@@ -361,6 +435,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 const hay = (row.textContent || '').toLowerCase();
                 row.classList.toggle('vn-row-hidden', q !== '' && !hay.includes(q));
             });
+            tableAdvancedApi?.syncRowSelectionHeaderState?.();
             updateTblNavPill();
         };
 
@@ -544,6 +619,18 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 tableAdvancedApi?.togglePinColumn?.(key);
                 requestFloatingHeadSync();
             });
+            floatingHost.addEventListener('pointerdown', (e) => {
+                if (!isColumnReorderMode()) return;
+                if (e.target?.closest?.('.vn-col-pin-btn,.vn-col-resize-handle,button,a,input,select,textarea,[role="button"]')) return;
+                const key = e.target?.closest?.('th[data-column-key]')?.getAttribute('data-column-key');
+                if (key && tableAdvancedApi?.startColumnReorderDrag?.(key, e)) e.preventDefault();
+            });
+            floatingHost.addEventListener('change', (e) => {
+                const selectAll = e.target?.closest?.('.vn-row-selection-select-all');
+                if (!selectAll || !floatingHost.contains(selectAll)) return;
+                tableAdvancedApi?.setAllVisibleRowsSelected?.(selectAll.checked);
+                requestFloatingHeadSync();
+            });
             document.body.appendChild(floatingHost);
         };
 
@@ -614,7 +701,8 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             headClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
             headClone.querySelectorAll('input, button, select, textarea, a').forEach((el) => {
                 const pinBtn = el.closest?.('.vn-col-pin-btn');
-                if (pinBtn) {
+                const rowSelectionControl = el.closest?.('.vn-row-selection-cell');
+                if (pinBtn || rowSelectionControl) {
                     el.removeAttribute('tabindex');
                     el.setAttribute('aria-hidden', 'false');
                     if ('disabled' in el) el.disabled = false;
@@ -659,6 +747,7 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
             floatingTable.innerHTML = '';
             if (colgroupClone) floatingTable.appendChild(colgroupClone);
             floatingTable.appendChild(headClone);
+            tableAdvancedApi?.syncRowSelectionHeaderState?.();
             thead.style.visibility = 'hidden';
             floatingHost.style.display = 'block';
             floatingHost.setAttribute('aria-hidden', 'false');
@@ -722,7 +811,18 @@ import { initPropertiesTableAdvanced } from './properties-table.js';
                 updateTblNavPill();
                 tableAdvancedApi?.syncTopScrollWidth();
             },
+            onColumnOrderChange: (order) => {
+                safeSet(COL_ORDER_KEY, JSON.stringify(normalizeColumnOrder(order)));
+                requestFloatingHeadSync();
+                updateTblNavPill();
+            },
+            onRowSelectionChange: ({ count } = {}) => {
+                updateRowSelectionCount(count || 0);
+                requestFloatingHeadSync();
+            },
         });
+
+        applyColumnOrder(orderFromStorage, false);
 
         ensureFloatingHost();
         hideFloatingHead();

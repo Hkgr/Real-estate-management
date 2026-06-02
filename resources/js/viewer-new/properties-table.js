@@ -61,6 +61,8 @@ export function initPropertiesTableAdvanced(options) {
         tableEl,
         tableScroller,
         onLayoutChange,
+        onColumnOrderChange,
+        onRowSelectionChange,
     } = options;
 
     if (!reportRoot || !tableEl || !tableScroller) return () => {};
@@ -82,6 +84,179 @@ export function initPropertiesTableAdvanced(options) {
         if (typeof onLayoutChange === 'function') onLayoutChange();
     };
 
+    let rowSelectionMode = false;
+    const selectedRowIds = new Set();
+
+    const notifyRowSelection = () => {
+        if (typeof onRowSelectionChange === 'function') {
+            onRowSelectionChange({ count: selectedRowIds.size, ids: [...selectedRowIds] });
+        }
+    };
+
+    const getMainRows = () => [...tableEl.querySelectorAll('tbody tr')]
+        .filter((row) => row.querySelector(':scope > td[data-column-key]'));
+
+    const getRowId = (row, index = 0) => {
+        const explicit = row?.getAttribute('data-property-id') || row?.dataset?.propertyId;
+        if (explicit) return String(explicit);
+        const idCellText = row?.querySelector(':scope > td[data-column-key="id"]')?.textContent?.trim();
+        return idCellText || `row-${index + 1}`;
+    };
+
+    const isRowVisible = (row) => {
+        if (!row || row.hidden) return false;
+        const style = getComputedStyle(row);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    };
+
+    const getVisibleMainRows = () => getMainRows().filter(isRowVisible);
+
+    const syncDetailRowColspans = (includeSelectionColumn) => {
+        tableEl.querySelectorAll('tbody tr').forEach((row) => {
+            if (row.querySelector(':scope > td[data-column-key]')) return;
+            row.querySelectorAll(':scope > td[colspan]').forEach((cell) => {
+                if (!cell.dataset.originalColspan) cell.dataset.originalColspan = cell.getAttribute('colspan') || '1';
+                const base = Math.max(1, parseInt(cell.dataset.originalColspan || '1', 10) || 1);
+                cell.setAttribute('colspan', String(includeSelectionColumn ? base + 1 : base));
+            });
+        });
+    };
+
+    const ensureRowSelectionColumn = () => {
+        if (!colgroupEl || colgroupEl.querySelector('.vn-row-selection-col')) {
+            syncDetailRowColspans(true);
+            return;
+        }
+
+        const col = document.createElement('col');
+        col.className = 'vn-row-selection-col';
+        col.style.width = '52px';
+        col.style.minWidth = '52px';
+        colgroupEl.insertBefore(col, colgroupEl.firstChild);
+
+        tableEl.querySelectorAll('thead tr').forEach((tr) => {
+            if (tr.querySelector(':scope > .vn-row-selection-cell')) return;
+            const th = document.createElement('th');
+            th.className = 'vn-row-selection-cell vn-row-selection-head';
+            th.scope = 'col';
+            th.innerHTML = '<input type="checkbox" class="vn-row-selection-checkbox vn-row-selection-select-all" aria-label="تحديد كل الصفوف الظاهرة">';
+            tr.insertBefore(th, tr.firstChild);
+        });
+
+        getMainRows().forEach((row, index) => {
+            const rowId = getRowId(row, index);
+            row.dataset.propertyId = rowId;
+            if (row.querySelector(':scope > .vn-row-selection-cell')) return;
+            const td = document.createElement('td');
+            td.className = 'vn-row-selection-cell vn-row-selection-body-cell';
+            td.innerHTML = `<input type="checkbox" class="vn-row-selection-checkbox vn-row-selection-row-checkbox" data-row-selection-id="${rowId.replace(/"/g, '&quot;')}" aria-label="تحديد العقار رقم ${rowId.replace(/"/g, '&quot;')}">`;
+            row.insertBefore(td, row.firstChild);
+        });
+        syncDetailRowColspans(true);
+    };
+
+    const removeRowSelectionColumn = () => {
+        colgroupEl?.querySelector('.vn-row-selection-col')?.remove();
+        tableEl.querySelectorAll('.vn-row-selection-cell').forEach((cell) => cell.remove());
+        document.querySelectorAll('.vn-pr-floating-table-head .vn-row-selection-cell').forEach((cell) => cell.remove());
+        syncDetailRowColspans(false);
+    };
+
+    const syncRowSelectionInputs = () => {
+        getMainRows().forEach((row, index) => {
+            const rowId = getRowId(row, index);
+            row.dataset.propertyId = rowId;
+            row.classList.toggle('vn-row-selected', selectedRowIds.has(rowId));
+            row.querySelectorAll('.vn-row-selection-row-checkbox').forEach((checkbox) => {
+                checkbox.checked = selectedRowIds.has(rowId);
+                checkbox.setAttribute('data-row-selection-id', rowId);
+                checkbox.setAttribute('aria-label', `تحديد العقار رقم ${rowId}`);
+            });
+        });
+    };
+
+    const syncRowSelectionHeaderState = () => {
+        const visibleRows = getVisibleMainRows();
+        const visibleIds = visibleRows.map((row, index) => getRowId(row, index));
+        const selectedVisible = visibleIds.filter((id) => selectedRowIds.has(id)).length;
+        const checked = visibleIds.length > 0 && selectedVisible === visibleIds.length;
+        const indeterminate = selectedVisible > 0 && selectedVisible < visibleIds.length;
+        document.querySelectorAll('#vn-properties-table .vn-row-selection-select-all, .vn-pr-floating-table-head .vn-row-selection-select-all').forEach((checkbox) => {
+            checkbox.checked = checked;
+            checkbox.indeterminate = indeterminate;
+            checkbox.disabled = visibleIds.length === 0;
+            checkbox.setAttribute('aria-label', 'تحديد كل الصفوف الظاهرة');
+        });
+    };
+
+    const syncRowSelectionUi = () => {
+        if (!rowSelectionMode) return;
+        ensureRowSelectionColumn();
+        syncRowSelectionInputs();
+        syncRowSelectionHeaderState();
+        syncTopScrollWidth();
+        applyColumnPinning();
+        notifyLayout();
+    };
+
+    const clearSelectedRows = () => {
+        selectedRowIds.clear();
+        syncRowSelectionInputs();
+        syncRowSelectionHeaderState();
+        notifyRowSelection();
+    };
+
+    const setAllVisibleRowsSelected = (selected) => {
+        getVisibleMainRows().forEach((row, index) => {
+            const rowId = getRowId(row, index);
+            if (selected) selectedRowIds.add(rowId);
+            else selectedRowIds.delete(rowId);
+        });
+        syncRowSelectionInputs();
+        syncRowSelectionHeaderState();
+        notifyRowSelection();
+    };
+
+    const enableRowSelectionMode = (enabled) => {
+        rowSelectionMode = !!enabled;
+        reportRoot.classList.toggle('vn-properties-report--row-selection', rowSelectionMode);
+        tableEl.classList.toggle('vn-table-row-selection-mode', rowSelectionMode);
+        if (rowSelectionMode) {
+            ensureRowSelectionColumn();
+            syncRowSelectionUi();
+            notifyRowSelection();
+        } else {
+            selectedRowIds.clear();
+            removeRowSelectionColumn();
+            notifyRowSelection();
+            syncTopScrollWidth();
+            applyColumnPinning();
+            notifyLayout();
+        }
+    };
+
+    const bindRowSelectionHandlers = () => {
+        if (tableEl.dataset.rowSelectionBound === '1') return;
+        tableEl.dataset.rowSelectionBound = '1';
+        tableEl.addEventListener('change', (e) => {
+            if (!rowSelectionMode) return;
+            const selectAll = e.target?.closest?.('.vn-row-selection-select-all');
+            if (selectAll && tableEl.contains(selectAll)) {
+                setAllVisibleRowsSelected(selectAll.checked);
+                return;
+            }
+            const rowCheckbox = e.target?.closest?.('.vn-row-selection-row-checkbox');
+            if (!rowCheckbox || !tableEl.contains(rowCheckbox)) return;
+            const row = rowCheckbox.closest('tr');
+            const rowId = rowCheckbox.getAttribute('data-row-selection-id') || getRowId(row);
+            if (rowCheckbox.checked) selectedRowIds.add(rowId);
+            else selectedRowIds.delete(rowId);
+            syncRowSelectionInputs();
+            syncRowSelectionHeaderState();
+            notifyRowSelection();
+        });
+    };
+
     const ensureThInners = () => {
         tableEl.querySelectorAll('thead th[data-column-key]').forEach((th) => {
             if (th.querySelector('.vn-th-inner')) return;
@@ -100,7 +275,8 @@ export function initPropertiesTableAdvanced(options) {
             if (!cell.classList.contains(cls)) cell.classList.add(cls);
         });
         if (colgroupEl) {
-            [...colgroupEl.children].forEach((col, i) => {
+            const keyedCols = [...colgroupEl.querySelectorAll('col[data-column-key]')];
+            keyedCols.forEach((col, i) => {
                 const th = tableEl.querySelectorAll('thead th[data-column-key]')[i];
                 const key = th?.getAttribute('data-column-key');
                 if (key && !col.classList.contains(colClassForKey(key))) {
@@ -154,11 +330,19 @@ export function initPropertiesTableAdvanced(options) {
         if (pinCountEl) pinCountEl.textContent = count > 0 ? `${count} مثبت` : '';
     };
 
+    const getVisualPinnedColumns = () => {
+        const visiblePinned = new Set(pinnedCols);
+        return [...tableEl.querySelectorAll('thead th[data-column-key]')]
+            .map((th) => th.getAttribute('data-column-key') || '')
+            .filter((key) => {
+                if (!key || !visiblePinned.has(key)) return false;
+                const th = tableEl.querySelector(`thead th[data-column-key="${key}"]`);
+                return th && getComputedStyle(th).display !== 'none';
+            });
+    };
+
     const applyColumnPinning = () => {
-        const pinned = pinnedCols.filter((key) => {
-            const th = tableEl.querySelector(`thead th[data-column-key="${key}"]`);
-            return th && getComputedStyle(th).display !== 'none';
-        });
+        const pinned = getVisualPinnedColumns();
 
         tableEl.classList.remove('vn-has-pinned-cols');
         tableEl.querySelectorAll('.vn-col-pinned, .vn-col-pin-edge').forEach((el) => {
@@ -352,6 +536,244 @@ export function initPropertiesTableAdvanced(options) {
         });
     };
 
+    const reorderElementsByKey = (parent, selector, order) => {
+        if (!parent) return;
+        const byKey = new Map([...parent.querySelectorAll(selector)].map((el) => [el.getAttribute('data-column-key'), el]));
+        order.forEach((key) => {
+            const el = byKey.get(key);
+            if (el) parent.appendChild(el);
+        });
+    };
+
+    const applyColumnOrder = (order) => {
+        const requested = Array.isArray(order) ? order.filter((key) => typeof key === 'string') : [];
+        const existing = [...tableEl.querySelectorAll('thead th[data-column-key]')].map((th) => th.getAttribute('data-column-key')).filter(Boolean);
+        const existingSet = new Set(existing);
+        const normalized = [...new Set(requested.filter((key) => existingSet.has(key)))];
+        existing.forEach((key) => { if (!normalized.includes(key)) normalized.push(key); });
+        if (!normalized.length) return existing;
+
+        reorderElementsByKey(colgroupEl, ':scope > col[data-column-key]', normalized);
+        tableEl.querySelectorAll('thead tr').forEach((tr) => reorderElementsByKey(tr, ':scope > th[data-column-key]', normalized));
+        tableEl.querySelectorAll('tbody tr').forEach((tr) => reorderElementsByKey(tr, ':scope > td[data-column-key]', normalized));
+
+        syncColClasses();
+        restoreColWidths();
+        ensureColumnResizers();
+        syncTopScrollWidth();
+        applyColumnPinning();
+        syncRowSelectionUi();
+        notifyLayout();
+        return normalized;
+    };
+
+    const getColumnOrder = () => [...tableEl.querySelectorAll('thead th[data-column-key]')]
+        .map((th) => th.getAttribute('data-column-key'))
+        .filter(Boolean);
+
+    let columnReorderMode = false;
+    let columnDrag = null;
+    let dropIndicator = null;
+
+    const getDocumentDirection = () => getComputedStyle(tableEl).direction || getComputedStyle(document.documentElement).direction || 'rtl';
+
+    const ensureReorderGrips = () => {
+        tableEl.querySelectorAll('thead th[data-column-key]').forEach((th) => {
+            const inner = th.querySelector('.vn-th-inner') || th;
+            if (inner.querySelector('.vn-col-reorder-grip')) return;
+            const grip = document.createElement('span');
+            grip.className = 'vn-col-reorder-grip';
+            grip.setAttribute('aria-hidden', 'true');
+            grip.textContent = '⋮⋮';
+            inner.insertBefore(grip, inner.firstChild);
+        });
+    };
+
+    const ensureDropIndicator = () => {
+        if (dropIndicator) return dropIndicator;
+        dropIndicator = document.createElement('div');
+        dropIndicator.className = 'vn-col-drop-indicator';
+        dropIndicator.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(dropIndicator);
+        return dropIndicator;
+    };
+
+    const hideDropIndicator = () => {
+        dropIndicator?.classList.remove('is-visible');
+    };
+
+    const clearDraggedColumnClasses = () => {
+        tableEl.querySelectorAll('.vn-col-dragging, .vn-col-drop-target').forEach((el) => {
+            el.classList.remove('vn-col-dragging', 'vn-col-drop-target');
+        });
+    };
+
+    const setDraggedColumnClasses = (key) => {
+        clearDraggedColumnClasses();
+        if (!key) return;
+        tableEl.querySelectorAll(`th.${colClassForKey(key)}, td.${colClassForKey(key)}`).forEach((el) => {
+            if (getComputedStyle(el).display !== 'none') el.classList.add('vn-col-dragging');
+        });
+    };
+
+    const getHeaderFromPoint = (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        const th = el?.closest?.('th[data-column-key]');
+        const key = th?.getAttribute('data-column-key');
+        const realTh = key ? tableEl.querySelector(`thead th[data-column-key="${key}"]`) : th;
+        return realTh && tableEl.contains(realTh) && getComputedStyle(realTh).display !== 'none' ? realTh : null;
+    };
+
+    const getDropPlacement = (targetTh, clientX) => {
+        const targetKey = targetTh?.getAttribute('data-column-key');
+        const sourceKey = columnDrag?.sourceKey;
+        const order = getColumnOrder();
+        const sourceIndex = order.indexOf(sourceKey);
+        const targetIndex = order.indexOf(targetKey);
+        if (!targetKey || !sourceKey || sourceIndex < 0 || targetIndex < 0) return null;
+
+        const rect = targetTh.getBoundingClientRect();
+        const isRtl = getDocumentDirection() === 'rtl';
+        const beforeTarget = isRtl ? clientX > rect.left + rect.width / 2 : clientX < rect.left + rect.width / 2;
+        const insertionIndex = beforeTarget ? targetIndex : targetIndex + 1;
+        let dropIndex = insertionIndex;
+        if (sourceIndex < insertionIndex) dropIndex -= 1;
+        dropIndex = Math.max(0, Math.min(order.length - 1, dropIndex));
+        const indicatorX = beforeTarget
+            ? (isRtl ? rect.right : rect.left)
+            : (isRtl ? rect.left : rect.right);
+
+        return { targetKey, order, sourceIndex, dropIndex, indicatorX, targetRect: rect };
+    };
+
+    const showDropIndicator = (placement) => {
+        const indicator = ensureDropIndicator();
+        const scrollerRect = tableScroller.getBoundingClientRect();
+        const tableRect = tableEl.getBoundingClientRect();
+        const top = Math.max(scrollerRect.top, placement.targetRect.top);
+        const bottom = Math.min(scrollerRect.bottom, tableRect.bottom, window.innerHeight);
+        indicator.style.left = `${Math.round(placement.indicatorX)}px`;
+        indicator.style.top = `${Math.round(top)}px`;
+        indicator.style.height = `${Math.max(placement.targetRect.height, bottom - top)}px`;
+        indicator.classList.add('is-visible');
+    };
+
+    const updateDropTarget = (placement) => {
+        tableEl.querySelectorAll('.vn-col-drop-target').forEach((el) => el.classList.remove('vn-col-drop-target'));
+        if (!placement?.targetKey) return;
+        tableEl.querySelectorAll(`th.${colClassForKey(placement.targetKey)}, td.${colClassForKey(placement.targetKey)}`).forEach((el) => {
+            if (getComputedStyle(el).display !== 'none') el.classList.add('vn-col-drop-target');
+        });
+    };
+
+    const finishColumnDrag = (commit) => {
+        if (!columnDrag) return;
+        const drag = columnDrag;
+        columnDrag = null;
+        window.removeEventListener('pointermove', onColumnReorderPointerMove);
+        window.removeEventListener('pointerup', onColumnReorderPointerUp);
+        window.removeEventListener('pointercancel', onColumnReorderPointerCancel);
+        document.body.classList.remove('vn-is-column-reordering');
+        hideDropIndicator();
+        clearDraggedColumnClasses();
+
+        if (commit && drag.active && drag.placement && drag.placement.dropIndex !== drag.placement.sourceIndex) {
+            const nextOrder = drag.placement.order.filter((key) => key !== drag.sourceKey);
+            nextOrder.splice(drag.placement.dropIndex, 0, drag.sourceKey);
+            const applied = applyColumnOrder(nextOrder);
+            if (typeof onColumnOrderChange === 'function') onColumnOrderChange(applied);
+        } else {
+            applyColumnPinning();
+            notifyLayout();
+        }
+    };
+
+    function onColumnReorderPointerMove(e) {
+        if (!columnDrag) return;
+        const moved = Math.abs(e.clientX - columnDrag.startX) > 5 || Math.abs(e.clientY - columnDrag.startY) > 5;
+        if (!columnDrag.active && !moved) return;
+        if (!columnDrag.active) {
+            columnDrag.active = true;
+            document.body.classList.add('vn-is-column-reordering');
+            setDraggedColumnClasses(columnDrag.sourceKey);
+        }
+        e.preventDefault();
+        const targetTh = getHeaderFromPoint(e.clientX, e.clientY) || columnDrag.sourceTh;
+        const placement = getDropPlacement(targetTh, e.clientX);
+        columnDrag.placement = placement;
+        if (placement) {
+            showDropIndicator(placement);
+            updateDropTarget(placement);
+        } else {
+            hideDropIndicator();
+            updateDropTarget(null);
+        }
+    }
+
+    function onColumnReorderPointerUp(e) {
+        if (columnDrag?.active) e.preventDefault();
+        finishColumnDrag(true);
+    }
+
+    function onColumnReorderPointerCancel() {
+        finishColumnDrag(false);
+    }
+
+    const shouldIgnoreReorderStart = (target) => !!target?.closest?.([
+        '.vn-col-pin-btn',
+        '.col-pin-btn',
+        '.vn-col-resize-handle',
+        '.col-resize-handle',
+        '[data-col-resize]',
+        'button',
+        'a',
+        'input',
+        'select',
+        'textarea',
+        '[role="button"]',
+    ].join(','));
+
+    const startColumnReorderDrag = (sourceKey, e) => {
+        if (!columnReorderMode || !sourceKey || !e || e.button !== 0 || (e.pointerType === 'touch' && e.isPrimary === false)) return false;
+        const sourceTh = tableEl.querySelector(`thead th[data-column-key="${sourceKey}"]`);
+        if (!sourceTh || getComputedStyle(sourceTh).display === 'none') return false;
+        if (columnDrag) finishColumnDrag(false);
+        columnDrag = {
+            sourceKey,
+            sourceTh,
+            startX: e.clientX,
+            startY: e.clientY,
+            active: false,
+            placement: null,
+        };
+        window.addEventListener('pointermove', onColumnReorderPointerMove, { passive: false });
+        window.addEventListener('pointerup', onColumnReorderPointerUp, { passive: false });
+        window.addEventListener('pointercancel', onColumnReorderPointerCancel, { passive: true });
+        return true;
+    };
+
+    const bindColumnReorderHandlers = () => {
+        if (tableEl.dataset.columnReorderBound === '1') return;
+        tableEl.dataset.columnReorderBound = '1';
+        tableEl.addEventListener('pointerdown', (e) => {
+            if (shouldIgnoreReorderStart(e.target)) return;
+            const th = e.target?.closest?.('th[data-column-key]');
+            if (!th || !tableEl.contains(th)) return;
+            const sourceKey = th.getAttribute('data-column-key');
+            if (startColumnReorderDrag(sourceKey, e)) e.preventDefault();
+        });
+    };
+
+    const enableColumnReorderMode = (enabled) => {
+        columnReorderMode = !!enabled;
+        reportRoot.classList.toggle('vn-properties-report--column-reorder', columnReorderMode);
+        tableEl.classList.toggle('vn-table-column-reorder-mode', columnReorderMode);
+        tableEl.querySelectorAll('thead th[data-column-key]').forEach((th) => {
+            th.toggleAttribute('data-column-reorder-draggable', columnReorderMode);
+        });
+        if (!columnReorderMode) finishColumnDrag(false);
+    };
+
     const wireTopScrollSync = () => {
         const topScroll = ensureTopScrollMirror();
         if (!topScroll || topScroll.dataset.wired === '1') return;
@@ -392,7 +814,10 @@ export function initPropertiesTableAdvanced(options) {
     restoreColWidths();
     injectPinButtons();
     ensureColumnResizers();
+    ensureReorderGrips();
     bindColumnResizeHandlers();
+    bindColumnReorderHandlers();
+    bindRowSelectionHandlers();
     wireTopScrollSync();
     syncTopScrollWidth();
     applyColumnPinning();
@@ -408,7 +833,16 @@ export function initPropertiesTableAdvanced(options) {
         applyColumnPinning,
         syncTopScrollWidth,
         togglePinColumn,
-        getPinnedColumns: () => [...pinnedCols],
+        getPinnedColumns: () => getVisualPinnedColumns(),
+        applyColumnOrder,
+        getColumnOrder,
+        enableColumnReorderMode,
+        startColumnReorderDrag,
+        enableRowSelectionMode,
+        getSelectedRowIds: () => [...selectedRowIds],
+        clearSelectedRows,
+        syncRowSelectionHeaderState,
+        setAllVisibleRowsSelected,
         onColumnsVisibilityChange: (visibleKeys) => {
             if (!colgroupEl) return;
             const selected = new Set(visibleKeys);
@@ -418,6 +852,7 @@ export function initPropertiesTableAdvanced(options) {
             });
             syncTopScrollWidth();
             applyColumnPinning();
+            syncRowSelectionUi();
             notifyLayout();
         },
         destroy: () => {
