@@ -26,7 +26,7 @@ class RashadPanelProvider extends PanelProvider
         return $panel
             ->id('rashad')
             ->path('rashad')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\RashadLogin::class)
             ->default()
             ->font('Cairo')
             ->maxContentWidth('full')

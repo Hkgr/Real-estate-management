@@ -28,7 +28,7 @@ class ViewerPanelProvider extends PanelProvider
         return $panel
             ->id('viewer')
             ->path('viewer')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\ViewerLogin::class)
             ->font('Cairo')
             ->maxContentWidth('full')
             ->colors([
