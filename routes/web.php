@@ -13,6 +13,12 @@ use App\Http\Controllers\ViewerNew\Statistics\AdministrativeStatisticsController
 use App\Http\Controllers\ViewerNew\Statistics\StatisticsGeneratorController;
 use Illuminate\Support\Facades\Route;
 Route::get('/login', fn () => redirect('/viewer/login'))->name('login');
+
+// Preview login pages without authentication (design only)
+Route::get('/login-preview/{panel?}', function (string $panel = 'viewer') {
+    abort_if(! in_array($panel, ['rashad', 'viewer']), 404);
+    return view('auth.login-preview', compact('panel'));
+})->name('login.preview');
 Route::get('/__probe_cookie', function () {
     return response('ok')->cookie('probe_cookie', '1', 5);
 });
