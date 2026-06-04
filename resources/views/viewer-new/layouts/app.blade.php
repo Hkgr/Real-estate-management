@@ -7,8 +7,13 @@
     <title>@yield('page_title', 'viewer-new')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-    @vite(['resources/css/viewer-new/app.css', 'resources/js/viewer-new/app.js'])
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    @vite([
+        'resources/css/viewer-new/app.css',
+        'resources/css/viewer-new/quick-settings.css',
+        'resources/js/viewer-new/app.js',
+        'resources/js/viewer-new/quick-settings.js',
+    ])
     @yield('extra_styles')
     <style>
         .viewer-new .vn-sidebar{width:230px;background:#18191f;border-left:1px solid rgba(255,255,255,.08);padding:18px;gap:14px}
