@@ -431,79 +431,11 @@ body.viewer-new[data-theme="light"] .vn-report-toolbar {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   § PAGINATION + ROWS-PER-PAGE TOOLBAR
+   § UNIFIED PAGINATION FOOTER
    ══════════════════════════════════════════════════════════════════ */
 
-/* Toolbar row wrapping pagination + rows selector */
-.vn-pagination-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 6px 0 2px;
-}
-
-/* Rows-per-page widget */
-.vn-rows-per-page {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.vn-rows-per-page__label {
-  font-size: .8rem;
-  color: var(--muted, #b5aa95);
-  white-space: nowrap;
-  font-weight: 500;
-}
-.vn-rows-per-page__select {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(212,175,55,.3);
-  background: rgba(212,175,55,.06);
-  color: var(--text, #f4efe6);
-  font-size: .82rem;
-  cursor: pointer;
-  outline: none;
-  transition: border-color .18s, background .18s;
-  appearance: auto;
-  font-family: inherit;
-}
-.vn-rows-per-page__select:focus,
-.vn-rows-per-page__select:hover {
-  border-color: rgba(212,175,55,.55);
-  background: rgba(212,175,55,.1);
-}
-
-/* Client-side count text */
-.vn-pg-client-count {
-  font-size: .78rem;
-  color: var(--muted, #b5aa95);
-  margin: 0 0 6px;
-  text-align: center;
-}
-
-/* Fixed pagination.next / pagination.previous arrow buttons */
-.vn-pg-arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid rgba(212,175,55,.3) !important;
-  background: rgba(212,175,55,.06) !important;
-  color: var(--gold, #d4af37) !important;
-  cursor: pointer;
-  transition: all .18s;
-}
-.vn-pg-arrow:hover {
-  border-color: rgba(212,175,55,.55) !important;
-  background: rgba(212,175,55,.14) !important;
-}
-
-/* ── Pagination area dark background — dark default ── */
-.viewer-new .vn-properties-report .vn-pagination-wrap,
-.viewer-new .vn-properties-report .vn-pagination-toolbar {
+/* Pagination wrap container */
+.viewer-new .vn-properties-report .vn-pagination-wrap {
   background: var(--table-surface, var(--card, #161616));
   border-radius: 0 0 12px 12px;
   border: 1px solid var(--table-border, var(--border, #2a2a2a));
@@ -512,13 +444,96 @@ body.viewer-new[data-theme="light"] .vn-report-toolbar {
   margin-top: 0;
 }
 
+/* Unified one-row footer */
+.vn-prop-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  direction: rtl;
+  width: 100%;
+}
+
+/* Nav buttons (بداية / نهاية) — reuse pill styling */
+.vn-prop-footer__nav {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1.5px solid rgba(212,175,55,.5);
+  background: rgba(212,175,55,.06);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Rows-per-page */
+.vn-rows-per-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.vn-rows-per-page__label {
+  font-size: .8rem;
+  color: var(--muted, #b5aa95);
+  white-space: nowrap;
+}
+.vn-rows-per-page__select {
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(212,175,55,.3);
+  background: rgba(212,175,55,.06);
+  color: var(--text, #f4efe6);
+  font-size: .82rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .18s, background .18s;
+  font-family: inherit;
+}
+.vn-rows-per-page__select:hover,
+.vn-rows-per-page__select:focus { border-color: rgba(212,175,55,.55); background: rgba(212,175,55,.1); }
+
+/* Count text */
+.vn-pg-client-count {
+  font-size: .78rem;
+  color: var(--muted, #b5aa95);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Pager (Laravel pagination numbers) — push to the end */
+.vn-prop-footer__pager {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.vn-prop-footer__pager nav {
+  display: flex !important;
+  align-items: center;
+}
+
 /* ── Pagination area — light mode ── */
 html[data-theme="light"] .viewer-new .vn-properties-report .vn-pagination-wrap,
-html[data-theme="light"] .viewer-new .vn-properties-report .vn-pagination-toolbar,
-body.viewer-new[data-theme="light"] .vn-properties-report .vn-pagination-wrap,
-body.viewer-new[data-theme="light"] .vn-properties-report .vn-pagination-toolbar {
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-pagination-wrap {
   background: var(--table-surface, #fffaf3) !important;
   border-color: var(--table-border, rgba(180,145,60,.32)) !important;
+}
+html[data-theme="light"] .vn-rows-per-page__label,
+body.viewer-new[data-theme="light"] .vn-rows-per-page__label { color: #5a4a35 !important; }
+html[data-theme="light"] .vn-rows-per-page__select,
+body.viewer-new[data-theme="light"] .vn-rows-per-page__select {
+  background: rgba(212,175,55,.10) !important;
+  border-color: rgba(180,145,60,.4) !important;
+  color: #1a1208 !important;
+}
+html[data-theme="light"] .vn-pg-client-count,
+body.viewer-new[data-theme="light"] .vn-pg-client-count { color: #7a6040 !important; }
+html[data-theme="light"] .vn-prop-footer__nav,
+body.viewer-new[data-theme="light"] .vn-prop-footer__nav {
+  background: rgba(212,175,55,.10) !important;
+  border-color: rgba(180,145,60,.45) !important;
 }
 html[data-theme="light"] .vn-rows-per-page__label,
 body.viewer-new[data-theme="light"] .vn-rows-per-page__label { color: #5a4a35 !important; }

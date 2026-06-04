@@ -1,16 +1,15 @@
 /**
  * properties-report.js — viewer-new
- * Handles: column toggles, pagination text fix, rows-per-page selector,
- *          pagination light-mode theming, table-nav light-mode theming.
+ * Unified footer row: nav pill + rows-per-page + pagination in one line.
  */
 
 (function () {
   'use strict';
 
-  function qs(sel, ctx) { return (ctx || document).querySelector(sel); }
+  function qs(sel, ctx)  { return (ctx || document).querySelector(sel); }
   function qsa(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
 
-  /* ── Column toggles (owned here, not in app.js) ── */
+  /* ── Column toggles ── */
   var propertiesTable = document.getElementById('vn-properties-table');
   var columnToggles   = qsa('[data-column-toggle]');
 
@@ -34,36 +33,10 @@
     });
   }
 
-  /* ══════════════════════════════════════════════════════════════
-     1.  FIX "pagination.next" / "pagination.previous" raw text
-         Laravel's built-in pagination outputs the translation key
-         when the locale file is missing. Replace text with arrows.
-     ══════════════════════════════════════════════════════════════ */
-  function fixPaginationText() {
-    var wrap = qs('.vn-pagination-wrap');
-    if (!wrap) return;
+  /* ══════════════════════════════════════════════════════════════════
+     UNIFIED FOOTER — single flex row with all pagination elements
+     ══════════════════════════════════════════════════════════════════ */
 
-    /* Find anchor / span elements whose visible text is the raw key */
-    wrap.querySelectorAll('a, span, button').forEach(function (el) {
-      var txt = (el.textContent || '').trim();
-      if (txt === 'pagination.next') {
-        /* Keep the element functional but show only an arrow */
-        el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M12.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L15.586 11H3a1 1 0 110-2h12.586l-3.293-3.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
-        el.setAttribute('aria-label', 'الصفحة التالية');
-        el.classList.add('vn-pg-arrow', 'vn-pg-next');
-      } else if (txt === 'pagination.previous') {
-        el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M7.707 4.293a1 1 0 010 1.414L4.414 9H17a1 1 0 110 2H4.414l3.293 3.293a1 1 0 01-1.414 1.414l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
-        el.setAttribute('aria-label', 'الصفحة السابقة');
-        el.classList.add('vn-pg-arrow', 'vn-pg-prev');
-      }
-    });
-  }
-
-  /* ══════════════════════════════════════════════════════════════
-     2.  ROWS-PER-PAGE CLIENT-SIDE SELECTOR
-         Backend is hardcoded to 15; we slice rows client-side.
-         Options ≤ 15 work fully; > 15 shows all available.
-     ══════════════════════════════════════════════════════════════ */
   var PER_PAGE_KEY = 'vn_properties_per_page';
 
   function getStoredPerPage() {
@@ -73,50 +46,21 @@
     try { localStorage.setItem(PER_PAGE_KEY, String(n)); } catch (_) {}
   }
 
-  function buildRowsPerPageUI() {
-    var paginationWrap = qs('.vn-pagination-wrap');
-    if (!paginationWrap) return;
-
-    /* Build the selector */
-    var selectorHtml = [
-      '<div class="vn-rows-per-page" id="vn-rows-per-page-wrap">',
-        '<label class="vn-rows-per-page__label" for="vn-per-page-select">عدد الصفوف:</label>',
-        '<select class="vn-rows-per-page__select" id="vn-per-page-select" aria-label="عدد الصفوف في الصفحة">',
-          '<option value="5">5</option>',
-          '<option value="10">10</option>',
-          '<option value="15">15</option>',
-          '<option value="25">25</option>',
-          '<option value="50">50</option>',
-        '</select>',
-      '</div>',
-    ].join('');
-
-    /* Inject before the pagination wrap */
-    var container = paginationWrap.parentElement;
-    var rowsWrap  = document.createElement('div');
-    rowsWrap.className = 'vn-pagination-toolbar';
-    rowsWrap.innerHTML = selectorHtml;
-    container.insertBefore(rowsWrap, paginationWrap);
-
-    /* Set stored value */
-    var select = document.getElementById('vn-per-page-select');
-    if (!select) return;
-
-    var stored = getStoredPerPage();
-    select.value = String(stored);
-    applyRowsPerPage(stored);
-
-    select.addEventListener('change', function () {
-      var n = parseInt(this.value) || 15;
-      storePerPage(n);
-      applyRowsPerPage(n);
+  /* ── 1. Fix pagination.next / pagination.previous raw text keys ──
+     HIDE them — the > < arrows in the numbered pagination are enough */
+  function fixPaginationText(container) {
+    (container || document).querySelectorAll('a, span, button').forEach(function (el) {
+      var txt = (el.textContent || '').trim();
+      if (txt === 'pagination.next' || txt === 'pagination.previous') {
+        el.style.display = 'none';
+        el.setAttribute('aria-hidden', 'true');
+      }
     });
   }
 
-  function applyRowsPerPage(n) {
+  /* ── 2. Rows per page (client-side) ── */
+  function applyRowsPerPage(n, countEl) {
     if (!propertiesTable) return;
-
-    /* Get all main data rows (not child-expand rows) */
     var allRows = qsa('tbody > tr', propertiesTable).filter(function (row) {
       return !row.hasAttribute('data-property-operations-row')
           && !row.hasAttribute('data-property-signals-row')
@@ -126,54 +70,132 @@
           && row.querySelector('td[data-column-key]');
     });
 
-    var total = allRows.length;
-    var perPage = n > total ? total : n;  /* can't show more than we have */
+    var total   = allRows.length;
+    var perPage = n > total ? total : n;
 
     allRows.forEach(function (row, i) {
-      var shouldShow = i < perPage;
-      row.style.display = shouldShow ? '' : 'none';
-      /* Also hide any related child rows after this row */
+      var show = i < perPage;
+      row.style.display = show ? '' : 'none';
+      /* hide/restore associated child-expand rows */
       var next = row.nextElementSibling;
       while (next && (
-        next.hasAttribute('data-property-operations-row') ||
-        next.hasAttribute('data-property-signals-row')    ||
-        next.hasAttribute('data-property-files-row')      ||
+        next.hasAttribute('data-property-operations-row')  ||
+        next.hasAttribute('data-property-signals-row')     ||
+        next.hasAttribute('data-property-files-row')       ||
         next.hasAttribute('data-property-installments-row')||
         next.hasAttribute('data-property-notes-row')
       )) {
-        next.style.display = shouldShow ? next.style.display : 'none';
+        if (!show) next.style.display = 'none';
         next = next.nextElementSibling;
       }
     });
 
-    /* Update the counter text in summary if present */
-    updateShownCount(Math.min(perPage, total), total);
-
-    /* Notify app.js to sync nav pill visibility */
+    if (countEl) {
+      countEl.textContent = 'يُعرض ' + Math.min(perPage, total) + ' من ' + total + ' نتيجة';
+    }
     if (typeof window.updateTblNavPill === 'function') window.updateTblNavPill();
   }
 
-  function updateShownCount(shown, total) {
-    /* Update "Showing X to Y of Z results" in the pagination area */
-    var wrap = qs('.vn-pagination-wrap');
-    if (!wrap) return;
-    var countEl = qs('.vn-pg-client-count');
-    if (!countEl) {
-      countEl = document.createElement('p');
-      countEl.className = 'vn-pg-client-count';
-      wrap.insertBefore(countEl, wrap.firstChild);
+  /* ── 3. Build the unified footer ── */
+  function buildUnifiedFooter() {
+    var paginationWrap = qs('.vn-properties-report .vn-pagination-wrap');
+    if (!paginationWrap) return;
+
+    /* ─ Hide the existing floating nav pill (we replicate its buttons in-footer) ─ */
+    var floatingPill = qs('.vn-properties-report .vn-tbl-nav-pill');
+    if (floatingPill) floatingPill.style.display = 'none';
+
+    /* ─ Remove my old toolbar if it already exists from a previous run ─ */
+    var oldBar = qs('.vn-prop-footer');
+    if (oldBar) oldBar.remove();
+
+    /* ─ Build footer wrapper ─ */
+    var footer = document.createElement('div');
+    footer.className = 'vn-prop-footer';
+
+    /* Section 1: nav buttons (بداية / نهاية الجدول) */
+    var navInner = document.createElement('div');
+    navInner.className = 'vn-tbl-nav-pill-inner vn-prop-footer__nav';
+
+    var btnStart = document.createElement('button');
+    btnStart.type = 'button';
+    btnStart.className = 'vn-tbl-nav-pill-btn';
+    btnStart.setAttribute('aria-label', 'بداية الجدول');
+    btnStart.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M10 1l-5 5 5 5"/><path d="M5 1l-5 5 5 5" opacity=".45"/></svg> بداية الجدول';
+    btnStart.addEventListener('click', function () {
+      var scroller = qs('.vn-properties-report .vn-properties-table');
+      if (scroller) scroller.scrollBy({ left: 999999, behavior: 'smooth' });
+    });
+
+    var sep = document.createElement('div');
+    sep.className = 'vn-tbl-nav-pill-sep';
+    sep.setAttribute('aria-hidden', 'true');
+
+    var btnEnd = document.createElement('button');
+    btnEnd.type = 'button';
+    btnEnd.className = 'vn-tbl-nav-pill-btn';
+    btnEnd.setAttribute('aria-label', 'نهاية الجدول');
+    btnEnd.innerHTML = 'نهاية الجدول <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l5 5-5 5"/><path d="M7 1l5 5-5 5" opacity=".45"/></svg>';
+    btnEnd.addEventListener('click', function () {
+      var scroller = qs('.vn-properties-report .vn-properties-table');
+      if (scroller) scroller.scrollBy({ left: -999999, behavior: 'smooth' });
+    });
+
+    navInner.append(btnStart, sep, btnEnd);
+
+    /* Section 2: rows-per-page selector */
+    var rowsGroup = document.createElement('div');
+    rowsGroup.className = 'vn-rows-per-page';
+
+    var label = document.createElement('label');
+    label.className = 'vn-rows-per-page__label';
+    label.htmlFor = 'vn-per-page-select';
+    label.textContent = 'عدد الصفوف:';
+
+    var select = document.createElement('select');
+    select.className = 'vn-rows-per-page__select';
+    select.id = 'vn-per-page-select';
+    select.setAttribute('aria-label', 'عدد الصفوف في الصفحة');
+    [5, 10, 15, 25, 50].forEach(function (n) {
+      var opt = document.createElement('option');
+      opt.value = String(n);
+      opt.textContent = String(n);
+      select.appendChild(opt);
+    });
+
+    /* Section 3: count text */
+    var countEl = document.createElement('span');
+    countEl.className = 'vn-pg-client-count';
+
+    rowsGroup.append(label, select, countEl);
+
+    /* Section 4: pagination numbers (move existing nav from paginationWrap) */
+    var pager = document.createElement('div');
+    pager.className = 'vn-prop-footer__pager';
+    while (paginationWrap.firstChild) {
+      pager.appendChild(paginationWrap.firstChild);
     }
-    countEl.textContent = 'يُعرض ' + shown + ' من ' + total + ' نتيجة في هذه الصفحة';
+    fixPaginationText(pager);   /* hide raw key text */
+
+    /* Assemble all sections into footer */
+    footer.append(navInner, rowsGroup, pager);
+
+    /* Put the footer inside the now-empty pagination wrap */
+    paginationWrap.appendChild(footer);
+
+    /* ─ Wire rows-per-page select ─ */
+    var stored = getStoredPerPage();
+    select.value = String(stored);
+    applyRowsPerPage(stored, countEl);
+
+    select.addEventListener('change', function () {
+      var n = parseInt(this.value) || 15;
+      storePerPage(n);
+      applyRowsPerPage(n, countEl);
+    });
   }
 
-  /* ══════════════════════════════════════════════════════════════
-     3.  PAGINATION CONTAINER THEME (light-mode dark bg fix done
-         via CSS in quick-settings.css, see § PAGINATION section)
-     ══════════════════════════════════════════════════════════════ */
-
-  /* ── Init ── */
-  fixPaginationText();
-  buildRowsPerPageUI();
+  buildUnifiedFooter();
 
   window.__vnPropertiesReportReady = true;
 })();
