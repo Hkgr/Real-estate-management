@@ -430,6 +430,89 @@ body.viewer-new[data-theme="light"] .vn-report-toolbar {
   border-color: rgba(180,145,60,.35)  !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   § PROPERTIES REPORT — high-specificity light-mode overrides
+     properties-report.css uses ID selector (#vn-properties-table)
+     and !important, so we must use an even more specific selector
+     to win the cascade.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Selection/summary card (the dark box top-right of report) ── */
+html[data-theme="light"] .vn-properties-report .selection-card,
+html[data-theme="light"] body.viewer-new .selection-card {
+  background:   var(--table-surface, #fffaf3) !important;
+  border-color: rgba(180,145,60,.38) !important;
+  box-shadow:   0 4px 18px rgba(139,105,20,.10) !important;
+}
+html[data-theme="light"] .vn-properties-report .selection-main-value {
+  color: var(--gold, #8B6914) !important;
+}
+html[data-theme="light"] .vn-properties-report .selection-subvalue {
+  color: var(--qs-font-color, #3a2e10) !important;
+}
+html[data-theme="light"] .vn-properties-report .selection-meta {
+  color: var(--qs-font-color, #7a6040) !important;
+}
+html[data-theme="light"] .vn-properties-report .selection-bar {
+  background: rgba(139,105,20,.12) !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-report-hero__back {
+  color: #8B6914 !important;
+}
+
+/* ── Properties table header — beat the ID-selector !important in properties-report.css ──
+   Selector specificity: html(0,0,1)+[data-theme](0,1,0)+body.viewer-new.page(0,2,1)+#id(1,0,0)+thead th(0,0,2) = (1,3,4)
+   vs properties-report:  body.viewer-new.page(0,2,1)+#id(1,0,0)+thead th(0,0,2) = (1,2,3) → ours wins            */
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th {
+  background: var(--table-head-bg, rgba(212,175,55,.16)) !important;
+  color:      var(--table-head-text, #1a1208) !important;
+  box-shadow: 0 1px 4px rgba(139,105,20,.10) !important;
+  text-shadow: none !important;
+  border-bottom-color: rgba(180,145,60,.4) !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th:hover {
+  background: var(--table-head-bg, rgba(212,175,55,.22)) !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th.vn-col-pinned {
+  background: var(--table-head-bg, rgba(212,175,55,.20)) !important;
+  box-shadow: -4px 0 12px rgba(139,105,20,.10), -1px 0 0 rgba(180,145,60,.3) !important;
+}
+
+/* ── Floating table head (the JS-cloned sticky header) ── */
+html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
+  background: var(--table-head-bg, rgba(248,242,232,.98)) !important;
+  border-color: rgba(180,145,60,.45) !important;
+  box-shadow: 0 4px 18px rgba(139,105,20,.12) !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head thead th {
+  background: var(--table-head-bg, rgba(212,175,55,.16)) !important;
+  color:      var(--table-head-text, #1a1208) !important;
+  text-shadow: none !important;
+  border-bottom-color: rgba(180,145,60,.4) !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head thead th.vn-col-pinned {
+  background: var(--table-head-bg, rgba(212,175,55,.20)) !important;
+  box-shadow: -4px 0 12px rgba(139,105,20,.10) !important;
+}
+
+/* ── Pin buttons and sort icons inside headers — dark in light mode ── */
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table thead th .vn-col-pin-btn,
+html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head .vn-col-pin-btn {
+  color: #8B6914 !important;
+  border-color: rgba(139,105,20,.3) !important;
+}
+
+/* ── Table body rows — use table-surface var so color picker works ── */
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table tbody td {
+  background: var(--table-surface, #fffaf3) !important;
+  border-color: var(--table-row-border, rgba(180,145,60,.2)) !important;
+  color: var(--qs-font-color, #1a1208) !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table tbody tr:hover td {
+  background: var(--table-row-hover-bg, rgba(212,175,55,.10)) !important;
+}
+
 
 /* ══════════════════════════════════════════════════════════════════
    § 3. QS FAB + PANEL STYLES
