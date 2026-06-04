@@ -431,6 +431,137 @@ body.viewer-new[data-theme="light"] .vn-report-toolbar {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   § PAGINATION + ROWS-PER-PAGE TOOLBAR
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Toolbar row wrapping pagination + rows selector */
+.vn-pagination-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 0 2px;
+}
+
+/* Rows-per-page widget */
+.vn-rows-per-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.vn-rows-per-page__label {
+  font-size: .8rem;
+  color: var(--muted, #b5aa95);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.vn-rows-per-page__select {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(212,175,55,.3);
+  background: rgba(212,175,55,.06);
+  color: var(--text, #f4efe6);
+  font-size: .82rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .18s, background .18s;
+  appearance: auto;
+  font-family: inherit;
+}
+.vn-rows-per-page__select:focus,
+.vn-rows-per-page__select:hover {
+  border-color: rgba(212,175,55,.55);
+  background: rgba(212,175,55,.1);
+}
+
+/* Client-side count text */
+.vn-pg-client-count {
+  font-size: .78rem;
+  color: var(--muted, #b5aa95);
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+/* Fixed pagination.next / pagination.previous arrow buttons */
+.vn-pg-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(212,175,55,.3) !important;
+  background: rgba(212,175,55,.06) !important;
+  color: var(--gold, #d4af37) !important;
+  cursor: pointer;
+  transition: all .18s;
+}
+.vn-pg-arrow:hover {
+  border-color: rgba(212,175,55,.55) !important;
+  background: rgba(212,175,55,.14) !important;
+}
+
+/* ── Pagination area dark background — dark default ── */
+.viewer-new .vn-properties-report .vn-pagination-wrap,
+.viewer-new .vn-properties-report .vn-pagination-toolbar {
+  background: var(--table-surface, var(--card, #161616));
+  border-radius: 0 0 12px 12px;
+  border: 1px solid var(--table-border, var(--border, #2a2a2a));
+  border-top: none;
+  padding: 10px 14px;
+  margin-top: 0;
+}
+
+/* ── Pagination area — light mode ── */
+html[data-theme="light"] .viewer-new .vn-properties-report .vn-pagination-wrap,
+html[data-theme="light"] .viewer-new .vn-properties-report .vn-pagination-toolbar,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-pagination-wrap,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-pagination-toolbar {
+  background: var(--table-surface, #fffaf3) !important;
+  border-color: var(--table-border, rgba(180,145,60,.32)) !important;
+}
+html[data-theme="light"] .vn-rows-per-page__label,
+body.viewer-new[data-theme="light"] .vn-rows-per-page__label { color: #5a4a35 !important; }
+html[data-theme="light"] .vn-rows-per-page__select,
+body.viewer-new[data-theme="light"] .vn-rows-per-page__select {
+  background:   rgba(212,175,55,.10) !important;
+  border-color: rgba(180,145,60,.4)  !important;
+  color: #1a1208 !important;
+}
+html[data-theme="light"] .vn-pg-client-count,
+body.viewer-new[data-theme="light"] .vn-pg-client-count { color: #7a6040 !important; }
+html[data-theme="light"] .vn-pg-arrow,
+body.viewer-new[data-theme="light"] .vn-pg-arrow {
+  border-color: rgba(139,105,20,.35) !important;
+  background:   rgba(212,175,55,.10) !important;
+  color: #8B6914 !important;
+}
+
+/* ── Table nav pill (بداية / نهاية) — light mode ── */
+html[data-theme="light"] .vn-tbl-nav-pill-inner,
+body.viewer-new[data-theme="light"] .vn-tbl-nav-pill-inner {
+  background: rgba(248,242,232,.96) !important;
+  border-color: rgba(180,145,60,.38) !important;
+  box-shadow: 0 2px 12px rgba(139,105,20,.10) !important;
+}
+html[data-theme="light"] .vn-tbl-nav-pill-btn,
+body.viewer-new[data-theme="light"] .vn-tbl-nav-pill-btn { color: #7A5B16 !important; }
+html[data-theme="light"] .vn-tbl-nav-pill-btn:hover,
+body.viewer-new[data-theme="light"] .vn-tbl-nav-pill-btn:hover {
+  background: rgba(212,175,55,.14) !important;
+  color: #5A3E10 !important;
+}
+html[data-theme="light"] .vn-tbl-nav-pill-sep,
+body.viewer-new[data-theme="light"] .vn-tbl-nav-pill-sep { background: rgba(139,105,20,.28) !important; }
+
+/* ── Top scroll bar — light mode ── */
+html[data-theme="light"] .vn-tbl-top-scroll,
+body.viewer-new[data-theme="light"] .vn-tbl-top-scroll {
+  background: rgba(240,233,218,.9) !important;
+  border-color: rgba(180,145,60,.32) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    § PROPERTIES REPORT — high-specificity light-mode overrides
      properties-report.css uses ID selector (#vn-properties-table)
      and !important, so we must use an even more specific selector
