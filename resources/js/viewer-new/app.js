@@ -858,10 +858,8 @@ tbody tr:nth-child(odd) td { background: #fff; }
             const huge = 999999;
             /* RTL tables: +huge scrolls to physical RIGHT edge (= visual start/first columns)
                FRONT/index.html confirms: 'right'→+HUGE for بداية, 'left'→-HUGE for نهاية */
-            tableScroller.scrollBy({
-                left: direction === 'start' ? huge : -huge,
-                behavior: smooth ? 'smooth' : 'auto',
-            });
+            /* Instant jump — scrollLeft assignment is always instantaneous */
+            tableScroller.scrollLeft = direction === 'start' ? huge : -huge;
             requestFloatingHeadSync();
         };
 

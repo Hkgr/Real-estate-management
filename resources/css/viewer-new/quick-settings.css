@@ -431,6 +431,26 @@ body.viewer-new[data-theme="light"] .vn-report-toolbar {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   § PAGINATION — hide Laravel mobile text buttons (no Tailwind loaded)
+     The pagination template has two divs: mobile (text) + desktop (SVG).
+     Tailwind's sm: breakpoint classes don't apply, so we force-hide the
+     mobile text div and show the desktop SVG div via CSS as a safety net.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Hide first child div of pagination <nav> (mobile: text next/prev) */
+.vn-prop-footer__pager nav > div:first-child {
+  display: none !important;
+}
+/* Show second child div of pagination <nav> (desktop: SVG arrows) */
+.vn-prop-footer__pager nav > div:last-child {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    § UNIFIED PAGINATION FOOTER
    ══════════════════════════════════════════════════════════════════ */
 

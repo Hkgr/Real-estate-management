@@ -48,14 +48,35 @@
 
   /* ── 1. Fix pagination.next / pagination.previous raw text keys ──
      HIDE them — the > < arrows in the numbered pagination are enough */
-  function fixPaginationText(container) {
-    (container || document).querySelectorAll('a, span, button').forEach(function (el) {
-      var txt = (el.textContent || '').trim();
-      if (txt === 'pagination.next' || txt === 'pagination.previous') {
-        el.style.display = 'none';
-        el.setAttribute('aria-hidden', 'true');
-      }
-    });
+  function fixPaginationLayout(container) {
+    /*
+     * The Laravel Tailwind pagination template renders TWO divs inside <nav>:
+     *   1st div (mobile):  class="flex ... sm:hidden"   → text "pagination.next/previous"
+     *   2nd div (desktop): class="hidden sm:flex-1 ..." → SVG arrows + page numbers
+     *
+     * Since Tailwind CSS is NOT loaded in viewer-new, NEITHER sm: class works,
+     * so both divs render visibly. Fix: explicitly hide the mobile div and show
+     * the desktop div.
+     */
+    var nav = container ? container.querySelector('nav') : null;
+    if (!nav) return;
+
+    var divs = nav.children;
+    if (divs.length < 1) return;
+
+    /* Hide the first div (mobile text buttons) */
+    var mobileDiv = divs[0];
+    mobileDiv.style.display = 'none';
+
+    /* Show the second div (desktop SVG navigation) */
+    var desktopDiv = divs[1];
+    if (desktopDiv) {
+      desktopDiv.style.display    = 'flex';
+      desktopDiv.style.flex       = '1';
+      desktopDiv.style.alignItems = 'center';
+      desktopDiv.style.justifyContent = 'space-between';
+      desktopDiv.style.gap        = '8px';
+    }
   }
 
   /* ── 2. Rows per page (client-side) ── */
@@ -124,7 +145,7 @@
     btnStart.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M10 1l-5 5 5 5"/><path d="M5 1l-5 5 5 5" opacity=".45"/></svg> بداية الجدول';
     btnStart.addEventListener('click', function () {
       var scroller = qs('.vn-properties-report .vn-properties-table');
-      if (scroller) scroller.scrollBy({ left: 999999, behavior: 'smooth' });
+      if (scroller) scroller.scrollLeft = 999999; /* instant, no animation */
     });
 
     var sep = document.createElement('div');
@@ -138,7 +159,7 @@
     btnEnd.innerHTML = 'نهاية الجدول <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l5 5-5 5"/><path d="M7 1l5 5-5 5" opacity=".45"/></svg>';
     btnEnd.addEventListener('click', function () {
       var scroller = qs('.vn-properties-report .vn-properties-table');
-      if (scroller) scroller.scrollBy({ left: -999999, behavior: 'smooth' });
+      if (scroller) scroller.scrollLeft = -999999; /* instant, no animation */
     });
 
     navInner.append(btnStart, sep, btnEnd);
@@ -175,7 +196,7 @@
     while (paginationWrap.firstChild) {
       pager.appendChild(paginationWrap.firstChild);
     }
-    fixPaginationText(pager);   /* hide raw key text */
+    fixPaginationLayout(pager); /* hide mobile text divs, show desktop SVG nav */
 
     /* Assemble all sections into footer */
     footer.append(navInner, rowsGroup, pager);
