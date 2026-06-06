@@ -684,187 +684,151 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
    § 3. QS FAB + PANEL STYLES
    ══════════════════════════════════════════════════════════════════ */
 
-/* ── FAB wrapper — left-center side tab ── */
+/* ── QS Nav Drawer wrapper ── */
 .qs-fab {
   position: fixed;
   z-index: 9999;
   left: 0;
+  top: 0;
+  height: 100vh;
+  pointer-events: none;   /* only children capture events */
+  direction: ltr;
+}
+
+/* ── Arrow trigger tab ── */
+.qs-fab-trigger {
+  position: absolute;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
+  pointer-events: auto;
   display: flex;
-  flex-direction: row;   /* trigger on left, panel opens to its right */
-  align-items: center;
-  gap: 0;
-  direction: ltr;        /* override page RTL — keep trigger flush-left regardless */
-}
-
-/* ── LTR (English) — flip to right side ── */
-html[dir="ltr"] .qs-fab {
-  left: auto;
-  right: 0;
-  flex-direction: row-reverse; /* trigger on right, panel opens to its left */
-}
-html[dir="ltr"] .qs-panel {
-  margin-left: 0;
-  margin-right: 8px;
-  animation-name: qsSlideInRtl;
-}
-html[dir="ltr"] .qs-fab-trigger {
-  border-radius: 18px 0 0 18px;  /* rounded on left, flush on right */
-  border-left:   1.5px solid rgba(212,175,55,.5);
-  border-right:  none;
-  box-shadow:
-    -5px 0 28px rgba(0,0,0,.55),
-    0    0 24px rgba(212,175,55,.18),
-    inset 0 1px 0 rgba(212,175,55,.12),
-    inset 0 -1px 0 rgba(212,175,55,.08);
-}
-html[dir="ltr"] .qs-fab-trigger:hover {
-  box-shadow:
-    -8px 0 32px rgba(0,0,0,.6),
-    0    0 32px rgba(212,175,55,.28),
-    inset 0 1px 0 rgba(212,175,55,.18);
-}
-html[dir="ltr"] .qs-fab.open .qs-fab-trigger {
-  box-shadow:
-    -6px 0 24px rgba(0,0,0,.5),
-    0 0 0 2px rgba(212,175,55,.22),
-    0 0 28px rgba(212,175,55,.22);
-}
-/* light mode LTR overrides */
-html[dir="ltr"] html[data-theme="light"] .qs-fab-trigger,
-html[dir="ltr"] body[data-theme="light"] .qs-fab-trigger {
-  box-shadow:
-    -5px 0 22px rgba(100,75,30,.22),
-    0    0 18px rgba(139,105,20,.15),
-    inset 0 1px 0 rgba(255,255,255,.65);
-}
-
-/* ── Trigger — vertical side tab (dark) ── */
-.qs-fab-trigger {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 52px;
-  padding: 20px 0;
-  border-radius: 0 18px 18px 0;   /* rounded only on the right */
-  border-top:    1.5px solid rgba(212,175,55,.5);
-  border-right:  1.5px solid rgba(212,175,55,.5);
-  border-bottom: 1.5px solid rgba(212,175,55,.5);
-  border-left:   none;             /* flush with screen edge */
-  background: linear-gradient(160deg, rgba(28,22,10,.97) 0%, rgba(14,11,4,.96) 100%);
+  width: 22px;
+  height: 56px;
+  border-radius: 0 12px 12px 0;
+  border-top:    1.5px solid rgba(212,175,55,.45);
+  border-right:  1.5px solid rgba(212,175,55,.45);
+  border-bottom: 1.5px solid rgba(212,175,55,.45);
+  border-left:   none;
+  background: linear-gradient(160deg, rgba(28,22,10,.97), rgba(14,11,4,.96));
   color: #D4AF37;
   cursor: pointer;
-  box-shadow:
-    5px 0 28px rgba(0,0,0,.55),
-    0  0 24px rgba(212,175,55,.18),
-    inset 0 1px 0 rgba(212,175,55,.12),
-    inset 0 -1px 0 rgba(212,175,55,.08);
-  transition: width .22s ease, background .22s, box-shadow .22s, border-color .22s;
+  box-shadow: 4px 0 18px rgba(0,0,0,.55), 0 0 14px rgba(212,175,55,.15);
+  transition: left .3s cubic-bezier(.22,.7,.3,1), background .2s, border-color .2s, box-shadow .2s;
   -webkit-tap-highlight-color: transparent;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.qs-fab-icon { width: 24px; height: 24px; flex-shrink: 0; }
-.qs-fab-label {
-  font-family: 'Tajawal', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  color: rgba(212,175,55,.8);
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);     /* read bottom→top in Arabic vertical text */
-  line-height: 1;
 }
 .qs-fab-trigger:hover {
-  width: 62px;                   /* expand slightly on hover */
   background: linear-gradient(160deg, rgba(36,28,12,.98), rgba(20,16,6,.97));
-  border-color: rgba(212,175,55,.75);
-  box-shadow:
-    8px 0 32px rgba(0,0,0,.6),
-    0  0 32px rgba(212,175,55,.28),
-    inset 0 1px 0 rgba(212,175,55,.18);
+  border-color: rgba(212,175,55,.7);
+  box-shadow: 5px 0 22px rgba(0,0,0,.6), 0 0 18px rgba(212,175,55,.25);
 }
-.qs-fab-trigger:focus-visible {
-  outline: 2px solid #D4AF37;
-  outline-offset: -3px;
+.qs-fab-trigger:focus-visible { outline: 2px solid #D4AF37; outline-offset: -3px; }
+
+/* Arrow icon — rotates when open */
+.qs-fab-icon {
+  width: 14px; height: 14px; flex-shrink: 0;
+  transition: transform .3s cubic-bezier(.22,.7,.3,1);
 }
-.qs-fab.open .qs-fab-trigger {
-  width: 58px;
-  border-color: rgba(212,175,55,.8);
-  background: linear-gradient(160deg, rgba(40,32,14,.98), rgba(22,18,8,.97));
-  box-shadow:
-    6px 0 24px rgba(0,0,0,.5),
-    0  0 0 2px rgba(212,175,55,.22),
-    0  0 28px rgba(212,175,55,.22);
-}
+.qs-fab.open .qs-fab-icon { transform: rotate(180deg); }
+
+/* Trigger slides right when drawer opens (RTL: trigger is at left:0, panel is 280px wide) */
+.qs-fab.open .qs-fab-trigger { left: 280px; }
 
 /* ── Trigger — light mode ── */
 html[data-theme="light"] .qs-fab-trigger,
 body[data-theme="light"] .qs-fab-trigger {
   background: linear-gradient(160deg, rgba(255,252,242,.97), rgba(244,234,210,.95));
-  color:        #7A5B16;
-  border-color: rgba(139,105,20,.55);
-  box-shadow:
-    5px 0 22px rgba(100,75,30,.22),
-    0  0 18px rgba(139,105,20,.15),
-    inset 0 1px 0 rgba(255,255,255,.65);
+  color:       #7A5B16;
+  border-color: rgba(139,105,20,.5);
+  box-shadow: 4px 0 16px rgba(100,75,30,.22), 0 0 12px rgba(139,105,20,.14), inset 0 1px 0 rgba(255,255,255,.65);
 }
-.qs-fab-trigger .qs-fab-label { color: rgba(122,91,22,.75); }
 html[data-theme="light"] .qs-fab-trigger:hover,
 body[data-theme="light"] .qs-fab-trigger:hover {
-  background: linear-gradient(160deg, rgba(255,253,246,.99), rgba(246,238,216,.98));
   border-color: rgba(139,105,20,.75);
-  box-shadow: 8px 0 28px rgba(100,75,30,.3);
-}
-html[data-theme="light"] .qs-fab.open .qs-fab-trigger,
-body[data-theme="light"] .qs-fab.open .qs-fab-trigger {
-  border-color: rgba(139,105,20,.85);
-  box-shadow: 6px 0 20px rgba(100,75,30,.25), 0 0 0 2px rgba(139,105,20,.2);
+  box-shadow: 5px 0 20px rgba(100,75,30,.3);
 }
 
-/* ── Panel — slides in from left ── */
+/* ── Nav drawer panel ── */
 .qs-panel {
-  display: none;
-  width: min(310px, calc(100vw - 68px));
-  max-height: min(80vh, 540px);
+  position: absolute;
+  left: 0; top: 0;
+  width: 280px;
+  height: 100%;
   overflow-y: auto;
-  border-radius: 12px;
-  border: 1px solid var(--qs-panel-border, #2a2a2a);
-  background: var(--qs-panel-bg, #1A1A1A);
-  box-shadow: 8px 8px 48px rgba(0,0,0,.6), 0 0 28px rgba(212,175,55,.1);
-  padding: 0;
-  margin-left: 8px;
-  animation: qsSlideIn .22s cubic-bezier(.22,.7,.3,1);
+  overflow-x: hidden;
+  border-radius: 0 16px 16px 0;
+  border-right: 1px solid var(--qs-panel-border, rgba(212,175,55,.2));
+  border-top: none; border-bottom: none; border-left: none;
+  background: var(--qs-panel-bg, rgba(12,10,4,.97));
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  backdrop-filter: blur(28px) saturate(1.4);
+  box-shadow: 8px 0 48px rgba(0,0,0,.65), 0 0 32px rgba(212,175,55,.08);
+  pointer-events: none;
+  visibility: hidden;
+  transform: translateX(-100%);
+  filter: blur(8px);
+  /* closing: blur quickly, slide out */
+  transition:
+    transform .3s cubic-bezier(.22,.7,.3,1),
+    filter    .3s cubic-bezier(.22,.7,.3,1),
+    visibility 0s .3s;
 }
 html[data-theme="light"] .qs-panel,
 body[data-theme="light"] .qs-panel {
-  border-color: var(--qs-panel-border, rgba(180,145,60,.4)) !important;
-  background:   var(--qs-panel-bg, #fffaf3) !important;
-  box-shadow: 8px 8px 40px rgba(100,75,30,.18) !important;
+  background:   var(--qs-panel-bg, rgba(255,250,243,.97)) !important;
+  border-color: var(--qs-panel-border, rgba(180,145,60,.35)) !important;
+  box-shadow: 8px 0 40px rgba(100,75,30,.2) !important;
 }
-.qs-fab.open .qs-panel { display: block; }
-@keyframes qsSlideIn {
-  from { opacity: 0; transform: translateX(-14px); }
-  to   { opacity: 1; transform: translateX(0); }
+/* open: slide in + un-blur */
+.qs-fab.open .qs-panel {
+  pointer-events: auto;
+  visibility: visible;
+  transform: translateX(0);
+  filter: blur(0);
+  transition:
+    transform .3s cubic-bezier(.22,.7,.3,1),
+    filter    .28s cubic-bezier(.22,.7,.3,1),
+    visibility 0s;
 }
-@keyframes qsSlideInRtl {
-  from { opacity: 0; transform: translateX(14px); }
-  to   { opacity: 1; transform: translateX(0); }
+
+/* ── LTR (English) — flip everything to the right edge ── */
+html[dir="ltr"] .qs-fab { left: auto; right: 0; }
+html[dir="ltr"] .qs-fab-trigger {
+  left: auto; right: 0;
+  border-radius: 12px 0 0 12px;
+  border-left:  1.5px solid rgba(212,175,55,.45);
+  border-right: none;
+  box-shadow: -4px 0 18px rgba(0,0,0,.55), 0 0 14px rgba(212,175,55,.15);
+  transition: right .3s cubic-bezier(.22,.7,.3,1), background .2s, border-color .2s, box-shadow .2s;
 }
-/* Panel head */
+html[dir="ltr"] .qs-fab.open .qs-fab-trigger { right: 280px; left: auto; }
+html[dir="ltr"] .qs-fab-icon { transform: rotate(180deg); }
+html[dir="ltr"] .qs-fab.open .qs-fab-icon { transform: rotate(0deg); }
+html[dir="ltr"] .qs-panel {
+  left: auto; right: 0;
+  border-radius: 16px 0 0 16px;
+  border-left:  1px solid var(--qs-panel-border, rgba(212,175,55,.2));
+  border-right: none;
+  transform: translateX(100%);
+  box-shadow: -8px 0 48px rgba(0,0,0,.65), 0 0 32px rgba(212,175,55,.08);
+}
+html[dir="ltr"] .qs-fab.open .qs-panel { transform: translateX(0); }
+
+/* ── Panel head ── */
 .qs-panel-head {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--qs-panel-border, #2a2a2a);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--qs-panel-border, rgba(212,175,55,.15));
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   position: sticky; top: 0; z-index: 1;
-  background: var(--qs-panel-head-bg, #1A1A1A);
+  background: var(--qs-panel-head-bg, rgba(16,13,5,.98));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 html[data-theme="light"] .qs-panel-head,
 body[data-theme="light"] .qs-panel-head {
-  border-bottom-color: var(--qs-panel-border, rgba(180,145,60,.3)) !important;
+  border-bottom-color: var(--qs-panel-border, rgba(180,145,60,.25)) !important;
   background: var(--qs-panel-head-bg, rgba(250,244,232,.98)) !important;
 }
 
