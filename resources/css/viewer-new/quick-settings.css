@@ -695,6 +695,7 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
   flex-direction: row;   /* trigger on left, panel opens to its right */
   align-items: center;
   gap: 0;
+  direction: ltr;        /* override page RTL — keep trigger flush-left regardless */
 }
 
 /* ── Trigger — vertical side tab (dark) ── */
