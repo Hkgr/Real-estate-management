@@ -211,18 +211,18 @@
 }
 
 [data-theme="light"] .vn-properties-report .vn-report-toolbar-button {
-  color: #3f3116;
+  color: var(--qs-font-color, #3f3116);
   background: linear-gradient(160deg, rgba(196,154,42,.22), rgba(255,255,255,.62));
   border-color: rgba(167,144,103,.46);
   box-shadow: 0 7px 14px rgba(138,108,45,.15), inset 0 1px 0 rgba(255,255,255,.58);
 }
 [data-theme="light"] .vn-properties-report .vn-report-toolbar-button:hover:not(:disabled) {
-  color: #2b210f;
+  color: var(--qs-font-color, #2b210f);
   border-color: rgba(139,105,20,.65);
   box-shadow: 0 10px 18px rgba(138,108,45,.22), 0 0 14px rgba(196,154,42,.24);
 }
 [data-theme="light"] .vn-properties-report .vn-report-toolbar-button.active {
-  color: #18120a;
+  color: var(--qs-font-color, #18120a);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -311,7 +311,7 @@
 [data-theme="light"] .vn-properties-report .vn-report-generator__field input {
   background: #fff;
   border-color: #dfd5c6;
-  color: #2d2418;
+  color: var(--qs-font-color, #2d2418);
 }
 
 /* Calendar picker — gold tint in dark mode */

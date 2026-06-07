@@ -693,11 +693,36 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
   height: 100vh;
   pointer-events: none;   /* only children capture events */
   direction: ltr;
+  /* Panel width grows slightly with font size so content never clips */
+  --qs-panel-w: calc(280px + (var(--fs-scale, 1) - 1) * 120px);
+}
+
+/* ── Backdrop — blurs page content behind the drawer ── */
+.qs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;              /* behind panel (z-index:2) and trigger (z-index:3) */
+  pointer-events: none;
+  background: rgba(0,0,0,0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  opacity: 0;
+  transition:
+    opacity .3s cubic-bezier(.22,.7,.3,1),
+    backdrop-filter .3s cubic-bezier(.22,.7,.3,1);
+}
+.qs-fab.open .qs-backdrop {
+  pointer-events: auto;
+  opacity: 1;
+  background: rgba(0,0,0,.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* ── Arrow trigger tab ── */
 .qs-fab-trigger {
   position: absolute;
+  z-index: 3;              /* above backdrop(0) and panel(2) */
   left: 0;
   top: 50%;
   transform: translateY(-50%);
@@ -733,8 +758,8 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
 }
 .qs-fab.open .qs-fab-icon { transform: rotate(180deg); }
 
-/* Trigger slides right when drawer opens (RTL: trigger is at left:0, panel is 280px wide) */
-.qs-fab.open .qs-fab-trigger { left: 280px; }
+/* Trigger slides right when drawer opens (RTL: trigger is at left:0, panel is --qs-panel-w wide) */
+.qs-fab.open .qs-fab-trigger { left: var(--qs-panel-w, 280px); }
 
 /* ── Trigger — light mode ── */
 html[data-theme="light"] .qs-fab-trigger,
@@ -753,11 +778,12 @@ body[data-theme="light"] .qs-fab-trigger:hover {
 /* ── Nav drawer panel ── */
 .qs-panel {
   position: absolute;
+  z-index: 2;              /* above backdrop, below trigger */
   left: 0; top: 0;
-  width: 280px;
+  width: var(--qs-panel-w, 280px);
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   border-radius: 0 16px 16px 0;
   border-right: 1px solid var(--qs-panel-border, rgba(212,175,55,.2));
   border-top: none; border-bottom: none; border-left: none;
@@ -803,7 +829,7 @@ html[dir="ltr"] .qs-fab-trigger {
   box-shadow: -4px 0 18px rgba(0,0,0,.55), 0 0 14px rgba(212,175,55,.15);
   transition: right .3s cubic-bezier(.22,.7,.3,1), background .2s, border-color .2s, box-shadow .2s;
 }
-html[dir="ltr"] .qs-fab.open .qs-fab-trigger { right: 280px; left: auto; }
+html[dir="ltr"] .qs-fab.open .qs-fab-trigger { right: var(--qs-panel-w, 280px); left: auto; }
 html[dir="ltr"] .qs-fab-icon { transform: rotate(180deg); }
 html[dir="ltr"] .qs-fab.open .qs-fab-icon { transform: rotate(0deg); }
 html[dir="ltr"] .qs-panel {

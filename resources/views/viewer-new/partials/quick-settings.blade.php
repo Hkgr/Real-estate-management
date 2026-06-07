@@ -16,6 +16,9 @@
   </button>
 
   {{-- Panel — appears to the RIGHT of the trigger --}}
+  {{-- Backdrop — blurs page behind drawer, closes on click --}}
+  <div class="qs-backdrop" onclick="closeQuickSettings()"></div>
+
   <div class="qs-panel" id="qs-panel" onclick="event.stopPropagation()">
 
     {{-- Header --}}

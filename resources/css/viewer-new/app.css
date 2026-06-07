@@ -186,10 +186,10 @@
 
 
 .viewer-new .vn-breadcrumb__list{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.viewer-new .vn-breadcrumb__item{font-size:12px;color:#8f949f}
+.viewer-new .vn-breadcrumb__item{font-size:calc(12px * var(--fs-scale, 1));color:#8f949f}
 .viewer-new .vn-breadcrumb__link{color:#a8adb7}
 .viewer-new .vn-breadcrumb__current{color:#d9dde4}
-.viewer-new .vn-breadcrumb__separator{font-size:11px;color:#747983}
+.viewer-new .vn-breadcrumb__separator{font-size:calc(11px * var(--fs-scale, 1));color:#747983}
 
 .viewer-new .vn-nav-link__icon svg path{fill:currentColor}
 .viewer-new .vn-pagination-wrap svg{width:20px;height:20px;max-width:20px;max-height:20px}
@@ -302,6 +302,10 @@
   color:var(--vn-pr-text);
   line-height:1.8;
 }
+[data-theme="light"] .viewer-new .vn-properties-report{
+  --vn-pr-text:#2c2a26;
+}
+
 .viewer-new .vn-properties-report > .vn-report-hero{
   flex:0 0 auto;
   width:100%;
@@ -418,6 +422,9 @@
   font-weight:700;
   line-height:1.2;
   color:var(--vn-pr-text);
+}
+[data-theme="light"] .viewer-new :is(.vn-properties-report, .vn-owners-report) .vn-report-hero__content h1{
+  color:#2c2a26;
 }
 
 .viewer-new .vn-properties-report .vn-report-hero__content p:last-child{

@@ -69,8 +69,9 @@ export function setFontSize(s) {
   } else {
     document.documentElement.style.removeProperty('font-size');
   }
-  document.documentElement.style.setProperty('--fs-base',  htmlSz || '16px');
-  document.documentElement.style.setProperty('--fs-scale', scaleMap[s] || '1');
+  document.documentElement.style.setProperty('--fs-base',    htmlSz || '16px');
+  document.documentElement.style.setProperty('--fs-scale',   scaleMap[s] || '1');
+  document.documentElement.style.setProperty('--vn-pr-fs-scale', scaleMap[s] || '1');
 
   const p = qsGetPrefs(); p.fontSize = s; qsSavePrefs(p);
   ['normal','large','xl','xxl'].forEach(k => {
