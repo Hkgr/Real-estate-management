@@ -876,7 +876,7 @@ tbody tr:nth-child(odd) td { background: #fff; }
             tblNavPill.setAttribute('data-table-nav-pill', '');
             tblNavPill.setAttribute('role', 'navigation');
             tblNavPill.setAttribute('aria-label', 'التنقل في الجدول');
-            tblNavPill.innerHTML = '<div class="vn-tbl-nav-pill-inner"><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="start">⟪ بداية الجدول</button><div class="vn-tbl-nav-pill-sep"></div><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="end">نهاية الجدول ⟫</button></div>';
+            tblNavPill.innerHTML = '<div class="vn-tbl-nav-pill-inner"><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="start">بداية الجدول ⟫</button><div class="vn-tbl-nav-pill-sep"></div><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="end">⟪ نهاية الجدول</button></div>';
             wrap.appendChild(tblNavPill);
             tblNavPill.querySelector('[data-tbl-nav="start"]')?.addEventListener('click', () => tblNavScroll('start'));
             tblNavPill.querySelector('[data-tbl-nav="end"]')?.addEventListener('click', () => tblNavScroll('end'));
