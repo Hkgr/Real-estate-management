@@ -72,6 +72,12 @@ export function setFontSize(s) {
   document.documentElement.style.setProperty('--fs-base',    htmlSz || '16px');
   document.documentElement.style.setProperty('--fs-scale',   scaleMap[s] || '1');
   document.documentElement.style.setProperty('--vn-pr-fs-scale', scaleMap[s] || '1');
+  /* Also set directly on .vn-properties-report and .vn-owners-report
+     because the CSS defines --vn-pr-fs-scale:1 on those elements,
+     which blocks the documentElement value from cascading down. */
+  document.querySelectorAll('.vn-properties-report, .vn-owners-report').forEach(function(el) {
+    el.style.setProperty('--vn-pr-fs-scale', scaleMap[s] || '1');
+  });
 
   const p = qsGetPrefs(); p.fontSize = s; qsSavePrefs(p);
   ['normal','large','xl','xxl'].forEach(k => {
