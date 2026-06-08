@@ -76,6 +76,8 @@
       desktopDiv.style.alignItems = 'center';
       desktopDiv.style.justifyContent = 'space-between';
       desktopDiv.style.gap        = '8px';
+      var arrowSpan = desktopDiv.querySelector('span.inline-flex');
+      if (arrowSpan) arrowSpan.style.direction = 'ltr';
     }
   }
 
@@ -142,7 +144,7 @@
     btnStart.type = 'button';
     btnStart.className = 'vn-tbl-nav-pill-btn';
     btnStart.setAttribute('aria-label', 'بداية الجدول');
-    btnStart.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M10 1l-5 5 5 5"/><path d="M5 1l-5 5 5 5" opacity=".45"/></svg> بداية الجدول';
+    btnStart.innerHTML = 'بداية الجدول <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l5 5-5 5"/><path d="M7 1l5 5-5 5" opacity=".45"/></svg>';
     btnStart.addEventListener('click', function () {
       var scroller = qs('.vn-properties-report .vn-properties-table');
       if (scroller) scroller.scrollLeft = 999999; /* instant, no animation */
@@ -156,7 +158,7 @@
     btnEnd.type = 'button';
     btnEnd.className = 'vn-tbl-nav-pill-btn';
     btnEnd.setAttribute('aria-label', 'نهاية الجدول');
-    btnEnd.innerHTML = 'نهاية الجدول <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l5 5-5 5"/><path d="M7 1l5 5-5 5" opacity=".45"/></svg>';
+    btnEnd.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M10 1l-5 5 5 5"/><path d="M5 1l-5 5 5 5" opacity=".45"/></svg> نهاية الجدول';
     btnEnd.addEventListener('click', function () {
       var scroller = qs('.vn-properties-report .vn-properties-table');
       if (scroller) scroller.scrollLeft = -999999; /* instant, no animation */
