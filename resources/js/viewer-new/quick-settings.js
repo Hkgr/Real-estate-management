@@ -243,13 +243,14 @@ export function setTableColor(colorMode) {
   const root = getVnEl();
   if (colorMode === 'default') {
     if (theme === 'light') {
-      root.style.setProperty('--table-surface',      '#fffaf3');
-      root.style.setProperty('--table-border',       'rgba(180,145,60,.32)');
-      root.style.setProperty('--table-head-bg',      'rgba(212,175,55,.18)');
-      root.style.setProperty('--table-head-text',    '#1a1208');
-      root.style.setProperty('--table-head-hover',   'rgba(212,175,55,.28)');
-      root.style.setProperty('--table-row-border',   'rgba(180,145,60,.22)');
-      root.style.setProperty('--table-row-hover-bg', 'rgba(212,175,55,.11)');
+      /* Sand light values as the default table look in light mode */
+      root.style.setProperty('--table-surface',      '#FFF9EE');
+      root.style.setProperty('--table-border',       '#E8D7BC');
+      root.style.setProperty('--table-head-bg',      '#FBF1DD');
+      root.style.setProperty('--table-head-text',    '#876B42');
+      root.style.setProperty('--table-head-hover',   '#B45309');
+      root.style.setProperty('--table-row-border',   'rgba(205,180,141,.62)');
+      root.style.setProperty('--table-row-hover-bg', 'rgba(180,83,9,.08)');
     } else {
       ['--table-surface','--table-border','--table-head-bg','--table-head-text',
        '--table-head-hover','--table-row-border','--table-row-hover-bg'].forEach(v => root.style.removeProperty(v));
@@ -300,7 +301,7 @@ export function setPanelColor(colorMode) {
 
 /* ── Reset all ── */
 export function resetAllSettings() {
-  const d = { theme:'dark', fontSize:'normal', currency:'USD', area:'m2', ownership:'sahm',
+  const d = { theme:'light', fontSize:'normal', currency:'USD', area:'m2', ownership:'sahm',
               fontFamily:'Tajawal', lang:'ar', fontColor:'default', navbarColor:'default',
               headerColor:'default', tableColor:'default', panelColor:'plum' };
   qsSavePrefs(d);
@@ -335,7 +336,7 @@ function bindFontRadios() {
 function loadPrefs() {
   bindFontRadios();
   const p = qsGetPrefs();
-  const t = localStorage.getItem('themeMode') || p.theme || 'dark';
+  const t = localStorage.getItem('themeMode') || p.theme || 'light';
   setThemePref(t);
   setFontSize(p.fontSize    || 'normal');
   setCurrency(p.currency    || 'USD');
