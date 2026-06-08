@@ -1673,6 +1673,15 @@ body.vn-is-col-resizing *{cursor:col-resize!important;user-select:none!important
   background:linear-gradient(160deg,rgba(212,175,55,.1),rgba(255,255,255,.6));
   border-color:rgba(180,140,30,.3);
 }
+[data-theme="light"] .viewer-new .vn-properties-report .vn-owner-pill__name{color:#2c2a26}
+[data-theme="light"] .viewer-new .vn-properties-report .vn-related-inline__count{color:#8b6914}
+[data-theme="light"] .viewer-new .vn-properties-report .vn-property-operations-row td,
+[data-theme="light"] .viewer-new .vn-properties-report .vn-property-signals-row td,
+[data-theme="light"] .viewer-new .vn-properties-report .vn-property-files-row td,
+[data-theme="light"] .viewer-new .vn-properties-report .vn-property-installments-row td{background:rgba(212,175,55,.06);color:#2c2a26}
+[data-theme="light"] .viewer-new .vn-properties-report .vn-child-panel{background:linear-gradient(160deg,rgba(212,175,55,.1),rgba(255,255,255,.7));border-color:rgba(180,140,30,.3)}
+[data-theme="light"] .viewer-new .vn-properties-report .vn-child-table td{color:#2c2a26;border-bottom-color:rgba(180,140,30,.2)}
+[data-theme="light"] .viewer-new .vn-properties-report .vn-child-table tbody tr:nth-child(even) td{background:rgba(212,175,55,.07)}
 .viewer-new .vn-properties-report .vn-table-number{font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .viewer-new .vn-properties-report .vn-row-actions{display:flex;flex-wrap:wrap;gap:.3rem;min-width:96px}
