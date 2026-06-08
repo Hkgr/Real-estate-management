@@ -644,6 +644,44 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
   box-shadow: -4px 0 12px rgba(139,105,20,.10), -1px 0 0 rgba(180,145,60,.3) !important;
 }
 
+/* ── Child table (expanded ops/signals rows) in light mode ──
+   Fixed colors — intentionally NOT using --table-surface/--table-head-bg
+   so the default table color preset doesn't bleed into child rows.       */
+html[data-theme="light"] .vn-properties-report .vn-property-operations-row td,
+html[data-theme="light"] .vn-properties-report .vn-property-signals-row td,
+html[data-theme="light"] .vn-properties-report .vn-property-files-row td,
+html[data-theme="light"] .vn-properties-report .vn-property-installments-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-operations-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-signals-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-files-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-installments-row td {
+  background: #f5efe0 !important;
+  color: #1a1208 !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table th,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table th {
+  background: rgba(212,175,55,.2) !important;
+  color: #1a1208 !important;
+  border-color: rgba(180,145,60,.35) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table td {
+  background: transparent !important;
+  color: #1a1208 !important;
+  border-color: rgba(180,145,60,.22) !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:nth-child(even) td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:nth-child(even) td {
+  background: rgba(212,175,55,.08) !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:hover td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:hover td {
+  background: rgba(212,175,55,.16) !important;
+}
+
 /* ── Floating table head (the JS-cloned sticky header) ── */
 html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-pr-floating-table-head {
   background: var(--table-head-bg, rgba(248,242,232,.98)) !important;
