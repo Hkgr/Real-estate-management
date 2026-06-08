@@ -644,14 +644,40 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
   box-shadow: -4px 0 12px rgba(139,105,20,.10), -1px 0 0 rgba(180,145,60,.3) !important;
 }
 
-/* ── Child table (expanded ops/signals rows) th in light mode ── */
-html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-child-table thead th,
-html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-child-table th {
-  background: rgba(212,175,55,.18) !important;
-  color: #1a1208 !important;
+/* ── Child table (expanded ops/signals rows) in light mode ── */
+html[data-theme="light"] .vn-properties-report .vn-property-operations-row td,
+html[data-theme="light"] .vn-properties-report .vn-property-signals-row td,
+html[data-theme="light"] .vn-properties-report .vn-property-files-row td,
+html[data-theme="light"] .vn-properties-report .vn-property-installments-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-operations-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-signals-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-files-row td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-property-installments-row td {
+  background: var(--table-surface, #fffaf3) !important;
+  color: var(--qs-font-color, #1a1208) !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table th,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table th {
+  background: var(--table-head-bg, rgba(212,175,55,.18)) !important;
+  color: var(--table-head-text, #1a1208) !important;
+  border-color: var(--table-row-border, rgba(180,145,60,.3)) !important;
   text-shadow: none !important;
-  border-bottom-color: rgba(180,145,60,.4) !important;
   box-shadow: none !important;
+  font-weight: 700 !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table td {
+  background: var(--table-surface, #fffaf3) !important;
+  color: var(--qs-font-color, #1a1208) !important;
+  border-color: var(--table-row-border, rgba(180,145,60,.22)) !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:hover td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:hover td {
+  background: var(--table-row-hover-bg, rgba(212,175,55,.12)) !important;
+}
+html[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:nth-child(even) td,
+body.viewer-new[data-theme="light"] .vn-properties-report .vn-child-table tbody tr:nth-child(even) td {
+  background: var(--table-surface, rgba(212,175,55,.06)) !important;
 }
 
 /* ── Floating table head (the JS-cloned sticky header) ── */
