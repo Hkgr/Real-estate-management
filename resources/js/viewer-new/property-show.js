@@ -166,3 +166,20 @@ if (document.readyState === 'loading') {
 } else {
     initPropertyShowPdfExport();
 }
+
+/* ── Apply quick-settings (theme + font size) on property-show page ── */
+(function applyQuickSettings() {
+    const stored = JSON.parse(localStorage.getItem('vn-quick-settings') || '{}');
+    const theme    = stored.theme    || localStorage.getItem('themeMode') || 'light';
+    const fontSize = stored.fontSize || 'normal';
+
+    const scaleMap = { small: '0.85', normal: '1', large: '1.18', xlarge: '1.38', xxlarge: '1.6' };
+    const scale = scaleMap[fontSize] || '1';
+
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    document.documentElement.style.setProperty('--fs-scale', scale);
+
+    const showEl = document.querySelector('.vn-property-show');
+    if (showEl) showEl.style.setProperty('--fs-scale', scale);
+})();

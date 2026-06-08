@@ -415,3 +415,100 @@
   background: rgba(212, 175, 55, .2);
   outline: none;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHT MODE
+══════════════════════════════════════════════════════════════ */
+[data-theme="light"] .viewer-new .vn-property-show__hero,
+body[data-theme="light"] .viewer-new .vn-property-show__hero {
+  background:
+    radial-gradient(circle at top right, rgba(212, 175, 55, .14), transparent 42%),
+    linear-gradient(135deg, rgba(255, 255, 255, .8), rgba(255, 255, 255, .6)),
+    #f8f2e4;
+  border-color: rgba(180, 140, 30, .35);
+  box-shadow: 0 8px 24px rgba(139, 105, 20, .12);
+}
+[data-theme="light"] .viewer-new .vn-property-show h1,
+body[data-theme="light"] .viewer-new .vn-property-show h1 { color: #2c2a26; }
+
+[data-theme="light"] .viewer-new .vn-property-show__summary,
+body[data-theme="light"] .viewer-new .vn-property-show__summary {
+  background: rgba(212, 175, 55, .1);
+  border-color: rgba(180, 140, 30, .3);
+}
+[data-theme="light"] .viewer-new .vn-property-show__summary strong,
+body[data-theme="light"] .viewer-new .vn-property-show__summary strong { color: #2c2a26; }
+
+[data-theme="light"] .viewer-new .vn-property-show__record,
+body[data-theme="light"] .viewer-new .vn-property-show__record { color: #4a4540; }
+[data-theme="light"] .viewer-new .vn-property-show__record strong,
+body[data-theme="light"] .viewer-new .vn-property-show__record strong { color: #2c2a26; }
+
+[data-theme="light"] .viewer-new .vn-property-show-card,
+body[data-theme="light"] .viewer-new .vn-property-show-card {
+  background: #fffaf3;
+  border-color: rgba(180, 140, 30, .25);
+  box-shadow: 0 4px 16px rgba(139, 105, 20, .08);
+}
+[data-theme="light"] .viewer-new .vn-property-show-card__head,
+body[data-theme="light"] .viewer-new .vn-property-show-card__head { border-bottom-color: rgba(180, 140, 30, .2); }
+
+[data-theme="light"] .viewer-new .vn-property-show-field,
+body[data-theme="light"] .viewer-new .vn-property-show-field {
+  background: rgba(212, 175, 55, .07);
+  border-color: rgba(180, 140, 30, .2);
+}
+[data-theme="light"] .viewer-new .vn-property-show-field strong,
+body[data-theme="light"] .viewer-new .vn-property-show-field strong { color: #2c2a26; }
+
+[data-theme="light"] .viewer-new .vn-property-show-list-item,
+body[data-theme="light"] .viewer-new .vn-property-show-list-item {
+  background: rgba(212, 175, 55, .06);
+  border-color: rgba(180, 140, 30, .2);
+}
+[data-theme="light"] .viewer-new .vn-property-show-list-item h3,
+body[data-theme="light"] .viewer-new .vn-property-show-list-item h3 { color: #2c2a26; }
+[data-theme="light"] .viewer-new .vn-property-show-list-item dl > div,
+body[data-theme="light"] .viewer-new .vn-property-show-list-item dl > div { background: rgba(212, 175, 55, .1); }
+[data-theme="light"] .viewer-new .vn-property-show-list-item dd,
+body[data-theme="light"] .viewer-new .vn-property-show-list-item dd { color: #2c2a26; }
+
+[data-theme="light"] .viewer-new .vn-property-show-note,
+body[data-theme="light"] .viewer-new .vn-property-show-note { color: #2c2a26; background: rgba(212, 175, 55, .08); border-color: rgba(180, 140, 30, .25); }
+
+[data-theme="light"] .viewer-new .vn-property-show-status,
+body[data-theme="light"] .viewer-new .vn-property-show-status { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); color: #4a4540; }
+
+[data-theme="light"] .viewer-new .vn-property-show-attachment,
+body[data-theme="light"] .viewer-new .vn-property-show-attachment { background: rgba(212, 175, 55, .07); border-color: rgba(180, 140, 30, .22); }
+[data-theme="light"] .viewer-new .vn-property-show-attachment span,
+body[data-theme="light"] .viewer-new .vn-property-show-attachment span { color: #2c2a26; }
+
+[data-theme="light"] .viewer-new .vn-property-show-table-wrap,
+body[data-theme="light"] .viewer-new .vn-property-show-table-wrap { background: #fffaf3; border-color: rgba(180, 140, 30, .25); }
+[data-theme="light"] .viewer-new .vn-property-show-table th,
+[data-theme="light"] .viewer-new .vn-property-show-table td,
+body[data-theme="light"] .viewer-new .vn-property-show-table th,
+body[data-theme="light"] .viewer-new .vn-property-show-table td { color: #2c2a26; border-bottom-color: rgba(180, 140, 30, .18); border-inline-start-color: rgba(180, 140, 30, .12); }
+[data-theme="light"] .viewer-new .vn-property-show-table thead th,
+body[data-theme="light"] .viewer-new .vn-property-show-table thead th { color: #1a1208; background: rgba(212, 175, 55, .18); }
+[data-theme="light"] .viewer-new .vn-property-show-table tbody tr:nth-child(odd) td,
+body[data-theme="light"] .viewer-new .vn-property-show-table tbody tr:nth-child(odd) td { background: rgba(255,255,255,.6); }
+[data-theme="light"] .viewer-new .vn-property-show-table tbody tr:nth-child(even) td,
+body[data-theme="light"] .viewer-new .vn-property-show-table tbody tr:nth-child(even) td { background: rgba(212, 175, 55, .07); }
+[data-theme="light"] .viewer-new .vn-property-show-table tbody tr:hover td,
+body[data-theme="light"] .viewer-new .vn-property-show-table tbody tr:hover td { background: rgba(212, 175, 55, .15); }
+
+/* ── Font size scaling ── */
+.viewer-new .vn-property-show-table th,
+.viewer-new .vn-property-show-table td { font-size: calc(.9rem * var(--fs-scale, 1)); }
+.viewer-new .vn-property-show h1 { font-size: clamp(calc(1.8rem * var(--fs-scale, 1)), 4vw, calc(3rem * var(--fs-scale, 1))); }
+.viewer-new .vn-property-show-field strong { font-size: calc(.98rem * var(--fs-scale, 1)); }
+.viewer-new .vn-property-show-card h2 { font-size: calc(1.08rem * var(--fs-scale, 1)); }
+.viewer-new .vn-property-show__eyebrow { font-size: calc(.78rem * var(--fs-scale, 1)); }
+.viewer-new .vn-property-show__subtitle { font-size: calc(1rem * var(--fs-scale, 1)); }
+.viewer-new .vn-property-show__summary strong { font-size: calc(1.45rem * var(--fs-scale, 1)); }
+.viewer-new .vn-property-show__summary span:first-child,
+.viewer-new .vn-property-show-field span,
+.viewer-new .vn-property-show-list-item dt,
+.viewer-new .vn-property-show-attachment small { font-size: calc(.82rem * var(--fs-scale, 1)); }
