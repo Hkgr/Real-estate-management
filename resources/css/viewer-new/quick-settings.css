@@ -716,6 +716,16 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-propertie
 html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table tbody tr:hover td {
   background: var(--table-row-hover-bg, rgba(212,175,55,.10)) !important;
 }
+/* Child table rows inside expanded rows must not inherit outer hover color */
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr:hover td {
+  background: rgba(212,175,55,.16) !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr td {
+  background: transparent !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr:nth-child(even) td {
+  background: rgba(212,175,55,.08) !important;
+}
 
 
 /* ══════════════════════════════════════════════════════════════════
