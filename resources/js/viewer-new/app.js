@@ -1064,7 +1064,13 @@ tbody tr:nth-child(odd) td { background: #fff; }
             const activeEl = document.fullscreenElement || document.webkitFullscreenElement || null;
             const isReportFs = activeEl === reportRoot;
             document.body.classList.toggle('vn-report-fullscreen-active', isReportFs);
-            if (isReportFs) hideFloatingHead();
+            if (isReportFs) {
+                hideFloatingHead();
+                const theme = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme') || 'dark';
+                reportRoot.setAttribute('data-theme', theme);
+            } else {
+                reportRoot.removeAttribute('data-theme');
+            }
             if (fullscreenBtn) {
                 fullscreenBtn.textContent = isReportFs ? '⤫ إغلاق الشاشة الكاملة' : '⛶ ملء الشاشة';
             }
