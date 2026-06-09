@@ -856,10 +856,10 @@ tbody tr:nth-child(odd) td { background: #fff; }
             if (!tableScroller) return;
             const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const huge = 999999;
-            tableScroller.scrollBy({
-                left: direction === 'end' ? huge : -huge,
-                behavior: smooth ? 'smooth' : 'auto',
-            });
+            /* RTL tables: +huge scrolls to physical RIGHT edge (= visual start/first columns)
+               FRONT/index.html confirms: 'right'→+HUGE for بداية, 'left'→-HUGE for نهاية */
+            /* Instant jump — scrollLeft assignment is always instantaneous */
+            tableScroller.scrollLeft = direction === 'start' ? huge : -huge;
             requestFloatingHeadSync();
         };
 
@@ -876,7 +876,7 @@ tbody tr:nth-child(odd) td { background: #fff; }
             tblNavPill.setAttribute('data-table-nav-pill', '');
             tblNavPill.setAttribute('role', 'navigation');
             tblNavPill.setAttribute('aria-label', 'التنقل في الجدول');
-            tblNavPill.innerHTML = '<div class="vn-tbl-nav-pill-inner"><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="start">⟪ بداية الجدول</button><div class="vn-tbl-nav-pill-sep"></div><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="end">نهاية الجدول ⟫</button></div>';
+            tblNavPill.innerHTML = '<div class="vn-tbl-nav-pill-inner"><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="start">بداية الجدول ⟫</button><div class="vn-tbl-nav-pill-sep"></div><button type="button" class="vn-tbl-nav-pill-btn" data-tbl-nav="end">⟪ نهاية الجدول</button></div>';
             wrap.appendChild(tblNavPill);
             tblNavPill.querySelector('[data-tbl-nav="start"]')?.addEventListener('click', () => tblNavScroll('start'));
             tblNavPill.querySelector('[data-tbl-nav="end"]')?.addEventListener('click', () => tblNavScroll('end'));
@@ -1064,7 +1064,13 @@ tbody tr:nth-child(odd) td { background: #fff; }
             const activeEl = document.fullscreenElement || document.webkitFullscreenElement || null;
             const isReportFs = activeEl === reportRoot;
             document.body.classList.toggle('vn-report-fullscreen-active', isReportFs);
-            if (isReportFs) hideFloatingHead();
+            if (isReportFs) {
+                hideFloatingHead();
+                const theme = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme') || 'dark';
+                reportRoot.setAttribute('data-theme', theme);
+            } else {
+                reportRoot.removeAttribute('data-theme');
+            }
             if (fullscreenBtn) {
                 fullscreenBtn.textContent = isReportFs ? '⤫ إغلاق الشاشة الكاملة' : '⛶ ملء الشاشة';
             }

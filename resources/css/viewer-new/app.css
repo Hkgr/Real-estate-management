@@ -1604,3 +1604,14 @@ body.viewer-new.vn-properties-report-page #vn-properties-table {
   height: auto !important;
   max-height: none !important;
 }
+
+/* ── Fullscreen light mode ── */
+.viewer-new .vn-properties-report.vn-report-focus-target[data-theme="light"]:fullscreen,
+.viewer-new .vn-properties-report.vn-report-focus-target[data-theme="light"]:-webkit-full-screen,
+[data-theme="light"] .viewer-new .vn-properties-report.vn-report-focus-target:fullscreen,
+[data-theme="light"] .viewer-new .vn-properties-report.vn-report-focus-target:-webkit-full-screen {
+  background:
+    radial-gradient(1200px 520px at 120% -10%, rgba(212,175,55,.10), transparent 52%),
+    radial-gradient(900px 420px at -20% 115%, rgba(212,175,55,.06), transparent 58%),
+    linear-gradient(135deg, #f5f0e4, #ede5d0) !important;
+}
