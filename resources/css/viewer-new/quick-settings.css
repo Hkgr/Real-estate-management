@@ -708,23 +708,26 @@ html[data-theme="light"] body.viewer-new.vn-properties-report-page .vn-pr-floati
 }
 
 /* ── Table body rows — use table-surface var so color picker works ── */
-html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table tbody td {
+/* Outer table body rows — excluded child table tds via :not selector chain */
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table > tbody > tr > td {
   background: var(--table-surface, #fffaf3) !important;
   border-color: var(--table-row-border, rgba(180,145,60,.2)) !important;
   color: var(--qs-font-color, #1a1208) !important;
 }
-html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table tbody tr:hover td {
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table > tbody > tr:hover > td {
   background: var(--table-row-hover-bg, rgba(212,175,55,.10)) !important;
 }
-/* Child table rows inside expanded rows must not inherit outer hover color */
-html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr:hover td {
-  background: rgba(212,175,55,.16) !important;
-}
+/* Child table rows — independent colors, never inherit outer row background */
 html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr td {
   background: transparent !important;
+  color: #1a1208 !important;
+  border-color: rgba(180,145,60,.22) !important;
 }
 html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr:nth-child(even) td {
   background: rgba(212,175,55,.08) !important;
+}
+html[data-theme="light"] body.viewer-new.vn-properties-report-page #vn-properties-table .vn-child-table tbody tr:hover td {
+  background: rgba(212,175,55,.16) !important;
 }
 
 
