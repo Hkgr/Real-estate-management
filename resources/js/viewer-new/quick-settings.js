@@ -110,6 +110,27 @@ export function setArea(a) {
   const p = qsGetPrefs(); p.area = a; qsSavePrefs(p);
   document.getElementById('area-m2-btn') ?.classList.toggle('active', a === 'm2');
   document.getElementById('area-ft2-btn')?.classList.toggle('active', a === 'ft2');
+
+  const M2_TO_FT2 = 10.7639;
+  document.querySelectorAll('td[data-column-key="card_total_area"]').forEach(function(td) {
+    // Store original m² value on first run
+    if (!td.dataset.areaM2) {
+      const raw = parseFloat((td.textContent || '').replace(/,/g, ''));
+      if (!isNaN(raw) && raw > 0) td.dataset.areaM2 = raw;
+    }
+    const m2 = parseFloat(td.dataset.areaM2);
+    if (isNaN(m2)) return;
+    td.textContent = a === 'ft2'
+      ? (m2 * M2_TO_FT2).toLocaleString('ar-SA', { maximumFractionDigits: 2 })
+      : m2.toLocaleString('ar-SA', { maximumFractionDigits: 2 });
+  });
+
+  document.querySelectorAll('td[data-column-key="card_area_unit"]').forEach(function(td) {
+    if (!td.dataset.areaUnitOrig) td.dataset.areaUnitOrig = td.textContent.trim();
+    const orig = td.dataset.areaUnitOrig;
+    if (orig === '—' || orig === 'سهم' || orig === '%') return; // non-metric units, don't convert
+    td.textContent = a === 'ft2' ? 'قدم²' : 'م²';
+  });
 }
 
 /* ── Ownership ── */
@@ -117,6 +138,21 @@ export function setOwnership(o) {
   const p = qsGetPrefs(); p.ownership = o; qsSavePrefs(p);
   document.getElementById('own-sahm-btn')?.classList.toggle('active', o === 'sahm');
   document.getElementById('own-pct-btn') ?.classList.toggle('active', o === 'pct');
+
+  document.querySelectorAll('.vn-owner-pill').forEach(function(pill) {
+    const shareEl = pill.querySelector('.vn-owner-pill__share');
+    const metaEl  = pill.querySelector('.vn-owner-pill__meta');
+    if (!shareEl || !metaEl) return;
+    if (o === 'pct') {
+      // Show percentage as primary, hide shares
+      shareEl.style.display = 'none';
+      metaEl.style.display  = '';
+    } else {
+      // Show shares as primary, hide percentage
+      shareEl.style.display = '';
+      metaEl.style.display  = 'none';
+    }
+  });
 }
 
 /* ── Language ── */
