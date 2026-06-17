@@ -1137,9 +1137,148 @@ tbody tr:nth-child(odd) td { background: #fff; }
         syncFullscreenUi();
     };
 
+
+    const bindOwnersReportInteractions = () => {
+        const reportRoot = document.querySelector('.vn-owners-report');
+        if (!reportRoot) return;
+
+        const GEN_KEY = 'viewer_new_owners_generator_open';
+        const COL_KEY = 'viewer_new_owners_visible_columns';
+        const defaultColumns = [
+            'name',
+            'phone',
+            'properties_linked_count',
+            'signals_count',
+            'ownership_percentage',
+            'current_ownerships_count',
+            'last_update',
+            'status_or_notes',
+        ];
+
+        const panel = reportRoot.querySelector('[data-report-generator-panel]');
+        const toggleBtn = reportRoot.querySelector('[data-report-generator-toggle]');
+        const form = reportRoot.querySelector('#vn-owners-report-generator-form');
+        const clearSearchBtn = reportRoot.querySelector('[data-owners-clear-search]');
+        const generateBtn = reportRoot.querySelector('[data-owners-generate-report]');
+        const resetBtn = reportRoot.querySelector('[data-owners-reset-columns]');
+        const fullscreenBtn = reportRoot.querySelector('[data-owners-fullscreen]');
+        const checkboxes = [...reportRoot.querySelectorAll('[data-owners-column-toggle]')];
+        const tableScope = reportRoot.querySelector('#vn-owners-table') || reportRoot;
+
+        const safeGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+        const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
+
+        const validColumnKeys = [...new Set(checkboxes.map((cb) => cb.value).filter(Boolean))];
+
+        const normalizeColumns = (columns) => {
+            const input = Array.isArray(columns) ? columns : [];
+            const filtered = [...new Set(input.filter((key) => validColumnKeys.includes(key)))];
+            return filtered.length > 0 ? filtered : defaultColumns.filter((key) => validColumnKeys.includes(key));
+        };
+
+        const syncCheckboxes = (columns) => {
+            const selected = new Set(columns);
+            checkboxes.forEach((cb) => { cb.checked = selected.has(cb.value); });
+        };
+
+        const applyColumns = (columns) => {
+            const selected = new Set(columns);
+            tableScope.querySelectorAll('[data-column-key]').forEach((cell) => {
+                const key = cell.getAttribute('data-column-key') || '';
+                cell.style.display = selected.has(key) ? '' : 'none';
+            });
+        };
+
+        const getChecked = () => checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+
+        const setPanelOpen = (open, persist = true) => {
+            if (!panel) return;
+            panel.classList.toggle('is-open', !!open);
+            toggleBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (persist) safeSet(GEN_KEY, open ? '1' : '0');
+        };
+
+        let visibleColumns = defaultColumns.filter((key) => validColumnKeys.includes(key));
+        try {
+            visibleColumns = normalizeColumns(JSON.parse(safeGet(COL_KEY) || 'null'));
+        } catch (_) {}
+
+        syncCheckboxes(visibleColumns);
+        applyColumns(visibleColumns);
+
+        if (safeGet(GEN_KEY) === '0') setPanelOpen(false, false);
+        else setPanelOpen(true, false);
+
+        toggleBtn?.addEventListener('click', () => setPanelOpen(!panel?.classList.contains('is-open')));
+
+        checkboxes.forEach((cb) => {
+            cb.addEventListener('change', () => {
+                const columns = normalizeColumns(getChecked());
+                syncCheckboxes(columns);
+                applyColumns(columns);
+                safeSet(COL_KEY, JSON.stringify(columns));
+            });
+        });
+
+        resetBtn?.addEventListener('click', () => {
+            const columns = defaultColumns.filter((key) => validColumnKeys.includes(key));
+            syncCheckboxes(columns);
+            applyColumns(columns);
+            safeSet(COL_KEY, JSON.stringify(columns));
+        });
+
+        generateBtn?.addEventListener('click', () => {
+            const columns = normalizeColumns(getChecked());
+            syncCheckboxes(columns);
+            applyColumns(columns);
+            safeSet(COL_KEY, JSON.stringify(columns));
+            setPanelOpen(false);
+        });
+
+        clearSearchBtn?.addEventListener('click', () => {
+            if (!form) return;
+            const searchInput = form.querySelector('input[name="q"]');
+            if (!searchInput) return;
+            searchInput.value = '';
+            form.submit();
+        });
+
+        const fsTarget = reportRoot.querySelector('#vn-owners-overflow') || reportRoot;
+        const syncFullscreenUi = () => {
+            const activeEl = document.fullscreenElement || document.webkitFullscreenElement || null;
+            const isFs = activeEl === fsTarget;
+            if (fullscreenBtn) fullscreenBtn.textContent = isFs ? '⤫ إغلاق الشاشة الكاملة' : '⛶ ملء الشاشة';
+        };
+
+        fullscreenBtn?.addEventListener('click', () => {
+            const activeEl = document.fullscreenElement || document.webkitFullscreenElement || null;
+            if (activeEl === fsTarget) {
+                (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+                return;
+            }
+            const request = fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen;
+            request?.call(fsTarget);
+        });
+
+        document.addEventListener('fullscreenchange', syncFullscreenUi);
+        document.addEventListener('webkitfullscreenchange', syncFullscreenUi);
+        syncFullscreenUi();
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            const activeEl = document.activeElement;
+            if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLSelectElement || activeEl instanceof HTMLTextAreaElement) {
+                activeEl.blur();
+                return;
+            }
+            if (panel?.classList.contains('is-open')) setPanelOpen(false);
+        });
+    };
+
     updateClock();
     if (clockEl || dateEl) setInterval(updateClock, 1000);
     bindQuickSearchShortcut();
     bindFullscreenToggle();
     bindPropertiesReportInteractions();
+    bindOwnersReportInteractions();
 })();
