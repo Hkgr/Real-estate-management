@@ -332,17 +332,10 @@
             const columnToggles = Array.from(scope.querySelectorAll('[data-column-toggle]'));
             const resetColumnsButton = scope.querySelector('[data-reset-columns]');
 
-            function getSignalColumnIndex(key) {
-                if (!signalsTable) return -1;
-                const header = signalsTable.querySelector('thead th[data-column-key="' + key + '"]');
-                if (!header || !header.parentElement) return -1;
-                return Array.from(header.parentElement.children).indexOf(header);
-            }
-
             function getVisibleSignalColumnCount() {
                 if (!signalsTable) return 1;
 
-                const headers = Array.from(signalsTable.querySelectorAll('thead th[data-column-key]'));
+                const headers = Array.from(signalsTable.querySelectorAll(':scope > thead th[data-column-key]'));
                 const visibleCount = headers.filter(function (header) {
                     return header.style.display !== 'none';
                 }).length;
@@ -355,7 +348,7 @@
 
                 const colspan = getVisibleSignalColumnCount();
 
-                signalsTable.querySelectorAll('tbody > tr.vn-signal-child-row > td[colspan]').forEach(function (cell) {
+                signalsTable.querySelectorAll(':scope > tbody > tr.vn-signal-child-row > td[colspan]').forEach(function (cell) {
                     cell.setAttribute('colspan', String(colspan));
                 });
             }
@@ -363,23 +356,16 @@
             function setSignalColumnVisibility(key, visible) {
                 if (!signalsTable) return;
 
-                if (key === 'signal_number') {
+                if (key === mandatoryColumn) {
                     visible = true;
                 }
 
-                const columnIndex = getSignalColumnIndex(key);
-                if (columnIndex < 0) return;
+                signalsTable.querySelectorAll(':scope > thead th[data-column-key="' + key + '"]').forEach(function (cell) {
+                    cell.style.display = visible ? '' : 'none';
+                });
 
-                const header = signalsTable.querySelector('thead th[data-column-key="' + key + '"]');
-                if (header) {
-                    header.style.display = visible ? '' : 'none';
-                }
-
-                signalsTable.querySelectorAll('tbody > tr:not(.vn-signal-child-row)').forEach(function (row) {
-                    const cell = row.children[columnIndex];
-                    if (cell) {
-                        cell.style.display = visible ? '' : 'none';
-                    }
+                signalsTable.querySelectorAll(':scope > tbody > tr:not(.vn-signal-child-row) > td[data-column-key="' + key + '"]').forEach(function (cell) {
+                    cell.style.display = visible ? '' : 'none';
                 });
 
                 updateSignalChildColspan();
@@ -421,6 +407,7 @@
                 toggle.addEventListener('change', function () {
                     if (toggle.value === mandatoryColumn) {
                         toggle.checked = true;
+                        toggle.disabled = true;
                         setSignalColumnVisibility(mandatoryColumn, true);
                         return;
                     }
